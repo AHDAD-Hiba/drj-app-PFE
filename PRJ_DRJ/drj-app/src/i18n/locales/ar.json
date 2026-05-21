@@ -1,0 +1,346 @@
+{
+  "app": {
+    "name": "المديرية الجهوية للشباب الدار البيضاء سطات",
+    "fullName": "المديرية الجهوية للشباب",
+    "subtitle": "منظومة القيادة الجهوية",
+    "ministry": "وزارة الشباب والثقافة والتواصل"
+  },
+  "auth": {
+    "loginTitle": "تسجيل الدخول",
+    "loginSubtitle": "ادخل إلى فضاء القيادة الجهوية",
+    "email": "البريد الإلكتروني",
+    "password": "كلمة المرور",
+    "fullName": "الاسم الكامل",
+    "signIn": "دخول",
+    "signUp": "إنشاء حساب",
+    "switchToSignUp": "ليس لديك حساب؟",
+    "switchToSignIn": "لديك حساب؟",
+    "logout": "تسجيل الخروج",
+    "demoAccounts": "حسابات تجريبية",
+    "useThisAccount": "استعمال هذا الحساب",
+    "loading": "جاري الاتصال…",
+    "errorInvalid": "بيانات غير صحيحة",
+    "errorGeneric": "حدث خطأ",
+    "demoBanner": "انقر على أحد الحسابات أدناه لتعبئة النموذج.",
+    "demoAccess": "دخول تجريبي (معاينة)",
+    "forgotPassword": "هل نسيت كلمة المرور؟",
+    "forgot": {
+      "title": "نسيت كلمة المرور",
+      "subtitle": "أدخل بريدك الإلكتروني لتلقي رابط إعادة التعيين.",
+      "send": "إرسال رابط إعادة التعيين",
+      "sent": "تم إرسال رابط إعادة التعيين إلى بريدك الإلكتروني.",
+      "sentToast": "تم إرسال البريد",
+      "backToLogin": "العودة إلى تسجيل الدخول"
+    }
+  },
+  "nav": {
+    "overview": "نظرة عامة",
+    "directions": "المديريات",
+    "map": "الخريطة",
+    "comparison": "المقارنة",
+    "myDirection": "مديريتي",
+    "settings": "الإعدادات",
+    "import": "استيراد إكسل",
+    "entry": "تعبئة"
+  },
+  "roles": {
+    "admin_regional": "مدير جهوي",
+    "equipe_regionale": "الفريق الجهوي",
+    "directeur_prefectoral": "مدير إقليمي"
+  },
+  "status": {
+    "brouillon": "مسودة",
+    "soumise": "مُرسلة",
+    "validee": "مُصادق عليها"
+  },
+  "dashboard": {
+    "title": "لوحة القيادة الجهوية",
+    "titleRegional": "لوحة القيادة الجهوية",
+    "titlePrefectoral": "لوحة القيادة الإقليمية",
+    "filters": "تصفية النتائج",
+    "subtitle": "قيادة 13 مديرية إقليمية · سنة {{year}}",
+    "welcomeBack": "مرحباً، {{name}}",
+    "kpi": {
+      "submitted": "المديريات المُرسِلة",
+      "completeness": "نسبة الإكمال",
+      "beneficiaries": "إجمالي المستفيدين",
+      "associations": "الجمعيات",
+      "conventions": "الاتفاقيات الموقعة",
+      "clubs": "النوادي النشطة",
+      "trainings": "التكوينات",
+      "festivals": "المشاركون بالمهرجانات",
+      "camping": "المشاركون بالتخييم"
+    },
+    "ranking": "الترتيب حسب النتيجة الإجمالية",
+    "byProgram": "المستفيدون حسب البرنامج",
+    "comparison": "مقارنة بين المديريات",
+    "rank": "الترتيب",
+    "direction": "المديرية",
+    "score": "النتيجة",
+    "completeness": "الإكمال",
+    "lastUpdate": "آخر تحديث",
+    "viewDetail": "عرض البطاقة",
+    "noData": "لا توجد بيانات"
+  },
+  "map": {
+    "eyebrow": "الخريطة الجهوية",
+    "title": "جهة الدار البيضاء سطات",
+    "subtitle": "عرض خرائطي للمديريات الإقليمية الـ13. انقر على المنطقة لفتح بطاقتها.",
+    "prefectures": "المديريات الإقليمية",
+    "avgScore": "متوسط النتيجة الجهوية",
+    "topPerformer": "أعلى أداء",
+    "choropleth": "الأداء حسب الإقليم",
+    "choroplethHint": "تدرج لوني من الأحمر (ضعيف) إلى الأخضر الداكن (مرتفع) حسب النتيجة الإجمالية.",
+    "themeDark": "داكن",
+    "themeLight": "فاتح",
+    "casaWilaya": "ولاية الدار البيضاء",
+    "casaHint": "تم تجميع المديريات الإقليمية السبع. كبّر (المستوى ≥ {{zoom}}) لرؤية مواقعها الفعلية."
+  },
+  "detail": {
+    "back": "رجوع",
+    "globalScore": "النتيجة الإجمالية",
+    "completenessRate": "نسبة إكمال البيانات",
+    "lastUpdate": "تحديث",
+    "permanent": "الأنشطة الدائمة",
+    "outreach": "الأنشطة الإشعاعية",
+    "camping": "برنامج التخييم",
+    "festivals": "مهرجانات الشباب",
+    "integration": "الإدماج السوسيو-اقتصادي",
+    "institutions": "وضعية المؤسسات",
+    "totalBeneficiaries": "إجمالي المستفيدين",
+    "associations": "الجمعيات",
+    "conventions": "الاتفاقيات",
+    "clubs": "النوادي",
+    "educative": "تربوية",
+    "cultural": "ثقافية",
+    "sportive": "رياضية وترفيهية",
+    "capacity": "تعزيز القدرات",
+    "participants": "المشاركون",
+    "female": "الإناث",
+    "male": "الذكور",
+    "rural": "قروي",
+    "urban": "حضري",
+    "facilitators": "مؤطرون",
+    "trainings": "تكوينات",
+    "qualified": "متأهلون",
+    "beneficiaries": "المستفيدون",
+    "partners": "الشركاء",
+    "updated": "محدّثة",
+    "inProgress": "قيد الإنجاز",
+    "dispute": "في نزاع",
+    "rehabNeeds": "تحتاج إعادة تأهيل",
+    "strengths": "نقاط القوة",
+    "weaknesses": "محاور التحسين",
+    "scoreFormula": "صيغة النتيجة: 40٪ حجم الأنشطة · 25٪ المستفيدون · 15٪ الشراكات · 10٪ التكوين · 10٪ الإكمال"
+  },
+  "common": {
+    "loading": "جاري التحميل…",
+    "search": "بحث",
+    "year": "السنة",
+    "all": "الكل",
+    "language": "اللغة",
+    "show": "إظهار",
+    "hide": "إخفاء",
+    "next": "التالي",
+    "previous": "السابق",
+    "domain": "المجال",
+    "step": "الخطوة {{n}} / {{total}}",
+    "duplicateYear": "نسخ من السنة الماضية",
+    "duplicateYearConfirm": "نسخ كل بيانات {{from}} إلى {{to}} ؟ ستُستبدل القيم الحالية لـ {{to}}.",
+    "duplicated": "تم نسخ البيانات من {{from}} إلى {{to}}"
+  },
+  "domain": {
+    "title": "لوحة القيادة حسب المجال",
+    "subtitle": "نظرة شاملة · تتبع · مقارنة بين المديريات",
+    "tracking": "تتبع الإرسالات",
+    "submittedCount": "{{n}} / {{total}} مديرية أرسلت",
+    "options": {
+      "jeunesse": "الشباب",
+      "femme": "المرأة / الفتاة",
+      "enfance": "الطفولة",
+      "creche": "الحضانة",
+      "sport": "الرياضة"
+    },
+    "status": {
+      "completed": "مكتملة",
+      "in_progress": "قيد الإنجاز",
+      "not_started": "لم تبدأ"
+    },
+    "kpi": {
+      "coverage": "نسبة التغطية",
+      "coverageHint": "المستفيدون / السكان",
+      "coverageShort": "التغطية",
+      "activities": "إجمالي الأنشطة",
+      "activitiesShort": "الأنشطة",
+      "participants": "إجمالي المشاركين",
+      "participantsShort": "المشاركون",
+      "partnerships": "إجمالي الشراكات",
+      "score": "النتيجة الإجمالية للمجال",
+      "scoreHint": "متوسط /100"
+    },
+    "charts": {
+      "activitiesByDir": "الأنشطة حسب المديرية",
+      "activitiesByDirHint": "حجم الأنشطة المُعلَن من كل مديرية",
+      "byType": "التوزيع حسب النوع",
+      "byTypeHint": "أنواع أنشطة المجال",
+      "evolution": "تطور المشاركين",
+      "evolutionHint": "الحجم الفصلي التراكمي",
+      "gender": "التوزيع إناث / ذكور",
+      "vsAvg": "المديرية مقابل المتوسط الجهوي"
+    },
+    "compare": {
+      "title": "مقارنة المديريات",
+      "results": "{{n}} نتيجة",
+      "searchPlaceholder": "البحث عن مديرية…",
+      "statusPlaceholder": "الحالة",
+      "allStatuses": "كل الحالات",
+      "noMatch": "لا توجد مديرية مطابقة للمرشحات."
+    },
+    "detail": {
+      "noReportTitle": "لم يُرسَل أي تقرير بعد",
+      "noReportBody": "لم يُرسَل أي تقرير لهذه المديرية خلال الفترة المختارة.",
+      "avg": "متوسط"
+    }
+  },
+  "regionDashboard": {
+    "title": "لوحة القيادة الجهوية DRJ",
+    "subtitle": "نظرة شاملة على جهة الدار البيضاء سطات",
+    "completionTracking": "التتبع العام للملء",
+    "kpi": {
+      "coverageRate": "نسبة التغطية العامة",
+      "totalActivities": "إجمالي الأنشطة",
+      "totalParticipants": "إجمالي المشاركين",
+      "totalPartnerships": "إجمالي الشراكات",
+      "globalScore": "النتيجة العامة المتوسطة",
+      "partnerships": "الشراكات"
+    },
+    "charts": {
+      "activitiesPerDirection": "الأنشطة حسب المديرية",
+      "genderDistribution": "التوزيع حسب الجنس",
+      "evolution": "التطور الزمني",
+      "participantsOverTime": "المشاركون على 3 سنوات",
+      "activityTypes": "أنواع الأنشطة"
+    },
+    "comparisonTable": "مقارنة المديريات",
+    "tabs": {
+      "overview": "نظرة شاملة",
+      "detail": "التفاصيل"
+    },
+    "table": {
+      "activities": "الأنشطة",
+      "participants": "المشاركون",
+      "coverageRate": "نسبة التغطية"
+    },
+    "smartInsights": "الرؤى الذكية",
+    "insights": {
+      "goodPerformance": "أداء جهوي جيد",
+      "aboveAverage": "النتيجة المتوسطة فوق 70",
+      "average": "أداء متوسط مرضي",
+      "needsImprovement": "يحتاج تحسين",
+      "topDirections": "أفضل المديريات",
+      "needsAttention": "المديريات التي تحتاج مراقبة"
+    },
+    "comparisonWithAverage": "المقارنة مع المتوسط الجهوي",
+    "average": "متوسط"
+  },
+  "import": {
+    "eyebrow": "أداة إدارية",
+    "title": "استيراد البيانات عبر ملف إكسل",
+    "subtitle": "حمّل النموذج، املأه، ثم ارفعه لتحديث بيانات المديريات الإقليمية بنقرة واحدة.",
+    "step1": "تحميل نموذج إكسل",
+    "step1Hint": "يحتوي النموذج على جميع الأعمدة المطلوبة، قاموس الحقول، وقائمة رموز المديريات الإقليمية الـ13.",
+    "downloadTemplate": "تحميل النموذج الفارغ (.xlsx)",
+    "step2": "رفع الملف المعبّأ",
+    "dropZone": "انقر لاختيار ملف .xlsx",
+    "maxSize": "20 م.ب كحد أقصى",
+    "parsing": "جاري تحليل الملف…",
+    "step3": "التحقق وتأكيد الاستيراد",
+    "valid": "أسطر صالحة",
+    "invalid": "أسطر بأخطاء",
+    "fixErrorsHint": "لن يتم استيراد الأسطر التي بها أخطاء. صحّح الملف ثم ارفعه من جديد.",
+    "colStatus": "الحالة",
+    "colDp": "المديرية الإقليمية",
+    "colDetail": "التفاصيل",
+    "confirmImport": "استيراد {{count}} سطر(أسطر)",
+    "successTitle": "تم الاستيراد بنجاح",
+    "successBody": "تم تسجيل {{count}} إرسال(إرسالات).",
+    "forbiddenTitle": "وصول مقيد",
+    "forbiddenBody": "يمكن للمدير الجهوي والمديرين الإقليميين فقط استيراد البيانات.",
+    "errEmpty": "الملف لا يحتوي على أسطر قابلة للمعالجة.",
+    "errParse": "تعذّرت قراءة الملف",
+    "errImport": "فشل الاستيراد",
+    "errCodeMissing": "رمز المديرية مفقود",
+    "errCodeUnknown": "الرمز « {{code}} » غير معروف",
+    "errNotYourDp": "لا يمكنك استيراد بيانات إلا لمديريتك",
+    "errYear": "السنة غير صحيحة",
+    "errStatus": "الحالة غير صحيحة (brouillon | soumise | validee)"
+  },
+  "form": {
+    "eyebrow": "حملة {{year}}",
+    "title": "تعبئة",
+    "completeness": "نسبة الإكمال",
+    "score": "النتيجة",
+    "fieldsFilled": "حقل مُعبَّأ",
+    "steps": {
+      "Activités permanentes": "الأنشطة الدائمة"
+    },
+    "permanent": {
+      "nombreAssociations": "عدد الجمعيات",
+      "nombreClubs": "عدد الأندية",
+      "nombreConventions": "عدد الاتفاقيات",
+      "activitesEducatives": "الأنشطة التربوية",
+      "activitesCulturelles": "الأنشطة الثقافية والفنية",
+      "activitesSportives": "الأنشطة الترفيهية والبدنية",
+      "renforcementCapacites": "بناء القدرات"
+    },
+    "save": {
+      "saving": "جاري الحفظ…",
+      "savedJustNow": "تم الحفظ",
+      "savedAt": "تم الحفظ في {{time}}",
+      "notYetSaved": "لم يُحفظ بعد",
+      "error": "فشل الحفظ",
+      "draftSavedTitle": "تم حفظ المسودة",
+      "draftErrorTitle": "فشل الحفظ"
+    },
+    "actions": {
+      "saveDraft": "حفظ المسودة",
+      "submit": "إرسال"
+    },
+    "confirm": {
+      "title": "تأكيد الإرسال",
+      "body": "أنت على وشك إرسال تقرير {{year}} (نسبة الإكمال: {{completeness}}٪). بعد الإرسال، لن تكون البيانات قابلة للتعديل دون تدخل الفريق الجهوي. هل تؤكد؟",
+      "cancel": "إلغاء",
+      "confirm": "إرسال نهائي"
+    },
+    "submit": {
+      "successTitle": "تم إرسال التقرير",
+      "successBody": "تم إرسال تقريركم لسنة {{year}} بنجاح إلى الفريق الجهوي.",
+      "errorTitle": "فشل الإرسال"
+    },
+    "forbidden": {
+      "title": "وصول محجوز",
+      "body": "يمكن للمديرين الإقليميين فقط تعبئة التقرير السنوي. إذا كان هذا خطأ، تواصل مع المدير الجهوي."
+    },
+    "error": {
+      "invalid": "قيمة غير صحيحة",
+      "negative": "يجب أن تكون القيمة ≥ 0",
+      "tooLarge": "قيمة كبيرة جداً"
+    }
+  },
+  "footer": {
+    "ministryShort": "وزارة الشباب والثقافة والتواصل",
+    "tagline": "المنصة الرسمية للقيادة الجهوية لأنشطة الشباب بولاية الدار البيضاء سطات.",
+    "contact": "معلومات الاتصال",
+    "directionName": "المديرية الجهوية للشباب الدار البيضاء سطات",
+    "address": "شارع محمد الخامس، الدار البيضاء · المغرب",
+    "navigation": "التصفّح",
+    "legal": "إشعارات قانونية",
+    "legalNotices": "إشعارات قانونية",
+    "privacy": "سياسة الخصوصية",
+    "termsOfUse": "شروط الاستخدام",
+    "accessibility": "إمكانية الوصول",
+    "officialApp": "تطبيق رسمي",
+    "kingdom": "المملكة المغربية",
+    "version": "الإصدار"
+  }
+}

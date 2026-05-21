@@ -1,0 +1,342 @@
+{
+  "app": {
+    "name": "DRJ Casablanca-Settat",
+    "fullName": "Direction Régionale de la Jeunesse",
+    "subtitle": "Système de pilotage régional",
+    "ministry": "Ministère de la Jeunesse, de la Culture et de la Communication"
+  },
+  "auth": {
+    "loginTitle": "Connexion",
+    "loginSubtitle": "Accédez à votre espace de pilotage régional",
+    "email": "Adresse e-mail",
+    "password": "Mot de passe",
+    "fullName": "Nom complet",
+    "signIn": "Se connecter",
+    "signUp": "Créer un compte",
+    "switchToSignUp": "Pas encore de compte ?",
+    "switchToSignIn": "Déjà inscrit ?",
+    "logout": "Déconnexion",
+    "demoAccounts": "Comptes de démonstration",
+    "useThisAccount": "Utiliser ce compte",
+    "loading": "Connexion en cours…",
+    "errorInvalid": "Identifiants invalides",
+    "errorGeneric": "Une erreur est survenue",
+    "demoBanner": "Cliquez sur un compte ci-dessous pour pré-remplir le formulaire.",
+    "demoAccess": "Accès démo (aperçu)",
+    "forgotPassword": "Mot de passe oublié ?",
+    "forgot": {
+      "title": "Mot de passe oublié",
+      "subtitle": "Saisissez votre adresse e-mail pour recevoir un lien de réinitialisation.",
+      "send": "Envoyer le lien de réinitialisation",
+      "sent": "Un lien de réinitialisation a été envoyé à votre adresse e-mail.",
+      "sentToast": "E-mail envoyé",
+      "backToLogin": "Retour à la connexion"
+    }
+  },
+  "nav": {
+    "overview": "Vue d'ensemble",
+    "directions": "Directions",
+    "map": "Carte",
+    "comparison": "Comparaison",
+    "myDirection": "Ma direction",
+    "settings": "Paramètres",
+    "import": "Import Excel",
+    "entry": "Saisie"
+  },
+  "roles": {
+    "admin_regional": "Administrateur régional",
+    "equipe_regionale": "Équipe régionale",
+    "directeur_prefectoral": "Directeur préfectoral"
+  },
+  "status": {
+    "brouillon": "Brouillon",
+    "soumise": "Soumise",
+    "validee": "Validée"
+  },
+  "dashboard": {
+    "title": "Tableau de bord régional",
+    "subtitle": "Pilotage des 13 directions préfectorales · Année {{year}}",
+    "welcomeBack": "Bonjour, {{name}}",
+    "kpi": {
+      "submitted": "Directions ayant soumis",
+      "completeness": "Taux de complétude moyen",
+      "beneficiaries": "Total bénéficiaires",
+      "associations": "Associations",
+      "conventions": "Conventions signées",
+      "clubs": "Clubs actifs",
+      "trainings": "Formations",
+      "festivals": "Participants festivals",
+      "camping": "Participants camping"
+    },
+    "ranking": "Classement par score global",
+    "byProgram": "Bénéficiaires par programme",
+    "comparison": "Comparaison entre directions",
+    "rank": "Rang",
+    "direction": "Direction",
+    "score": "Score",
+    "completeness": "Complétude",
+    "lastUpdate": "Dernière mise à jour",
+    "viewDetail": "Voir la fiche",
+    "noData": "Aucune donnée"
+  },
+  "map": {
+    "eyebrow": "Carte régionale",
+    "title": "Région Casablanca-Settat",
+    "subtitle": "Vue cartographique des 13 directions préfectorales. Cliquez sur une zone pour ouvrir sa fiche.",
+    "prefectures": "Directions préfectorales",
+    "avgScore": "Score moyen régional",
+    "topPerformer": "Meilleure performance",
+    "choropleth": "Performance par préfecture",
+    "choroplethHint": "Couleur graduée du rouge (faible) au vert profond (élevé) selon le score global.",
+    "themeDark": "Sombre",
+    "themeLight": "Clair",
+    "casaWilaya": "Wilaya de Casablanca",
+    "casaHint": "Les 7 préfectures d'arrondissements sont regroupées. Zoomez (≥ niveau {{zoom}}) pour voir leurs positions réelles."
+  },
+  "detail": {
+    "back": "Retour",
+    "globalScore": "Score global",
+    "completenessRate": "Complétude des données",
+    "lastUpdate": "Mise à jour",
+    "permanent": "Activités permanentes",
+    "outreach": "Activités rayonnantes",
+    "camping": "Programme camping",
+    "festivals": "Festivals jeunesse",
+    "integration": "Intégration socio-économique",
+    "institutions": "État des établissements",
+    "totalBeneficiaries": "Total bénéficiaires",
+    "associations": "Associations",
+    "conventions": "Conventions",
+    "clubs": "Clubs",
+    "educative": "Éducatives",
+    "cultural": "Culturelles",
+    "sportive": "Sportives & récréatives",
+    "capacity": "Renforcement des capacités",
+    "participants": "Participants",
+    "female": "Filles",
+    "male": "Garçons",
+    "rural": "Rural",
+    "urban": "Urbain",
+    "facilitators": "Encadrants",
+    "trainings": "Formations",
+    "qualified": "Qualifiés",
+    "beneficiaries": "Bénéficiaires",
+    "partners": "Partenaires",
+    "updated": "Mis à jour",
+    "inProgress": "En cours",
+    "dispute": "En litige",
+    "rehabNeeds": "Besoins de réhabilitation",
+    "strengths": "Points forts",
+    "weaknesses": "Axes d'amélioration",
+    "scoreFormula": "Formule de score : 40% volume d'activité · 25% bénéficiaires · 15% partenariats · 10% formation · 10% complétude"
+  },
+  "common": {
+    "loading": "Chargement…",
+    "search": "Rechercher",
+    "year": "Année",
+    "all": "Toutes",
+    "language": "Langue",
+    "show": "Afficher",
+    "hide": "Masquer",
+    "next": "Suivant",
+    "previous": "Précédent",
+    "domain": "Domaine",
+    "step": "Étape {{n}} / {{total}}",
+    "duplicateYear": "Dupliquer depuis l'année précédente",
+    "duplicateYearConfirm": "Copier toutes les données de {{from}} vers {{to}} ? Les valeurs existantes pour {{to}} seront écrasées.",
+    "duplicated": "Données copiées de {{from}} vers {{to}}"
+  },
+  "domain": {
+    "title": "Tableau de bord par domaine",
+    "subtitle": "Vue globale · suivi · comparaison entre directions",
+    "tracking": "Suivi des soumissions",
+    "submittedCount": "{{n}} / {{total}} directions ont soumis",
+    "options": {
+      "jeunesse": "Jeunesse",
+      "femme": "Femme / Fille",
+      "enfance": "Enfance",
+      "creche": "Crèche"
+    },
+    "status": {
+      "completed": "Complétée",
+      "in_progress": "En cours",
+      "not_started": "Non démarrée"
+    },
+    "kpi": {
+      "coverage": "Taux de couverture",
+      "coverageHint": "bénéficiaires / population",
+      "coverageShort": "Couverture",
+      "activities": "Total activités",
+      "activitiesShort": "Activités",
+      "participants": "Total participants",
+      "participantsShort": "Participants",
+      "partnerships": "Total partenariats",
+      "score": "Score global domaine",
+      "scoreHint": "moyenne /100"
+    },
+    "charts": {
+      "activitiesByDir": "Activités par direction",
+      "activitiesByDirHint": "Volume d'activités déclaré par chaque direction",
+      "byType": "Répartition par type",
+      "byTypeHint": "Types d'activités du domaine",
+      "evolution": "Évolution des participants",
+      "evolutionHint": "Volume trimestriel cumulé",
+      "gender": "Répartition F / H",
+      "vsAvg": "Direction vs Moyenne régionale"
+    },
+    "compare": {
+      "title": "Comparaison des directions",
+      "results": "{{n}} résultat(s)",
+      "searchPlaceholder": "Rechercher une direction…",
+      "statusPlaceholder": "Statut",
+      "allStatuses": "Tous statuts",
+      "noMatch": "Aucune direction ne correspond aux filtres."
+    },
+    "detail": {
+      "noReportTitle": "Aucun rapport encore soumis",
+      "noReportBody": "Aucun rapport n'a encore été soumis pour cette direction sur la période sélectionnée.",
+      "avg": "moy."
+    }
+  },
+  "regionDashboard": {
+    "title": "Tableau de bord régional DRJ",
+    "subtitle": "Vue globale de la région Casablanca-Settat",
+    "completionTracking": "Suivi global du remplissage",
+    "kpi": {
+      "coverageRate": "Taux de couverture global",
+      "totalActivities": "Total activités",
+      "totalParticipants": "Total participants",
+      "totalPartnerships": "Total partenariats",
+      "globalScore": "Score global moyen",
+      "partnerships": "Partenariats"
+    },
+    "charts": {
+      "activitiesPerDirection": "Activités par direction",
+      "genderDistribution": "Répartition par genre",
+      "evolution": "Évolution temporelle",
+      "participantsOverTime": "Participants sur 3 ans",
+      "activityTypes": "Types d'activités"
+    },
+    "comparisonTable": "Comparaison des directions",
+    "tabs": {
+      "overview": "Vue globale",
+      "detail": "Détail"
+    },
+    "table": {
+      "activities": "Activités",
+      "participants": "Participants",
+      "coverageRate": "Taux couverture"
+    },
+    "smartInsights": "Insights intelligents",
+    "insights": {
+      "goodPerformance": "Bonne performance régionale",
+      "aboveAverage": "Score moyen au-dessus de 70",
+      "average": "Performance moyenne satisfaisante",
+      "needsImprovement": "Amélioration nécessaire",
+      "topDirections": "Top directions",
+      "needsAttention": "Directions à surveiller"
+    },
+    "comparisonWithAverage": "Comparaison avec la moyenne régionale",
+    "average": "moyenne"
+  },
+  "import": {
+    "eyebrow": "Outil d'administration",
+    "title": "Import de données par fichier Excel",
+    "subtitle": "Téléchargez le modèle, remplissez-le, puis importez-le pour mettre à jour les soumissions des directions préfectorales en un clic.",
+    "step1": "Télécharger le modèle Excel",
+    "step1Hint": "Le modèle contient toutes les colonnes attendues, le dictionnaire des champs et la liste des codes des 13 préfectures.",
+    "downloadTemplate": "Télécharger le modèle vierge (.xlsx)",
+    "step2": "Téléverser le fichier rempli",
+    "dropZone": "Cliquez pour sélectionner un fichier .xlsx",
+    "maxSize": "20 Mo max",
+    "parsing": "Analyse du fichier en cours…",
+    "step3": "Vérifier et confirmer l'import",
+    "valid": "lignes valides",
+    "invalid": "lignes en erreur",
+    "fixErrorsHint": "Les lignes en erreur ne seront pas importées. Corrigez votre fichier Excel et téléversez-le à nouveau.",
+    "colStatus": "Statut",
+    "colDp": "Direction préfectorale",
+    "colDetail": "Détail",
+    "confirmImport": "Importer {{count}} ligne(s)",
+    "successTitle": "Import réussi",
+    "successBody": "{{count}} soumission(s) enregistrée(s).",
+    "forbiddenTitle": "Accès restreint",
+    "forbiddenBody": "Seuls l'administrateur régional et les directeurs préfectoraux peuvent importer des données.",
+    "errEmpty": "Le fichier ne contient aucune ligne exploitable.",
+    "errParse": "Impossible de lire le fichier",
+    "errImport": "Échec de l'import",
+    "errCodeMissing": "Code préfecture manquant",
+    "errCodeUnknown": "Code « {{code}} » inconnu",
+    "errNotYourDp": "Vous ne pouvez importer que les données de votre direction",
+    "errYear": "Année invalide",
+    "errStatus": "Statut invalide (brouillon | soumise | validee)"
+  },
+  "form": {
+    "eyebrow": "Campagne {{year}}",
+    "title": "Saisie",
+    "completeness": "Complétude",
+    "score": "Score",
+    "fieldsFilled": "champs renseignés",
+    "steps": {
+      "Activités permanentes": "Activités permanentes"
+    },
+    "permanent": {
+      "nombreAssociations": "Nombre d'associations",
+      "nombreClubs": "Nombre de clubs",
+      "nombreConventions": "Nombre de conventions",
+      "activitesEducatives": "Activités éducatives",
+      "activitesCulturelles": "Activités culturelles et artistiques",
+      "activitesSportives": "Activités récréatives et physiques",
+      "renforcementCapacites": "Renforcement des capacités"
+    },
+    "save": {
+      "saving": "Enregistrement…",
+      "savedJustNow": "Enregistré",
+      "savedAt": "Enregistré à {{time}}",
+      "notYetSaved": "Non enregistré",
+      "error": "Échec de l'enregistrement",
+      "draftSavedTitle": "Brouillon enregistré",
+      "draftErrorTitle": "Échec de l'enregistrement"
+    },
+    "actions": {
+      "saveDraft": "Enregistrer brouillon",
+      "submit": "Soumettre"
+    },
+    "confirm": {
+      "title": "Confirmer la soumission",
+      "body": "Vous êtes sur le point de soumettre votre rapport {{year}} (complétude : {{completeness}}%). Après soumission, les données ne seront plus modifiables sans intervention de l'équipe régionale. Confirmez-vous ?",
+      "cancel": "Annuler",
+      "confirm": "Soumettre définitivement"
+    },
+    "submit": {
+      "successTitle": "Rapport soumis",
+      "successBody": "Votre rapport {{year}} a bien été transmis à l'équipe régionale.",
+      "errorTitle": "Échec de la soumission"
+    },
+    "forbidden": {
+      "title": "Accès réservé",
+      "body": "Seuls les directeurs préfectoraux peuvent saisir le rapport annuel. Si vous pensez qu'il s'agit d'une erreur, contactez votre administrateur régional."
+    },
+    "error": {
+      "invalid": "Valeur invalide",
+      "negative": "La valeur doit être ≥ 0",
+      "tooLarge": "Valeur trop élevée"
+    }
+  },
+  "footer": {
+    "ministryShort": "Ministère de la Jeunesse, de la Culture et de la Communication",
+    "tagline": "Plateforme officielle de pilotage régional des activités jeunesse de la Wilaya de Casablanca-Settat.",
+    "contact": "Coordonnées",
+    "directionName": "Direction Régionale de la Jeunesse Casablanca-Settat",
+    "address": "Boulevard Mohammed V, Casablanca · Maroc",
+    "navigation": "Navigation",
+    "legal": "Mentions légales",
+    "legalNotices": "Mentions légales",
+    "privacy": "Politique de confidentialité",
+    "termsOfUse": "Conditions d'utilisation",
+    "accessibility": "Accessibilité",
+    "officialApp": "Application officielle",
+    "kingdom": "Royaume du Maroc",
+    "version": "Version"
+  }
+}
