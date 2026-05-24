@@ -24,7 +24,7 @@ export const AppLayout = ({ children }: { children: ReactNode }) => {
 
   const navItems = [
     { path: '/saisie',           label: t('nav.entry'),       icon: FilePlus2,      show: isPrefectoral },
-    { path: '/dashboard',        label: t('nav.overview'),    icon: LayoutDashboard, show: true },
+    //{ path: '/dashboard',        label: t('nav.overview'),    icon: LayoutDashboard, show: true },
     { path: '/domain-dashboard', label: 'Domaines',           icon: Layers,          show: true },
     { path: '/carte',            label: t('nav.map'),         icon: Map,             show: true },
     { path: '/directions',       label: t('nav.directions'),  icon: Building2,       show: isRegional },

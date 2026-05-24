@@ -13,13 +13,11 @@ import {
 import { Calendar, Layers, ArrowRight, ArrowLeft, FileText, CheckCircle2, Lock, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-export type PeriodType = 'annuel' | 'trimestriel';
 export type Quarter = 't1' | 't2' | 't3' | 't4'; // En minuscules pour matcher ton ENUM SQL
 export type Domain = 'jeunesse' | 'femme' | 'enfants' | 'creche';
 
 export interface ReportSelection {
   year: number;
-  type: PeriodType;
   quarter?: Quarter;
   domain: Domain;
   rapportId?: string; // On ajoute l'ID du rapport ici
@@ -67,22 +65,23 @@ export const PreFormSelection = ({ initial, onComplete }: Props) => {
       return;
     }
 
+    if (!sel.quarter) {
+      toast({ 
+        title: "Erreur", 
+        description: isAr ? "المرجو اختيار الفصل" : "Veuillez sélectionner un trimestre.", 
+        variant: "destructive" 
+      });
+      return;
+    }
+
     setLoading(true);
     try {
-      // 2. Préparation de la requête de recherche
-      // No need for dbQuarter conversion here if SelectItems are already lowercase
-      const dbQuarter = sel.quarter;
-
-      let query = supabase
+      const query = supabase
         .from('rapports')
         .select('id')
         .eq('annee', sel.year)
-        .eq('type', sel.type)
+        .eq('trimestre', sel.quarter)
         .eq('direction_id', utilisateur.direction_id);
-      
-      if (sel.type === 'trimestriel' && dbQuarter) {
-        query = query.eq('trimestre', dbQuarter);
-      }
 
       const { data: existingRapport, error: fetchError } = await query.maybeSingle();
 
@@ -97,8 +96,7 @@ export const PreFormSelection = ({ initial, onComplete }: Props) => {
           .from('rapports')
           .insert({
             annee: sel.year,
-            type: sel.type,
-            trimestre: sel.type === 'trimestriel' ? dbQuarter : null,
+            trimestre: sel.quarter,
             direction_id: utilisateur.direction_id
           })
           .select('id')
@@ -110,17 +108,12 @@ export const PreFormSelection = ({ initial, onComplete }: Props) => {
     } catch (error: any) {
       // Duplicate rapport: gestion de la race condition
       if (error.code === '23505') {
-        const dbQuarter = sel.quarter;
-        let retryQuery = supabase
+        const retryQuery = supabase
           .from('rapports')
           .select('id')
           .eq('annee', sel.year)
-          .eq('type', sel.type)
+          .eq('trimestre', sel.quarter)
           .eq('direction_id', utilisateur.direction_id);
-        
-        if (sel.type === 'trimestriel' && dbQuarter) {
-          retryQuery = retryQuery.eq('trimestre', dbQuarter);
-        }
 
         const { data: recoveredRapport, error: retryError } = await retryQuery.maybeSingle();
 
@@ -142,12 +135,11 @@ export const PreFormSelection = ({ initial, onComplete }: Props) => {
     }
   };
 
-  const canNextFromStage1 =
-    !!sel.year &&
-    !!sel.type &&
-    (sel.type === 'annuel' || !!sel.quarter);
+const canNextFromStage1 =
+  !!sel.year &&
+  !!sel.quarter;
 
-  const stages = [
+const stages = [
     { id: 1, label: isAr ? 'اختيار التقرير' : 'Choisir le rapport', icon: Calendar },
     { id: 2, label: isAr ? 'اختيار المجال' : 'Choisir le domaine', icon: Layers },
     { id: 3, label: isAr ? 'الاستمارة' : 'Formulaire', icon: FileText },
@@ -201,7 +193,7 @@ export const PreFormSelection = ({ initial, onComplete }: Props) => {
               {isAr ? 'اختيار التقرير' : 'Choisir le rapport'}
             </h2>
             <p className="text-sm text-muted-foreground mt-1">
-              {isAr ? 'حدد السنة والنوع' : 'Sélectionnez l\'année et le type de rapport'}
+              {isAr ? 'حدد السنة والفصل' : 'Sélectionnez l’année et le trimestre'}
             </p>
           </div>
 
@@ -218,35 +210,36 @@ export const PreFormSelection = ({ initial, onComplete }: Props) => {
               />
             </div>
 
+
             <div className="space-y-1.5">
-              <Label className="text-xs font-medium">{isAr ? 'النوع' : 'Type'}</Label>
-              <Select value={sel.type} onValueChange={(v: PeriodType) => setSel(s => ({ ...s, type: v, quarter: v === 'annuel' ? undefined : s.quarter }))}>
+              <Label className="text-xs font-medium">
+                {isAr ? 'الفصل' : 'Trimestre'}
+              </Label>
+
+              <Select
+                value={sel.quarter}
+                onValueChange={(v: Quarter) =>
+                  setSel(s => ({ ...s, quarter: v }))
+                }
+              >
                 <SelectTrigger className="h-10">
-                  <SelectValue />
+                  <SelectValue
+                    placeholder={
+                      isAr
+                        ? 'اختر الفصل'
+                        : 'Choisir le trimestre'
+                    }
+                  />
                 </SelectTrigger>
+
                 <SelectContent>
-                  <SelectItem value="annuel">{isAr ? 'سنوي' : 'Annuel'}</SelectItem>
-                  <SelectItem value="trimestriel">{isAr ? 'فصلي' : 'Trimestriel'}</SelectItem>
+                  <SelectItem value="t1">T1</SelectItem>
+                  <SelectItem value="t2">T2</SelectItem>
+                  <SelectItem value="t3">T3</SelectItem>
+                  <SelectItem value="t4">T4</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-
-            {sel.type === 'trimestriel' && (
-              <div className="space-y-1.5 sm:col-span-2 animate-fade-in">
-                <Label className="text-xs font-medium">{isAr ? 'الفصل' : 'Trimestre'}</Label>
-                <Select value={sel.quarter} onValueChange={(v: Quarter) => setSel(s => ({ ...s, quarter: v }))}>
-                  <SelectTrigger className="h-10">
-                    <SelectValue placeholder={isAr ? 'اختر الفصل' : 'Choisir le trimestre'} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="t1">T1</SelectItem>
-                    <SelectItem value="t2">T2</SelectItem>
-                    <SelectItem value="t3">T3</SelectItem>
-                    <SelectItem value="t4">T4</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
           </div>
 
           <div className="flex justify-end pt-2">
