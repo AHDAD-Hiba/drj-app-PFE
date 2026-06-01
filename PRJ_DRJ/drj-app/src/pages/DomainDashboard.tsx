@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { AppLayout } from "@/components/AppLayout";
@@ -61,6 +61,7 @@ import {
 import { DOMAIN_OPTIONS, type Domain } from "@/lib/domainData";
 import { useAuth } from "@/hooks/useAuth";
 
+
 const fmt = (n: number, lang: string) =>
   new Intl.NumberFormat(lang === "ar" ? "ar-MA" : "fr-FR").format(Math.round(n));
 
@@ -72,205 +73,317 @@ const WORKFLOW_STATUS: Record<WorkflowStatus, { label: string; badge: string; ic
   TERMINE: { label: "TERMINÉ", badge: "bg-success/15 text-success", icon: CheckCircle2 },
 };
 
+// --- FONCTIONS DE FORMATAGE POUR SUPABASE ---
+
+const formatEvolutionData = (dataArray: any[]) => {
+  const squeletteAnnee = [
+    { name: "T1", Camping: null, Festivals: null, Formation: null, Insertion: null },
+    { name: "T2", Camping: null, Festivals: null, Formation: null, Insertion: null },
+    { name: "T3", Camping: null, Festivals: null, Formation: null, Insertion: null },
+    { name: "T4", Camping: null, Festivals: null, Formation: null, Insertion: null }
+  ];
+
+  if (!dataArray || dataArray.length === 0) return squeletteAnnee;
+
+  return squeletteAnnee.map(trimestre => {
+    const donneesExistantes = dataArray.find(d => d.name === trimestre.name);
+    return donneesExistantes ? { ...trimestre, ...donneesExistantes } : trimestre;
+  });
+};
+
+const formatBenchmarkData = (data: any) => {
+  const d = data || {}; // Si data est null, on utilise un objet vide
+  return [
+    { kpi: "Total des Activités", monScore: d.pref_total_activites || 0, moyenneReg: d.reg_total_activites || 0, isPercentage: false },
+    { kpi: "Total Bénéficiaires", monScore: d.pref_total_beneficiaires || 0, moyenneReg: d.reg_total_beneficiaires || 0, isPercentage: false },
+    { kpi: "Taux de Couverture", monScore: d.pref_taux_ruralite || 0, moyenneReg: d.reg_taux_ruralite || 0, isPercentage: true },
+    { kpi: "Taux de Féminisation", monScore: d.pref_taux_feminisation || 0, moyenneReg: d.reg_taux_feminisation || 0, isPercentage: true },
+    { kpi: "Partenariats Actifs", monScore: d.pref_total_partenariats || 0, moyenneReg: d.reg_total_partenariats || 0, isPercentage: false },
+    { kpi: "Établ. Opérationnels", monScore: d.pref_etablissements_actifs || 0, moyenneReg: d.reg_etablissements_actifs || 0, isPercentage: false }
+  ];
+};
+
+const mapSection6Data = (data: any) => {
+  const d = data || {}; // Sécurité pour éviter les erreurs "cannot read property of null"
+
+  const staffTotal = d.camp_staff_total || 0;
+  const benefTotal = d.formations_beneficiaires || 0; 
+  // (Note: on utilise les bénéficiaires du camping. Si tu voulais strictement ceux des formations, utilise d.formations_beneficiaires)
+  
+  const ratioCalcule = (staffTotal === 0 || benefTotal === 0) 
+    ? "0:0" 
+    : `1:${Math.round(benefTotal / staffTotal)}`;
+
+  return {
+    activites: {
+      nombre_associations: d.act_assocs || 0,
+      nombre_clubs: d.act_clubs || 0,
+      nombre_conventions: d.act_conventions || 0,
+      activites_sportives: d.act_sport || 0,
+      activites_culturelles: d.act_cult || 0,
+      activites_educatives: d.act_educ || 0,
+      renforcement_capacites: d.act_renf || 0
+    },
+    camping: {
+      participants: { total: d.camp_benef_total || 0, enfants_mre: d.camp_mre || 0, besoins_specifiques: d.camp_besoins_spec || 0 },
+      encadrement: { ratio: ratioCalcule, total_staff: d.camp_staff_total || 0, hommes: d.camp_staff_h || 0, femmes: d.camp_staff_f || 0 },
+      associations: { locales: 0, nationales: 0, mouvements: 0 },
+      formations: { total_sessions: 0, beneficiaires: 0 }
+    },
+    conventions: {
+      total_conventions: d.conv_total_global || 0,
+      total_partenaires: d.conv_types_distincts || 0,
+      repartition: d.repartition_partenaires_json || []
+    },
+    insertion: {
+      total_activites: d.ins_total_activites || 0,
+      partenaires_actifs: d.ins_partenaires_actifs || 0,
+      volume_horaire: `${d.ins_volume_h || 0} Heures`,
+      genre: { hommes: d.ins_hommes || 0, femmes: d.ins_femmes || 0 },
+      milieu: { urbain: d.ins_urbain || 0, rural: d.ins_rural || 0 }
+    },
+    festivals: {
+      total_evenements: d.fest_total || 0,
+      total_provinces: d.fest_provinces || 0,
+      qualifies: d.fest_qualifies || 0,
+      total_participants: (d.fest_hommes || 0) + (d.fest_femmes || 0),
+      genre: { hommes: d.fest_hommes || 0, femmes: d.fest_femmes || 0 },
+      milieu: { urbain: d.fest_urbain || 0, rural: d.fest_rural || 0 }
+    },
+    etablissements: {
+      total: (d.etab_nouvel || 0) + (d.etab_en_cours || 0) + (d.etab_total_fermes || 0),
+      operationnels: d.etab_en_cours || 0,
+      nouvellement_creees: d.etab_nouvel || 0,
+      en_cours_realisation: 0,
+      fermees: {
+        total: d.etab_total_fermes || 0,
+        causes: d.causes_fermeture_json || []
+      }
+    }
+  };
+};
+
 const DomainDashboard = () => {
-  const { t, i18n } = useTranslation();
+const { t, i18n } = useTranslation();
   const lang = i18n.language;
   const { utilisateur: profile } = useAuth();
 
   const [domain, setDomain] = useState<Domain>("jeunesse");
   const [year, setYear] = useState<number>(new Date().getFullYear());
   const [openSection, setOpenSection] = useState<string | null>("activites");
+  
+  const [dashboardData, setDashboardData] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const dashboardData = {
-    status: {
-      workflowStatus: "EN_COURS" as any, 
-      completedSteps: 4,
-      totalSteps: 6,
-      lastUpdated: new Date().toISOString(),
-    },
-    kpis: {
-      totalBeneficiaries: 24780,
-      totalActivities: 1450,
-      feminizationRate: 46.5,
-      ruralityRate: 34.2,
-      activeEstablishments: 28,
-      activePartnerships: 42,
-    },
-    repartition: [
-      {
-        name: "Camping",
-        total: 4800,
-        hommesPct: 58,
-        femmesPct: 42,
-        urbainPct: 45,
-        ruralPct: 55,
-      },
-      {
-        name: "Formation",
-        total: 1600,
-        hommesPct: 47,
-        femmesPct: 53,
-        urbainPct: 100, 
-        ruralPct: 0,    
-      },
-      {
-        name: "Festivals",
-        total: 5500,
-        hommesPct: 50,
-        femmesPct: 50,
-        urbainPct: 80,
-        ruralPct: 20,
-      },
-      {
-        name: "Insertion",
-        total: 400,
-        hommesPct: 68,
-        femmesPct: 32,
-        urbainPct: 60,
-        ruralPct: 40,
-      },
-    ],
-    evolution: [
-      { name: "T1", Camping: 1200, Festivals: 800, Formation: 300, Insertion: 50 },
-      { name: "T2", Camping: 1500, Festivals: 1200, Formation: 400, Insertion: 80 },
-      { name: "T3", Camping: 3000, Festivals: 2500, Formation: 200, Insertion: 120 },
-      { name: "T4", Camping: 800,  Festivals: 1000, Formation: 700, Insertion: 150 },
-    ],
-    benchmark: [
-      { 
-        kpi: "Couverture globale", 
-        monScore: 12.5, 
-        moyenneReg: 10.2, 
-        isPercentage: true 
-      },
-      { 
-        kpi: "Taux de féminisation", 
-        monScore: 48.0, 
-        moyenneReg: 45.5, 
-        isPercentage: true 
-      },
-      { 
-        kpi: "Taux de ruralité", 
-        monScore: 35.0, 
-        moyenneReg: 40.0, 
-        isPercentage: true 
-      },
-      { 
-        kpi: "Établissements actifs", 
-        monScore: 85.0, 
-        moyenneReg: 72.0, 
-        isPercentage: true 
-      },
-      { 
-        kpi: "Partenariats / établ.", 
-        monScore: 1.5, 
-        moyenneReg: 0.8, 
-        isPercentage: false 
-      },
-    ],
+const loadDashboardData = useCallback(async () => {
+    if (!profile?.direction_id) return;
     
-    detailed: {
-      activites: {
-        nombre_associations: 45,
-        nombre_clubs: 18,
-        nombre_conventions: 5,
-        activites_sportives: 38,
-        activites_culturelles: 14,
-        activites_educatives: 22,
-        renforcement_capacites: 12
-      },
-      camping: {
-        participants: {
-          total: 4800,
-          enfants_mre: 140,
-          besoins_specifiques: 35
-        },
-        encadrement: {
-          ratio: "1:22",
-          total_staff: 210,
-          hommes: 120,
-          femmes: 90
-        },
-        associations: {
-          locales: 45,
-          nationales: 12,
-          mouvements: 8
-        },
-        formations: {
-          total_sessions: 5,
-          beneficiaires: 150
-        }
-      },
-      etablissements: {
-        total: 28,
-        operationnels: 21, 
-        nouvellement_creees: 2,
-        en_cours_realisation: 1,
-        fermees: {
-          total: 4,
-          causes: [
-            { type: "Mise à niveau", count: 2 },
-            { type: "Encadrement", count: 1 },
-            { type: "Équipement", count: 1 },
-            { type: "Conflit juridique", count: 0 },
-            { type: "En attente d'inauguration", count: 0 }
-          ]
-        }
-      },
-      festivals: {
-        total_evenements: 6,
-        total_provinces: 14,
-        total_participants: 1250,
-        qualifies: 320,
-        genre: { 
-          hommes: 750, 
-          femmes: 500 
-        },
-        milieu: { 
-          urbain: 900, 
-          rural: 350 
-        }
-      },
-      insertion: {
-        total_activites: 12,
-        total_participants: 850,
-        partenaires_actifs: 8,
-        volume_horaire: "144 Heures",
-        genre: { 
-          hommes: 400, 
-          femmes: 450 
-        },
-        milieu: { 
-          urbain: 600, 
-          rural: 250 
-        }
-      },
-      conventions: {
-        total_conventions: 45,
-        total_partenaires: 12,
-        repartition: [
-          { type: "Secteur Public", count: 20 },
-          { type: "Société Civile", count: 15 },
-          { type: "Secteur Privé", count: 7 },
-          { type: "Coopération Internationale", count: 3 }
-        ]
+    setIsLoading(true);
+    try {
+      // 1. Chercher si au moins un rapport existe pour cette année et cette direction
+      const { data: rapport } = await supabase
+        .from('rapports')
+        .select('id')
+        .eq('direction_id', profile.direction_id)
+        .eq('annee', year)
+        .limit(1)
+        .maybeSingle();
+
+      // 2. Si AUCUN rapport n'est trouvé, on génère un tableau de bord vide (rempli de zéros)
+      if (!rapport) {
+        setDashboardData({
+          status: {
+            workflowStatus: "NON_COMMENCE",
+            progressPct: 0,
+            lastUpdated: null,
+          },
+          kpis: {
+            totalBeneficiaries: 0,
+            totalActivities: 0,
+            feminizationRate: 0,
+            ruralityRate: 0,
+            activeEstablishments: 0,
+            activePartnerships: 0,
+          },
+          repartition: [],
+          evolution: formatEvolutionData([]), 
+          benchmark: formatBenchmarkData(null),
+          detailed: mapSection6Data(null)
+        });
+        return; 
       }
+
+      // 3. Si des rapports existent pour l'année, on charge les vues YTD (Year-To-Date)
+      const [resSec1, resSec2, resSec3, resSec4, resSec5, resSec6] = await Promise.all([
+        // Section 1 : S'il y a plusieurs rapports, on récupère le plus récent
+        supabase.from('v_dashboard_pref_section1')
+          .select('*')
+          .eq('direction_id', profile.direction_id)
+          .eq('annee', year)
+          .order('trimestre', { ascending: false })
+          .limit(1)
+          .maybeSingle(),
+          
+        // Remplacement par les vues '_annuel' :
+        supabase.from('v_dashboard_pref_section2_annuel')
+          .select('*')
+          .eq('direction_id', profile.direction_id)
+          .eq('annee', year)
+          .maybeSingle(),
+          
+        supabase.from('v_dashboard_pref_section3_annuel')
+          .select('*')
+          .eq('direction_id', profile.direction_id)
+          .eq('annee', year),
+          
+        supabase.from('v_dashboard_pref_section4')
+          .select('*')
+          .eq('direction_id', profile.direction_id)
+          .eq('annee', year),
+          
+        supabase.from('v_dashboard_pref_section5_annuel')
+          .select('*')
+          .eq('direction_id', profile.direction_id)
+          .eq('annee', year)
+          .maybeSingle(),
+          
+        supabase.from('v_dashboard_pref_section6_annuel')
+          .select('*')
+          .eq('direction_id', profile.direction_id)
+          .eq('annee', year)
+          .maybeSingle()
+      ]);
+
+
+      // 4. On met à jour le state avec les vraies données
+      setDashboardData({
+        status: {
+          workflowStatus: resSec1.data?.statut || "NON_COMMENCE",
+          progressPct: resSec1.data?.progression_pourcentage || 0,
+          lastUpdated: resSec1.data?.derniere_mise_a_jour,
+        },
+        kpis: {
+          totalBeneficiaries: resSec2.data?.total_beneficiaires || 0,
+          totalActivities: resSec2.data?.total_activites || 0,
+          feminizationRate: resSec2.data?.taux_feminisation || 0,
+          ruralityRate: resSec2.data?.taux_ruralite || 0,
+          activeEstablishments: resSec2.data?.etablissements_actifs || 0,
+          activePartnerships: resSec2.data?.total_partenariats || 0,
+        },
+        repartition: resSec3.data || [],
+        evolution: formatEvolutionData(resSec4.data),
+        benchmark: formatBenchmarkData(resSec5.data),
+        detailed: mapSection6Data(resSec6.data)
+      });
+
+    } catch (error) {
+      console.error("Erreur lors du chargement du dashboard:", error);
+    } finally {
+      setIsLoading(false);
     }
-};
+  }, [profile?.direction_id, year]);
+  
+  // 5. Appeler le chargement au démarrage (ou quand l'année change)
+  useEffect(() => {
+    loadDashboardData();
+  }, [loadDashboardData]);
 
-  const statusMeta = WORKFLOW_STATUS[dashboardData.status.workflowStatus];
+  // 6. Écouteur REALTIME Supabase
+  useEffect(() => {
+    if (!profile?.direction_id) return;
+
+    // On crée un canal pour écouter les modifications de base de données en direct
+    const channel = supabase
+      .channel('dashboard-realtime-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'activites' }, () => {
+        console.log("Mise à jour détectée : activites");
+        loadDashboardData();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'participants' }, () => {
+        console.log("Mise à jour détectée : participants");
+        loadDashboardData();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'suivi_remplissage' }, () => {
+        loadDashboardData();
+      })
+      // --- AJOUT : STRUCTURE DU RAPPORT ---
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'rapports' }, () => {
+        loadDashboardData();
+      })
+
+      // --- AJOUT : FORMATIONS & ENCADREMENT ---
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'encadrements' }, () => {
+        loadDashboardData();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'formations' }, () => {
+        loadDashboardData();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'statistiques_formation' }, () => {
+        loadDashboardData();
+      })
+
+      // --- AJOUT : PARTENARIATS ---
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'partenariats' }, () => {
+        loadDashboardData();
+      })
+
+      // --- AJOUT : INSERTION SOCIO-ÉCONOMIQUE ---
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'activites_insertion' }, () => {
+        loadDashboardData();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'stats_insertion' }, () => {
+        loadDashboardData();
+      })
+
+      // --- AJOUT : FESTIVALS DE JEUNESSE ---
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'festivals' }, () => {
+        loadDashboardData();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'statistiques_festivals' }, () => {
+        loadDashboardData();
+      })
+
+      // --- AJOUT : ÉTABLISSEMENTS & INFRASTRUCTURES ---
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'etablissements' }, () => {
+        loadDashboardData();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'fermetures' }, () => {
+        loadDashboardData();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'suivi_projets' }, () => {
+        loadDashboardData();
+      })
+      // Tu peux chainer d'autres tables ici (festivals, etc.) selon tes besoins
+      .subscribe();
+
+    // Nettoyage à la fermeture de la page
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [profile?.direction_id, loadDashboardData]);
+
+  // 1️⃣ DÉPLACE CE BLOC ICI : AVANT LES "IF" 
+  const activeDomainLabel = useMemo(() => {
+    const option = DOMAIN_OPTIONS.find((opt) => opt.value === domain);
+    return option ? (lang === "ar" ? option.labelAr : option.labelFr) : domain;
+  }, [domain, lang]);
+
+
+  // 2️⃣ LES CONDITIONS DE RETOUR VIENNENT APRÈS TOUS LES HOOKS
+  if (isLoading) {
+    return <AppLayout><div className="p-12 text-center animate-pulse">Chargement des indicateurs...</div></AppLayout>;
+  }
+
+  // 3️⃣ LES VARIABLES SIMPLES (sans Hooks) RESTENT EN BAS
+  const statusKey = dashboardData.status.workflowStatus as WorkflowStatus;
+  const statusMeta = WORKFLOW_STATUS[statusKey] || WORKFLOW_STATUS["NON_COMMENCE"];
   const StatusIcon = statusMeta.icon;
-  const progressPct = Math.round((dashboardData.status.completedSteps / dashboardData.status.totalSteps) * 100);
-
+  
+  const progressPct = dashboardData.status.progressPct || 0;
   const toggleSection = (section: string) => {
     setOpenSection(openSection === section ? null : section);
   };
-
-  const activeDomainLabel = useMemo(() => {
-  const option = DOMAIN_OPTIONS.find((opt) => opt.value === domain);
-  return option ? (lang === "ar" ? option.labelAr : option.labelFr) : domain;
-}, [domain, lang]);
-
+  
   return (
     <AppLayout>
       <div className="space-y-6 animate-fade-in pb-12">
@@ -279,9 +392,6 @@ const DomainDashboard = () => {
          <div className="gradient-hero rounded-3xl p-6 sm:p-8">
           <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
             <div className="space-y-3">
-              <div className="text-xs uppercase tracking-[0.24em] text-white/80">
-                {profile?.role ? `BONJOUR, ${profile.role}` : "BONJOUR"}
-              </div>
               <div>
                 <h1 className="text-2xl sm:text-3xl font-extrabold text-white leading-tight">
                   {t("domain.title", "Tableau de bord préfectoral")}
@@ -560,10 +670,10 @@ const DomainDashboard = () => {
           />
           <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '20px' }} iconType="circle" />
           
-          <Area type="monotone" dataKey="Camping" stroke="#3b82f6" strokeWidth={2} fillOpacity={1} fill="url(#colorCamping)" />
-          <Area type="monotone" dataKey="Festivals" stroke="#8b5cf6" strokeWidth={2} fillOpacity={1} fill="url(#colorFestivals)" />
-          <Area type="monotone" dataKey="Formation" stroke="#ec4899" strokeWidth={2} fill="none" />
-          <Area type="monotone" dataKey="Insertion" stroke="#10b981" strokeWidth={2} fill="none" />
+          <Area type="linear" dataKey="Camping" stroke="#3b82f6" strokeWidth={2} fillOpacity={1} fill="url(#colorCamping)" />
+          <Area type="linear" dataKey="Festivals" stroke="#8b5cf6" strokeWidth={2} fillOpacity={1} fill="url(#colorFestivals)" />
+          <Area type="linear" dataKey="Formation" stroke="#ec4899" strokeWidth={2} fill="none" />
+          <Area type="linear" dataKey="Insertion" stroke="#10b981" strokeWidth={2} fill="none" />
         </AreaChart>
       </ResponsiveContainer>
     </div>
@@ -615,10 +725,11 @@ const DomainDashboard = () => {
 </section>
 
         {/* --- SECTION 6 : Détails du rapport (Accordion) --- */}
+{/* --- SECTION 6 : Détails du rapport (Accordion) --- */}
         <section className="space-y-2">
           <h2 className="text-base sm:text-lg font-bold text-foreground">
             {t("benchmark.title", "Lecture détaillée du rapport")}
-            </h2>
+          </h2>
           <div className="space-y-3">
             
             {/* ACCORDION ITEM 1: ACTIVITÉS */}
@@ -630,7 +741,15 @@ const DomainDashboard = () => {
                 {openSection === "activites" ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
               </button>
               
-              {openSection === "activites" && (
+              {openSection === "activites" && (() => {
+                const act = dashboardData.detailed?.activites || {};
+                const totalAnim = (act.activites_sportives || 0) + (act.activites_educatives || 0) + (act.activites_culturelles || 0) + (act.renforcement_capacites || 0);
+                const pctSport = totalAnim ? Math.round(((act.activites_sportives || 0) / totalAnim) * 100) : 0;
+                const pctEduc = totalAnim ? Math.round(((act.activites_educatives || 0) / totalAnim) * 100) : 0;
+                const pctCult = totalAnim ? Math.round(((act.activites_culturelles || 0) / totalAnim) * 100) : 0;
+                const pctRenf = totalAnim ? Math.round(((act.renforcement_capacites || 0) / totalAnim) * 100) : 0;
+
+                return (
                 <div className="p-5 bg-card border-t border-border/50">
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     
@@ -641,21 +760,15 @@ const DomainDashboard = () => {
                         </h4>
                         <div className="grid grid-cols-3 gap-3">
                           <div className="p-3 bg-muted/30 rounded-xl border border-border/50 flex flex-col items-center justify-center text-center">
-                            <span className="text-2xl font-black text-foreground">
-                              {dashboardData.detailed?.activites?.nombre_associations || 45}
-                            </span>
+                            <span className="text-2xl font-black text-foreground">{act.nombre_associations || 0}</span>
                             <span className="text-[10px] font-medium text-muted-foreground mt-1">Associations</span>
                           </div>
                           <div className="p-3 bg-muted/30 rounded-xl border border-border/50 flex flex-col items-center justify-center text-center">
-                            <span className="text-2xl font-black text-foreground">
-                              {dashboardData.detailed?.activites?.nombre_clubs || 18}
-                            </span>
+                            <span className="text-2xl font-black text-foreground">{act.nombre_clubs || 0}</span>
                             <span className="text-[10px] font-medium text-muted-foreground mt-1">Clubs Actifs</span>
                           </div>
                           <div className="p-3 bg-muted/30 rounded-xl border border-border/50 flex flex-col items-center justify-center text-center">
-                            <span className="text-2xl font-black text-foreground">
-                              {dashboardData.detailed?.activites?.nombre_conventions || 5}
-                            </span>
+                            <span className="text-2xl font-black text-foreground">{act.nombre_conventions || 0}</span>
                             <span className="text-[10px] font-medium text-muted-foreground mt-1">Conventions</span>
                           </div>
                         </div>
@@ -666,52 +779,48 @@ const DomainDashboard = () => {
                       <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3 flex justify-between items-end">
                         <span>Volume d'Animation</span>
                         <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded font-bold">
-                          Total: 86 Actions
+                          Total: {totalAnim} Actions
                         </span>
                       </h4>
                       <div className="space-y-3.5">
                         
-                        {/* Activités Sportives */}
                         <div>
                           <div className="flex justify-between text-xs mb-1">
                             <span className="font-medium text-foreground">Activités Sportives</span>
-                            <span className="font-bold">38</span>
+                            <span className="font-bold">{act.activites_sportives || 0}</span>
                           </div>
                           <div className="w-full bg-muted rounded-full h-1.5">
-                            <div className="bg-orange-500 h-1.5 rounded-full" style={{ width: '44%' }}></div>
+                            <div className="bg-orange-500 h-1.5 rounded-full" style={{ width: `${pctSport}%` }}></div>
                           </div>
                         </div>
 
-                        {/* Activités Éducatives */}
                         <div>
                           <div className="flex justify-between text-xs mb-1">
                             <span className="font-medium text-foreground">Activités Éducatives</span>
-                            <span className="font-bold">22</span>
+                            <span className="font-bold">{act.activites_educatives || 0}</span>
                           </div>
                           <div className="w-full bg-muted rounded-full h-1.5">
-                            <div className="bg-blue-500 h-1.5 rounded-full" style={{ width: '25%' }}></div>
+                            <div className="bg-blue-500 h-1.5 rounded-full" style={{ width: `${pctEduc}%` }}></div>
                           </div>
                         </div>
 
-                        {/* Activités Culturelles */}
                         <div>
                           <div className="flex justify-between text-xs mb-1">
                             <span className="font-medium text-foreground">Activités Culturelles</span>
-                            <span className="font-bold">14</span>
+                            <span className="font-bold">{act.activites_culturelles || 0}</span>
                           </div>
                           <div className="w-full bg-muted rounded-full h-1.5">
-                            <div className="bg-pink-500 h-1.5 rounded-full" style={{ width: '16%' }}></div>
+                            <div className="bg-pink-500 h-1.5 rounded-full" style={{ width: `${pctCult}%` }}></div>
                           </div>
                         </div>
 
-                        {/* Renforcement des capacités */}
                         <div>
                           <div className="flex justify-between text-xs mb-1">
                             <span className="font-medium text-foreground">Renforcement des capacités</span>
-                            <span className="font-bold">12</span>
+                            <span className="font-bold">{act.renforcement_capacites || 0}</span>
                           </div>
                           <div className="w-full bg-muted rounded-full h-1.5">
-                            <div className="bg-purple-500 h-1.5 rounded-full" style={{ width: '15%' }}></div>
+                            <div className="bg-purple-500 h-1.5 rounded-full" style={{ width: `${pctRenf}%` }}></div>
                           </div>
                         </div>
 
@@ -720,7 +829,8 @@ const DomainDashboard = () => {
 
                   </div>
                 </div>
-              )}
+                );
+              })()}
             </Card>
 
             {/* ACCORDION ITEM 2: CAMPING & FORMATION */}
@@ -732,10 +842,16 @@ const DomainDashboard = () => {
                 {openSection === "camping" ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
               </button>
               
-              {openSection === "camping" && (
+              {openSection === "camping" && (() => {
+                const camp = dashboardData.detailed?.camping || {};
+                const staffTot = camp.encadrement?.total_staff || 0;
+                const staffH = camp.encadrement?.hommes || 0;
+                const staffF = camp.encadrement?.femmes || 0;
+                const pctStaffH = staffTot ? Math.round((staffH / staffTot) * 100) : 0;
+                const pctStaffF = staffTot ? Math.round((staffF / staffTot) * 100) : 0;
+
+                return (
                 <div className="p-5 bg-card border-t border-border/50 grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-10">
-                  
-                  {/* الجهة اليسرى: المشاركين والتأطير */}
                   <div className="space-y-6">
                     {/* Participants */}
                     <div className="space-y-3">
@@ -748,15 +864,15 @@ const DomainDashboard = () => {
                             <span className="text-sm font-bold text-emerald-700 dark:text-emerald-400 block">Total Bénéficiaires</span>
                             <span className="text-[10px] text-emerald-600/80">Colonies de vacances</span>
                           </div>
-                          <span className="text-3xl font-black text-emerald-600">4,800</span>
+                          <span className="text-3xl font-black text-emerald-600">{fmt(camp.participants?.total || 0, lang)}</span>
                         </div>
                         <div className="p-3 bg-muted/20 rounded-xl border border-border/50">
                           <span className="text-[11px] font-medium text-muted-foreground block mb-1">Enfants MRE</span>
-                          <span className="text-xl font-bold text-foreground">140</span>
+                          <span className="text-xl font-bold text-foreground">{camp.participants?.enfants_mre || 0}</span>
                         </div>
                         <div className="p-3 bg-muted/20 rounded-xl border border-border/50">
                           <span className="text-[11px] font-medium text-muted-foreground block mb-1">Besoins Spécifiques</span>
-                          <span className="text-xl font-bold text-foreground">35</span>
+                          <span className="text-xl font-bold text-foreground">{camp.participants?.besoins_specifiques || 0}</span>
                         </div>
                       </div>
                     </div>
@@ -768,30 +884,35 @@ const DomainDashboard = () => {
                       </h4>
                       <div className="flex gap-3">
                         <div className="flex-1 p-3 bg-blue-500/5 rounded-xl border border-blue-500/10 flex flex-col justify-center items-center">
-                          <span className="text-2xl font-black text-blue-600">1:22</span>
+                          <span className="text-2xl font-black text-blue-600">{camp.encadrement?.ratio || "0:0"}</span>
                           <span className="text-[10px] text-blue-600/80 font-medium">Ratio d'encadrement</span>
+                          
+                          <span className="text-[8px] text-muted-foreground mt-1.5 leading-tight">
+                            {camp.encadrement?.ratio !== "0:0" 
+                              ? `(1 encadrant pour ${camp.encadrement?.ratio.split(':')[1]} bénéficiaires)` 
+                              : "(Aucune donnée saisie)"}
+                          </span>
                         </div>
                         <div className="flex-[2] p-3 bg-muted/20 rounded-xl border border-border/50 flex flex-col justify-between">
                           <div className="flex justify-between items-center mb-2">
                             <span className="text-xs font-medium text-muted-foreground">Staff Mobilisé</span>
-                            <span className="text-sm font-bold text-foreground">210</span>
+                            <span className="text-sm font-bold text-foreground">{staffTot}</span>
                           </div>
                           <div className="flex items-center gap-2">
-                            <div className="flex-1 h-2 rounded-full bg-blue-500" style={{ width: '57%' }} title="Hommes: 120"></div>
-                            <div className="flex-1 h-2 rounded-full bg-pink-500" style={{ width: '43%' }} title="Femmes: 90"></div>
+                            <div className="flex-1 h-2 rounded-full bg-blue-500" style={{ width: `${pctStaffH}%` }} title={`Hommes: ${staffH}`}></div>
+                            <div className="flex-1 h-2 rounded-full bg-pink-500" style={{ width: `${pctStaffF}%` }} title={`Femmes: ${staffF}`}></div>
                           </div>
                           <div className="flex justify-between text-[10px] text-muted-foreground mt-1">
-                            <span>120 Hommes</span>
-                            <span>90 Femmes</span>
+                            <span>{staffH} Hommes</span>
+                            <span>{staffF} Femmes</span>
                           </div>
                         </div>
                       </div>
                     </div>
                   </div>
 
-                  {/* الجهة اليمنى: الجمعيات والتكوينات */}
                   <div className="space-y-6">
-                    {/* Associations & Mouvements */}
+                    {/* Associations */}
                     <div className="space-y-3">
                       <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                         <HeartHandshake className="h-4 w-4" /> Tissu Associatif
@@ -799,15 +920,15 @@ const DomainDashboard = () => {
                       <div className="p-4 bg-muted/30 rounded-xl border border-border/50 space-y-3">
                         <div className="flex justify-between items-center text-sm border-b border-border/50 pb-2">
                           <span className="text-muted-foreground">Associations Locales</span>
-                          <span className="font-bold text-foreground">45</span>
+                          <span className="font-bold text-foreground">{camp.associations?.locales || 0}</span>
                         </div>
                         <div className="flex justify-between items-center text-sm border-b border-border/50 pb-2">
                           <span className="text-muted-foreground">Associations Nationales</span>
-                          <span className="font-bold text-foreground">12</span>
+                          <span className="font-bold text-foreground">{camp.associations?.nationales || 0}</span>
                         </div>
                         <div className="flex justify-between items-center text-sm">
                           <span className="text-muted-foreground">Mouvements Associatifs</span>
-                          <span className="font-bold text-foreground">8</span>
+                          <span className="font-bold text-foreground">{camp.associations?.mouvements || 0}</span>
                         </div>
                       </div>
                     </div>
@@ -819,19 +940,19 @@ const DomainDashboard = () => {
                       </h4>
                       <div className="grid grid-cols-2 gap-3">
                         <div className="p-4 bg-amber-500/5 rounded-xl border border-amber-500/10 flex flex-col justify-center">
-                          <span className="text-2xl font-bold text-amber-600">5</span>
+                          <span className="text-2xl font-bold text-amber-600">{camp.formations?.total_sessions || 0}</span>
                           <span className="text-[11px] font-medium text-amber-600/80 mt-1">Sessions Organisées</span>
                         </div>
                         <div className="p-4 bg-amber-500/5 rounded-xl border border-amber-500/10 flex flex-col justify-center">
-                          <span className="text-2xl font-bold text-amber-600">150</span>
+                          <span className="text-2xl font-bold text-amber-600">{camp.formations?.beneficiaires || 0}</span>
                           <span className="text-[11px] font-medium text-amber-600/80 mt-1">Cadres Formés</span>
                         </div>
                       </div>
                     </div>
                   </div>
-
                 </div>
-              )}
+                );
+              })()}
             </Card>
 
             {/* ACCORDION ITEM 3: CONVENTIONS & PARTENARIATS */}
@@ -843,17 +964,18 @@ const DomainDashboard = () => {
                 {openSection === "conventions" ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
               </button>
               
-              {openSection === "conventions" && (
+              {openSection === "conventions" && (() => {
+                const conv = dashboardData.detailed?.conventions || {};
+                const repArray = conv.repartition || [];
+                const totalConv = conv.total_conventions || 1; // || 1 pour éviter div par 0
+                
+                return (
                 <div className="p-5 bg-card border-t border-border/50 grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-10">
-                  
-                  {/* الجهة اليسرى: الإحصائيات العامة */}
                   <div className="space-y-4">
                     <h4 className="h-7 text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                       <FileText className="h-4 w-4" /> Bilan des Conventions
                     </h4>
-                    
                     <div className="grid grid-cols-2 gap-3">
-                      {/* Total Conventions - واخدة العرض كامل */}
                       <div className="col-span-2 p-4 bg-emerald-500/10 rounded-xl border border-emerald-500/20 flex items-center justify-between">
                         <div className="flex items-center gap-3">
                           <div className="p-2 bg-emerald-500/20 rounded-lg">
@@ -861,33 +983,29 @@ const DomainDashboard = () => {
                           </div>
                           <span className="font-bold text-emerald-700 dark:text-emerald-400 text-sm">Total Conventions</span>
                         </div>
-                        <span className="text-3xl font-black text-emerald-600 dark:text-emerald-400">45</span>
+                        <span className="text-3xl font-black text-emerald-600 dark:text-emerald-400">{conv.total_conventions || 0}</span>
                       </div>
 
-                      {/* Nombre de types de partenaires */}
                       <div className="col-span-2 p-4 bg-muted/20 rounded-xl border border-border/50 flex items-center justify-between">
                          <div className="flex items-center gap-2">
                            <Building2 className="h-4 w-4 text-muted-foreground" />
                            <span className="text-sm font-semibold text-foreground">Types de Partenaires Engagés</span>
                          </div>
-                         <span className="text-xl font-bold text-foreground">12</span>
+                         <span className="text-xl font-bold text-foreground">{conv.total_partenaires || 0}</span>
                       </div>
                     </div>
                   </div>
 
-                  {/* الجهة اليمنى: توزيع الشركاء */}
                   <div className="space-y-4">
                     <h4 className="h-7 text-xs font-bold uppercase tracking-wider text-muted-foreground flex justify-between items-center">
                       <span className="flex items-center gap-1.5"><Building2 className="h-4 w-4" /> Répartition par Type</span>
                     </h4>
 
                     <div className="p-4 bg-muted/30 rounded-xl border border-border/50 space-y-4">
-                      
-                      {/* قائمة الشركاء بـ Progress Bars صغيرة */}
-                      {dashboardData.detailed.conventions.repartition.map((item, index) => {
-                        // حساب النسبة المئوية بناءً على المجموع الإجمالي (45)
-                        const percentage = Math.round((item.count / dashboardData.detailed.conventions.total_conventions) * 100);
-                        
+                      {repArray.length === 0 ? (
+                        <span className="text-sm text-muted-foreground">Aucune donnée disponible</span>
+                      ) : repArray.map((item: any, index: number) => {
+                        const percentage = Math.round((item.count / totalConv) * 100);
                         return (
                           <div key={index} className="space-y-1.5">
                             <div className="flex justify-between items-center text-xs">
@@ -895,20 +1013,16 @@ const DomainDashboard = () => {
                               <span className="text-muted-foreground font-bold">{item.count} <span className="text-[10px] font-normal">({percentage}%)</span></span>
                             </div>
                             <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
-                              <div 
-                                className="h-full bg-emerald-500 rounded-full" 
-                                style={{ width: `${percentage}%` }}
-                              ></div>
+                              <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${percentage}%` }}></div>
                             </div>
                           </div>
                         );
                       })}
-
                     </div>
                   </div>
-
                 </div>
-              )}
+                );
+              })()}
             </Card>
 
             {/* ACCORDION ITEM 4: INSERTION */}
@@ -920,17 +1034,27 @@ const DomainDashboard = () => {
                 {openSection === "insertion" ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
               </button>
               
-              {openSection === "insertion" && (
+              {openSection === "insertion" && (() => {
+                const ins = dashboardData.detailed?.insertion || {};
+                const h = ins.genre?.hommes || 0;
+                const f = ins.genre?.femmes || 0;
+                const totGF = h + f;
+                const pctH = totGF ? Math.round((h / totGF) * 100) : 0;
+                const pctF = totGF ? Math.round((f / totGF) * 100) : 0;
+
+                const urb = ins.milieu?.urbain || 0;
+                const rur = ins.milieu?.rural || 0;
+                const totUR = urb + rur;
+                const pctUrb = totUR ? Math.round((urb / totUR) * 100) : 0;
+                const pctRur = totUR ? Math.round((rur / totUR) * 100) : 0;
+
+                return (
                 <div className="p-5 bg-card border-t border-border/50 grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-10">
-                  
-                  {/* الجهة اليسرى: الأنشطة والشركاء */}
                   <div className="space-y-4">
                     <h4 className="h-7 text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                       <Target className="h-4 w-4" /> Bilan des Activités
                     </h4>
-                    
                     <div className="grid grid-cols-2 gap-3">
-                      {/* Total Activités - واخدة العرض كامل */}
                       <div className="col-span-2 p-4 bg-indigo-500/10 rounded-xl border border-indigo-500/20 flex items-center justify-between">
                         <div className="flex items-center gap-3">
                           <div className="p-2 bg-indigo-500/20 rounded-lg">
@@ -938,79 +1062,66 @@ const DomainDashboard = () => {
                           </div>
                           <span className="font-bold text-indigo-700 dark:text-indigo-400 text-sm">Activités Réalisées</span>
                         </div>
-                        <span className="text-3xl font-black text-indigo-600 dark:text-indigo-400">12</span>
+                        <span className="text-3xl font-black text-indigo-600 dark:text-indigo-400">{ins.total_activites || 0}</span>
                       </div>
-
-                      {/* Partenaires */}
                       <div className="p-3 bg-muted/20 rounded-xl border border-border/50 flex flex-col justify-center">
                         <span className="text-muted-foreground font-semibold text-xs flex items-center gap-1.5 mb-1">
                           <Handshake className="h-3.5 w-3.5 text-orange-500" /> Partenaires Actifs
                         </span>
-                        <span className="text-2xl font-bold text-foreground">8</span>
+                        <span className="text-2xl font-bold text-foreground">{ins.partenaires_actifs || 0}</span>
                       </div>
-
-                      {/* Volume Horaire */}
                       <div className="p-3 bg-muted/20 rounded-xl border border-border/50 flex flex-col justify-center">
                         <span className="text-muted-foreground font-semibold text-xs flex items-center gap-1.5 mb-1">
                           <Clock className="h-3.5 w-3.5 text-blue-500" /> Volume Global
                         </span>
-                        <span className="text-2xl font-bold text-foreground">144<span className="text-sm font-medium text-muted-foreground ml-1">Hrs</span></span>
+                        <span className="text-2xl font-bold text-foreground">{ins.volume_horaire || "0 Heures"}</span>
                       </div>
                     </div>
                   </div>
 
-                  {/* الجهة اليمنى: الديموغرافيا (التوزيع والجنس) */}
                   <div className="space-y-4">
                     <h4 className="h-7 text-xs font-bold uppercase tracking-wider text-muted-foreground flex justify-between items-center">
                       <span className="flex items-center gap-1.5"><Users className="h-4 w-4" /> Bénéficiaires</span>
                       <span className="text-[10px] bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 px-2 py-0.5 rounded font-bold border border-indigo-500/20">
-                        Total: 850
+                        Total: {totGF}
                       </span>
                     </h4>
 
                     <div className="p-4 bg-muted/30 rounded-xl border border-border/50 space-y-5">
-                      
-                      {/* Répartition par Genre */}
                       <div className="space-y-2">
                         <div className="flex justify-between items-center text-xs mb-1">
                           <span className="text-foreground font-bold">Répartition par Genre</span>
                         </div>
                         <div className="flex items-center gap-1.5 h-3">
-                          {/* Hommes (47%) */}
-                          <div className="h-full rounded-full bg-blue-500" style={{ width: '47%' }} title="Hommes: 400"></div>
-                          {/* Femmes (53%) */}
-                          <div className="h-full rounded-full bg-pink-500" style={{ width: '53%' }} title="Femmes: 450"></div>
+                          <div className="h-full rounded-full bg-blue-500" style={{ width: `${pctH}%` }} title={`Hommes: ${h}`}></div>
+                          <div className="h-full rounded-full bg-pink-500" style={{ width: `${pctF}%` }} title={`Femmes: ${f}`}></div>
                         </div>
                         <div className="flex justify-between text-[10px] text-muted-foreground font-medium">
-                          <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-500"></div> Hommes: 400</span>
-                          <span className="flex items-center gap-1">Femmes: 450 <div className="w-2 h-2 rounded-full bg-pink-500"></div></span>
+                          <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-500"></div> Hommes: {h}</span>
+                          <span className="flex items-center gap-1">Femmes: {f} <div className="w-2 h-2 rounded-full bg-pink-500"></div></span>
                         </div>
                       </div>
 
                       <div className="border-t border-border/50 my-2"></div>
 
-                      {/* Répartition Spatiale (Urbain/Rural) */}
                       <div className="space-y-2">
                         <div className="flex justify-between items-center text-xs mb-1">
                           <span className="text-foreground font-bold">Répartition Spatiale</span>
                         </div>
                         <div className="flex items-center gap-1.5 h-3">
-                          {/* Urbain (70%) */}
-                          <div className="h-full rounded-full bg-slate-500" style={{ width: '70%' }} title="Urbain: 600"></div>
-                          {/* Rural (30%) */}
-                          <div className="h-full rounded-full bg-emerald-500" style={{ width: '30%' }} title="Rural: 250"></div>
+                          <div className="h-full rounded-full bg-slate-500" style={{ width: `${pctUrb}%` }} title={`Urbain: ${urb}`}></div>
+                          <div className="h-full rounded-full bg-emerald-500" style={{ width: `${pctRur}%` }} title={`Rural: ${rur}`}></div>
                         </div>
                         <div className="flex justify-between text-[10px] text-muted-foreground font-medium">
-                          <span className="flex items-center gap-1"><Building className="h-3 w-3 text-slate-500" /> Urbain: 600</span>
-                          <span className="flex items-center gap-1">Rural: 250 <TreePine className="h-3 w-3 text-emerald-500" /></span>
+                          <span className="flex items-center gap-1"><Building className="h-3 w-3 text-slate-500" /> Urbain: {urb}</span>
+                          <span className="flex items-center gap-1">Rural: {rur} <TreePine className="h-3 w-3 text-emerald-500" /></span>
                         </div>
                       </div>
-
                     </div>
                   </div>
-
                 </div>
-              )}
+                );
+              })()}
             </Card>
 
             {/* ACCORDION ITEM 5: FESTIVALS */}
@@ -1022,17 +1133,27 @@ const DomainDashboard = () => {
                 {openSection === "festivals" ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
               </button>
               
-              {openSection === "festivals" && (
+              {openSection === "festivals" && (() => {
+                const fest = dashboardData.detailed?.festivals || {};
+                const h = fest.genre?.hommes || 0;
+                const f = fest.genre?.femmes || 0;
+                const totGF = h + f;
+                const pctH = totGF ? Math.round((h / totGF) * 100) : 0;
+                const pctF = totGF ? Math.round((f / totGF) * 100) : 0;
+
+                const urb = fest.milieu?.urbain || 0;
+                const rur = fest.milieu?.rural || 0;
+                const totUR = urb + rur;
+                const pctUrb = totUR ? Math.round((urb / totUR) * 100) : 0;
+                const pctRur = totUR ? Math.round((rur / totUR) * 100) : 0;
+
+                return (
                 <div className="p-5 bg-card border-t border-border/50 grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-10">
-                  
-                  {/* الجهة اليسرى: الحدث والإقصائيات */}
                   <div className="space-y-4">
                     <h4 className="h-7 text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-1.5">
                       <Activity className="h-4 w-4" /> Événements & Éliminatoires
                     </h4>
-                    
                     <div className="grid grid-cols-2 gap-3">
-                      {/* Total Festivals - واخدة العرض كامل */}
                       <div className="col-span-2 p-4 bg-purple-500/10 rounded-xl border border-purple-500/20 flex items-center justify-between">
                         <div className="flex items-center gap-3">
                           <div className="p-2 bg-purple-500/20 rounded-lg">
@@ -1040,79 +1161,66 @@ const DomainDashboard = () => {
                           </div>
                           <span className="font-bold text-purple-700 dark:text-purple-400 text-sm">Festivals Organisés</span>
                         </div>
-                        <span className="text-3xl font-black text-purple-600">6</span>
+                        <span className="text-3xl font-black text-purple-600">{fest.total_evenements || 0}</span>
                       </div>
-
-                      {/* Provinces Participantes */}
                       <div className="p-3 bg-muted/20 rounded-xl border border-border/50 flex flex-col justify-center">
                         <span className="text-muted-foreground font-semibold text-xs flex items-center gap-1.5 mb-1">
                           <MapPin className="h-3.5 w-3.5 text-blue-500" /> Provinces (Couverture)
                         </span>
-                        <span className="text-2xl font-bold text-foreground">14</span>
+                        <span className="text-2xl font-bold text-foreground">{fest.total_provinces || 0}</span>
                       </div>
-
-                      {/* Qualifiés */}
                       <div className="p-3 bg-amber-500/5 rounded-xl border border-amber-500/20 flex flex-col justify-center">
                         <span className="text-amber-600 font-semibold text-xs flex items-center gap-1.5 mb-1">
                           <Medal className="h-3.5 w-3.5" /> Qualifiés (Finales)
                         </span>
-                        <span className="text-2xl font-bold text-foreground">320</span>
+                        <span className="text-2xl font-bold text-foreground">{fest.qualifies || 0}</span>
                       </div>
                     </div>
                   </div>
 
-                  {/* الجهة اليمنى: الديموغرافيا (التوزيع والجنس) */}
                   <div className="space-y-4">
                     <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3 flex justify-between items-end">
                       <span className="flex items-center gap-1.5"><Users className="h-4 w-4" /> Démographie des Participants</span>
                       <span className="text-[10px] bg-purple-500/10 text-purple-600 px-2 py-0.5 rounded font-bold border border-purple-500/20">
-                        Total: 1,250
+                        Total: {totGF}
                       </span>
                     </h4>
 
                     <div className="p-4 bg-muted/30 rounded-xl border border-border/50 space-y-5">
-                      
-                      {/* Répartition par Genre */}
                       <div className="space-y-2">
                         <div className="flex justify-between items-center text-xs mb-1">
                           <span className="text-foreground font-bold">Répartition par Genre</span>
                         </div>
                         <div className="flex items-center gap-1.5 h-3">
-                          {/* Hommes (60%) */}
-                          <div className="h-full rounded-full bg-blue-500" style={{ width: '60%' }} title="Hommes: 750"></div>
-                          {/* Femmes (40%) */}
-                          <div className="h-full rounded-full bg-pink-500" style={{ width: '40%' }} title="Femmes: 500"></div>
+                          <div className="h-full rounded-full bg-blue-500" style={{ width: `${pctH}%` }} title={`Hommes: ${h}`}></div>
+                          <div className="h-full rounded-full bg-pink-500" style={{ width: `${pctF}%` }} title={`Femmes: ${f}`}></div>
                         </div>
                         <div className="flex justify-between text-[10px] text-muted-foreground font-medium">
-                          <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-500"></div> Hommes: 750</span>
-                          <span className="flex items-center gap-1">Femmes: 500 <div className="w-2 h-2 rounded-full bg-pink-500"></div></span>
+                          <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-500"></div> Hommes: {h}</span>
+                          <span className="flex items-center gap-1">Femmes: {f} <div className="w-2 h-2 rounded-full bg-pink-500"></div></span>
                         </div>
                       </div>
 
                       <div className="border-t border-border/50 my-2"></div>
 
-                      {/* Répartition Spatiale (Urbain/Rural) */}
                       <div className="space-y-2">
                         <div className="flex justify-between items-center text-xs mb-1">
                           <span className="text-foreground font-bold">Répartition Spatiale</span>
                         </div>
                         <div className="flex items-center gap-1.5 h-3">
-                          {/* Urbain (72%) */}
-                          <div className="h-full rounded-full bg-slate-500" style={{ width: '72%' }} title="Urbain: 900"></div>
-                          {/* Rural (28%) */}
-                          <div className="h-full rounded-full bg-emerald-500" style={{ width: '28%' }} title="Rural: 350"></div>
+                          <div className="h-full rounded-full bg-slate-500" style={{ width: `${pctUrb}%` }} title={`Urbain: ${urb}`}></div>
+                          <div className="h-full rounded-full bg-emerald-500" style={{ width: `${pctRur}%` }} title={`Rural: ${rur}`}></div>
                         </div>
                         <div className="flex justify-between text-[10px] text-muted-foreground font-medium">
-                          <span className="flex items-center gap-1"><Building className="h-3 w-3 text-slate-500" /> Urbain: 900</span>
-                          <span className="flex items-center gap-1">Rural: 350 <TreePine className="h-3 w-3 text-emerald-500" /></span>
+                          <span className="flex items-center gap-1"><Building className="h-3 w-3 text-slate-500" /> Urbain: {urb}</span>
+                          <span className="flex items-center gap-1">Rural: {rur} <TreePine className="h-3 w-3 text-emerald-500" /></span>
                         </div>
                       </div>
-
                     </div>
                   </div>
-
                 </div>
-              )}
+                );
+              })()}
             </Card>
 
             {/* ACCORDION ITEM 6: ÉTABLISSEMENTS & PARTENARIATS */}
@@ -1124,20 +1232,22 @@ const DomainDashboard = () => {
                 {openSection === "etablissements" ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
               </button>
               
-              {openSection === "etablissements" && (
+              {openSection === "etablissements" && (() => {
+                const etab = dashboardData.detailed?.etablissements || {};
+                const causesArray = etab.fermees?.causes || [];
+                const totFermes = etab.fermees?.total || 1; // 1 pour div par 0
+
+                return (
                 <div className="p-5 bg-card border-t border-border/50 grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-10">
-                  
-                  {/* الجهة اليسرى: وضعية المؤسسات (Statut) - شكل جديد بالمربعات */}
                   <div className="space-y-4">
                     <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3 flex justify-between items-end">
                       <span>Statut du Parc Actuel</span>
                       <span className="text-[10px] bg-blue-500/10 text-blue-600 px-2 py-0.5 rounded font-bold border border-blue-500/20">
-                        Total: 28
+                        Total: {etab.total || 0}
                       </span>
                     </h4>
 
                     <div className="grid grid-cols-2 gap-3">
-                      {/* Opérationnels - واخدة العرض كامل حيت هي الأهم */}
                       <div className="col-span-2 p-4 bg-emerald-500/10 rounded-xl border border-emerald-500/20 flex items-center justify-between">
                         <div className="flex items-center gap-3">
                           <div className="p-2 bg-emerald-500/20 rounded-lg">
@@ -1145,97 +1255,63 @@ const DomainDashboard = () => {
                           </div>
                           <span className="font-bold text-emerald-700 dark:text-emerald-400 text-sm">Opérationnels / Actifs</span>
                         </div>
-                        <span className="text-3xl font-black text-emerald-600">21</span>
+                        <span className="text-3xl font-black text-emerald-600">{etab.operationnels || 0}</span>
                       </div>
 
-                      {/* Nouvellement créées */}
                       <div className="p-3 bg-blue-500/5 rounded-xl border border-blue-500/10 flex flex-col justify-center">
                         <span className="text-blue-600 font-semibold text-xs flex items-center gap-1.5 mb-1">
                           <Sparkles className="h-3.5 w-3.5" /> Nouvelle création
                         </span>
-                        <span className="text-2xl font-bold text-foreground">2</span>
+                        <span className="text-2xl font-bold text-foreground">{etab.nouvellement_creees || 0}</span>
                       </div>
 
-                      {/* En cours de réalisation */}
                       <div className="p-3 bg-amber-500/5 rounded-xl border border-amber-500/10 flex flex-col justify-center">
                         <span className="text-amber-600 font-semibold text-xs flex items-center gap-1.5 mb-1">
                           <HardHat className="h-3.5 w-3.5" /> En réalisation
                         </span>
-                        <span className="text-2xl font-bold text-foreground">1</span>
+                        <span className="text-2xl font-bold text-foreground">{etab.en_cours_realisation || 0}</span>
                       </div>
                     </div>
                   </div>
 
-                  {/* الجهة اليمنى: المؤسسات المغلقة وأسبابها - شكل جديد بأشرطة التقدم */}
                   <div className="space-y-4">
                     <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3 flex justify-between items-end">
                       <span>Analyse des Fermetures</span>
                       <span className="text-[10px] bg-red-500/10 text-red-600 px-2 py-0.5 rounded font-bold border border-red-500/20">
-                        Total Fermées: 4
+                        Total Fermées: {etab.fermees?.total || 0}
                       </span>
                     </h4>
 
                     <div className="p-4 bg-muted/30 rounded-xl border border-border/50 space-y-4">
-                      
-                      {/* Cause 1 */}
-                      <div className="space-y-1.5">
-                        <div className="flex justify-between items-center text-xs">
-                          <span className="text-foreground font-medium flex items-center gap-1.5">
-                            <Wrench className="h-3.5 w-3.5 text-amber-500" /> Mise à niveau
-                          </span>
-                          <span className="font-bold text-foreground">2</span>
-                        </div>
-                        <div className="h-1.5 w-full bg-muted-foreground/20 rounded-full overflow-hidden">
-                          <div className="h-full bg-amber-500 rounded-full" style={{ width: '50%' }}></div>
-                        </div>
-                      </div>
-
-                      {/* Cause 2 */}
-                      <div className="space-y-1.5">
-                        <div className="flex justify-between items-center text-xs">
-                          <span className="text-foreground font-medium flex items-center gap-1.5">
-                            <Users className="h-3.5 w-3.5 text-red-500" /> Encadrement (RH)
-                          </span>
-                          <span className="font-bold text-foreground">1</span>
-                        </div>
-                        <div className="h-1.5 w-full bg-muted-foreground/20 rounded-full overflow-hidden">
-                          <div className="h-full bg-red-500 rounded-full" style={{ width: '25%' }}></div>
-                        </div>
-                      </div>
-
-                      {/* Cause 3 */}
-                      <div className="space-y-1.5">
-                        <div className="flex justify-between items-center text-xs">
-                          <span className="text-foreground font-medium flex items-center gap-1.5">
-                            <Package className="h-3.5 w-3.5 text-orange-500" /> Équipement
-                          </span>
-                          <span className="font-bold text-foreground">1</span>
-                        </div>
-                        <div className="h-1.5 w-full bg-muted-foreground/20 rounded-full overflow-hidden">
-                          <div className="h-full bg-orange-500 rounded-full" style={{ width: '25%' }}></div>
-                        </div>
-                      </div>
-
-                      {/* Les causes à 0 (Grisées pour montrer qu'elles existent dans le form mais sont inactives) */}
-                      <div className="pt-2 mt-2 border-t border-border/50 grid grid-cols-2 gap-2">
-                        <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground opacity-60">
-                           <Scale className="h-3 w-3" /> Conflit juridique: 0
-                        </div>
-                        <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground opacity-60">
-                           <Clock className="h-3 w-3" /> Attente inaugu.: 0
-                        </div>
-                      </div>
-
+                      {causesArray.length === 0 ? (
+                        <span className="text-sm text-muted-foreground">Aucune fermeture signalée</span>
+                      ) : causesArray.map((item: any, index: number) => {
+                        const percentage = Math.round((item.count / totFermes) * 100);
+                        
+                        // Attribuer une icône et couleur selon l'index ou la cause si tu le souhaites (ici simplifié)
+                        return (
+                          <div key={index} className="space-y-1.5">
+                            <div className="flex justify-between items-center text-xs">
+                              <span className="text-foreground font-medium flex items-center gap-1.5">
+                                {item.cause}
+                              </span>
+                              <span className="font-bold text-foreground">{item.count}</span>
+                            </div>
+                            <div className="h-1.5 w-full bg-muted-foreground/20 rounded-full overflow-hidden">
+                              <div className="h-full bg-amber-500 rounded-full" style={{ width: `${percentage}%` }}></div>
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
-
                 </div>
-              )}
+                );
+              })()}
             </Card>
 
           </div>
         </section>
-
       </div>
     </AppLayout>
   );

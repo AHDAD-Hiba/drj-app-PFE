@@ -56,6 +56,7 @@ const toInsertionEntry = (
 export function useInsertionEntries(rapportId: string | null) {
   const [items, setItems] = useState<InternalInsertionEntry[]>([]);
   const [loading, setLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const itemsRef = useRef<InternalInsertionEntry[]>([]);
 
   useEffect(() => {
@@ -149,57 +150,7 @@ export function useInsertionEntries(rapportId: string | null) {
       };
 
       setItems((prev) => [...prev, optimisticEntry]);
-
-      try {
-        const { data: activite, error: activiteError } = await supabase
-          .from('activites_insertion')
-          .insert({
-            sujet: optimisticEntry.sujet,
-            duree_valeur: optimisticEntry.duree_valeur,
-            unite_duree: optimisticEntry.unite_duree || null,
-            rapport_id: rapportId,
-            type_partenaire_id: optimisticEntry.type_partenaire_id || null,
-          } as any)
-          .select('id')
-          .single();
-
-        if (activiteError || !activite) {
-          console.error('[useInsertionEntries] add activite error:', activiteError);
-          setItems((prev) => prev.filter((item) => item.local_id !== local_id));
-          return false;
-        }
-
-        const { data: stats, error: statsError } = await supabase
-          .from('stats_insertion')
-          .insert({
-            activite_id: activite.id,
-            femmes: optimisticEntry.femmes,
-            hommes: optimisticEntry.hommes,
-            nbr_rural: optimisticEntry.rural,
-            nbr_urbain: optimisticEntry.urbain,
-          } as any)
-          .select('id')
-          .single();
-
-        if (statsError || !stats) {
-          console.error('[useInsertionEntries] add stats error:', statsError);
-          await supabase.from('activites_insertion').delete().eq('id', activite.id);
-          setItems((prev) => prev.filter((item) => item.local_id !== local_id));
-          return false;
-        }
-
-        setItems((prev) => prev.map((item) =>
-          item.local_id === local_id
-            ? { ...item, id: activite.id, stats_id: stats.id }
-            : item,
-        ));
-
-        return true;
-      } catch (error) {
-        console.error('[useInsertionEntries] add unexpected error:', error);
-        setItems((prev) => prev.filter((item) => item.local_id !== local_id));
-        return false;
-      }
+      return true;
     },
     [rapportId],
   );
@@ -220,85 +171,55 @@ export function useInsertionEntries(rapportId: string | null) {
       setItems((prev) => prev.map((item) =>
         item.local_id === local_id ? updatedEntry : item,
       ));
-
-      if (!existing.id) {
-        return true;
-      }
-
+      
+      setIsSaving(true);
       try {
-        const activitePayload: Partial<DbActiviteRow> = {};
-        if (patch.sujet !== undefined) activitePayload.sujet = updatedEntry.sujet;
-        if (patch.duree_valeur !== undefined) {
-        activitePayload.duree_valeur =
-            updatedEntry.duree_valeur;
-        }
+        const activitePayload = {
+          ...(existing.id ? { id: existing.id } : {}),
+          rapport_id: rapportId,
+          sujet: updatedEntry.sujet,
+          duree_valeur: updatedEntry.duree_valeur,
+          unite_duree: updatedEntry.unite_duree === '' ? null : updatedEntry.unite_duree,
+          type_partenaire_id: updatedEntry.type_partenaire_id || null,
+        };
 
-        if (patch.unite_duree !== undefined) {
-            activitePayload.unite_duree =
-            updatedEntry.unite_duree === ''
-                ? null
-                : updatedEntry.unite_duree;
-        }
-        if (patch.type_partenaire_id !== undefined) activitePayload.type_partenaire_id = updatedEntry.type_partenaire_id || null;
+        const { data: activiteData, error: activiteError } = await supabase
+          .from('activites_insertion')
+          .upsert(activitePayload as any, { onConflict: existing.id ? 'id' : 'rapport_id,sujet,type_partenaire_id' })
+          .select('id')
+          .single();
+        if (activiteError) throw activiteError;
 
-        if (Object.keys(activitePayload).length > 0) {
-          const { error: activiteUpdateError } = await supabase
-            .from('activites_insertion')
-            .update(activitePayload as any)
-            .eq('id', existing.id);
+        const statsPayload = {
+          ...(existing.stats_id ? { id: existing.stats_id } : {}),
+          activite_id: activiteData.id,
+          femmes: updatedEntry.femmes,
+          hommes: updatedEntry.hommes,
+          nbr_rural: updatedEntry.rural,
+          nbr_urbain: updatedEntry.urbain,
+        };
 
-          if (activiteUpdateError) {
-            console.error('[useInsertionEntries] update activite error:', activiteUpdateError);
-            setItems(previousItems);
-            return false;
-          }
-        }
+        const { data: statsData, error: statsError } = await supabase
+          .from('stats_insertion')
+          .upsert(statsPayload as any, { onConflict: existing.stats_id ? 'id' : 'activite_id' })
+          .select('id')
+          .single();
+        if (statsError) throw statsError;
 
-        const statsPayload: Partial<DbStatsRow> = {};
-        if (patch.femmes !== undefined) statsPayload.femmes = updatedEntry.femmes;
-        if (patch.hommes !== undefined) statsPayload.hommes = updatedEntry.hommes;
-        if (patch.rural !== undefined) statsPayload.nbr_rural = updatedEntry.rural;
-        if (patch.urbain !== undefined) statsPayload.nbr_urbain = updatedEntry.urbain;
-
-        if (Object.keys(statsPayload).length > 0) {
-          if (existing.stats_id) {
-            const { error: statsUpdateError } = await supabase
-              .from('stats_insertion')
-              .update(statsPayload as any)
-              .eq('id', existing.stats_id);
-
-            if (statsUpdateError) {
-              console.error('[useInsertionEntries] update stats error:', statsUpdateError);
-              setItems(previousItems);
-              return false;
-            }
-          } else {
-            const { data: stats, error: statsInsertError } = await supabase
-              .from('stats_insertion')
-              .insert({ activite_id: existing.id, ...statsPayload } as any)
-              .select('id')
-              .single();
-
-            if (statsInsertError || !stats) {
-              console.error('[useInsertionEntries] insert stats error:', statsInsertError);
-              setItems(previousItems);
-              return false;
-            }
-
-            setItems((prev) => prev.map((item) =>
-              item.local_id === local_id ? { ...item, stats_id: stats.id } : item,
-            ));
-          }
-        }
+        setItems((prev) => prev.map((item) =>
+          item.local_id === local_id ? { ...item, id: activiteData.id, stats_id: statsData.id } : item
+        ));
 
         return true;
       } catch (error) {
         console.error('[useInsertionEntries] update unexpected error:', error);
         setItems(previousItems);
         return false;
+      } finally {
+        setIsSaving(false);
       }
     },
-    [],
+    [rapportId],
   );
 
   const remove = useCallback(
@@ -351,6 +272,7 @@ export function useInsertionEntries(rapportId: string | null) {
   return {
     items,
     loading,
+    isSaving,
     reload,
     add,
     update,

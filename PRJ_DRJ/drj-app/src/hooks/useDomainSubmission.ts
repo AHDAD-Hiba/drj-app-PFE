@@ -37,6 +37,7 @@ export const useDomainSubmission = ({
     rapportId,
     directionId,
     domain,
+    completeness,
     debounceMs,
   });
 
@@ -82,10 +83,7 @@ export const useDomainSubmission = ({
     update,
     saveNow,
     submit,
-
-    // Temporary placeholder
-    // Later:
-    // calculate from real form data
+    
     completeness,
   };
 };

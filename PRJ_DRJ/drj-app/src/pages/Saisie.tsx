@@ -76,10 +76,10 @@ const { utilisateur: profile, isPrefectoral: isDirector, loading: authLoading } 
   // Pre-form selection
   const [selectionDone, setSelectionDone] = useState(false);
   const [selection, setSelection] = useState<ReportSelection>({
-    year: DEFAULT_YEAR,
-    type: 'annuel',
-    domain: 'jeunesse',
-  });
+  year: DEFAULT_YEAR,
+  quarter: 't1',
+  domain: 'jeunesse',
+});
 
   const [step, setStep] = useState<number>(1);
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -240,9 +240,8 @@ if (!isDirector || !profile?.direction_id) {
 
   const isLocked = domain.isReadOnly || localLocked;
 
-  const periodLabel = selection.type === 'annuel'
-    ? (isAr ? 'سنوي' : 'Annuel')
-    : `${isAr ? 'فصلي' : 'Trimestriel'} · ${selection.quarter ?? ''}`;
+  const periodLabel =
+    `${isAr ? 'فصلي' : 'Trimestriel'} · ${selection.quarter?.toUpperCase() ?? ''}`;
   const domainLabel = DOMAIN_LABEL[selection.domain]?.[isAr ? 'ar' : 'fr'] ?? selection.domain;
 
 const handleSaveDraft = async () => {
@@ -382,7 +381,7 @@ const handleSaveDraft = async () => {
                 data={permanenteData}
                 onSave={onSaveStep1}
                 onActivity={onActivityGlobal}
-                disabled={isLocked}
+                disabled={isLocked || (activites as any).isSaving}
               />
             )}
             {step === 2 && (
@@ -390,7 +389,7 @@ const handleSaveDraft = async () => {
                 data={rayonanteData}
                 onSave={onSaveStep2}
                 onActivity={onActivityGlobal}
-                disabled={isLocked}
+                disabled={isLocked || (activites as any).isSaving}
               />
             )}
             {step === 3 && (
@@ -399,7 +398,7 @@ const handleSaveDraft = async () => {
                 onAdd={onAddFacility}
                 onUpdate={onUpdateFacility}
                 onRemove={onRemoveFacility}
-                disabled={isLocked}
+                disabled={isLocked || facilities.isSaving}
               />
             )}
             {step === 4 && (
@@ -414,13 +413,13 @@ const handleSaveDraft = async () => {
                 onAddFormation={formations.add}
                 onUpdateFormation={formations.update}
                 onRemoveFormation={formations.remove}
-                disabled={isLocked}
+                disabled={isLocked || camps.isSaving || associationValues.isSaving || formations.isSaving}
                 rapportId={currentId}
               />
             )}
             {step === 5 && (
               <Step5Convention
-                disabled={isLocked}
+                disabled={isLocked || (partenaires as any)?.isSaving}
                 items={partenaires.items}
                 partnerTypes={typesPartenaires.items}
                 onAdd={onAddConvention}
@@ -434,7 +433,7 @@ const handleSaveDraft = async () => {
                 onAddFestival={onAddFestival}
                 onUpdateFestival={festivals.update}
                 onRemoveFestival={onRemoveFestival}
-                disabled={isLocked}
+                disabled={isLocked || festivals.isSaving}
               />
             )}
             {step === 7 && (
@@ -446,7 +445,7 @@ const handleSaveDraft = async () => {
                 rapportId={currentId}
                 domain={selection.domain}
                 onActivity={onActivityStep7}
-                disabled={isLocked}
+                disabled={isLocked || socios.isSaving}
               />
             )}
           </>

@@ -18,6 +18,7 @@ interface AssociationValueRow {
 export function useAssociationValues(rapportId: string | null) {
   const [items, setItems] = useState<AssociationValue[]>([]);
   const [loading, setLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const itemsRef = useRef<AssociationValue[]>([]);
 
   useEffect(() => {
@@ -142,6 +143,7 @@ export function useAssociationValues(rapportId: string | null) {
       );
 
       if (!rapportId) return true;
+      setIsSaving(true);
 
       try {
         const payload = {
@@ -153,7 +155,7 @@ export function useAssociationValues(rapportId: string | null) {
         const { data, error } = await supabase
           .from('valeurs_associations')
           .upsert(payload, {
-            onConflict: 'rapport_id,categorie_association_id',
+            onConflict: updatedEntry.id ? 'id' : 'rapport_id,categorie_association_id',
           })
           .select('id')
           .single();
@@ -171,10 +173,12 @@ export function useAssociationValues(rapportId: string | null) {
       } catch (error) {
         console.error('[useAssociationValues] update error:', error);
         return false;
+      } finally {
+        setIsSaving(false);
       }
     },
     [rapportId]
   );
 
-  return { items, loading, reload, update };
+  return { items, loading, isSaving, reload, update };
 }

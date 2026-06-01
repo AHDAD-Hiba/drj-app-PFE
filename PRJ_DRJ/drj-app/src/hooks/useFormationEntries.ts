@@ -16,6 +16,7 @@ export interface FormationEntry {
 export function useFormationEntries(rapportId: string | null) {
   const [items, setItems] = useState<FormationEntry[]>([]);
   const [loading, setLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const itemsRef = useRef<FormationEntry[]>([]);
 
   useEffect(() => {
@@ -118,58 +119,43 @@ export function useFormationEntries(rapportId: string | null) {
       );
 
       if (!rapportId) return true;
+      setIsSaving(true);
 
       try {
-        // Only persist centre and numero_session to Supabase
         const payload: any = {
+          ...(updatedEntry.id ? { id: updatedEntry.id } : {}),
           rapport_id: rapportId,
           centre: updatedEntry.centre,
           numero_session: updatedEntry.numero_session,
         };
 
-        let frmId = updatedEntry.id;
-        if (frmId) {
-          await supabase
-            .from('formations')
-            .update(payload)
-            .eq('id', frmId);
-        } else {
-          const { data } = await supabase
-            .from('formations')
-            .insert(payload)
-            .select('id')
-            .single();
-          if (data) frmId = data.id;
-        }
+        const { data: frmData, error: frmError } = await supabase
+          .from('formations')
+          .upsert(payload, { onConflict: updatedEntry.id ? 'id' : 'rapport_id,centre,numero_session' })
+          .select('id')
+          .single();
+        if (frmError) throw frmError;
 
-        // Insert/update statistiques_formation
         const statsPayload = {
-          formation_id: frmId,
+          ...(updatedEntry.statistiques_id ? { id: updatedEntry.statistiques_id } : {}),
+          formation_id: frmData.id,
           nombre_beneficiaires_femmes: updatedEntry.beneficiaries_girls,
           nombre_beneficiaires_hommes: updatedEntry.beneficiaries_boys,
           nombre_formateurs_femmes: updatedEntry.trainers_girls,
           nombre_formateurs_hommes: updatedEntry.trainers_boys,
         };
 
-        let statsId = updatedEntry.statistiques_id;
-        if (statsId) {
-          await supabase
-            .from('statistiques_formation')
-            .update(statsPayload)
-            .eq('id', statsId);
-        } else {
-          const { data: statsData } = await supabase
-            .from('statistiques_formation')
-            .insert(statsPayload)
-            .select('id')
-            .single();
-          if (statsData) statsId = statsData.id;
-        }
+        const { data: statsData, error: statsError } = await supabase
+          .from('statistiques_formation')
+          .upsert(statsPayload, { onConflict: updatedEntry.statistiques_id ? 'id' : 'formation_id' })
+          .select('id')
+          .single();
+        if (statsError) throw statsError;
 
         setItems((prev) =>
           prev.map((item) =>
             item.local_id === local_id 
-              ? { ...updatedEntry, id: frmId, statistiques_id: statsId } 
+              ? { ...updatedEntry, id: frmData.id, statistiques_id: statsData.id } 
               : item
           )
         );
@@ -177,6 +163,8 @@ export function useFormationEntries(rapportId: string | null) {
       } catch (error) {
         console.error('[useFormationEntries] update error:', error);
         return false;
+      } finally {
+        setIsSaving(false);
       }
     },
     [rapportId]
@@ -209,5 +197,5 @@ export function useFormationEntries(rapportId: string | null) {
     [rapportId]
   );
 
-  return { items, loading, reload, add, update, remove };
+  return { items, loading, isSaving, reload, add, update, remove };
 }

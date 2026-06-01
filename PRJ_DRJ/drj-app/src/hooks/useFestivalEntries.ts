@@ -53,6 +53,7 @@ const normalizeStats = (stats: DbStatRow[] | DbStatRow | null | undefined): DbSt
 export function useFestivalEntries(rapportId: string | null) {
   const [items, setItems] = useState<InternalFestivalEntry[]>([]);
   const [loading, setLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const itemsRef = useRef<InternalFestivalEntry[]>([]);
 
   useEffect(() => {
@@ -145,55 +146,7 @@ export function useFestivalEntries(rapportId: string | null) {
       };
 
       setItems((prev) => [...prev, optimisticItem]);
-
-      try {
-        const { data: festival, error: festivalError } = await supabase
-          .from('festivals')
-          .insert({ nom: optimisticItem.name, rapport_id: rapportId } as any)
-          .select('id')
-          .single();
-
-        if (festivalError || !festival) {
-          console.error('[useFestivalEntries] add festival error:', festivalError);
-          setItems((prev) => prev.filter((item) => item.local_id !== local_id));
-          return false;
-        }
-
-        const { data: stats, error: statsError } = await supabase
-          .from('statistiques_festivals')
-          .insert({
-            festival_id: festival.id,
-            nbr_participants_qualifies: optimisticItem.participants_qualifies,
-            nbr_provinces_participantes: optimisticItem.provinces_participantes,
-            nbr_rural: optimisticItem.rural,
-            nbr_urbain: optimisticItem.urbain,
-            nombre_femmes: optimisticItem.femmes,
-            nombre_hommes: optimisticItem.hommes,
-          } as any)
-          .select('id')
-          .single();
-
-        if (statsError || !stats) {
-          console.error('[useFestivalEntries] add stats error:', statsError);
-          await supabase.from('festivals').delete().eq('id', festival.id);
-          setItems((prev) => prev.filter((item) => item.local_id !== local_id));
-          return false;
-        }
-
-        setItems((prev) => prev.map((item) =>
-          item.local_id === local_id ? {
-            ...item,
-            id: festival.id,
-            statistiques_id: stats.id,
-          } : item,
-        ));
-
-        return true;
-      } catch (error) {
-        console.error('[useFestivalEntries] add unexpected error:', error);
-        setItems((prev) => prev.filter((item) => item.local_id !== local_id));
-        return false;
-      }
+      return true;
     },
     [rapportId],
   );
@@ -214,26 +167,25 @@ export function useFestivalEntries(rapportId: string | null) {
       setItems((prev) => prev.map((item) =>
         item.local_id === local_id ? updatedEntry : item,
       ));
-
-      if (!existing.id) {
-        return true;
-      }
-
+      
+      setIsSaving(true);
       try {
-        if (patch.name !== undefined) {
-          const { error: festivalUpdateError } = await supabase
-            .from('festivals')
-            .update({ nom: updatedEntry.name } as any)
-            .eq('id', existing.id);
+        const festivalPayload = {
+          ...(existing.id ? { id: existing.id } : {}),
+          rapport_id: rapportId,
+          nom: updatedEntry.name,
+        };
 
-          if (festivalUpdateError) {
-            console.error('[useFestivalEntries] update festival error:', festivalUpdateError);
-            setItems(previousItems);
-            return false;
-          }
-        }
+        const { data: festivalData, error: festivalError } = await supabase
+          .from('festivals')
+          .upsert(festivalPayload as any, { onConflict: existing.id ? 'id' : 'rapport_id,nom' })
+          .select('id')
+          .single();
+        if (festivalError) throw festivalError;
 
         const statsFields = {
+          ...(existing.statistiques_id ? { id: existing.statistiques_id } : {}),
+          festival_id: festivalData.id,
           nbr_participants_qualifies: updatedEntry.participants_qualifies,
           nbr_provinces_participantes: updatedEntry.provinces_participantes,
           nbr_rural: updatedEntry.rural,
@@ -241,55 +193,27 @@ export function useFestivalEntries(rapportId: string | null) {
           nombre_femmes: updatedEntry.femmes,
           nombre_hommes: updatedEntry.hommes,
         };
+        const { data: statsData, error: statsError } = await supabase
+          .from('statistiques_festivals')
+          .upsert(statsFields as any, { onConflict: existing.statistiques_id ? 'id' : 'festival_id' })
+          .select('id')
+          .single();
+        if (statsError) throw statsError;
 
-        const shouldUpdateStats = Object.keys(patch).some((key) => [
-          'participants_qualifies',
-          'provinces_participantes',
-          'rural',
-          'urbain',
-          'femmes',
-          'hommes',
-        ].includes(key));
-
-        if (shouldUpdateStats) {
-          if (existing.statistiques_id) {
-            const { error: statsUpdateError } = await supabase
-              .from('statistiques_festivals')
-              .update(statsFields as any)
-              .eq('id', existing.statistiques_id);
-
-            if (statsUpdateError) {
-              console.error('[useFestivalEntries] update stats error:', statsUpdateError);
-              setItems(previousItems);
-              return false;
-            }
-          } else {
-            const { data: insertedStats, error: statsInsertError } = await supabase
-              .from('statistiques_festivals')
-              .insert({ festival_id: existing.id, ...statsFields } as any)
-              .select('id')
-              .single();
-
-            if (statsInsertError || !insertedStats) {
-              console.error('[useFestivalEntries] insert stats error:', statsInsertError);
-              setItems(previousItems);
-              return false;
-            }
-
-            setItems((prev) => prev.map((item) =>
-              item.local_id === local_id ? { ...item, statistiques_id: insertedStats.id } : item,
-            ));
-          }
-        }
+        setItems((prev) => prev.map((item) =>
+          item.local_id === local_id ? { ...item, id: festivalData.id, statistiques_id: statsData.id } : item,
+        ));
 
         return true;
       } catch (error) {
         console.error('[useFestivalEntries] update unexpected error:', error);
         setItems(previousItems);
         return false;
+      } finally {
+        setIsSaving(false);
       }
     },
-    [],
+    [rapportId],
   );
 
   const remove = useCallback(
@@ -342,6 +266,7 @@ export function useFestivalEntries(rapportId: string | null) {
   return {
     items,
     loading,
+    isSaving,
     reload,
     add,
     update,

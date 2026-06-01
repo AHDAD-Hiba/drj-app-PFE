@@ -12,6 +12,7 @@ export interface EncadrementEntry {
 export function useEncadrementEntries(rapportId: string | null) {
   const [items, setItems] = useState<EncadrementEntry[]>([]);
   const [loading, setLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const itemsRef = useRef<EncadrementEntry[]>([]);
 
   useEffect(() => {
@@ -106,39 +107,35 @@ export function useEncadrementEntries(rapportId: string | null) {
 
       if (!rapportId) return true;
       if (!updatedEntry.niveau_formation_id) return true;
+      setIsSaving(true);
 
       try {
         const payload = {
+          ...(updatedEntry.id ? { id: updatedEntry.id } : {}),
           rapport_id: rapportId,
           niveau_formation_id: updatedEntry.niveau_formation_id,
           nombre_femmes: updatedEntry.nombre_femmes,
           nombre_hommes: updatedEntry.nombre_hommes,
         };
 
-        let encId = updatedEntry.id;
-        if (encId) {
-          await supabase
-            .from('encadrements')
-            .update(payload)
-            .eq('id', encId);
-        } else {
-          const { data } = await supabase
-            .from('encadrements')
-            .insert(payload)
-            .select('id')
-            .single();
-          if (data) encId = data.id;
-        }
+        const { data, error } = await supabase
+          .from('encadrements')
+          .upsert(payload, { onConflict: updatedEntry.id ? 'id' : 'rapport_id,niveau_formation_id' })
+          .select('id')
+          .single();
+        if (error) throw error;
 
         setItems((prev) =>
           prev.map((item) =>
-            item.local_id === local_id ? { ...updatedEntry, id: encId } : item
+            item.local_id === local_id ? { ...updatedEntry, id: data.id } : item
           )
         );
         return true;
       } catch (error) {
         console.error('[useEncadrementEntries] update error:', error);
         return false;
+      } finally {
+        setIsSaving(false);
       }
     },
     [rapportId]
@@ -165,5 +162,5 @@ export function useEncadrementEntries(rapportId: string | null) {
     [rapportId]
   );
 
-  return { items, loading, reload, add, update, remove };
+  return { items, loading, isSaving, reload, add, update, remove };
 }

@@ -52,6 +52,7 @@ export function useEtablissementEntries(
 ) {
   const [items, setItems] = useState<InternalFacilityEntry[]>([]);
   const [loading, setLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const itemsRef = useRef<InternalFacilityEntry[]>([]);
 
   useEffect(() => {
@@ -206,68 +207,7 @@ export function useEtablissementEntries(
       };
 
       setItems((prev) => [...prev, optimisticEntry]);
-
-      try {
-        const { data: etabData, error: etabError } = await supabase
-          .from('etablissements')
-          .insert({ direction_id: directionId, nom: entry.name, rapport_id: rapportId } as any)
-          .select()
-          .single();
-
-        if (etabError || !etabData) {
-          console.error('[useEtablissementEntries] insert etablissements error:', etabError);
-          setItems((prev) => prev.filter((item) => item.local_id !== localId));
-          return false;
-        }
-
-        const etablissementId = etabData.id;
-        const suiviPayload = {
-          rapport_id: rapportId,
-          etablissement_id: etablissementId,
-          statut: mapProjectStatusToSuiviStatus(entry.project_status),
-        };
-
-        const { data: suiviData, error: suiviError } = await supabase
-          .from('suivi_projets')
-          .insert(suiviPayload as any)
-          .select()
-          .single();
-
-        if (suiviError || !suiviData) {
-          console.error('[useEtablissementEntries] insert suivi_projets error:', suiviError);
-          await supabase.from('etablissements').delete().eq('id', etablissementId);
-          setItems((prev) => prev.filter((item) => item.local_id !== localId));
-          return false;
-        }
-
-        let fermetureId: string | undefined;
-
-        const closureType = entry.closure_status || entry.other_status || null;
-        if (entry.project_status === 'ferme' && closureType) {
-          const { data: fermetureData, error: fermetureError } = await supabase
-            .from('fermetures')
-            .insert({
-              rapport_id: rapportId,
-              etablissement_id: etablissementId,
-              type_fermeture_id: closureType,
-            } as any)
-            .select()
-            .single();
-
-          if (fermetureError) {
-            console.error('[useEtablissementEntries] insert fermetures error:', fermetureError);
-          } else {
-            fermetureId = fermetureData?.id;
-          }
-        }
-
-        await reload();
-        return true;
-      } catch (error) {
-        console.error('[useEtablissementEntries] add unexpected error:', error);
-        setItems((prev) => prev.filter((item) => item.local_id !== localId));
-        return false;
-      }
+      return true;
     },
     [directionId, rapportId, reload],
   );
@@ -283,53 +223,42 @@ export function useEtablissementEntries(
       const updatedEntry: InternalFacilityEntry = { ...existing, ...patch };
       setItems((prev) => prev.map((item) => item.local_id === local_id ? updatedEntry : item));
 
-      // If entry not persisted yet, just keep optimistic value
-      if (!existing.id) return true;
-
+      setIsSaving(true);
       try {
-        // Update etablissements name if changed
-        if (patch.name !== undefined && patch.name !== existing.name) {
-          const { error: etabError } = await supabase
-            .from('etablissements')
-            .update({ nom: patch.name } as any)
-            .eq('id', existing.id);
-          if (etabError) throw etabError;
-        }
+        const etabPayload = {
+          ...(existing.id ? { id: existing.id } : {}),
+          rapport_id: rapportId,
+          direction_id: directionId,
+          nom: updatedEntry.name,
+        };
+        
+        const { data: etabData, error: etabError } = await supabase
+          .from('etablissements')
+          .upsert(etabPayload as any, { onConflict: existing.id ? 'id' : 'rapport_id,nom' })
+          .select('id')
+          .single();
+        if (etabError) throw etabError;
+        const etablissementId = etabData.id;
 
-        // Ensure suivi_projet exists; create if missing
-        let suiviId = existing.suivi_projet_id;
-        if (!suiviId) {
-          const suiviPayload = {
-            rapport_id: rapportId,
-            etablissement_id: existing.id,
-            statut: mapProjectStatusToSuiviStatus(updatedEntry.project_status),
-          };
-          const { data: newSuivi, error: createSuiviError } = await supabase
-            .from('suivi_projets')
-            .insert(suiviPayload as any)
-            .select()
-            .single();
-          if (createSuiviError) throw createSuiviError;
-          suiviId = newSuivi.id;
-          updatedEntry.suivi_projet_id = suiviId;
-        }
+        const suiviPayload = {
+          ...(existing.suivi_projet_id ? { id: existing.suivi_projet_id } : {}),
+          rapport_id: rapportId,
+          etablissement_id: etablissementId,
+          statut: mapProjectStatusToSuiviStatus(updatedEntry.project_status),
+        };
 
-        // Update suivi_projets statut if changed
-        if (patch.project_status !== undefined && patch.project_status !== existing.project_status) {
-          const { error: suiviError } = await supabase
-            .from('suivi_projets')
-            .update({ statut: mapProjectStatusToSuiviStatus(updatedEntry.project_status) } as any)
-            .eq('id', suiviId);
-          if (suiviError) throw suiviError;
-        }
+        const { data: suiviData, error: suiviError } = await supabase
+          .from('suivi_projets')
+          .upsert(suiviPayload as any, { onConflict: existing.suivi_projet_id ? 'id' : 'rapport_id,etablissement_id' })
+          .select('id')
+          .single();
+        if (suiviError) throw suiviError;
 
         // Handle fermetures: create/update/delete as needed
         const nextClosureStatus =
-          patch.closure_status !== undefined
-            ? patch.closure_status
-            : patch.other_status !== undefined
-            ? patch.other_status
-            : existing.closure_status || existing.other_status;
+          patch.closure_status !== undefined ? patch.closure_status :
+          patch.other_status !== undefined ? patch.other_status :
+          existing.closure_status || existing.other_status;
 
         const hasExistingFermeture = Boolean(existing.fermeture_id);
         const shouldHaveFermeture = updatedEntry.project_status === 'ferme' && Boolean(nextClosureStatus);
@@ -344,36 +273,31 @@ export function useEtablissementEntries(
         }
 
         if (shouldHaveFermeture) {
-          if (existing.fermeture_id) {
-            const { error: updateError } = await supabase
-              .from('fermetures')
-              .update({ type_fermeture_id: nextClosureStatus } as any)
-              .eq('id', existing.fermeture_id);
-            if (updateError) throw updateError;
-            updatedEntry.fermeture_id = existing.fermeture_id;
-          } else {
-            const { data: fermetureData, error: fermetureError } = await supabase
-              .from('fermetures')
-              .insert({
-                rapport_id: rapportId,
-                etablissement_id: existing.id,
-                type_fermeture_id: nextClosureStatus,
-              } as any)
-              .select()
-              .single();
-            if (fermetureError) throw fermetureError;
-            updatedEntry.fermeture_id = fermetureData?.id;
-          }
+          const fermeturePayload = {
+            ...(existing.fermeture_id ? { id: existing.fermeture_id } : {}),
+            rapport_id: rapportId,
+            etablissement_id: etablissementId,
+            type_fermeture_id: nextClosureStatus,
+          };
+          const { data: fermetureData, error: fermetureError } = await supabase
+            .from('fermetures')
+            .upsert(fermeturePayload as any, { onConflict: existing.fermeture_id ? 'id' : 'rapport_id,etablissement_id' })
+            .select('id')
+            .single();
+          if (fermetureError) throw fermetureError;
+          updatedEntry.fermeture_id = fermetureData.id;
         }
 
         // Commit optimistic result (already applied). Ensure fermeture_id/suivi id present
-        setItems((prev) => prev.map((item) => item.local_id === local_id ? { ...item, ...updatedEntry } : item));
+        setItems((prev) => prev.map((item) => item.local_id === local_id ? { ...item, ...updatedEntry, id: etablissementId, suivi_projet_id: suiviData.id } : item));
         return true;
       } catch (error) {
         console.error('[useEtablissementEntries] update unexpected error:', error);
         // revert optimistic
         setItems(prevItems);
         return false;
+      } finally {
+        setIsSaving(false);
       }
     },
     [items, rapportId],
@@ -439,6 +363,7 @@ export function useEtablissementEntries(
   return {
     items: items.map(toPublicEntry),
     loading,
+    isSaving,
     reload,
     add,
     update,

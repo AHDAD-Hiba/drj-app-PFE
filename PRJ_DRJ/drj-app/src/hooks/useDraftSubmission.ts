@@ -10,6 +10,7 @@ interface UseDraftOpts {
   rapportId: string;
   directionId: string;
   domain: string;
+  completeness?: number;
   debounceMs?: number;
 }
 
@@ -23,6 +24,7 @@ export const useDraftSubmission = ({
   rapportId,
   directionId,
   domain,
+  completeness = 0,
   debounceMs = 2000,
 }: UseDraftOpts) => {
   const [status, setStatus] = useState<ReportStatus>('NON_COMMENCE');
@@ -111,6 +113,7 @@ export const useDraftSubmission = ({
             direction_id: directionId,
             domaine_id: DOMAIN_IDS['jeunesse'],
             statut: effectiveStatus,
+            progression_pourcentage: Math.round(completeness),
             updated_at: new Date().toISOString(),
           },
           { onConflict: 'rapport_id,direction_id,domaine_id' },
@@ -132,7 +135,7 @@ export const useDraftSubmission = ({
       setErrorMsg(err.message ?? 'Erreur inconnue lors de la sauvegarde.');
       return false;
     }
-  }, [rapportId, directionId, domain]);
+  }, [rapportId, directionId, domain, completeness]);
 
   // ── Public API ────────────────────────────────────────────────────────────
 

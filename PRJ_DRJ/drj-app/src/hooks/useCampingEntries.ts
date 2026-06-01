@@ -24,6 +24,7 @@ export interface CampEntry {
 export function useCampingEntries(rapportId: string | null) {
   const [items, setItems] = useState<CampEntry[]>([]);
   const [loading, setLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const itemsRef = useRef<CampEntry[]>([]);
 
   useEffect(() => {
@@ -146,9 +147,11 @@ export function useCampingEntries(rapportId: string | null) {
       // Si le type de camp n'est pas encore choisi, on ne sauvegarde pas encore en base
       if (!updatedEntry.programme_id) return true;
 
+      setIsSaving(true);
       try {
         // 1. Gérer Participants
         const partPayload = {
+          ...(updatedEntry.participant_id ? { id: updatedEntry.participant_id } : {}),
           rapport_id: rapportId,
           programme_id: updatedEntry.programme_id,
           femmes: updatedEntry.girls,
@@ -159,17 +162,14 @@ export function useCampingEntries(rapportId: string | null) {
           enfants_marocains_etranger: updatedEntry.immigrant_children,
         };
 
-        let partId = updatedEntry.participant_id;
-        if (partId) {
-          await supabase.from('participants').update(partPayload).eq('id', partId);
-        } else {
-          const { data } = await supabase.from('participants').insert(partPayload).select('id').single();
-          if (data) partId = data.id;
-        }
+        const { data: partData, error: partError } = await supabase.from('participants').upsert(partPayload, { onConflict: updatedEntry.participant_id ? 'id' : 'rapport_id,programme_id' }).select('id').single();
+        if (partError) throw partError;
+        const partId = partData.id;
 
         // 2. Sauvegarder encadrements
         for (const enc of updatedEntry.encadrements) {
           const encPayload = {
+            ...(enc.id ? { id: enc.id } : {}),
             rapport_id: rapportId,
             programme_id: updatedEntry.programme_id,
             niveau_formation_id: enc.niveau_formation_id || null,
@@ -177,22 +177,9 @@ export function useCampingEntries(rapportId: string | null) {
             nombre_hommes: enc.nombre_hommes,
           };
 
-          if (enc.id) {
-            await supabase
-              .from('encadrements')
-              .update(encPayload)
-              .eq('id', enc.id);
-          } else {
-            const { data } = await supabase
-              .from('encadrements')
-              .insert(encPayload)
-              .select('id')
-              .single();
-
-            if (data) {
-              enc.id = data.id;
-            }
-          }
+          const { data: encData, error: encError } = await supabase.from('encadrements').upsert(encPayload, { onConflict: enc.id ? 'id' : 'rapport_id,programme_id,niveau_formation_id' }).select('id').single();
+          if (encError) throw encError;
+          enc.id = encData.id;
         }
         // Mettre à jour l'état avec les nouveaux IDs
         setItems((prev) =>
@@ -209,6 +196,8 @@ export function useCampingEntries(rapportId: string | null) {
       } catch (error) {
         console.error('[useCampingEntries] update error:', error);
         return false;
+      } finally {
+        setIsSaving(false);
       }
     },
     [rapportId]
@@ -243,5 +232,5 @@ export function useCampingEntries(rapportId: string | null) {
     [rapportId]
   );
 
-  return { items, loading, reload, add, update, remove };
+  return { items, loading, isSaving, reload, add, update, remove };
 }

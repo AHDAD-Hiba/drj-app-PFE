@@ -12,6 +12,7 @@ export interface MouvementAssociation {
 export function useMouvementsAssociations(rapportId: string | null) {
   const [items, setItems] = useState<MouvementAssociation[]>([]);
   const [loading, setLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const itemsRef = useRef<MouvementAssociation[]>([]);
 
   useEffect(() => {
@@ -108,39 +109,35 @@ export function useMouvementsAssociations(rapportId: string | null) {
       );
 
       if (!rapportId) return true;
+      setIsSaving(true);
 
       try {
         const payload = {
+          ...(updatedEntry.id ? { id: updatedEntry.id } : {}),
           rapport_id: rapportId,
           nom_association: updatedEntry.nom_association,
           type_mouvement: updatedEntry.type_mouvement,
           date_mouvement: updatedEntry.date_mouvement,
         };
 
-        let mvtId = updatedEntry.id;
-        if (mvtId) {
-          await supabase
-            .from('mouvements_associations')
-            .update(payload)
-            .eq('id', mvtId);
-        } else {
-          const { data } = await supabase
-            .from('mouvements_associations')
-            .insert(payload)
-            .select('id')
-            .single();
-          if (data) mvtId = data.id;
-        }
+        const { data, error } = await supabase
+          .from('mouvements_associations')
+          .upsert(payload, { onConflict: updatedEntry.id ? 'id' : 'rapport_id,nom_association,type_mouvement' })
+          .select('id')
+          .single();
+        if (error) throw error;
 
         setItems((prev) =>
           prev.map((item) =>
-            item.local_id === local_id ? { ...updatedEntry, id: mvtId } : item
+            item.local_id === local_id ? { ...updatedEntry, id: data.id } : item
           )
         );
         return true;
       } catch (error) {
         console.error('[useMouvementsAssociations] update error:', error);
         return false;
+      } finally {
+        setIsSaving(false);
       }
     },
     [rapportId]
@@ -170,5 +167,5 @@ export function useMouvementsAssociations(rapportId: string | null) {
     [rapportId]
   );
 
-  return { items, loading, reload, add, update, remove };
+  return { items, loading, isSaving, reload, add, update, remove };
 }
