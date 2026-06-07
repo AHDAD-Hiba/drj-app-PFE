@@ -53,6 +53,9 @@ export const PreFormSelection = ({ initial, onComplete }: Props) => {
   const [sel, setSel] = useState<ReportSelection>(initial);
   const [loading, setLoading] = useState(false);
 
+  const DOMAIN_IDS = {
+  jeunesse: '9b15dc1d-5f39-4e5d-915c-33c465b3276e',
+};
 
   const handleStartReporting = async () => {
     // 1. Sécurité : Vérifier si l'utilisateur est bien chargé avec sa direction
@@ -92,6 +95,8 @@ export const PreFormSelection = ({ initial, onComplete }: Props) => {
         onComplete({ ...sel, rapportId: existingRapport.id });
       } else {
         // 3. Le rapport n'existe pas, on le crée dans ta table SQL
+        const { data: { user } } = await supabase.auth.getUser();
+
         const { data: newRapport, error: insertError } = await supabase
           .from('rapports')
           .insert({
@@ -103,6 +108,21 @@ export const PreFormSelection = ({ initial, onComplete }: Props) => {
           .single();
 
         if (insertError) throw insertError;
+        console.log('CREATE SUIVI START');
+
+        const { data, error } = await supabase
+          .from('suivi_remplissage')
+          .insert({
+            rapport_id: newRapport.id,
+            direction_id: utilisateur.direction_id,
+            domaine_id: DOMAIN_IDS[sel.domain],
+            statut: 'NON_COMMENCE',
+            progression_pourcentage: 0
+          })
+          .select();
+
+        console.log('CREATE SUIVI DATA', data);
+        console.log('CREATE SUIVI ERROR', error);
         onComplete({ ...sel, rapportId: newRapport.id });
       }
     } catch (error: any) {

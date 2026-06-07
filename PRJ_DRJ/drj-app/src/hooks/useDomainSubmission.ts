@@ -70,6 +70,14 @@ export const useDomainSubmission = ({
     return draft.submit();
   }, [draft]);
 
+  /**
+   * Force immediate persistence of EN_COURS status.
+   * Prevents RLS race conditions on metadata table UPSERTs.
+   */
+  const ensureEnCours = useCallback(async (): Promise<boolean> => {
+    return draft.ensureEnCours();
+  }, [draft]);
+
   return {
     // Status
     status: draft.status,
@@ -83,6 +91,7 @@ export const useDomainSubmission = ({
     update,
     saveNow,
     submit,
+    ensureEnCours,
     
     completeness,
   };

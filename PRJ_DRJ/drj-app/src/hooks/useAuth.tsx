@@ -33,14 +33,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading]       = useState(true);
 
   const fetchUtilisateur = async (userId: string) => {
-  console.log('Fetching userId:', userId); // ← ajoute cette ligne
   const { data, error } = await (supabase as any)
     .from('utilisateurs')
     .select('*')
     .eq('auth_user_id', userId)
     .maybeSingle();
 
-  console.log('Result:', data, error); // ← et celle-ci
   setUtilisateur((data as Utilisateur) ?? null);
   };
 

@@ -15,7 +15,7 @@ interface UseDraftOpts {
 }
 
 const DOMAIN_IDS = {
-  jeunesse: '6a3a9ab9-2f5a-4775-a09e-ca4b4a6a8349',
+  jeunesse: '9b15dc1d-5f39-4e5d-915c-33c465b3276e',
 };
 
 // ─── Hook ─────────────────────────────────────────────────────────────────────
@@ -27,6 +27,13 @@ export const useDraftSubmission = ({
   completeness = 0,
   debounceMs = 2000,
 }: UseDraftOpts) => {
+
+  console.log('useDraftSubmission mounted', {
+  rapportId,
+  directionId,
+  domain,
+});
+
   const [status, setStatus] = useState<ReportStatus>('NON_COMMENCE');
   const [loading, setLoading] = useState(true);
   const [saveState, setSaveState] = useState<SaveState>('idle');
@@ -88,6 +95,10 @@ export const useDraftSubmission = ({
    * If the report is already TERMINE, calling persist() is a no-op.
    */
   const persist = useCallback(async (overrideStatus?: ReportStatus): Promise<boolean> => {
+
+    
+
+    console.log('persist CALLED');
     const effectiveStatus = overrideStatus ?? statusRef.current;
 
     // Guard: never overwrite a TERMINE record except when explicitly submitting.
@@ -104,8 +115,15 @@ export const useDraftSubmission = ({
     setSaveState('saving');
     setErrorMsg(null);
 
+console.log('UPSERT suivi_remplissage', {
+  rapportId,
+  directionId,
+  domain,
+  domaine_id_sent: DOMAIN_IDS['jeunesse'],
+});
+
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('suivi_remplissage')
         .upsert(
           {
@@ -116,11 +134,20 @@ export const useDraftSubmission = ({
             progression_pourcentage: Math.round(completeness),
             updated_at: new Date().toISOString(),
           },
-          { onConflict: 'rapport_id,direction_id,domaine_id' },
-        );
+          { onConflict: 'rapport_id,direction_id,domaine_id' }
+        )
+        .select();
+
+      console.log('UPSERT DATA:', data);
+      console.log('UPSERT ERROR:', error);
 
       if (error) throw error;
 
+
+          console.log(
+      'persist effectiveStatus =',
+      effectiveStatus,
+    );
       setLastSavedAt(
   new Date(
     new Date().toLocaleString('en-US', {
@@ -141,16 +168,35 @@ export const useDraftSubmission = ({
 
   /**
    * Call this whenever the user modifies data.
-   * Marks the report EN_COURS and schedules a debounced persist.
+   * CRITICAL: If transitioning from NON_COMMENCE to EN_COURS, persist IMMEDIATELY
+   * to avoid RLS race conditions (Étape 10 du diagramme).
+   * For subsequent updates, debounce the persist.
    * No-op if the report is already TERMINE.
    */
   const update = useCallback(() => {
+    console.log('UPDATE CALLED');
     if (statusRef.current === 'TERMINE') return;
+
+    // Évaluer la transition de statut
+    const isInitialTransition = statusRef.current === 'NON_COMMENCE';
 
     setStatus('EN_COURS');
 
     if (timerRef.current) clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(() => persist('EN_COURS'), debounceMs);
+
+    // IMPORTANT (Étape 10 du diagramme) : si on passe de NON_COMMENCE à EN_COURS,
+    // faire la persistence IMMÉDIATEMENT (sans debounce) pour éviter le RLS bloquant.
+    // Cela garantit que le statut est 'EN_COURS' en base AVANT les UPSERTs métier.
+    if (isInitialTransition) {
+      persist('EN_COURS').then(ok => {
+        if (!ok) {
+          console.warn('[useDraftSubmission] Impossible de persister le statut EN_COURS immédiatement');
+        }
+      });
+    } else {
+      // Pour les appels suivants, debounce la persistence
+      timerRef.current = setTimeout(() => persist('EN_COURS'), debounceMs);
+    }
   }, [persist, debounceMs]);
 
   /**
@@ -177,6 +223,21 @@ export const useDraftSubmission = ({
     return ok;
   }, [persist]);
 
+  /**
+   * Force immediate persistence of EN_COURS status WITHOUT debounce.
+   * Used to avoid RLS race conditions before metadata table UPSERTs.
+   * No-op if already TERMINE or if status is already EN_COURS.
+   */
+const ensureEnCours = useCallback(async (): Promise<boolean> => {
+  if (statusRef.current !== 'NON_COMMENCE') {
+    return true;
+  }
+
+  setStatus('EN_COURS');
+  statusRef.current = 'EN_COURS';
+
+  return persist('EN_COURS');
+}, [persist]);
   // Clean up debounce on unmount
   useEffect(() => () => {
     if (timerRef.current) clearTimeout(timerRef.current);
@@ -193,8 +254,7 @@ export const useDraftSubmission = ({
     // Actions
     update,
     saveNow,
-    submit,
-    // Stable alias kept for backward-compat with existing consumers
+    submit,    ensureEnCours, // NEW: Permettre aux callbacks métier d'attendre la persistence du statut    // Stable alias kept for backward-compat with existing consumers
     submissionId: rapportId,
     /** Réservé à l’UI (progression) ; non calculé par ce hook pour l’instant. */
     completeness: 0,

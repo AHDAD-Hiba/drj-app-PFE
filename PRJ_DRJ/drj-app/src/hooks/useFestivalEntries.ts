@@ -60,6 +60,84 @@ export function useFestivalEntries(rapportId: string | null) {
     itemsRef.current = items;
   }, [items]);
 
+
+  const updateLocal = useCallback(
+  (local_id: string, patch: Partial<FestivalEntry>) => {
+    setItems((prev) =>
+      prev.map((item) =>
+        item.local_id === local_id
+          ? { ...item, ...patch }
+          : item
+      )
+    );
+  },
+  [],
+);
+
+  const savingEntriesRef = useRef<Set<string>>(new Set());
+
+  const saveEntry = useCallback(
+  async (local_id: string): Promise<boolean> => {
+    if (savingEntriesRef.current.has(local_id)) {
+      return true;
+    }
+
+    savingEntriesRef.current.add(local_id);
+    const existing = itemsRef.current.find((item) => item.local_id === local_id);
+    if (!existing) {
+      return false;
+    }
+
+    const updatedEntry = existing;
+    
+    setIsSaving(true);
+    try {
+      const festivalPayload = {
+        ...(existing.id ? { id: existing.id } : {}),
+        rapport_id: rapportId,
+        nom: updatedEntry.name.trim(),
+      };
+
+      const { data: festivalData, error: festivalError } = await supabase
+        .from('festivals')
+        .upsert(festivalPayload as any, { onConflict: existing.id ? 'id' : 'rapport_id,nom' })
+        .select('id')
+        .single();
+      if (festivalError) throw festivalError;
+
+      const statsFields = {
+        ...(existing.statistiques_id ? { id: existing.statistiques_id } : {}),
+        festival_id: festivalData.id,
+        nbr_participants_qualifies: updatedEntry.participants_qualifies,
+        nbr_provinces_participantes: updatedEntry.provinces_participantes,
+        nbr_rural: updatedEntry.rural,
+        nbr_urbain: updatedEntry.urbain,
+        nombre_femmes: updatedEntry.femmes,
+        nombre_hommes: updatedEntry.hommes,
+      };
+      const { data: statsData, error: statsError } = await supabase
+        .from('statistiques_festivals')
+        .upsert(statsFields as any, { onConflict: existing.statistiques_id ? 'id' : 'festival_id' })
+        .select('id')
+        .single();
+      if (statsError) throw statsError;
+
+      setItems((prev) => prev.map((item) =>
+        item.local_id === local_id ? { ...item, id: festivalData.id, statistiques_id: statsData.id } : item,
+      ));
+
+      return true;
+    } catch (error) {
+      console.error('[useFestivalEntries] update unexpected error:', error);
+      return false;
+    } finally {
+      savingEntriesRef.current.delete(local_id);
+      setIsSaving(false);
+    }
+},
+[rapportId],
+);
+
   const reload = useCallback(async (): Promise<InternalFestivalEntry[]> => {
     if (!rapportId) {
       setItems([]);
@@ -150,72 +228,33 @@ export function useFestivalEntries(rapportId: string | null) {
     },
     [rapportId],
   );
+  
+  const saveTimersRef = useRef<
+  Record<string, ReturnType<typeof setTimeout>>
+>({});
 
-  const update = useCallback(
-    async (local_id: string, patch: Partial<FestivalEntry>): Promise<boolean> => {
-      const existing = itemsRef.current.find((item) => item.local_id === local_id);
-      if (!existing) {
-        return false;
-      }
+const update = useCallback(
+  async (
+    local_id: string,
+    patch: Partial<FestivalEntry>,
+  ): Promise<boolean> => {
 
-      const previousItems = itemsRef.current;
-      const updatedEntry: InternalFestivalEntry = {
-        ...existing,
-        ...patch,
-      };
+    console.log('UPDATE PATCH', patch);
+    updateLocal(local_id, patch);
 
-      setItems((prev) => prev.map((item) =>
-        item.local_id === local_id ? updatedEntry : item,
-      ));
-      
-      setIsSaving(true);
-      try {
-        const festivalPayload = {
-          ...(existing.id ? { id: existing.id } : {}),
-          rapport_id: rapportId,
-          nom: updatedEntry.name,
-        };
+    if (saveTimersRef.current[local_id]) {
+      clearTimeout(saveTimersRef.current[local_id]);
+    }
 
-        const { data: festivalData, error: festivalError } = await supabase
-          .from('festivals')
-          .upsert(festivalPayload as any, { onConflict: existing.id ? 'id' : 'rapport_id,nom' })
-          .select('id')
-          .single();
-        if (festivalError) throw festivalError;
+    saveTimersRef.current[local_id] = setTimeout(() => {
+      delete saveTimersRef.current[local_id];
+      void saveEntry(local_id);
+    }, 1500);
 
-        const statsFields = {
-          ...(existing.statistiques_id ? { id: existing.statistiques_id } : {}),
-          festival_id: festivalData.id,
-          nbr_participants_qualifies: updatedEntry.participants_qualifies,
-          nbr_provinces_participantes: updatedEntry.provinces_participantes,
-          nbr_rural: updatedEntry.rural,
-          nbr_urbain: updatedEntry.urbain,
-          nombre_femmes: updatedEntry.femmes,
-          nombre_hommes: updatedEntry.hommes,
-        };
-        const { data: statsData, error: statsError } = await supabase
-          .from('statistiques_festivals')
-          .upsert(statsFields as any, { onConflict: existing.statistiques_id ? 'id' : 'festival_id' })
-          .select('id')
-          .single();
-        if (statsError) throw statsError;
-
-        setItems((prev) => prev.map((item) =>
-          item.local_id === local_id ? { ...item, id: festivalData.id, statistiques_id: statsData.id } : item,
-        ));
-
-        return true;
-      } catch (error) {
-        console.error('[useFestivalEntries] update unexpected error:', error);
-        setItems(previousItems);
-        return false;
-      } finally {
-        setIsSaving(false);
-      }
-    },
-    [rapportId],
-  );
-
+    return true;
+  },
+  [updateLocal, saveEntry],
+);
   const remove = useCallback(
     async (local_id: string): Promise<boolean> => {
       const existing = itemsRef.current.find((item) => item.local_id === local_id);

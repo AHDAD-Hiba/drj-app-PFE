@@ -17,6 +17,11 @@ export function useTypesFermeture() {
     setLoading(true);
     setError(null);
 
+    const { count, error: countError } = await supabase
+      .from('types_fermeture')
+      .select('*', { count: 'exact', head: true });
+
+
     try {
       const { data, error } = await supabase
         .from('types_fermeture')

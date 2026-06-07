@@ -17,7 +17,6 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { useDomainSubmission } from '@/hooks/useDomainSubmission';
 import { useEtablissementEntries } from '@/hooks/useEtablissementEntries';
-import { useSubmissionEntries } from '@/hooks/useSubmissionEntries';
 import { useFestivalEntries } from '@/hooks/useFestivalEntries';
 import { useTypesPartenaires } from '@/hooks/useTypesPartenaires';
 import { usePartenariatEntries } from '@/hooks/usePartenariatEntries';
@@ -26,7 +25,6 @@ import type { ReportStatus } from '@/hooks/useDraftSubmission';
 import { SaveIndicator } from '@/components/form/SaveIndicator';
 import { Stepper, type Step } from '@/components/form/Stepper';
 import { useRef } from 'react';
-import type { Step1PermanentRef } from '@/components/wizard/Step1Permanent';
 import { Step1Permanent } from '@/components/wizard/Step1Permanent';
 import { Step2Rayonante } from '@/components/wizard/Step2Rayonante';
 import { Step3Etablissement , FacilityEntry } from '@/components/wizard/Step3Etablissement';
@@ -41,6 +39,7 @@ import { useInsertionEntries, type InsertionEntry as SocioEcoEntry } from '@/hoo
 import { PreFormSelection, type ReportSelection } from '@/components/wizard/PreFormSelection';
 import { DEFAULT_YEAR } from '@/components/YearSwitcher';
 import { computeJeunesseCompleteness } from '@/lib/jeunesseCompleteness';
+import { useActivitesEntries } from '@/hooks/useActivitesEntries';
 
 const STEPS: Step[] = [
   { id: 1, labelFr: 'Permanentes', labelAr: 'الدائمة' },
@@ -90,11 +89,7 @@ const { utilisateur: profile, isPrefectoral: isDirector, loading: authLoading } 
   const currentId = selection.rapportId ?? null;
 
   // Entry hooks for each table
-  const activites = useSubmissionEntries<any>(
-    'activites',
-    currentId,
-    'rapport_id'
-  );
+  const activites = useActivitesEntries(currentId);
   const partenaires = usePartenariatEntries(currentId);
   const typesPartenaires = useTypesPartenaires();
   const camps = useCampingEntries(currentId);
@@ -104,13 +99,8 @@ const { utilisateur: profile, isPrefectoral: isDirector, loading: authLoading } 
   const socios = useInsertionEntries(currentId);
   const facilities = useEtablissementEntries(currentId, profile?.direction_id ?? null);
 
-  const permanenteData = activites.items.find(
-  (a) => a.type_activite === 'permanente'
-);
-
-const rayonanteData = activites.items.find(
-  (a) => a.type_activite === 'rayonnante'
-);
+  const permanenteData = activites.permanente;
+  const rayonanteData = activites.rayonnante;
 
 const completeness = useMemo(() => {
   return computeJeunesseCompleteness({
@@ -145,60 +135,132 @@ const completeness = useMemo(() => {
   });
 
   // Stabilized callbacks for steps
-  const onSaveStep1 = useCallback(async (values: any) => {
-    let success = false;
-    if (permanenteData?.id) {
-      success = await activites.updateById(permanenteData.id, values);
-    } else {
-      success = await activites.add({
-        ...values,
-        type_activite: 'permanente',
-      });
-    }
-    return success;
-  }, [activites.add, activites.updateById, permanenteData?.id]);
-
+  const onSaveStep1 = useCallback(
+    async (values: any) => {
+      return activites.savePermanente(values);
+    },
+    [activites]
+  );
   const onActivityGlobal = useCallback(async () => {
     await domain.saveNow();
   }, [domain.saveNow]);
 
-  const onSaveStep2 = useCallback(async (values: any) => {
-    let success = false;
-    if (rayonanteData?.id) {
-      success = await activites.updateById(rayonanteData.id, values);
-    } else {
-      success = await activites.add({
-        ...values,
-        type_activite: 'rayonnante',
-      });
-    }
-    return success;
-  }, [activites.add, activites.updateById, rayonanteData?.id]);
+  const onSaveStep2 = useCallback(
+    async (values: any) => {
+      return activites.saveRayonnante(values);
+    },
+    [activites]
+  );
+  const onAddFacility = useCallback(async (f: FacilityEntry) => {
+    await domain.ensureEnCours();
+    void facilities.add(f);
+  }, [facilities.add, domain.ensureEnCours]);
 
-  const onAddFacility = useCallback((f: FacilityEntry) => { void facilities.add(f); }, [facilities.add]);
-  const onUpdateFacility = useCallback(async (id: string, patch: Partial<FacilityEntry>) => { await facilities.update(id, patch); }, [facilities.update]);
+  const onUpdateFacility = useCallback(
+    async (id: string, patch: Partial<FacilityEntry>) => {
+
+      console.time('ensureEnCours');
+
+      await domain.ensureEnCours();
+
+      console.timeEnd('ensureEnCours');
+
+      await facilities.update(id, patch);
+    },
+    [facilities.update, domain.ensureEnCours]
+  );
   const onRemoveFacility = useCallback((id: string) => { void facilities.remove(id); }, [facilities.remove]);
 
-  const onAddCamp = useCallback((c: CampEntry) => { void camps.add(c); }, [camps.add]);
+  const onAddCamp = useCallback(async (c: CampEntry) => {
+    await domain.ensureEnCours();
+    void camps.add(c);
+  }, [camps.add, domain.ensureEnCours]);
+
   const onRemoveCamp = useCallback((id: string) => { void camps.remove(id); }, [camps.remove]);
 
-  const onAddConvention = useCallback(() => {
+  const onAddConvention = useCallback(async () => {
+    await domain.ensureEnCours();
     void partenaires.add({
       local_id: crypto.randomUUID(),
       type_partenaire_id: '',
       nombre_conventions: 0,
     });
-  }, [partenaires.add]);
+  }, [partenaires.add, domain.ensureEnCours]);
 
-  const onAddFestival = useCallback((f: any) => { void festivals.add(f); }, [festivals.add]);
+  const onAddFestival = useCallback(async (f: any) => {
+    await domain.ensureEnCours();
+    void festivals.add(f);
+  }, [festivals.add, domain.ensureEnCours]);
+
   const onRemoveFestival = useCallback((id: string) => { void festivals.remove(id); }, [festivals.remove]);
 
-  const onAddSocio = useCallback((s: SocioEcoEntry) => { void socios.add(s); }, [socios.add]);
+  const onAddSocio = useCallback(async (s: SocioEcoEntry) => {
+    await domain.ensureEnCours();
+    void socios.add(s);
+  }, [socios.add, domain.ensureEnCours]);
+
   const onRemoveSocio = useCallback((id: string) => { void socios.remove(id); }, [socios.remove]);
   const onActivityStep7 = useCallback(async () => {
     domain.update();
     await domain.saveNow();
   }, [domain.update, domain.saveNow]);
+
+  // IMPORTANT : Wrappers pour assurer que le statut EN_COURS est persisté en base
+  // AVANT les UPSERTs métier. Cela évite les blocages RLS.
+  const onUpdateCampWrapper = useCallback(async (id: string, patch: any) => {
+    await domain.ensureEnCours();
+    return camps.update(id, patch);
+  }, [camps.update, domain.ensureEnCours]);
+
+  const onUpdateAssociationValueWrapper = useCallback(async (id: string, patch: any) => {
+    await domain.ensureEnCours();
+    return associationValues.update(id, patch);
+  }, [associationValues.update, domain.ensureEnCours]);
+
+  const onUpdateFormationWrapper = useCallback(async (id: string, patch: any) => {
+    await domain.ensureEnCours();
+    return formations.update(id, patch);
+  }, [formations.update, domain.ensureEnCours]);
+
+  const onAddFormationWrapper = useCallback(async (entry: any) => {
+    await domain.ensureEnCours();
+    return formations.add(entry);
+  }, [formations.add, domain.ensureEnCours]);
+
+  const onRemoveFormationWrapper = useCallback(async (id: string) => {
+    await domain.ensureEnCours();
+    return formations.remove(id);
+  }, [formations.remove, domain.ensureEnCours]);
+
+  const onUpdatePartenaireWrapper = useCallback(async (id: string, patch: any) => {
+    await domain.ensureEnCours();
+    return partenaires.update(id, patch);
+  }, [partenaires.update, domain.ensureEnCours]);
+
+  const onRemovePartenaireWrapper = useCallback(async (id: string) => {
+    await domain.ensureEnCours();
+    void partenaires.remove(id);
+  }, [partenaires.remove, domain.ensureEnCours]);
+
+  const onUpdateFestivalWrapper = useCallback(async (id: string, patch: any) => {
+    await domain.ensureEnCours();
+    return festivals.update(id, patch);
+  }, [festivals.update, domain.ensureEnCours]);
+
+  const onRemoveFestivalWrapper = useCallback(async (id: string) => {
+    await domain.ensureEnCours();
+    void festivals.remove(id);
+  }, [festivals.remove, domain.ensureEnCours]);
+
+  const onUpdateSocioWrapper = useCallback(async (id: string, patch: any) => {
+    await domain.ensureEnCours();
+    return socios.update(id, patch);
+  }, [socios.update, domain.ensureEnCours]);
+
+  const onRemoveSocioWrapper = useCallback(async (id: string) => {
+    await domain.ensureEnCours();
+    void socios.remove(id);
+  }, [socios.remove, domain.ensureEnCours]);
 
   if (authLoading || domain.loading) {
     return (
@@ -405,14 +467,14 @@ const handleSaveDraft = async () => {
               <Step4Camping
                 camps={camps.items}
                 onAddCamp={onAddCamp}
-                onUpdateCamp={camps.update}
+                onUpdateCamp={onUpdateCampWrapper}
                 onRemoveCamp={onRemoveCamp}
                 associationValues={associationValues.items}
-                onUpdateAssociationValue={associationValues.update}
+                onUpdateAssociationValue={onUpdateAssociationValueWrapper}
                 formations={formations.items}
-                onAddFormation={formations.add}
-                onUpdateFormation={formations.update}
-                onRemoveFormation={formations.remove}
+                onAddFormation={onAddFormationWrapper}
+                onUpdateFormation={onUpdateFormationWrapper}
+                onRemoveFormation={onRemoveFormationWrapper}
                 disabled={isLocked || camps.isSaving || associationValues.isSaving || formations.isSaving}
                 rapportId={currentId}
               />
@@ -423,16 +485,16 @@ const handleSaveDraft = async () => {
                 items={partenaires.items}
                 partnerTypes={typesPartenaires.items}
                 onAdd={onAddConvention}
-                onUpdate={partenaires.update}
-                onRemove={partenaires.remove}
+                onUpdate={onUpdatePartenaireWrapper}
+                onRemove={onRemovePartenaireWrapper}
               />
             )}
             {step === 6 && (
               <Step6Festival
                 festivals={festivals.items}
                 onAddFestival={onAddFestival}
-                onUpdateFestival={festivals.update}
-                onRemoveFestival={onRemoveFestival}
+                onUpdateFestival={onUpdateFestivalWrapper}
+                onRemoveFestival={onRemoveFestivalWrapper}
                 disabled={isLocked || festivals.isSaving}
               />
             )}
@@ -440,8 +502,8 @@ const handleSaveDraft = async () => {
               <Step7SocioEco
                 socioeco={socios.items}
                 onAddSocio={onAddSocio}
-                onUpdateSocio={socios.update}
-                onRemoveSocio={onRemoveSocio}
+                onUpdateSocio={onUpdateSocioWrapper}
+                onRemoveSocio={onRemoveSocioWrapper}
                 rapportId={currentId}
                 domain={selection.domain}
                 onActivity={onActivityStep7}

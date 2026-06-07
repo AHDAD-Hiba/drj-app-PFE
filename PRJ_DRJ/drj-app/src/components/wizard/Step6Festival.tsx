@@ -38,6 +38,7 @@ export const Step6Festival = memo(({
   const isAr = i18n.language === 'ar';
 
 
+  console.count('Step6Festival render');
   return (
     <div className="space-y-5">
       <Card className="p-5 sm:p-6 space-y-4">
@@ -112,7 +113,7 @@ export const Step6Festival = memo(({
                     <NumericField
                       label={isAr ? 'عدد الأقاليم المشاركة' : 'Nombre de provinces participantes'}
                       value={festival.provinces_participantes ?? 0}
-                      onChange={(value) => onUpdateFestival(festival.local_id, { provinces_participantes: value })}
+                      onChange={(value) => {console.log('NUMERIC CHANGE', value); onUpdateFestival(festival.local_id, { provinces_participantes: value })}}
                       disabled={disabled}
                     />
                     <NumericField

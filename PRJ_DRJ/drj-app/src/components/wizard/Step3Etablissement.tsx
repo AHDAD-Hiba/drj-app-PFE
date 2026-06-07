@@ -1,4 +1,4 @@
-import { memo } from 'react';
+import { memo, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -35,21 +35,6 @@ const PROJECT_STATUS_AR = [
   { v: 'ferme', l: 'مغلقة' },
 ];
 
-const OTHER_STATUS_FR = [
-  { v: 'conflit', l: 'Conflit juridique' },
-  { v: 'mise_a_niveau', l: 'Mise à niveau' },
-  { v: 'encadrement', l: 'Encadrement' },
-  { v: 'equipement', l: 'Équipement' },
-  { v: 'attente', l: "En attente d'inauguration" },
-];
-
-const OTHER_STATUS_AR = [
-  { v: 'conflit', l: 'نزاع قانوني' },
-  { v: 'mise_a_niveau', l: 'تأهيل' },
-  { v: 'encadrement', l: 'تأطير' },
-  { v: 'equipement', l: 'تجهيز' },
-  { v: 'attente', l: 'في انتظار التدشين' },
-];
 
 interface Props {
   items: FacilityEntry[];
@@ -65,6 +50,7 @@ interface Props {
 
   disabled?: boolean;
 }
+
 
 export const Step3Etablissement = memo(({
   items,
@@ -83,13 +69,19 @@ export const Step3Etablissement = memo(({
 
   const { items: fermetureTypes } = useTypesFermeture();
 
+    useEffect(() => {
+    console.log('Step3Etablissement MOUNT');
+
+    return () => {
+      console.log('Step3Etablissement UNMOUNT');
+    };
+  }, []);
+
+  console.count('Step3Etablissement render');
+  
   const otherStatuses =
-    fermetureTypes && fermetureTypes.length > 0
-      ? // map DB rows to { v, l }
-        fermetureTypes.map((t) => ({ v: t.id, l: t.nom }))
-      : isAr
-      ? OTHER_STATUS_AR
-      : OTHER_STATUS_FR;
+    fermetureTypes?.map((t) => ({ v: t.id, l: t.nom }))
+    ?? [];
 
   return (
     <Card className="p-5 sm:p-6 space-y-4">
