@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import type { Database } from '@/integrations/supabase/types';
 
 export interface CampEntry {
   local_id: string;
@@ -24,7 +23,6 @@ export interface CampEntry {
 export function useCampingEntries(rapportId: string | null) {
   const [items, setItems] = useState<CampEntry[]>([]);
   const [loading, setLoading] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
   const itemsRef = useRef<CampEntry[]>([]);
 
   useEffect(() => {
@@ -116,6 +114,151 @@ export function useCampingEntries(rapportId: string | null) {
     return () => { cancelled = true; };
   }, [rapportId, reload]);
 
+  const updateLocal = useCallback(
+  (local_id: string, patch: Partial<CampEntry>) => {
+    setItems(prev =>
+      prev.map(item =>
+        item.local_id === local_id
+          ? { ...item, ...patch }
+          : item
+      )
+    );
+  },
+  [],
+);
+
+  const saveTimersRef = useRef<
+  Record<string, ReturnType<typeof setTimeout>>
+>({});
+
+  const savingEntriesRef = useRef<Set<string>>(new Set());
+
+  const saveEntry = useCallback(
+    async (local_id: string): Promise<boolean> => {
+
+      if (savingEntriesRef.current.has(local_id)) {
+        return true;
+      }
+
+      savingEntriesRef.current.add(local_id);
+      
+      const existing = itemsRef.current.find((item) => item.local_id === local_id);
+        if (!existing) {
+          savingEntriesRef.current.delete(local_id);
+          return false;
+        }
+      const updatedEntry = existing;
+        // If rapportId is missing, stop after the optimistic local update.
+        if (!rapportId) {
+          savingEntriesRef.current.delete(local_id);
+          return true;
+        }
+
+        // Si le type de camp n'est pas encore choisi, on ne sauvegarde pas encore en base
+        if (!updatedEntry.programme_id) {
+          savingEntriesRef.current.delete(local_id);
+          return true;
+        }
+
+        const duplicate = itemsRef.current.find(
+          item =>
+            item.local_id !== local_id &&
+            item.programme_id === updatedEntry.programme_id
+        );
+        if (duplicate) {
+          console.warn('Duplicate camp entry');
+          savingEntriesRef.current.delete(local_id);
+          return false;
+        }
+
+        try {
+          // 1. Gérer Participants
+          const partPayload = {
+            ...(updatedEntry.participant_id ? { id: updatedEntry.participant_id } : {}),
+            rapport_id: rapportId,
+            programme_id: updatedEntry.programme_id,
+            femmes: updatedEntry.girls,
+            hommes: updatedEntry.boys,
+            milieu_rural: updatedEntry.rural,
+            milieu_urbain: updatedEntry.urban,
+            besoins_specifiques: updatedEntry.special_needs,
+            enfants_marocains_etranger: updatedEntry.immigrant_children,
+          };
+
+          const { data: partData, error: partError } = await supabase.from('participants').upsert(partPayload, { onConflict: updatedEntry.participant_id ? 'id' : 'rapport_id,programme_id' }).select('id').single();
+          if (partError) throw partError;
+          const partId = partData.id;
+
+          // 2. Sauvegarder encadrements
+          const updatedEncadrements: CampEntry['encadrements'] = [
+            ...updatedEntry.encadrements,
+          ];
+
+          for (const enc of updatedEntry.encadrements) {
+
+            if (!enc.niveau_formation_id) {
+              continue;
+            }
+
+            const encPayload = {
+              ...(enc.id ? { id: enc.id } : {}),
+              rapport_id: rapportId,
+              programme_id: updatedEntry.programme_id,
+              niveau_formation_id: enc.niveau_formation_id,
+              nombre_femmes: enc.nombre_femmes,
+              nombre_hommes: enc.nombre_hommes,
+            };
+
+            const { data: encData, error: encError } =
+              await supabase
+                .from('encadrements')
+                .upsert(
+                  encPayload,
+                  {
+                    onConflict:
+                      enc.id
+                        ? 'id'
+                        : 'rapport_id,programme_id,niveau_formation_id',
+                  },
+                )
+                .select('id')
+                .single();
+
+            if (encError) throw encError;
+
+            const idx = updatedEncadrements.findIndex(
+              x => x.local_id === enc.local_id
+            );
+
+            if (idx !== -1) {
+              updatedEncadrements[idx] = {
+                ...enc,
+                id: encData.id,
+              };
+            }
+          }
+          // Mettre à jour l'état avec les nouveaux IDs
+          setItems(prev =>
+            prev.map(item =>
+              item.local_id === local_id
+                ? {
+                    ...updatedEntry,
+                    participant_id: partId,
+                    encadrements: updatedEncadrements,
+                  }
+                : item
+            )
+          );
+          return true;
+        } catch (error) {
+          console.error('[useCampingEntries] update error:', error);
+          return false;
+        } finally {
+          savingEntriesRef.current.delete(local_id);
+        }
+      },
+    [rapportId]
+  );
   // ====================
   // CRUD Operations
   // ====================
@@ -134,77 +277,33 @@ export function useCampingEntries(rapportId: string | null) {
   );
 
   const update = useCallback(
-    async (local_id: string, patch: Partial<CampEntry>): Promise<boolean> => {
-      const existing = itemsRef.current.find((item) => item.local_id === local_id);
-      if (!existing) return false;
+    async (
+      local_id: string,
+      patch: Partial<CampEntry>,
+    ): Promise<boolean> => {
 
-      const updatedEntry = { ...existing, ...patch };
-      setItems((prev) => prev.map((item) => item.local_id === local_id ? updatedEntry : item));
+      updateLocal(local_id, patch);
 
-      // If rapportId is missing, stop after the optimistic local update.
-      if (!rapportId) return true;
-
-      // Si le type de camp n'est pas encore choisi, on ne sauvegarde pas encore en base
-      if (!updatedEntry.programme_id) return true;
-
-      setIsSaving(true);
-      try {
-        // 1. Gérer Participants
-        const partPayload = {
-          ...(updatedEntry.participant_id ? { id: updatedEntry.participant_id } : {}),
-          rapport_id: rapportId,
-          programme_id: updatedEntry.programme_id,
-          femmes: updatedEntry.girls,
-          hommes: updatedEntry.boys,
-          milieu_rural: updatedEntry.rural,
-          milieu_urbain: updatedEntry.urban,
-          besoins_specifiques: updatedEntry.special_needs,
-          enfants_marocains_etranger: updatedEntry.immigrant_children,
-        };
-
-        const { data: partData, error: partError } = await supabase.from('participants').upsert(partPayload, { onConflict: updatedEntry.participant_id ? 'id' : 'rapport_id,programme_id' }).select('id').single();
-        if (partError) throw partError;
-        const partId = partData.id;
-
-        // 2. Sauvegarder encadrements
-        for (const enc of updatedEntry.encadrements) {
-          const encPayload = {
-            ...(enc.id ? { id: enc.id } : {}),
-            rapport_id: rapportId,
-            programme_id: updatedEntry.programme_id,
-            niveau_formation_id: enc.niveau_formation_id || null,
-            nombre_femmes: enc.nombre_femmes,
-            nombre_hommes: enc.nombre_hommes,
-          };
-
-          const { data: encData, error: encError } = await supabase.from('encadrements').upsert(encPayload, { onConflict: enc.id ? 'id' : 'rapport_id,programme_id,niveau_formation_id' }).select('id').single();
-          if (encError) throw encError;
-          enc.id = encData.id;
-        }
-        // Mettre à jour l'état avec les nouveaux IDs
-        setItems((prev) =>
-          prev.map((item) =>
-            item.local_id === local_id
-              ? {
-                  ...updatedEntry,
-                  participant_id: partId,
-                }
-              : item
-          )
-        );
-        return true;
-      } catch (error) {
-        console.error('[useCampingEntries] update error:', error);
-        return false;
-      } finally {
-        setIsSaving(false);
+      if (saveTimersRef.current[local_id]) {
+        clearTimeout(saveTimersRef.current[local_id]);
       }
-    },
-    [rapportId]
-  );
 
+      saveTimersRef.current[local_id] = setTimeout(() => {
+        delete saveTimersRef.current[local_id];
+        void saveEntry(local_id);
+      }, 1500);
+
+      return true;
+    },
+    [updateLocal, saveEntry],
+  );
+  
   const remove = useCallback(
     async (local_id: string): Promise<boolean> => {
+      if (saveTimersRef.current[local_id]) {
+        clearTimeout(saveTimersRef.current[local_id]);
+        delete saveTimersRef.current[local_id];
+      }
       const existing = itemsRef.current.find((item) => item.local_id === local_id);
       if (!existing) return false;
 
@@ -232,5 +331,5 @@ export function useCampingEntries(rapportId: string | null) {
     [rapportId]
   );
 
-  return { items, loading, isSaving, reload, add, update, remove };
+  return { items, loading, reload, add, update, remove };
 }

@@ -113,7 +113,7 @@ export const Step6Festival = memo(({
                     <NumericField
                       label={isAr ? 'عدد الأقاليم المشاركة' : 'Nombre de provinces participantes'}
                       value={festival.provinces_participantes ?? 0}
-                      onChange={(value) => {console.log('NUMERIC CHANGE', value); onUpdateFestival(festival.local_id, { provinces_participantes: value })}}
+                      onChange={(value) => {console.log('NUMERIC CHANGE', festival.local_id); onUpdateFestival(festival.local_id, { provinces_participantes: value })}}
                       disabled={disabled}
                     />
                     <NumericField

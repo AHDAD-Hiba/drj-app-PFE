@@ -96,14 +96,14 @@ export function useEtablissementEntries(
         timestamp: Date.now(),
       });
 
-      if (!existing) return false;
+if (!existing) return false;
 
       const updatedEntry = existing;
 
       setIsSaving(true);
 
       try {
-        const etabPayload = {
+          const etabPayload = {
             ...(existing.id ? { id: existing.id } : {}),
             direction_id: directionId,
             nom: updatedEntry.name.trim(),

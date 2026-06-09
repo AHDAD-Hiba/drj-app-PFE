@@ -16,7 +16,6 @@ export interface FormationEntry {
 export function useFormationEntries(rapportId: string | null) {
   const [items, setItems] = useState<FormationEntry[]>([]);
   const [loading, setLoading] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
   const itemsRef = useRef<FormationEntry[]>([]);
 
   useEffect(() => {
@@ -91,6 +90,129 @@ export function useFormationEntries(rapportId: string | null) {
     };
   }, [rapportId, reload]);
 
+  const updateLocal = useCallback(
+    (local_id: string, patch: Partial<FormationEntry>) => {
+      setItems(prev =>
+        prev.map(item =>
+          item.local_id === local_id
+            ? { ...item, ...patch }
+            : item
+        )
+      );
+    },
+    [],
+  );
+
+  const saveTimersRef = useRef<
+    Record<string, ReturnType<typeof setTimeout>>
+  >({});
+
+  const savingEntriesRef = useRef<Set<string>>(new Set());
+
+  const saveEntry = useCallback(
+    async (local_id: string): Promise<boolean> => {
+        if (savingEntriesRef.current.has(local_id)) {
+        return true;
+      }
+
+      savingEntriesRef.current.add(local_id);
+      const existing = itemsRef.current.find((item) => item.local_id === local_id);
+        if (!existing) {
+          savingEntriesRef.current.delete(local_id);
+          return false;
+        }
+      const updatedEntry = existing;
+        // If rapportId is missing, stop after the optimistic local update.
+        if (!rapportId) {
+          savingEntriesRef.current.delete(local_id);
+          return true;
+        }
+
+        if (
+          !updatedEntry.centre.trim() &&
+          updatedEntry.numero_session <= 0 &&
+          updatedEntry.beneficiaries_girls === 0 &&
+          updatedEntry.beneficiaries_boys === 0 &&
+          updatedEntry.trainers_girls === 0 &&
+          updatedEntry.trainers_boys === 0
+        ) {
+          savingEntriesRef.current.delete(local_id);
+          return true;
+        }
+
+        const duplicate = itemsRef.current.find(
+          item =>
+            item.local_id !== local_id &&
+            item.centre.trim().toLowerCase() ===
+              updatedEntry.centre.trim().toLowerCase() &&
+            item.numero_session === updatedEntry.numero_session
+        );
+
+        if (duplicate) {
+          console.warn('Duplicate formation');
+
+          savingEntriesRef.current.delete(local_id);
+          return false;
+        }
+
+        try {
+          const payload: any = {
+            ...(updatedEntry.id ? { id: updatedEntry.id } : {}),
+            rapport_id: rapportId,
+            centre: updatedEntry.centre,
+            numero_session: updatedEntry.numero_session,
+          };
+
+          const { data: frmData, error: frmError } = await supabase
+            .from('formations')
+            .upsert(
+              payload,
+              {
+                onConflict: updatedEntry.id
+                  ? 'id'
+                  : 'rapport_id,centre,numero_session',
+              }
+            )
+            .select('id')
+            .single();
+          if (frmError) throw frmError;
+
+
+          const statsPayload = {
+            ...(updatedEntry.statistiques_id ? { id: updatedEntry.statistiques_id } : {}),
+            formation_id: frmData.id,
+            nombre_beneficiaires_femmes: updatedEntry.beneficiaries_girls,
+            nombre_beneficiaires_hommes: updatedEntry.beneficiaries_boys,
+            nombre_formateurs_femmes: updatedEntry.trainers_girls,
+            nombre_formateurs_hommes: updatedEntry.trainers_boys,
+          };
+
+          const { data: statsData, error: statsError } = await supabase
+            .from('statistiques_formation')
+            .upsert(statsPayload, { onConflict: updatedEntry.statistiques_id ? 'id' : 'formation_id' })
+            .select('id')
+            .single();
+          if (statsError) throw statsError;
+
+
+          setItems((prev) =>
+            prev.map((item) =>
+              item.local_id === local_id 
+                ? { ...updatedEntry, id: frmData.id, statistiques_id: statsData.id } 
+                : item
+            )
+          );
+          return true;
+        } catch (error) {
+          console.error('FULL ERROR', error);
+          console.error('[useFormationEntries] update error:', error);
+          return false;
+        } finally {
+          savingEntriesRef.current.delete(local_id);
+        }
+      },
+      [rapportId]
+  );
   // ====================
   // CRUD Operations
   // ====================
@@ -107,67 +229,25 @@ export function useFormationEntries(rapportId: string | null) {
   );
 
   const update = useCallback(
-    async (local_id: string, patch: Partial<FormationEntry>): Promise<boolean> => {
-      const existing = itemsRef.current.find((item) => item.local_id === local_id);
-      if (!existing) return false;
+    async (
+      local_id: string,
+      patch: Partial<FormationEntry>,
+    ): Promise<boolean> => {
 
-      const updatedEntry = { ...existing, ...patch };
-      setItems((prev) =>
-        prev.map((item) =>
-          item.local_id === local_id ? updatedEntry : item
-        )
-      );
+      updateLocal(local_id, patch);
 
-      if (!rapportId) return true;
-      setIsSaving(true);
-
-      try {
-        const payload: any = {
-          ...(updatedEntry.id ? { id: updatedEntry.id } : {}),
-          rapport_id: rapportId,
-          centre: updatedEntry.centre,
-          numero_session: updatedEntry.numero_session,
-        };
-
-        const { data: frmData, error: frmError } = await supabase
-          .from('formations')
-          .upsert(payload, { onConflict: updatedEntry.id ? 'id' : 'rapport_id,centre,numero_session' })
-          .select('id')
-          .single();
-        if (frmError) throw frmError;
-
-        const statsPayload = {
-          ...(updatedEntry.statistiques_id ? { id: updatedEntry.statistiques_id } : {}),
-          formation_id: frmData.id,
-          nombre_beneficiaires_femmes: updatedEntry.beneficiaries_girls,
-          nombre_beneficiaires_hommes: updatedEntry.beneficiaries_boys,
-          nombre_formateurs_femmes: updatedEntry.trainers_girls,
-          nombre_formateurs_hommes: updatedEntry.trainers_boys,
-        };
-
-        const { data: statsData, error: statsError } = await supabase
-          .from('statistiques_formation')
-          .upsert(statsPayload, { onConflict: updatedEntry.statistiques_id ? 'id' : 'formation_id' })
-          .select('id')
-          .single();
-        if (statsError) throw statsError;
-
-        setItems((prev) =>
-          prev.map((item) =>
-            item.local_id === local_id 
-              ? { ...updatedEntry, id: frmData.id, statistiques_id: statsData.id } 
-              : item
-          )
-        );
-        return true;
-      } catch (error) {
-        console.error('[useFormationEntries] update error:', error);
-        return false;
-      } finally {
-        setIsSaving(false);
+      if (saveTimersRef.current[local_id]) {
+        clearTimeout(saveTimersRef.current[local_id]);
       }
+
+      saveTimersRef.current[local_id] = setTimeout(() => {
+        delete saveTimersRef.current[local_id];
+        void saveEntry(local_id);
+      }, 1500);
+
+      return true;
     },
-    [rapportId]
+    [updateLocal, saveEntry],
   );
 
   const remove = useCallback(
@@ -197,5 +277,5 @@ export function useFormationEntries(rapportId: string | null) {
     [rapportId]
   );
 
-  return { items, loading, isSaving, reload, add, update, remove };
+  return { items, loading, reload, add, update, remove };
 }

@@ -53,7 +53,6 @@ const normalizeStats = (stats: DbStatRow[] | DbStatRow | null | undefined): DbSt
 export function useFestivalEntries(rapportId: string | null) {
   const [items, setItems] = useState<InternalFestivalEntry[]>([]);
   const [loading, setLoading] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
   const itemsRef = useRef<InternalFestivalEntry[]>([]);
 
   useEffect(() => {
@@ -82,7 +81,7 @@ export function useFestivalEntries(rapportId: string | null) {
       return true;
     }
 
-    savingEntriesRef.current.add(local_id);
+savingEntriesRef.current.add(local_id);
     const existing = itemsRef.current.find((item) => item.local_id === local_id);
     if (!existing) {
       return false;
@@ -90,7 +89,6 @@ export function useFestivalEntries(rapportId: string | null) {
 
     const updatedEntry = existing;
     
-    setIsSaving(true);
     try {
       const festivalPayload = {
         ...(existing.id ? { id: existing.id } : {}),
@@ -132,7 +130,6 @@ export function useFestivalEntries(rapportId: string | null) {
       return false;
     } finally {
       savingEntriesRef.current.delete(local_id);
-      setIsSaving(false);
     }
 },
 [rapportId],
@@ -305,7 +302,6 @@ const update = useCallback(
   return {
     items,
     loading,
-    isSaving,
     reload,
     add,
     update,

@@ -56,13 +56,89 @@ const toInsertionEntry = (
 export function useInsertionEntries(rapportId: string | null) {
   const [items, setItems] = useState<InternalInsertionEntry[]>([]);
   const [loading, setLoading] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
   const itemsRef = useRef<InternalInsertionEntry[]>([]);
 
   useEffect(() => {
     itemsRef.current = items;
   }, [items]);
 
+  const updateLocal = useCallback(
+  (local_id: string, patch: Partial<InsertionEntry>) => {
+    setItems(prev =>
+      prev.map(item =>
+        item.local_id === local_id
+          ? { ...item, ...patch }
+          : item
+      )
+    );
+  },
+  [],
+);
+
+  const savingEntriesRef = useRef<Set<string>>(new Set());
+
+  const saveEntry = useCallback(
+  async (local_id: string): Promise<boolean> => {
+    if (savingEntriesRef.current.has(local_id)) {
+      return true;
+    }
+
+    savingEntriesRef.current.add(local_id);
+
+const existing = itemsRef.current.find((item) => item.local_id === local_id);
+      if (!existing) {
+        return false;
+      }
+
+      const updatedEntry = existing;
+      try { 
+        const activitePayload = {
+          ...(existing.id ? { id: existing.id } : {}),
+          rapport_id: rapportId,
+          sujet: updatedEntry.sujet,
+          duree_valeur: updatedEntry.duree_valeur,
+          unite_duree: updatedEntry.unite_duree === '' ? null : updatedEntry.unite_duree,
+          type_partenaire_id: updatedEntry.type_partenaire_id || null,
+        };
+
+        const { data: activiteData, error: activiteError } = await supabase
+          .from('activites_insertion')
+          .upsert(activitePayload as any)
+          .select('id')
+          .single();
+        if (activiteError) throw activiteError;
+
+        const statsPayload = {
+          ...(existing.stats_id ? { id: existing.stats_id } : {}),
+          activite_id: activiteData.id,
+          femmes: updatedEntry.femmes,
+          hommes: updatedEntry.hommes,
+          nbr_rural: updatedEntry.rural,
+          nbr_urbain: updatedEntry.urbain,
+        };
+
+        const { data: statsData, error: statsError } = await supabase
+          .from('stats_insertion')
+          .upsert(statsPayload as any, { onConflict: existing.stats_id ? 'id' : 'activite_id' })
+          .select('id')
+          .single();
+        if (statsError) throw statsError;
+
+        setItems((prev) => prev.map((item) =>
+          item.local_id === local_id ? { ...item, id: activiteData.id, stats_id: statsData.id } : item
+        ));
+
+        return true;
+      } catch (error) {
+        console.error('[useInsertionEntries] update unexpected error:', error);
+        return false;
+      } finally {
+        savingEntriesRef.current.delete(local_id);
+      }
+  },
+    [rapportId],
+  );
+  
   const reload = useCallback(async (): Promise<InternalInsertionEntry[]> => {
     if (!rapportId) {
       setItems([]);
@@ -155,72 +231,31 @@ export function useInsertionEntries(rapportId: string | null) {
     [rapportId],
   );
 
+  const saveTimersRef = useRef<
+  Record<string, ReturnType<typeof setTimeout>>
+  >({});
+
   const update = useCallback(
-    async (local_id: string, patch: Partial<InsertionEntry>): Promise<boolean> => {
-      const existing = itemsRef.current.find((item) => item.local_id === local_id);
-      if (!existing) {
-        return false;
-      }
+  async (
+    local_id: string,
+    patch: Partial<InsertionEntry>,
+  ): Promise<boolean> => {
 
-      const previousItems = itemsRef.current;
-      const updatedEntry: InternalInsertionEntry = {
-        ...existing,
-        ...patch,
-      };
+    updateLocal(local_id, patch);
 
-      setItems((prev) => prev.map((item) =>
-        item.local_id === local_id ? updatedEntry : item,
-      ));
-      
-      setIsSaving(true);
-      try {
-        const activitePayload = {
-          ...(existing.id ? { id: existing.id } : {}),
-          rapport_id: rapportId,
-          sujet: updatedEntry.sujet,
-          duree_valeur: updatedEntry.duree_valeur,
-          unite_duree: updatedEntry.unite_duree === '' ? null : updatedEntry.unite_duree,
-          type_partenaire_id: updatedEntry.type_partenaire_id || null,
-        };
+    if (saveTimersRef.current[local_id]) {
+      clearTimeout(saveTimersRef.current[local_id]);
+    }
 
-        const { data: activiteData, error: activiteError } = await supabase
-          .from('activites_insertion')
-          .upsert(activitePayload as any, { onConflict: existing.id ? 'id' : 'rapport_id,sujet,type_partenaire_id' })
-          .select('id')
-          .single();
-        if (activiteError) throw activiteError;
+    saveTimersRef.current[local_id] = setTimeout(() => {
+      delete saveTimersRef.current[local_id];
+      void saveEntry(local_id);
+    }, 1500);
 
-        const statsPayload = {
-          ...(existing.stats_id ? { id: existing.stats_id } : {}),
-          activite_id: activiteData.id,
-          femmes: updatedEntry.femmes,
-          hommes: updatedEntry.hommes,
-          nbr_rural: updatedEntry.rural,
-          nbr_urbain: updatedEntry.urbain,
-        };
-
-        const { data: statsData, error: statsError } = await supabase
-          .from('stats_insertion')
-          .upsert(statsPayload as any, { onConflict: existing.stats_id ? 'id' : 'activite_id' })
-          .select('id')
-          .single();
-        if (statsError) throw statsError;
-
-        setItems((prev) => prev.map((item) =>
-          item.local_id === local_id ? { ...item, id: activiteData.id, stats_id: statsData.id } : item
-        ));
-
-        return true;
-      } catch (error) {
-        console.error('[useInsertionEntries] update unexpected error:', error);
-        setItems(previousItems);
-        return false;
-      } finally {
-        setIsSaving(false);
-      }
-    },
-    [rapportId],
-  );
+    return true;
+  },
+  [updateLocal, saveEntry],
+);
 
   const remove = useCallback(
     async (local_id: string): Promise<boolean> => {
@@ -272,7 +307,6 @@ export function useInsertionEntries(rapportId: string | null) {
   return {
     items,
     loading,
-    isSaving,
     reload,
     add,
     update,

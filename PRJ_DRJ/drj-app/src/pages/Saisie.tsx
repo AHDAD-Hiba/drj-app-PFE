@@ -475,13 +475,13 @@ const handleSaveDraft = async () => {
                 onAddFormation={onAddFormationWrapper}
                 onUpdateFormation={onUpdateFormationWrapper}
                 onRemoveFormation={onRemoveFormationWrapper}
-                disabled={isLocked || camps.isSaving || associationValues.isSaving || formations.isSaving}
+                disabled={isLocked}
                 rapportId={currentId}
               />
             )}
             {step === 5 && (
               <Step5Convention
-                disabled={isLocked || (partenaires as any)?.isSaving}
+                disabled={isLocked}
                 items={partenaires.items}
                 partnerTypes={typesPartenaires.items}
                 onAdd={onAddConvention}
@@ -495,7 +495,7 @@ const handleSaveDraft = async () => {
                 onAddFestival={onAddFestival}
                 onUpdateFestival={onUpdateFestivalWrapper}
                 onRemoveFestival={onRemoveFestivalWrapper}
-                disabled={isLocked || festivals.isSaving}
+                disabled={isLocked}
               />
             )}
             {step === 7 && (
@@ -507,7 +507,7 @@ const handleSaveDraft = async () => {
                 rapportId={currentId}
                 domain={selection.domain}
                 onActivity={onActivityStep7}
-                disabled={isLocked || socios.isSaving}
+                disabled={isLocked}
               />
             )}
           </>

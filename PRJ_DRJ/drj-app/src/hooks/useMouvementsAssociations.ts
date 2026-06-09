@@ -12,7 +12,6 @@ export interface MouvementAssociation {
 export function useMouvementsAssociations(rapportId: string | null) {
   const [items, setItems] = useState<MouvementAssociation[]>([]);
   const [loading, setLoading] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
   const itemsRef = useRef<MouvementAssociation[]>([]);
 
   useEffect(() => {
@@ -78,6 +77,126 @@ export function useMouvementsAssociations(rapportId: string | null) {
     };
   }, [rapportId, reload]);
 
+  const updateLocal = useCallback(
+    (
+      local_id: string,
+      patch: Partial<MouvementAssociation>
+    ) => {
+      setItems(prev =>
+        prev.map(item =>
+          item.local_id === local_id
+            ? { ...item, ...patch }
+            : item
+        )
+      );
+    },
+    []
+  );
+
+  const saveTimersRef = useRef<
+    Record<string, ReturnType<typeof setTimeout>>
+  >({});
+
+  const savingEntriesRef = useRef<Set<string>>(new Set());
+
+  const saveEntry = useCallback(
+    async (local_id: string): Promise<boolean> => {
+
+      if (savingEntriesRef.current.has(local_id)) {
+        return true;
+      }
+
+      savingEntriesRef.current.add(local_id);
+
+      const entry = itemsRef.current.find(
+          x => x.local_id === local_id
+        );
+
+      if (!entry) {
+        return true;
+      }
+
+      if (!rapportId) {
+        return true;
+      }
+
+      // skip empty rows
+      if (!entry.nom_association.trim()) {
+        return true;
+      }
+
+      // duplicate check UI
+       const duplicate = itemsRef.current.find(
+        x =>
+          x.local_id !== entry.local_id &&
+          x.nom_association.trim().toLowerCase() ===
+            entry.nom_association.trim().toLowerCase() &&
+          x.type_mouvement === entry.type_mouvement
+      );
+
+      if (duplicate) {
+        console.warn(
+          '[useMouvementsAssociations] duplicate mouvement'
+        );
+        return false;
+      }
+
+
+      try {
+        const payload = {
+          ...(entry.id ? { id: entry.id } : {}),
+          rapport_id: rapportId,
+          nom_association: entry.nom_association,
+          type_mouvement: entry.type_mouvement,
+          date_mouvement: entry.date_mouvement,
+        };
+
+        const { data, error } = await supabase
+          .from('mouvements_associations')
+          .upsert(
+            payload,
+            {
+              onConflict: entry.id
+                ? 'id'
+                : 'rapport_id,nom_association,type_mouvement',
+            }
+          )
+          .select('id')
+          .single();
+
+        if (error) throw error;
+
+        setItems(prev =>
+          prev.map(item =>
+            item.local_id === local_id
+              ? {
+                  ...item,
+                  id: data.id,
+                }
+              : item
+          )
+        );
+
+        return true;
+
+      } catch (error) {
+
+        console.error(
+          '[useMouvementsAssociations] save error:',
+          error
+        );
+
+        return false;
+
+      } finally {
+
+        savingEntriesRef.current.delete(local_id);
+
+      }
+    },
+    [rapportId]
+  );
+
   // ====================
   // CRUD Operations
   // ====================
@@ -98,51 +217,29 @@ export function useMouvementsAssociations(rapportId: string | null) {
       local_id: string,
       patch: Partial<MouvementAssociation>
     ): Promise<boolean> => {
-      const existing = itemsRef.current.find((item) => item.local_id === local_id);
-      if (!existing) return false;
 
-      const updatedEntry = { ...existing, ...patch };
-      setItems((prev) =>
-        prev.map((item) =>
-          item.local_id === local_id ? updatedEntry : item
-        )
-      );
+      updateLocal(local_id, patch);
 
-      if (!rapportId) return true;
-      setIsSaving(true);
-
-      try {
-        const payload = {
-          ...(updatedEntry.id ? { id: updatedEntry.id } : {}),
-          rapport_id: rapportId,
-          nom_association: updatedEntry.nom_association,
-          type_mouvement: updatedEntry.type_mouvement,
-          date_mouvement: updatedEntry.date_mouvement,
-        };
-
-        const { data, error } = await supabase
-          .from('mouvements_associations')
-          .upsert(payload, { onConflict: updatedEntry.id ? 'id' : 'rapport_id,nom_association,type_mouvement' })
-          .select('id')
-          .single();
-        if (error) throw error;
-
-        setItems((prev) =>
-          prev.map((item) =>
-            item.local_id === local_id ? { ...updatedEntry, id: data.id } : item
-          )
+      if (saveTimersRef.current[local_id]) {
+        clearTimeout(
+          saveTimersRef.current[local_id]
         );
-        return true;
-      } catch (error) {
-        console.error('[useMouvementsAssociations] update error:', error);
-        return false;
-      } finally {
-        setIsSaving(false);
       }
-    },
-    [rapportId]
-  );
 
+      saveTimersRef.current[local_id] =
+        setTimeout(() => {
+
+          delete saveTimersRef.current[local_id];
+
+          void saveEntry(local_id);
+
+        }, 1500);
+
+      return true;
+    },
+    [updateLocal, saveEntry]
+  );
+  
   const remove = useCallback(
     async (local_id: string): Promise<boolean> => {
       const existing = itemsRef.current.find((item) => item.local_id === local_id);
@@ -167,5 +264,5 @@ export function useMouvementsAssociations(rapportId: string | null) {
     [rapportId]
   );
 
-  return { items, loading, isSaving, reload, add, update, remove };
+  return { items, loading, reload, add, update, remove };
 }

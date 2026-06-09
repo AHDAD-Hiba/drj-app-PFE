@@ -96,7 +96,7 @@ const formatBenchmarkData = (data: any) => {
   return [
     { kpi: "Total des Activités", monScore: d.pref_total_activites || 0, moyenneReg: d.reg_total_activites || 0, isPercentage: false },
     { kpi: "Total Bénéficiaires", monScore: d.pref_total_beneficiaires || 0, moyenneReg: d.reg_total_beneficiaires || 0, isPercentage: false },
-    { kpi: "Taux de Couverture", monScore: d.pref_taux_ruralite || 0, moyenneReg: d.reg_taux_ruralite || 0, isPercentage: true },
+    { kpi: "Taux de Couverture", monScore: d.pref_taux_couverture || 0, moyenneReg: d.reg_taux_couverture || 0, isPercentage: true },
     { kpi: "Taux de Féminisation", monScore: d.pref_taux_feminisation || 0, moyenneReg: d.reg_taux_feminisation || 0, isPercentage: true },
     { kpi: "Partenariats Actifs", monScore: d.pref_total_partenariats || 0, moyenneReg: d.reg_total_partenariats || 0, isPercentage: false },
     { kpi: "Établ. Opérationnels", monScore: d.pref_etablissements_actifs || 0, moyenneReg: d.reg_etablissements_actifs || 0, isPercentage: false }
@@ -201,7 +201,7 @@ const loadDashboardData = useCallback(async () => {
             totalBeneficiaries: 0,
             totalActivities: 0,
             feminizationRate: 0,
-            ruralityRate: 0,
+            coverageRate: 0,
             activeEstablishments: 0,
             activePartnerships: 0,
           },
@@ -266,7 +266,7 @@ const loadDashboardData = useCallback(async () => {
           totalBeneficiaries: resSec2.data?.total_beneficiaires || 0,
           totalActivities: resSec2.data?.total_activites || 0,
           feminizationRate: resSec2.data?.taux_feminisation || 0,
-          ruralityRate: resSec2.data?.taux_ruralite || 0,
+          coverageRate: resSec2.data?.taux_couverture || 0,
           activeEstablishments: resSec2.data?.etablissements_actifs || 0,
           activePartnerships: resSec2.data?.total_partenariats || 0,
         },
@@ -362,7 +362,7 @@ const loadDashboardData = useCallback(async () => {
     };
   }, [profile?.direction_id, loadDashboardData]);
 
-  // 1️⃣ DÉPLACE CE BLOC ICI : AVANT LES "IF" 
+ 
   const activeDomainLabel = useMemo(() => {
     const option = DOMAIN_OPTIONS.find((opt) => opt.value === domain);
     return option ? (lang === "ar" ? option.labelAr : option.labelFr) : domain;
@@ -513,8 +513,7 @@ const loadDashboardData = useCallback(async () => {
                 <span className="absolute inset-y-0 start-0 w-1 bg-[hsl(var(--kpi-6))]" />
                 <div className="h-11 w-11 rounded-xl flex items-center justify-center bg-[hsl(var(--kpi-6-soft))] text-[hsl(var(--kpi-6))]"><Target className="h-5 w-5" /></div>
                 <div className="space-y-1">
-                  {/* استعملنا ruralityRate حيت حيدنا coverageRate فالنسخة اللخرة، أو تقدر تزيد coverageRate فالمعطيات الفوق */}
-                  <div className="text-3xl font-extrabold tracking-tight text-foreground tabular-nums">{`${dashboardData.kpis.ruralityRate?.toFixed(1) || 12.5}%`}</div>
+                  <div className="text-3xl font-extrabold tracking-tight text-foreground tabular-nums">{`${dashboardData.kpis.coverageRate?.toFixed(1) || 12.5}%`}</div>
                   <div className="text-sm text-muted-foreground leading-snug">{t("kpis.coverage", "Taux de Couverture")}</div>
                 </div>
               </div>

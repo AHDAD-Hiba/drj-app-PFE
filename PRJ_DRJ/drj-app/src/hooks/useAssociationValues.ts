@@ -83,102 +83,145 @@ export function useAssociationValues(rapportId: string | null) {
     };
   }, [rapportId, reload]);
 
-  // ====================
-  // Update Logic
-  // ====================
-  const update = useCallback(
-    async (
-      local_id: string,
-      patch: Partial<AssociationValue>
-    ): Promise<boolean> => {
-      let existing = itemsRef.current.find((item) => item.local_id === local_id);
-      
-      // Si l'item n'existe pas et local_id est temporaire, créer un nouvel item
-      if (!existing && local_id.startsWith('temp-')) {
-        const newItem: AssociationValue = {
-          local_id,
-          categorie_association_id: patch.categorie_association_id || '',
-          nombre_associations: patch.nombre_associations || 0,
-        };
-        setItems((prev) => [...prev, newItem]);
-        existing = newItem;
-      }
-      
-      if (!existing) return false;
+  const updateLocal = useCallback(
+    (local_id: string, patch: Partial<AssociationValue>) => {
+      setItems(prev => {
+        const existing = prev.find(x => x.local_id === local_id);
 
-      const updatedEntry = { ...existing, ...patch };
-      
-      // Si la valeur devient 0, supprimer de la base ou simplement oublier localement
-      if (updatedEntry.nombre_associations === 0) {
-        // Si on a un ID, supprimer de la base
-        if (updatedEntry.id && rapportId) {
-          try {
-            await supabase
-              .from('valeurs_associations')
-              .delete()
-              .eq('id', updatedEntry.id);
-            
-            setItems((prev) =>
-              prev.filter((item) => item.local_id !== local_id)
-            );
-            return true;
-          } catch (error) {
-            console.error('[useAssociationValues] delete error:', error);
-            return false;
-          }
-        } else {
-          // Pas d'ID en base, juste le supprimer localement
-          setItems((prev) =>
-            prev.filter((item) => item.local_id !== local_id)
-          );
-          return true;
+        if (!existing && local_id.startsWith('temp-')) {
+          return [
+            ...prev,
+            {
+              local_id,
+              categorie_association_id:
+                patch.categorie_association_id ?? '',
+              nombre_associations:
+                patch.nombre_associations ?? 0,
+            },
+          ];
         }
+
+        return prev.map(item =>
+          item.local_id === local_id
+            ? { ...item, ...patch }
+            : item
+        );
+      });
+    },
+    [],
+  );
+  
+  const saveTimersRef = useRef<
+    Record<string, ReturnType<typeof setTimeout>>
+  >({});
+
+  const savingEntriesRef = useRef<Set<string>>(new Set());
+
+  const saveEntry = useCallback(
+  async (local_id: string): Promise<boolean> => {
+    if (savingEntriesRef.current.has(local_id)) {
+      return true;
+    }
+
+    savingEntriesRef.current.add(local_id);
+
+    try {
+      const entry = itemsRef.current.find(
+        x => x.local_id === local_id
+      );
+
+      if (!entry) {
+        return true;
       }
 
-      // Sinon, mettre à jour localement
-      setItems((prev) =>
-        prev.map((item) =>
-          item.local_id === local_id ? updatedEntry : item
+      if (!rapportId) {
+        return true;
+      }
+
+      if (entry.nombre_associations === 0) {
+        if (entry.id) {
+          await supabase
+            .from('valeurs_associations')
+            .delete()
+            .eq('id', entry.id);
+        }
+
+        setItems(prev =>
+          prev.filter(x => x.local_id !== local_id)
+        );
+
+        return true;
+      }
+
+      const payload = {
+        rapport_id: rapportId,
+        categorie_association_id:
+          entry.categorie_association_id,
+        nombre_associations:
+          entry.nombre_associations,
+      };
+
+      const { data, error } = await supabase
+        .from('valeurs_associations')
+        .upsert(payload, {
+          onConflict:
+            'rapport_id,categorie_association_id',
+        })
+        .select('id')
+        .single();
+
+      if (error) throw error;
+
+      setItems(prev =>
+        prev.map(item =>
+          item.local_id === local_id
+            ? {
+                ...item,
+                id: data.id,
+              }
+            : item
         )
       );
 
-      if (!rapportId) return true;
-      setIsSaving(true);
+      return true;
+    } catch (error) {
+      console.error(
+        '[useAssociationValues] save error:',
+        error
+      );
+      return false;
+    } finally {
+      savingEntriesRef.current.delete(local_id);
+    }
+  },
+  [rapportId]
+);
+  // ====================
+  // Update Logic
+  // ====================
+const update = useCallback(
+  async (
+    local_id: string,
+    patch: Partial<AssociationValue>
+  ): Promise<boolean> => {
 
-      try {
-        const payload = {
-          rapport_id: rapportId,
-          categorie_association_id: updatedEntry.categorie_association_id,
-          nombre_associations: updatedEntry.nombre_associations,
-        };
+    updateLocal(local_id, patch);
 
-        const { data, error } = await supabase
-          .from('valeurs_associations')
-          .upsert(payload, {
-            onConflict: updatedEntry.id ? 'id' : 'rapport_id,categorie_association_id',
-          })
-          .select('id')
-          .single();
+    if (saveTimersRef.current[local_id]) {
+      clearTimeout(
+        saveTimersRef.current[local_id]
+      );
+    }
 
-        if (error) throw error;
+    saveTimersRef.current[local_id] =
+      setTimeout(() => {
+        delete saveTimersRef.current[local_id];
+        void saveEntry(local_id);
+      }, 1500);
 
-        const valId = data.id;
-
-        setItems((prev) =>
-          prev.map((item) =>
-            item.local_id === local_id ? { ...updatedEntry, id: valId } : item
-          )
-        );
-        return true;
-      } catch (error) {
-        console.error('[useAssociationValues] update error:', error);
-        return false;
-      } finally {
-        setIsSaving(false);
-      }
-    },
-    [rapportId]
-  );
-
+    return true;
+  },
+  [updateLocal, saveEntry]
+);
   return { items, loading, isSaving, reload, update };
 }

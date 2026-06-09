@@ -30,6 +30,90 @@ export function usePartenariatEntries(rapportId: string | null) {
     itemsRef.current = items;
   }, [items]);
 
+  const updateLocal = useCallback(
+    (local_id: string, patch: Partial<PartenariatEntry>) => {
+      setItems(prev =>
+        prev.map(item =>
+          item.local_id === local_id
+            ? { ...item, ...patch }
+            : item
+        )
+      );
+    },
+    [],
+  );
+  
+  const savingEntriesRef = useRef<Set<string>>(new Set());
+  
+  const saveEntry = useCallback(
+  async (local_id: string): Promise<boolean> => {
+    if (savingEntriesRef.current.has(local_id)) {
+      return true;
+    }
+
+    savingEntriesRef.current.add(local_id);
+
+    const existing = itemsRef.current.find(
+      item => item.local_id === local_id,
+    );
+
+     if (!existing) {
+      savingEntriesRef.current.delete(local_id);
+      return false;
+    }
+
+    const previousItems = itemsRef.current;
+
+    try {
+      const { data, error } = await supabase
+        .from('partenariats')
+        .upsert(
+          {
+            ...(existing.id ? { id: existing.id } : {}),
+            rapport_id: rapportId,
+            type_partenaire_id:
+              existing.type_partenaire_id || null,
+            nombre_conventions:
+              existing.nombre_conventions,
+          } as any,
+          {
+            onConflict: existing.id
+              ? 'id'
+              : 'rapport_id,type_partenaire_id',
+          },
+        )
+        .select()
+        .single();
+
+      if (error || !data) {
+        throw error;
+      }
+
+      setItems(prev =>
+        prev.map(item =>
+          item.local_id === local_id
+            ? toPartenariatEntry(data, local_id)
+            : item,
+        ),
+      );
+
+      return true;
+    } catch (err) {
+      console.error(
+        '[usePartenariatEntries] saveEntry error:',
+        err,
+      );
+
+      setItems(previousItems);
+
+      return false;
+    } finally {
+      savingEntriesRef.current.delete(local_id);
+    }
+  },
+  [rapportId],
+);
+
   const reload = useCallback(async (): Promise<PartenariatEntry[]> => {
     if (!rapportId) {
       setItems([]);
@@ -99,116 +183,53 @@ export function usePartenariatEntries(rapportId: string | null) {
     };
   }, [rapportId, reload]);
 
-  const add = useCallback(
-    async (entry: PartenariatEntry): Promise<boolean> => {
-      if (!rapportId) {
-        return false;
-      }
+const add = useCallback(
+  async (entry: PartenariatEntry): Promise<boolean> => {
+    if (!rapportId) return false;
 
-      const local_id = entry.local_id || crypto.randomUUID();
-      const optimisticItem: PartenariatEntry = {
-        ...entry,
-        local_id,
-        id: undefined,
-      };
+    const local_id = entry.local_id || crypto.randomUUID();
 
-      setItems((prev) => [...prev, optimisticItem]);
+    const optimisticItem: PartenariatEntry = {
+      ...entry,
+      local_id,
+      id: undefined,
+    };
 
-      try {
-        const { data, error } = await supabase
-          .from('partenariats')
-          .insert({
-            rapport_id: rapportId,
-            type_partenaire_id: entry.type_partenaire_id || undefined,
-            nombre_conventions:
-              entry.nombre_conventions === '' ? 0 : entry.nombre_conventions,
-          } as any)
-          .select()
-          .single();
+    setItems(prev => [...prev, optimisticItem]);
 
-        if (error || !data) {
-          console.error('[usePartenariatEntries] add error:', error);
-          setItems((prev) => prev.filter((item) => item.local_id !== local_id));
-          return false;
-        }
+    return true;
+  },
+  [rapportId],
+);
 
-        setItems((prev) => prev.map((item) =>
-          item.local_id === local_id
-            ? toPartenariatEntry(data, local_id)
-            : item,
-        ));
-
-        await reload();
-        return true;
-      } catch (err) {
-        console.error('[usePartenariatEntries] add unexpected error:', err);
-        setItems((prev) => prev.filter((item) => item.local_id !== local_id));
-        return false;
-      }
-    },
-    [rapportId, reload],
-  );
+  const saveTimersRef = useRef<
+  Record<string, ReturnType<typeof setTimeout>>
+>({});
 
   const update = useCallback(
     async (
       local_id: string,
       patch: Partial<PartenariatEntry>,
     ): Promise<boolean> => {
-      const existing = itemsRef.current.find((item) => item.local_id === local_id);
-      if (!existing) {
-        return false;
+
+      updateLocal(local_id, patch);
+
+      if (saveTimersRef.current[local_id]) {
+        clearTimeout(
+          saveTimersRef.current[local_id]
+        );
       }
 
-      const previousItems = itemsRef.current;
-      const updatedEntry: PartenariatEntry = {
-        ...existing,
-        ...patch,
-      };
+      saveTimersRef.current[local_id] =
+        setTimeout(() => {
+          delete saveTimersRef.current[local_id];
+          void saveEntry(local_id);
+        }, 1500);
 
-      setItems((prev) => prev.map((item) =>
-        item.local_id === local_id ? updatedEntry : item,
-      ));
-
-      if (!existing.id) {
-        return true;
-      }
-
-      try {
-        const { data, error } = await supabase
-          .from('partenariats')
-          .update({
-            type_partenaire_id: updatedEntry.type_partenaire_id || undefined,
-            nombre_conventions:
-              updatedEntry.nombre_conventions === ''
-                ? 0
-                : updatedEntry.nombre_conventions,
-          } as any)
-          .eq('id', existing.id)
-          .select()
-          .single();
-
-        if (error || !data) {
-          console.error('[usePartenariatEntries] update error:', error);
-          setItems(previousItems);
-          return false;
-        }
-
-        setItems((prev) => prev.map((item) =>
-          item.local_id === local_id
-            ? toPartenariatEntry(data, local_id)
-            : item,
-        ));
-
-        return true;
-      } catch (err) {
-        console.error('[usePartenariatEntries] update unexpected error:', err);
-        setItems(previousItems);
-        return false;
-      }
+      return true;
     },
-    [],
+    [updateLocal, saveEntry],
   );
-
   const remove = useCallback(
     async (local_id: string): Promise<boolean> => {
       const existing = itemsRef.current.find((item) => item.local_id === local_id);
