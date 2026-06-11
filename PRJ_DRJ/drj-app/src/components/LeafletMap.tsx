@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Moon, Sun } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
 import {
   PREFECTURE_COORDS,
   REGION_CENTER,
@@ -14,6 +15,10 @@ import {
   CASA_SPIDERFY_BREAKPOINT,
 } from '@/lib/prefectureCoords';
 import { formatNumber } from '@/lib/data';
+import type { Database } from '@/integrations/supabase/types';
+
+type Direction = Database['public']['Tables']['directions']['Row'];
+type Rapport   = Database['public']['Tables']['rapports']['Row'];
 
 type BaseLayerKey = 'dark' | 'light';
 
@@ -41,28 +46,32 @@ type Sub = {
 };
 
 interface Props {
-  prefectures: Pref[];
-  submissions: Sub[];
+  directions: Direction[];
+  rapports: (Rapport & { global_score?: number })[]; 
   totals: Map<string, number>;
   height?: number;
 }
 
 const scoreColor = (score: number | null) => {
   if (score == null) return '#64748b';
-  if (score >= 80) return 'hsl(158, 60%, 38%)';
-  if (score >= 70) return 'hsl(158, 55%, 48%)';
-  if (score >= 60) return 'hsl(38, 80%, 52%)';
-  if (score >= 50) return 'hsl(25, 80%, 55%)';
-  return 'hsl(0, 70%, 55%)';
+
+  if (score >= 120) return 'hsl(158,60%,38%)';
+  if (score >= 100) return 'hsl(158,55%,48%)';
+  if (score >= 80) return 'hsl(38,80%,52%)';
+  if (score >= 60) return 'hsl(25,80%,55%)';
+
+  return 'hsl(0,70%,55%)';
 };
 
 const scoreLabel = (score: number | null) => {
   if (score == null) return '—';
-  if (score >= 80) return 'Excellent';
-  if (score >= 70) return 'Très bon';
-  if (score >= 60) return 'Bon';
-  if (score >= 50) return 'Moyen';
-  return 'À améliorer';
+
+  if (score >= 120) return 'Excellent';
+  if (score >= 100) return 'Très bon';
+  if (score >= 80) return 'Moyen';
+  if (score >= 60) return 'Faible';
+
+  return 'Critique';
 };
 
 /**
@@ -80,7 +89,7 @@ const spiderfyPosition = (code: string): [number, number] => {
   return [lat, lng];
 };
 
-export const LeafletMap = ({ prefectures, submissions, totals, height = 520 }: Props) => {
+export const LeafletMap = ({ directions, rapports, totals, height = 520 }: Props) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
   const tileLayerRef = useRef<L.TileLayer | null>(null);
@@ -89,6 +98,10 @@ export const LeafletMap = ({ prefectures, submissions, totals, height = 520 }: P
   const navigate = useNavigate();
   const { i18n, t } = useTranslation();
   const isAr = i18n.language === 'ar';
+  
+  // زدنا useAuth باش نجيبو الصلاحيات
+  const { utilisateur: profile } = useAuth();
+  const isRegional = profile?.role === 'directeur_regional';
 
   const [baseLayer, setBaseLayer] = useState<BaseLayerKey>(() => {
     if (typeof window === 'undefined') return 'dark';
@@ -148,17 +161,35 @@ export const LeafletMap = ({ prefectures, submissions, totals, height = 520 }: P
     if (!map) return;
 
     const layer = L.layerGroup().addTo(map);
-    const subByPref = new Map(submissions.map(s => [s.prefecture_id, s]));
+    const subByPref = new Map(rapports.map(s => [s.direction_id, s]));
+
+    console.log('directions', directions);
     markersRef.current.clear();
 
-    prefectures.forEach(pref => {
-      const coord = PREFECTURE_COORDS[pref.code];
+    directions.forEach(pref => {
+
+      console.log('pref full', pref);
+      
+      const coord = PREFECTURE_COORDS[pref.code as keyof typeof PREFECTURE_COORDS];
       if (!coord) return;
       const sub = subByPref.get(pref.id);
+      
+      console.log('pref', pref.id);
+      console.log('sub', sub);
+
       const score = sub?.global_score != null ? Number(sub.global_score) : null;
+
+      console.log('score', score);
+      console.log(
+        'directions',
+        directions.length,
+        'rapports',
+        rapports.length
+      );
+
       const color = scoreColor(score);
       const total = totals.get(pref.id) ?? 0;
-      const name = isAr ? pref.name_ar : pref.name_fr;
+      const name = isAr ? pref.nom_ar : pref.nom_fr;
       const isClustered = CASA_CLUSTER_CODES.includes(pref.code as any);
 
       const html = `
@@ -189,8 +220,9 @@ export const LeafletMap = ({ prefectures, submissions, totals, height = 520 }: P
         }).addTo(layer);
       }
 
-      markersRef.current.set(pref.code, { marker, line, realLatLng });
+      markersRef.current.set(pref.id, { marker, line, realLatLng });
 
+      // هنا تم تعديل الـ Popup باش يحترم الصلاحيات ديال isRegional
       const popupHtml = `
         <div class="leaflet-pref-popup" dir="${isAr ? 'rtl' : 'ltr'}">
           <div class="lpp-head" style="background:${color}">
@@ -201,23 +233,25 @@ export const LeafletMap = ({ prefectures, submissions, totals, height = 520 }: P
             ${
               sub
                 ? `
-              <div class="lpp-row">
-                <span>${t('dashboard.score')}</span>
-                <strong>${score != null ? score.toFixed(1) : '—'}</strong>
-              </div>
-              <div class="lpp-row">
-                <span>${t('detail.beneficiaries')}</span>
-                <strong>${formatNumber(total, i18n.language)}</strong>
-              </div>
-              <div class="lpp-row">
-                <span>${t('dashboard.completeness')}</span>
-                <strong>${Number(sub.completeness_pct ?? 0).toFixed(0)}%</strong>
-              </div>
-              <div class="lpp-badge" style="background:${color}1a;color:${color}">${scoreLabel(score)}</div>
-            `
+                  <div class="lpp-row">
+                    <span>${t('dashboard.score')}</span>
+                    <strong>${Number(sub.global_score ?? 0).toFixed(0)}%</strong>
+                  </div>
+
+                  <div class="lpp-badge" style="background:${color}1a;color:${color}">
+                    ${scoreLabel(score)}
+                  </div>
+
+                  ${
+                    isRegional
+                      ? `<button class="lpp-cta" data-pref-id="${pref.id}">
+                          ${t('dashboard.viewDetail')} →
+                         </button>`
+                      : ''
+                  }
+                `
                 : `<div class="lpp-empty">${t('dashboard.noData')}</div>`
             }
-            <button class="lpp-cta" data-pref-id="${pref.id}">${t('dashboard.viewDetail')} →</button>
           </div>
         </div>
       `;
@@ -228,9 +262,15 @@ export const LeafletMap = ({ prefectures, submissions, totals, height = 520 }: P
       });
 
       marker.on('popupopen', e => {
+        // حماية الـ listener: إذا ماكانش المدير الجهوي، حبس هنا
+        if (!isRegional) return;
+
         const node = (e.popup as L.Popup).getElement();
         const btn = node?.querySelector<HTMLButtonElement>('.lpp-cta');
-        btn?.addEventListener('click', () => navigate(`/directions/${pref.id}`));
+
+        btn?.addEventListener('click', () =>
+          navigate(`/directions/${pref.id}`)
+        );
       });
     });
 
@@ -286,7 +326,7 @@ export const LeafletMap = ({ prefectures, submissions, totals, height = 520 }: P
       markersRef.current.clear();
       clusterCircleRef.current = null;
     };
-  }, [prefectures, submissions, totals, isAr, i18n.language, navigate, t]);
+  }, [directions, rapports, totals, isAr, i18n.language, navigate, t, isRegional]); // ضفنا isRegional للـ dependencies
 
   return (
     <div className="relative w-full rounded-xl overflow-hidden ring-1 ring-border" style={{ height }}>
@@ -298,12 +338,12 @@ export const LeafletMap = ({ prefectures, submissions, totals, height = 520 }: P
         </div>
         <div className="flex items-center gap-2">
           {[
-            { c: 'hsl(0, 70%, 55%)', l: '<50' },
-            { c: 'hsl(25, 80%, 55%)', l: '50' },
-            { c: 'hsl(38, 80%, 52%)', l: '60' },
-            { c: 'hsl(158, 55%, 48%)', l: '70' },
-            { c: 'hsl(158, 60%, 38%)', l: '80+' },
-          ].map((s, i) => (
+            { c: 'hsl(0,70%,55%)', l: '<60' },
+            { c: 'hsl(25,80%,55%)', l: '60' },
+            { c: 'hsl(38,80%,52%)', l: '80' },
+            { c: 'hsl(158,55%,48%)', l: '100' },
+            { c: 'hsl(158,60%,38%)', l: '120+' },
+           ].map((s, i) => (
             <div key={i} className="flex items-center gap-1">
               <span className="h-3 w-3 rounded-full" style={{ background: s.c }} />
               <span className="text-[10px] tabular-nums text-foreground">{s.l}</span>

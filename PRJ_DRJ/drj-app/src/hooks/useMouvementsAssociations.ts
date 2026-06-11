@@ -125,23 +125,6 @@ export function useMouvementsAssociations(rapportId: string | null) {
         return true;
       }
 
-      // duplicate check UI
-       const duplicate = itemsRef.current.find(
-        x =>
-          x.local_id !== entry.local_id &&
-          x.nom_association.trim().toLowerCase() ===
-            entry.nom_association.trim().toLowerCase() &&
-          x.type_mouvement === entry.type_mouvement
-      );
-
-      if (duplicate) {
-        console.warn(
-          '[useMouvementsAssociations] duplicate mouvement'
-        );
-        return false;
-      }
-
-
       try {
         const payload = {
           ...(entry.id ? { id: entry.id } : {}),
@@ -156,9 +139,7 @@ export function useMouvementsAssociations(rapportId: string | null) {
           .upsert(
             payload,
             {
-              onConflict: entry.id
-                ? 'id'
-                : 'rapport_id,nom_association,type_mouvement',
+              onConflict: 'id',
             }
           )
           .select('id')

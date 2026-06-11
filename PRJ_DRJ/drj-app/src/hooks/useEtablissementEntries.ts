@@ -254,12 +254,12 @@ if (!existing) return false;
       const etablissementIds = etablissementsRows.map((e) => e.id);
 
       // 2. Charger les statuts pour ce rapport précis
-      const { data: suiviData, error: suiviError } = await supabase
+      const { data: historiqueSuivi, error: suiviError } = await supabase
         .from('suivi_projets')
         .select('*')
-        .eq('rapport_id', rapportId)
-        .in('etablissement_id', etablissementIds);
-
+        .in('etablissement_id', etablissementIds)
+        .order('updated_at', { ascending: false });
+        
       if (suiviError) {
         console.error('[useEtablissementEntries] reload suivi_projets error:', suiviError);
         setItems([]);
@@ -267,10 +267,9 @@ if (!existing) return false;
       }
 
       // 3. Charger les fermetures pour ce rapport précis
-      const { data: fermeturesData, error: fermeturesError } = await supabase
+      const { data: historiqueFermetures, error: fermeturesError } = await supabase
         .from('fermetures')
         .select('*')
-        .eq('rapport_id', rapportId)
         .in('etablissement_id', etablissementIds);
 
       if (fermeturesError) {
@@ -280,14 +279,7 @@ if (!existing) return false;
       }
 
       // Mapping pour croiser les données
-      const suiviByEtabId = new Map(
-        (suiviData ?? []).map((row) => [row.etablissement_id, row] as const),
-      );
-      const fermetureByEtabId = new Map(
-        ((fermeturesData ?? []) as Database['public']['Tables']['fermetures']['Row'][])
-          .filter((item) => item.etablissement_id)
-          .map((item) => [item.etablissement_id as string, item] as const),
-      );
+      
       const localIdByEtabId = new Map(
         itemsRef.current
           .filter((it): it is InternalFacilityEntry & { id: string } => typeof it.id === 'string')
@@ -295,23 +287,52 @@ if (!existing) return false;
       );
 
       // 4. Construction de la liste finale basée sur le référentiel d'infrastructures
-      const normalizedItems = etablissementsRows.map((etab) => {
-        const suivi = suiviByEtabId.get(etab.id);
-        const fermeture = fermetureByEtabId.get(etab.id);
-        const local_id = localIdByEtabId.get(etab.id) ?? crypto.randomUUID();
+    const normalizedItems = etablissementsRows.map((etab) => {
+      const suiviActuel = historiqueSuivi?.find(
+        (s) =>
+          s.etablissement_id === etab.id &&
+          s.rapport_id === rapportId,
+      );
 
-        return {
-          local_id,
-          id: etab.id,
-          name: etab.nom,
-          project_status: normalizeProjectStatus(suivi?.statut),
-          other_status: normalizeClosureStatus(fermeture?.type_fermeture_id),
-          closure_status: normalizeClosureStatus(fermeture?.type_fermeture_id),
-          suivi_projet_id: suivi?.id,
-          fermeture_id: fermeture?.id,
-        };
-      });
+      const dernierSuivi = historiqueSuivi?.find(
+        (s) => s.etablissement_id === etab.id,
+      );
 
+
+      const suiviAffiche =
+        suiviActuel ??
+        dernierSuivi;
+      
+      const fermetureAssociee = historiqueFermetures?.find(
+        (f) =>
+          f.etablissement_id === etab.id &&
+          f.rapport_id === suiviAffiche?.rapport_id,
+      );
+      
+      const statutAffiche =
+        suiviActuel?.statut ??
+        dernierSuivi?.statut ??
+        'operationnel';
+
+      const causeAffiche =
+        statutAffiche === 'ferme'
+          ? fermetureAssociee?.type_fermeture_id ?? ''
+          : '';
+
+      const local_id =
+        localIdByEtabId.get(etab.id) ??
+        crypto.randomUUID();
+
+      return {
+        local_id,
+        id: etab.id,
+        name: etab.nom,
+        project_status: statutAffiche,
+        other_status: normalizeClosureStatus(causeAffiche),
+        closure_status: normalizeClosureStatus(causeAffiche),
+        suivi_projet_id: suiviActuel?.id,
+        fermeture_id: fermetureAssociee?.id,      };
+    });
       setItems(normalizedItems);
       return normalizedItems.map(toPublicEntry);
     } finally {

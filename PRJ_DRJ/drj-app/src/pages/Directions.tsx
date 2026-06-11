@@ -8,59 +8,93 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Input } from '@/components/ui/input';
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from '@/components/ui/select';
-import { Search, ChevronRight, MapPin, CheckCircle2, FileEdit, Clock, CalendarCheck } from 'lucide-react';
-import { computeTotalBeneficiaries, formatNumber, formatDate, usePrefName } from '@/lib/data';
-import { AVAILABLE_YEARS, DEFAULT_YEAR } from '@/components/YearSwitcher';
+import { Search, ChevronRight, MapPin, CalendarCheck } from 'lucide-react';
+import { DEFAULT_YEAR } from '@/components/YearSwitcher';
+import type { Database } from '@/integrations/supabase/types';
+
+type Direction = Database['public']['Tables']['directions']['Row'];
 
 const STATUS_STYLE: Record<string, string> = {
+  TERMINE: 'bg-success/15 text-success border-success/30',
+  EN_COURS: 'bg-info/15 text-info border-info/30',
+  NON_COMMENCE: 'bg-warning/15 text-warning border-warning/30',
   validee: 'bg-success/15 text-success border-success/30',
   soumise: 'bg-info/15 text-info border-info/30',
-  brouillon: 'bg-warning/15 text-warning border-warning/30',
 };
 
-const STATUS_ICON: Record<string, any> = {
-  validee: CheckCircle2,
-  soumise: CheckCircle2,
-  brouillon: FileEdit,
+const STATUS_LABEL: Record<string, string> = {
+  TERMINE: 'Terminé',
+  EN_COURS: 'En cours',
+  NON_COMMENCE: 'Non commencé',
+  validee: 'Validé',
+  soumise: 'Soumis',
 };
+
+interface DirectionRow {
+  direction: Direction;
+  statutGlobal: string;
+  scoreGlobal: number;
+  progression: number;
+  lastUpdate: string | null;
+  trimestre: string | null;
+}
 
 const Directions = () => {
   const { t, i18n } = useTranslation();
-  const { profile, isDirector } = useAuth();
-  const getName = usePrefName();
+  const { utilisateur: profile, isPrefectoral: isDirector } = useAuth();
   const navigate = useNavigate();
-  const [data, setData] = useState<any[]>([]);
+  const [data, setData]   = useState<DirectionRow[]>([]);
   const [search, setSearch] = useState('');
-  const [year, setYear] = useState<number>(DEFAULT_YEAR);
+  const [year, setYear]   = useState<number>(DEFAULT_YEAR);
+  const lang = i18n.language;
 
   useEffect(() => {
-    let prefQuery = supabase.from('prefectures').select('*');
-    let subQuery = supabase.from('submissions').select('*').eq('year', year);
-    if (isDirector && profile?.prefecture_id) {
-      prefQuery = prefQuery.eq('id', profile.prefecture_id);
-      subQuery = subQuery.eq('prefecture_id', profile.prefecture_id);
+    const directionId = profile?.direction_id ?? null;
+
+    let dirQuery = supabase.from('directions').select('*');
+    if (isDirector && directionId) {
+      dirQuery = dirQuery.eq('id', directionId);
     }
-    Promise.all([prefQuery, subQuery]).then(([p, s]) => {
-      const subs = new Map((s.data ?? []).map((x: any) => [x.prefecture_id, x]));
-      const merged = (p.data ?? []).map((pref: any) => ({
-        pref,
-        sub: subs.get(pref.id),
-      }));
+
+    Promise.all([
+      dirQuery,
+      // 1. On récupère le statut et la progression depuis notre vue de la section 1
+      supabase.from('v_dashboard_reg_section1_annuel').select('*').eq('annee', year),
+      // 2. On récupère le score depuis notre vue des scores
+      supabase.from('v_dashboard_pref_score_jeunesse').select('*').eq('annee', year),
+      // 3. On récupère les rapports pour connaître le dernier trimestre actif
+      supabase.from('rapports').select('*').eq('annee', year).order('trimestre', { ascending: false })
+    ]).then(([dirs, section1, scores, raps]) => {
+
+      const merged: DirectionRow[] = (dirs.data ?? []).map((dir) => {
+        // 💡 Ajout de "as any" pour forcer TypeScript à accepter nos objets
+        const s1 = (section1.data?.find(s => s.direction_id === dir.id) as any) || {};
+        const scoreRow = (scores.data?.find(s => s.direction_id === dir.id) as any) || {};
+        const latestRap = raps.data?.find(r => r.direction_id === dir.id);
+
+        return {
+          direction: dir,
+          statutGlobal: s1.statut || "NON_COMMENCE",
+          scoreGlobal: scoreRow.score_jeunesse || 0,
+          progression: s1.progression_pourcentage || 0,
+          lastUpdate: s1.derniere_mise_a_jour || null,
+          trimestre: latestRap?.trimestre || null
+        };
+      });
+
       setData(merged);
     });
-  }, [isDirector, profile?.prefecture_id, year]);
+    
+  }, [isDirector, profile?.direction_id, year]);
 
-  // Search bar visible only for admin / regional team — hidden for directors.
+  const getName = (dir: Direction) => lang === 'ar' ? dir.nom_ar : dir.nom_fr;
   const showSearch = !isDirector;
 
-  const filtered = data.filter(d =>
-    !showSearch || !search ||
-    getName(d.pref).toLowerCase().includes(search.toLowerCase()) ||
-    d.pref.code.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = data.filter((d) => {
+    if (!showSearch || !search) return true;
+    const name = getName(d.direction).toLowerCase();
+    return name.includes(search.toLowerCase());
+  });
 
   return (
     <AppLayout>
@@ -76,7 +110,7 @@ const Directions = () => {
             <Input
               type="number"
               value={year}
-              onChange={e => setYear(Number(e.target.value) || DEFAULT_YEAR)}
+              onChange={(e) => setYear(Number(e.target.value) || DEFAULT_YEAR)}
               min={2020}
               max={2099}
               className="h-10"
@@ -91,21 +125,24 @@ const Directions = () => {
             <Input
               placeholder={t('common.search')}
               value={search}
-              onChange={e => setSearch(e.target.value)}
+              onChange={(e) => setSearch(e.target.value)}
               className="ps-10 h-11"
             />
           </div>
         )}
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filtered.map(({ pref, sub }) => {
-            const total = sub ? computeTotalBeneficiaries(sub) : 0;
-            const isSubmitted = !!sub && sub.status !== 'brouillon';
-            const StatusIcon = sub ? (STATUS_ICON[sub.status] ?? FileEdit) : Clock;
+            {filtered.map(({ direction, statutGlobal, scoreGlobal, progression, lastUpdate, trimestre }) => {
+            
+            const trimestreLabel = trimestre ? `${trimestre.toUpperCase()}` : "—";            
+            const formattedDate = lastUpdate
+              ? new Date(lastUpdate).toLocaleDateString("fr-FR", { day: '2-digit', month: '2-digit', year: 'numeric' })
+              : "—";
+
             return (
               <Card
-                key={pref.id}
-                onClick={() => navigate(`/directions/${pref.id}`)}
+                key={direction.id}
+                onClick={() => navigate(`/directions/${direction.id}?year=${year}`)}
                 className="p-5 cursor-pointer hover:shadow-elegant hover:-translate-y-0.5 transition-smooth gradient-card border-border/60 group"
               >
                 <div className="flex items-start justify-between gap-2 mb-3">
@@ -113,49 +150,61 @@ const Directions = () => {
                     <div className="h-9 w-9 rounded-lg gradient-primary text-primary-foreground flex items-center justify-center">
                       <MapPin className="h-4 w-4" />
                     </div>
-                    <span className="text-xs font-mono text-muted-foreground">{pref.code}</span>
                   </div>
-                  {sub && (
-                    <Badge variant="outline" className={`text-[10px] gap-1 ${STATUS_STYLE[sub.status]}`}>
-                      <StatusIcon className="h-3 w-3" />
-                      {t(`status.${sub.status}`)}
+                  {statutGlobal && (
+                    <Badge
+                      variant="outline"
+                      className={`text-[10px] gap-1 ${STATUS_STYLE[statutGlobal] || STATUS_STYLE.NON_COMMENCE}`}
+                    >
+                      {STATUS_LABEL[statutGlobal] || 'Non commencé'}
                     </Badge>
                   )}
                 </div>
-                <h3 className="font-bold text-foreground leading-tight mb-3 min-h-[2.5em]">{getName(pref)}</h3>
 
-                {sub ? (
-                  <>
-                    <div className="grid grid-cols-2 gap-3 mb-3">
-                      <div>
-                        <div className="text-xl font-extrabold text-primary tabular-nums">{Number(sub.global_score).toFixed(1)}</div>
-                        <div className="text-[10px] text-muted-foreground uppercase tracking-wide">{t('detail.globalScore')}</div>
+                <h3 className="font-bold text-foreground leading-tight mb-3 min-h-[2.5em]">
+                  {getName(direction)}
+                </h3>
+
+                <>
+                  <div className="grid grid-cols-2 gap-3 mb-3">
+                    <div>
+                      <div className="text-xl font-extrabold text-primary tabular-nums">
+                        {scoreGlobal.toFixed(1)}
                       </div>
-                      <div>
-                        <div className="text-xl font-extrabold text-secondary tabular-nums">{formatNumber(total, i18n.language)}</div>
-                        <div className="text-[10px] text-muted-foreground uppercase tracking-wide">{t('detail.beneficiaries')}</div>
+                      <div className="text-[10px] text-muted-foreground uppercase tracking-wide">
+                        Score Global
                       </div>
                     </div>
-                    <div className="flex items-center gap-2 mb-3">
-                      <Progress value={Number(sub.completeness_pct)} className="h-1.5 flex-1" />
-                      <span className="text-xs font-semibold text-muted-foreground tabular-nums">{Number(sub.completeness_pct).toFixed(0)}%</span>
+
+                    <div>
+                      <div className="text-xl font-extrabold text-secondary tabular-nums">
+                        {trimestreLabel}
+                      </div>
+                      <div className="text-[10px] text-muted-foreground uppercase tracking-wide">
+                        Trimestre
+                      </div>
                     </div>
-                    <div className="flex items-center justify-between text-xs text-muted-foreground border-t border-border pt-3">
-                      <span className="flex items-center gap-1.5">
-                        {isSubmitted && <CalendarCheck className="h-3.5 w-3.5 text-success" />}
-                        {formatDate(sub.submitted_at, i18n.language)}
-                      </span>
-                      <ChevronRight className="h-4 w-4 group-hover:text-primary transition-smooth rtl:rotate-180" />
-                    </div>
-                  </>
-                ) : (
-                  <div className="flex flex-col items-center gap-2 py-6 text-center">
-                    <div className="h-10 w-10 rounded-full bg-muted/60 flex items-center justify-center">
-                      <FileEdit className="h-5 w-5 text-muted-foreground" />
-                    </div>
-                    <div className="text-xs text-muted-foreground">{t('dashboard.noData')}</div>
                   </div>
-                )}
+
+                  <div className="flex items-center gap-2 mb-3">
+                    <Progress
+                      value={progression}
+                      className="h-1.5 flex-1"
+                    />
+                    <span className="text-xs font-semibold text-muted-foreground tabular-nums">
+                      {progression.toFixed(0)}%
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between text-xs text-muted-foreground border-t border-border pt-3">
+                    <span className="flex items-center gap-1.5">
+                      <CalendarCheck className="h-3.5 w-3.5 text-primary" />
+                      {formattedDate}
+                    </span>
+
+                    <ChevronRight className="h-4 w-4 group-hover:text-primary transition-smooth rtl:rotate-180" />
+                  </div>
+                </>
               </Card>
             );
           })}

@@ -15,7 +15,7 @@ import { Loader2, Eye, EyeOff } from 'lucide-react';
 const Auth = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { user, loading: authLoading } = useAuth();
+  const { user, utilisateur, loading: authLoading, roleRedirectPath } = useAuth();
 
   const [email, setEmail]               = useState('');
   const [password, setPassword]         = useState('');
@@ -23,24 +23,29 @@ const Auth = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError]               = useState('');
 
+
   useEffect(() => {
-    if (!authLoading && user) navigate('/dashboard', { replace: true });
-  }, [user, authLoading, navigate]);
+  // 2. كنوجهوه فقط ملي يكون user كاين، و utilisateur (البروفايل ديالو) حتى هو كاين
+  if (!authLoading && user && utilisateur) {
+    navigate(roleRedirectPath, { replace: true });
+  }
+}, [user, utilisateur, authLoading, navigate, roleRedirectPath]);
 
   const handleSignIn = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setLoading(true);
-    const { error: authError } = await supabase.auth.signInWithPassword({
-      email: email.trim(),
-      password,
-    });
-    setLoading(false);
-    if (authError) {
-      const msg = t('auth.errorInvalid');
-      setError(msg);
-      toast.error(msg);
-    } else {
+  e.preventDefault();
+  setError('');
+  setLoading(true);
+  const { error: authError } = await supabase.auth.signInWithPassword({
+    email: email.trim(),
+    password,
+  });
+  setLoading(false);
+  
+  if (authError) {
+    const msg = t('auth.errorInvalid');
+    setError(msg);
+    toast.error(msg);
+  } else {
       navigate('/dashboard', { replace: true });
     }
   };

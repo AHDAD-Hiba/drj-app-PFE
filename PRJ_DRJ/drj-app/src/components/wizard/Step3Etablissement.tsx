@@ -24,13 +24,13 @@ export interface FacilityEntry {
 }
 
 const PROJECT_STATUS_FR = [
-  { v: 'nouvellement', l: 'Nouvellement créée' },
+  { v: 'nouvel', l: 'Nouvellement créée' },
   { v: 'en_cours', l: 'En cours de réalisation' },
   { v: 'ferme', l: 'Fermée' },
 ];
 
 const PROJECT_STATUS_AR = [
-  { v: 'nouvellement', l: 'حديثة الإنشاء' },
+  { v: 'nouvel', l: 'حديثة الإنشاء' },
   { v: 'en_cours', l: 'قيد الإنجاز' },
   { v: 'ferme', l: 'مغلقة' },
 ];

@@ -11,7 +11,7 @@ import Index                 from "./pages/Index.tsx";
 import Auth                from "./pages/Auth.tsx";
 import ForgotPassword      from "./pages/ForgotPassword.tsx";
 import ResetPassword       from "./pages/ResetPassword.tsx";
-import RegionDashboard     from "./pages/RegionDashboard.tsx";
+import RegionDashboard     from "./pages/RegDomainDashboard.tsx";
 import Directions          from "./pages/Directions.tsx";
 import DirectionDetail     from "./pages/DirectionDetail.tsx";
 import RegionMapPage       from "./pages/RegionMapPage.tsx";
