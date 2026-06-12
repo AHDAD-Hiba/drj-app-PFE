@@ -1,4 +1,310 @@
 {
+  "footer": {
+    "ministryShort": "Ministère de la Jeunesse, de la Culture et de la Communication",
+    "tagline": "Plateforme officielle de pilotage régional des activités jeunesse de la Wilaya de Casablanca-Settat.",
+    "contact": "Coordonnées",
+    "directionName": "Direction Régionale de la Jeunesse Casablanca-Settat",
+    "address": "Boulevard Mohammed V, Casablanca · Maroc",
+    "navigation": "Navigation",
+    "legal": "Mentions légales",
+    "legalNotices": "Mentions légales",
+    "privacy": "Politique de confidentialité",
+    "termsOfUse": "Conditions d'utilisation",
+    "accessibility": "Accessibilité",
+    "officialApp": "Application officielle",
+    "kingdom": "Royaume du Maroc",
+    "version": "Version"
+  },
+   "prefectures": {
+    "settat": "Settat",
+    "mohammedia": "Mohammedia",
+    "mediouna": "Médiouna",
+    "berrechid": "Berrechid",
+    "benslimane": "Benslimane",
+    "sidi bennour": "Sidi Bennour",
+    "sidi bernoussi": "Sidi Bernoussi",
+    "anfa": "Anfa",
+    "el jadida": "El Jadida",
+    "ben m'sick - moulay rachid": "Ben M'Sick - Moulay Rachid",
+    "fida - mers sultan": "Fida - Mers Sultan",
+    "aïn sebaâ - hay mohammadi": "Aïn Sebaâ - Hay Mohammadi",
+    "aïn chock - hay hassani": "Aïn Chock - Hay Hassani"
+  },
+  "nav": {
+    "entry": "Saisie",
+    "map": "Carte",
+    "directions": "Directions",
+    "domaines": "Domaines",
+    "directorTitle": "Directeur",
+    "import": "Import Excel"
+  },
+  "loadingIndicators": "Chargement des indicateurs...",
+  "prefDomainDashboard": {
+    "workflow": {
+      "title": "Suivi du rapport",
+      "status": "Statut",
+      "filteredDomain": "Domaine Filtré",
+      "lastUpdate": "Dernière mise à jour",
+      "progress": "Progression"
+    },
+      "status": {
+      "en_cours": "En cours",
+      "termine": "Terminé",
+      "non_commence": "Non commencé"
+    },
+      "kpis": {
+      "title": "Top KPIs principaux",
+      "activities": "Total des Activités",
+      "beneficiaries": "Total Bénéficiaires",
+      "coverage": "Taux de Couverture",
+      "feminization": "Taux de Féminisation",
+      "partnerships": "Total Partenariats",
+      "establishments": "Établissements Actifs"
+    },
+      "charts": {
+      "axeTitle": "Répartition des bénéficiaires par axe",
+      "volumeTitle": "Volume Global par Programme",
+      "volumeSubtitle": "Nombre absolu de bénéficiaires impactés",
+      "mixityTitle": "Mixité H / F par Programme (%)",
+      "mixitySubtitle": "Taux de féminisation comparatif",
+      "men": "Hommes",
+      "women": "Femmes",
+      "coverageTitle": "Couverture Territorial (Urbain / Rural)",
+      "coverageSubtitle": "Analyse incluant les données estimées",
+      "urban": "Urbain",
+      "rural": "Rural",
+      "evolutionTitle": "Évolution trimestrielle des bénéficiaires",
+      "evolutionCardTitle": "Trajectoire des performances par programme",
+      "evolutionCardSubtitle": "Évolution du nombre de bénéficiaires (T1 à T4) pour les axes éligibles"
+    },
+      "programs": {
+      "camping": "Camping",
+      "formation": "Formation",
+      "festivals": "Festivals",
+      "insertion": "Insertion"
+    },
+      "quarters": {
+      "t1": "T1",
+      "t2": "T2",
+      "t3": "T3",
+      "t4": "T4"
+    },
+      "benchmark": {
+      "title": "Benchmark régional",
+      "columns": {
+        "indicator": "Indicateur",
+        "prefecture": "Préfecture",
+        "regionalAverage": "Moyenne Régionale",
+        "variance": "Écart"
+      },
+       "kpis": {
+        "totalActivities": "Total des Activités",
+        "totalBeneficiaries": "Total Bénéficiaires",
+        "coverageRate": "Taux de Couverture",
+        "feminisationRate": "Taux de Féminisation",
+        "activePartnerships": "Partenariats Actifs",
+        "operationalEstab": "Établ. Opérationnels"
+      }
+    },
+     "details": {
+      "title": "Lecture détaillée du rapport",
+      "activities": {
+        "title": "Activités (Permanentes & Rayonnantes)",
+        "ecosystem": "Écosystème & Structures",
+        "associations": "Associations",
+        "activeClubs": "Clubs Actifs",
+        "conventions": "Conventions",
+        "animationVolume": "Volume d'Animation",
+        "totalActions": "Total: {{count}} Actions",
+        "sportsActivities": "Activités Sportives",
+        "educActivities": "Activités Éducatives",
+        "cultActivities": "Activités Culturelles",
+        "capacityBuilding": "Renforcement des capacités"
+      },
+       "camping": {
+        "title": "Programme National de Camping & Formations",
+        "participants": "Bénéficiaires & Participants",
+        "totalBeneficiaries": "Total Bénéficiaires",
+        "summerCamps": "Colonies de vacances",
+        "mreChildren": "Enfants MRE",
+        "specialNeeds": "Besoins Spécifiques",
+        "staffingDevice": "Dispositif d'Encadrement",
+        "staffingRatio": "Ratio d'encadrement",
+        "ratioDesc": "(1 encadrant pour {{count}} bénéficiaires)",
+        "noData": "(Aucune donnée saisie)",
+        "mobilizedStaff": "Staff Mobilisé",
+        "menCount": "{{count}} Hommes",
+        "womenCount": "{{count}} Femmes",
+        "trainings": "Formations (Encadrement)",
+        "organizedSessions": "Sessions Organisées",
+        "trainedCadres": "Cadres Formés",
+        "movements": "Mouvements de la période",
+        "netBalance": "Bilan Net du Flux",
+        "admissions": "Adhésions (Entrants)",
+        "withdrawals": "Retraits (Sortants)"
+      },
+       "conventions": {
+        "title": "Conventions et Partenariats",
+        "summary": "Bilan des Conventions",
+        "totalConventions": "Total Conventions",
+        "partnerTypes": "Types de Partenaires Engagés",
+        "distributionByType": "Répartition par Type",
+        "noData": "Aucune donnée disponible",
+        "types": {
+          "Secteur privé": "Secteur privé",
+          "Société civile": "Société civile",
+          "Associations": "Associations",
+          "Secteur public": "Secteur public"
+        }
+      },
+        "insertion": {
+        "title": "Intégration Socio-Économique",
+        "summary": "Bilan des Activités",
+        "activitiesDone": "Activités Réalisées",
+        "activePartners": "Partenaires Actifs",
+        "globalVolume": "Volume Global",
+        "hours": "Heures",
+        "beneficiaries": "Bénéficiaires",
+        "total": "Total",
+        "genderDistribution": "Répartition par Genre",
+        "men": "Hommes",
+        "women": "Femmes",
+        "spatialDistribution": "Répartition Spatiale",
+        "urban": "Urbain",
+        "rural": "Rural"
+      },
+       "festivals": {
+        "title": "Festivals de Jeunesse",
+        "summary": "Événements & Éliminatoires",
+        "organized": "Festivals Organisés",
+        "provinces": "Provinces (Couverture)",
+        "qualified": "Qualifiés (Finales)",
+        "demographics": "Démographie des Participants",
+        "total": "Total",
+        "genderDistribution": "Répartition par Genre",
+        "men": "Hommes",
+        "women": "Femmes",
+        "spatialDistribution": "Répartition Spatiale",
+        "urban": "Urbain",
+        "rural": "Rural"
+      },
+        "etablissements": {
+        "title": "Établissements & Infrastructures",
+        "parcStatus": "Statut du Parc Actuel",
+        "total": "Total",
+        "operational": "Opérationnels / Actifs",
+        "newCreation": "Nouvelle création",
+        "underRealization": "En réalisation",
+        "fermeturesAnalysis": "Analyse des Fermetures",
+        "totalFermees": "Total Fermées",
+        "noFermeture": "Aucune fermeture signalée",
+        "causes": {
+          "Encadrement": "Encadrement",
+          "En attente d'inauguration": "En attente d'inauguration",
+          "Mise à niveau": "Mise à niveau",
+          "Équipement": "Équipement",
+          "Conflit juridique": "Conflit juridique"
+        }
+      }
+    }  
+  },
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   "app": {
     "name": "DRJ Casablanca-Settat",
     "fullName": "Direction Régionale de la Jeunesse",
@@ -322,21 +628,6 @@
       "negative": "La valeur doit être ≥ 0",
       "tooLarge": "Valeur trop élevée"
     }
-  },
-  "footer": {
-    "ministryShort": "Ministère de la Jeunesse, de la Culture et de la Communication",
-    "tagline": "Plateforme officielle de pilotage régional des activités jeunesse de la Wilaya de Casablanca-Settat.",
-    "contact": "Coordonnées",
-    "directionName": "Direction Régionale de la Jeunesse Casablanca-Settat",
-    "address": "Boulevard Mohammed V, Casablanca · Maroc",
-    "navigation": "Navigation",
-    "legal": "Mentions légales",
-    "legalNotices": "Mentions légales",
-    "privacy": "Politique de confidentialité",
-    "termsOfUse": "Conditions d'utilisation",
-    "accessibility": "Accessibilité",
-    "officialApp": "Application officielle",
-    "kingdom": "Royaume du Maroc",
-    "version": "Version"
   }
+  
 }

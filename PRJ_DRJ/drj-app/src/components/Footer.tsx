@@ -2,14 +2,16 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { MapPin, Phone, Mail, Globe, Building2 } from 'lucide-react';
 import mjccLogo from '@/assets/mjcc-official-logo.jpeg';
+import { useAuth } from '@/hooks/useAuth';
 
 export const Footer = () => {
   const { t } = useTranslation();
+  const { isRegional } = useAuth();
   const year = new Date().getFullYear();
 
   return (
     <footer className="mt-12 border-t border-border bg-card/40">
-      <div className="container py-10 grid gap-8 md:grid-cols-4">
+      <div className="container py-10 grid gap-8 md:grid-cols-3">
         {/* Identité institutionnelle */}
         <div className="md:col-span-1">
           <div className="flex items-center gap-3">
@@ -80,38 +82,29 @@ export const Footer = () => {
           <h3 className="text-xs font-bold uppercase tracking-wider text-foreground mb-3">
             {t('footer.navigation')}
           </h3>
-          <ul className="space-y-2 text-xs">
+          <ul className="space-y-2 text-xs mb-4">
             {[
-              { to: '/dashboard', l: 'nav.overview' },
-              { to: '/carte', l: 'nav.map' },
-              { to: '/directions', l: 'nav.directions' },
-              { to: '/import', l: 'nav.import' },
-            ].map(i => (
-              <li key={i.to}>
-                <Link to={i.to} className="text-muted-foreground hover:text-foreground transition-smooth">
-                  {t(i.l)}
-                </Link>
-              </li>
-            ))}
+              { to: '/dashboard', l: 'nav.domaines', show: true },
+              { to: '/carte', l: 'nav.map', show: true },
+              { to: '/directions', l: 'nav.directions', show: isRegional },
+              { to: '/import', l: 'nav.import', show: true },
+            ]
+              .filter(i => i.show)
+              .map(i => (
+                <li key={i.to}>
+                  <Link to={i.to} className="text-muted-foreground hover:text-foreground transition-smooth">
+                    {t(i.l)}
+                  </Link>
+                </li>
+              ))}
           </ul>
-        </div>
-
-        {/* Mentions légales */}
-        <div>
-          <h3 className="text-xs font-bold uppercase tracking-wider text-foreground mb-3">
-            {t('footer.legal')}
-          </h3>
-          <ul className="space-y-2 text-xs text-muted-foreground">
-            <li>{t('footer.legalNotices')}</li>
-            <li>{t('footer.privacy')}</li>
-            <li>{t('footer.termsOfUse')}</li>
-            <li>{t('footer.accessibility')}</li>
-          </ul>
-          <div className="mt-4 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-primary-soft text-primary text-[10px] font-semibold">
+          
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-primary-soft text-primary text-[10px] font-semibold">
             {t('footer.officialApp')}
           </div>
         </div>
       </div>
+
 
       {/* Bandeau bas */}
       <div className="border-t border-border bg-muted/30">

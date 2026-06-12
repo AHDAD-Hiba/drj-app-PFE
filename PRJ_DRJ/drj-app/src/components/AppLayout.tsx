@@ -23,14 +23,28 @@ export const AppLayout = ({ children }: { children: ReactNode }) => {
   const location = useLocation();
 
   const navItems = [
-    { path: '/saisie',           label: t('nav.entry'),       icon: FilePlus2,      show: isPrefectoral },
-    //{ path: '/dashboard',        label: t('nav.overview'),    icon: LayoutDashboard, show: true },
-    { path: '/domain-dashboard', label: 'Domaines',           icon: Layers,          show: true },
-    { path: '/carte',            label: t('nav.map'),         icon: Map,             show: true },
-    { path: '/directions',       label: t('nav.directions'),  icon: Building2,       show: isRegional },
+    { path: '/saisie',          label: t('nav.entry'),        icon: FilePlus2,       show: isPrefectoral },
+    { path: '/domain-dashboard', label: t('nav.domaines', 'Domaines'), icon: Layers,  show: true },
+    { path: '/carte',            label: t('nav.map'),          icon: Map,             show: true },
+    { path: '/directions',       label: t('nav.directions'),   icon: Building2,       show: isRegional },
   ];
 
-  const fullName = utilisateur?.nom ?? '';
+  // 1. كنزيدو الدالة ديال الترجمة هنا
+  const formatDirectorName = (rawName: string) => {
+    if (!rawName) return '';
+    
+    if (rawName.toLowerCase().startsWith('directeur')) {
+      const prefectureKey = rawName.toLowerCase().replace('directeur', '').trim();
+      const translatedTitle = t('nav.directorTitle', 'Directeur');
+      const translatedPrefecture = t(`prefectures.${prefectureKey}`, prefectureKey);
+      
+      return `${translatedTitle} ${translatedPrefecture}`;
+    }
+    
+    return rawName;
+  };
+
+  const fullName = formatDirectorName(utilisateur?.nom ?? '');
 
   const initials = fullName
     .split(' ')

@@ -42,9 +42,10 @@ const Auth = () => {
   setLoading(false);
   
   if (authError) {
-    const msg = t('auth.errorInvalid');
-    setError(msg);
-    toast.error(msg);
+  console.error("AUTH ERROR:", authError);
+
+  setError(authError.message);
+  toast.error(authError.message);
   } else {
       navigate('/dashboard', { replace: true });
     }

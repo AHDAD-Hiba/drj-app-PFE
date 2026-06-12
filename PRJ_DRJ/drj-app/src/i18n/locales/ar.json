@@ -1,4 +1,246 @@
 {
+   "footer": {
+    "ministryShort": "وزارة الشباب والثقافة والتواصل",
+    "tagline": "المنصة الرسمية للقيادة الجهوية لأنشطة الشباب لولاية الدار البيضاء - سطات.",
+    "contact": "معلومات الاتصال",
+    "directionName": "المديرية الجهوية للشباب الدار البيضاء - سطات",
+    "address": "شارع محمد الخامس، الدار البيضاء · المغرب",
+    "navigation": "تصفح",
+    "officialApp": "تطبيق رسمي",
+    "kingdom": "المملكة المغربية",
+    "version": "إصدار"
+  },
+  "prefectures": {
+    "settat": "سطات",
+    "mohammedia": "المحمدية",
+    "mediouna": "مديونة",
+    "berrechid": "برشيد",
+    "benslimane": "بنسليمان",
+    "sidi bennour": "سيدي بنور",
+    "sidi bernoussi": "سيدي البرنوصي",
+    "anfa": "أنفا",
+    "el jadida": "الجديدة",
+    "ben m'sick - moulay rachid": "ابن مسيك مولاي رشيد",
+    "fida - mers sultan": "الفداء مرس السلطان",
+    "aïn sebaâ - hay mohammadi": "عين السبع الحي المحمدي",
+    "aïn chock - hay hassani": "عين الشق الحي الحسني"
+  },
+  "nav": {
+    "entry": "إدخال البيانات",
+    "map": "الخريطة",
+    "directions": "المديريات",
+    "domaines": "المجالات",
+    "directorTitle": "مدير",
+    "import": "استيراد Excel"
+  },
+  "loadingIndicators": "جاري تحميل المؤشرات...",
+  "prefDomainDashboard": {
+    "workflow": {
+      "title": "تتبع التقرير",
+      "status": "الحالة",
+      "filteredDomain": "المجال المحدد",
+      "lastUpdate": "آخر تحديث",
+      "progress": "نسبة التقدم"
+    },
+      "status": {
+      "en_cours": "في طور الإنجاز",
+      "termine": "مكتمل",
+      "non_commence": "لم يبدأ بعد"
+    },
+      "kpis": {
+      "title": "أهم المؤشرات الرئيسية",
+      "activities": "إجمالي الأنشطة",
+      "beneficiaries": "إجمالي المستفيدين",
+      "coverage": "نسبة التغطية",
+      "feminization": "نسبة التأنيث",
+      "partnerships": "إجمالي الشراكات",
+      "establishments": "المؤسسات النشطة"
+    },
+      "charts": {
+      "axeTitle": "توزيع المستفيدين حسب المحور",
+      "volumeTitle": "الحجم الإجمالي حسب البرنامج",
+      "volumeSubtitle": "العدد المطلق للمستفيدين",
+      "mixityTitle": "نسبة الذكور / الإناث حسب البرنامج (%)",
+      "mixitySubtitle": "مقارنة معدل التأنيث",
+      "men": "ذكور",
+      "women": "إناث",
+      "coverageTitle": "التغطية الترابية (حضري / قروي)",
+      "coverageSubtitle": "تحليل يشمل البيانات التقديرية",
+      "urban": "حضري",
+      "rural": "قروي",
+      "evolutionTitle": "التطور الفصلي للمستفيدين",
+      "evolutionCardTitle": "مسار الأداء حسب البرنامج",
+      "evolutionCardSubtitle": "تطور عدد المستفيدين (من الربع الأول إلى الرابع) للمحاور المؤهلة"
+    },
+      "programs": {
+      "camping": "التخييم",
+      "formation": "التكوين",
+      "festivals": "المهرجانات",
+      "insertion": "الإدماج"
+    },
+      "quarters": {
+      "t1": "الربع 1",
+      "t2": "الربع 2",
+      "t3": "الربع 3",
+      "t4": "الربع 4"
+    },
+      "benchmark": {
+      "title": "المقارنة المرجعية الجهوية",
+      "columns": {
+        "indicator": "المؤشر",
+        "prefecture": "العمالة / الإقليم",
+        "regionalAverage": "المعدل الجهوي",
+        "variance": "الفارق"
+      },
+      "kpis": {
+        "totalActivities": "إجمالي الأنشطة",
+        "totalBeneficiaries": "إجمالي المستفيدين",
+        "coverageRate": "نسبة التغطية",
+        "feminisationRate": "نسبة التأنيث",
+        "activePartnerships": "الشراكات النشطة",
+        "operationalEstab": "المؤسسات التشغيلية"
+      }
+    },
+     "details": {
+      "title": "قراءة مفصلة للتقرير",
+      "activities": {
+        "title": "الأنشطة (الدائمة والإشعاعية)",
+        "ecosystem": "المنظومة والـبنيات",
+        "associations": "جمعيات",
+        "activeClubs": "أندية نشطة",
+        "conventions": "اتفاقيات",
+        "animationVolume": "حجم التنشيط",
+        "totalActions": "المجموع: {{count}} نشاط",
+        "sportsActivities": "أنشطة رياضية",
+        "educActivities": "أنشطة تربوية",
+        "cultActivities": "أنشطة ثقافية",
+        "capacityBuilding": "تقوية القدرات"
+      },
+       "camping": {
+        "title": "البرنامج الوطني للتخييم والتكوين",
+        "participants": "المستفيدون والمشاركون",
+        "totalBeneficiaries": "إجمالي المستفيدين",
+        "summerCamps": "المخيمات الصيفية",
+        "mreChildren": "أطفال الجالية",
+        "specialNeeds": "ذوي الاحتياجات الخاصة",
+        "staffingDevice": "هيئة التأطير",
+        "staffingRatio": "نسبة التأطير",
+        "ratioDesc": "(1 مؤطر لكل {{count}} مستفيد)",
+        "noData": "(لا توجد بيانات مسجلة)",
+        "mobilizedStaff": "الأطر المعبأة",
+        "menCount": "{{count}} ذكور",
+        "womenCount": "{{count}} إناث",
+        "trainings": "التكوينات (التأطير)",
+        "organizedSessions": "الدورات المنظمة",
+        "trainedCadres": "الأطر المكونة",
+        "movements": "حركية الفترة",
+        "netBalance": "صافي الحصيلة",
+        "admissions": "المنخرطون (الوافدون)",
+        "withdrawals": "المنسحبون (المغادرون)"
+      },
+        "conventions": {
+        "title": "الاتفاقيات والشراكات",
+        "summary": "حصيلة الاتفاقيات",
+        "totalConventions": "إجمالي الاتفاقيات",
+        "partnerTypes": "أنواع الشركاء المنخرطين",
+        "distributionByType": "التوزيع حسب النوع",
+        "noData": "لا توجد بيانات متاحة",
+        "types": {
+          "Secteur privé": "قطاع خاص",
+          "Société civile": "مجتمع مدني",
+          "Associations": "جمعيات",
+          "Secteur public": "قطاع عام"
+        }
+      },
+        "insertion": {
+        "title": "الإدماج السوسيو-اقتصادي",
+        "summary": "حصيلة الأنشطة",
+        "activitiesDone": "الأنشطة المنجزة",
+        "activePartners": "الشركاء النشطون",
+        "globalVolume": "الحجم الإجمالي",
+        "hours": "ساعات",
+        "beneficiaries": "المستفيدون",
+        "total": "المجموع",
+        "genderDistribution": "التوزيع حسب الجنس",
+        "men": "ذكور",
+        "women": "إناث",
+        "spatialDistribution": "التوزيع المجالي",
+        "urban": "حضري",
+        "rural": "قروي"
+      },
+       "festivals": {
+        "title": "مهرجانات الشباب",
+        "summary": "الأنشطة والإقصائيات",
+        "organized": "المهرجانات المنظمة",
+        "provinces": "الأقاليم (التغطية)",
+        "qualified": "المؤهلون (النهائيات)",
+        "demographics": "الخصائص الديمغرافية للمشاركين",
+        "total": "المجموع",
+        "genderDistribution": "التوزيع حسب الجنس",
+        "men": "ذكور",
+        "women": "إناث",
+        "spatialDistribution": "التوزيع المجالي",
+        "urban": "حضري",
+        "rural": "قروي"
+      },
+        "etablissements": {
+        "title": "المؤسسات والبنيات التحتية",
+        "parcStatus": "وضعية الحظيرة الحالية",
+        "total": "المجموع",
+        "operational": "العملية / النشطة",
+        "newCreation": "إحداث جديد",
+        "underRealization": "فطور الإنجاز",
+        "fermeturesAnalysis": "تحليل الإغلاقات",
+        "totalFermees": "إجمالي المغلقة",
+        "noFermeture": "لم يتم تسجيل أي إغلاق",
+        "causes": {
+          "Encadrement": "التأطير",
+          "En attente d'inauguration": "في انتظار التدشين",
+          "Mise à niveau": "التأهيل",
+          "Équipement": "التجهيز",
+          "Conflit juridique": "نزاع قانوني"
+        }
+      }
+    }
+  },
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   "app": {
     "name": "المديرية الجهوية للشباب الدار البيضاء سطات",
     "fullName": "المديرية الجهوية للشباب",
