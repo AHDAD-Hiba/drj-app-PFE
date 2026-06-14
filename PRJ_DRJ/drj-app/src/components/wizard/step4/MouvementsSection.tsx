@@ -33,7 +33,7 @@ export const MouvementsSection = ({
   const isAr = i18n.language === 'ar';
 
   return (
-    <Card className="p-5 sm:p-6 space-y-4 bg-background">  
+<Card className="p-5 sm:p-6 space-y-4 bg-background">  
       <div className="space-y-3 pt-2">
         <div className="flex items-center justify-between gap-3 flex-wrap">
           <div>
@@ -41,7 +41,7 @@ export const MouvementsSection = ({
               {isAr ? 'الجمعيات (واردة / مغادرة)' : 'Associations (entrantes / sortantes)'}
             </h3>
             <p className="text-xs text-muted-foreground">
-              {isAr ? 'سجل الجمعيات الواردة والمغادرة' : 'Enregistrez les associations entrantes et sortantes'}
+              {isAr ? 'سجل الجمعيات الواردة والمغادرة والمستفيدين منها' : 'Enregistrez les mouvements et le nombre de bénéficiaires'}
             </p>
           </div>
           <Button
@@ -53,6 +53,7 @@ export const MouvementsSection = ({
                 nom_association: '',
                 type_mouvement: 'entrante',
                 date_mouvement: new Date().toISOString().split('T')[0],
+                beneficiaires: '', // 💡 Initialisation du nouveau champ
               })
             }
             disabled={disabled}
@@ -90,62 +91,94 @@ export const MouvementsSection = ({
                   </Button>
                 </div>
 
+                {/* 💡 Réajustement des colonnes (4 + 3 + 3 + 2 = 12) pour intégrer les bénéficiaires */}
                 <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
-                <div className="sm:col-span-5 space-y-1.5">
-                  <Label className="text-xs">{isAr ? 'الاسم' : 'Nom'}</Label>
-                  <Input
-                    value={m.nom_association}
-                    className="h-9"
-                    disabled={disabled}
-                    onChange={(e) =>
-                      onUpdate(m.local_id, {
-                        nom_association: e.target.value.slice(0, 200),
-                      })
-                    }
-                  />
-                </div>
-                <div className="sm:col-span-3 space-y-1.5">
-                  <Label className="text-xs">{isAr ? 'النوع' : 'Type'}</Label>
-                  <Select
-                    value={m.type_mouvement || 'entrante'}
-                    onValueChange={(v) =>
-                      onUpdate(m.local_id, {
-                        type_mouvement: v as 'entrante' | 'sortante',
-                      })
-                    }
-                    disabled={disabled}
-                  >
-                    <SelectTrigger className="h-9">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="entrante">
-                        <span className="inline-flex items-center gap-1.5">
-                          <ArrowDownToLine className="h-3.5 w-3.5" />
-                          {isAr ? 'واردة' : 'Entrante'}
-                        </span>
-                      </SelectItem>
-                      <SelectItem value="sortante">
-                        <span className="inline-flex items-center gap-1.5">
-                          <ArrowUpFromLine className="h-3.5 w-3.5" />
-                          {isAr ? 'مغادرة' : 'Sortante'}
-                        </span>
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="sm:col-span-3 space-y-1.5">
-                  <Label className="text-xs">{isAr ? 'التاريخ' : 'Date'}</Label>
-                  <Input
-                    type="date"
-                    value={m.date_mouvement}
-                    className="h-9"
-                    disabled={disabled}
-                    onChange={(e) =>
-                      onUpdate(m.local_id, { date_mouvement: e.target.value })
-                    }
-                  />
-                </div>
+                  
+                  {/* Champ Nom */}
+                  <div className="sm:col-span-4 space-y-1.5">
+                    <Label className="text-xs">{isAr ? 'الاسم' : 'Nom'}</Label>
+                    <Input
+                      value={m.nom_association}
+                      className="h-9"
+                      disabled={disabled}
+                      placeholder={isAr ? 'اسم الجمعية...' : 'Nom de l\'association...'}
+                      onChange={(e) =>
+                        onUpdate(m.local_id, {
+                          nom_association: e.target.value.slice(0, 200),
+                        })
+                      }
+                    />
+                  </div>
+
+                  {/* Champ Type */}
+                  <div className="sm:col-span-3 space-y-1.5">
+                    <Label className="text-xs">{isAr ? 'النوع' : 'Type'}</Label>
+                    <Select
+                      value={m.type_mouvement || 'entrante'}
+                      onValueChange={(v) =>
+                        onUpdate(m.local_id, {
+                          type_mouvement: v as 'entrante' | 'sortante',
+                        })
+                      }
+                      disabled={disabled}
+                    >
+                      <SelectTrigger className="h-9">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="entrante">
+                          <span className="inline-flex items-center gap-1.5">
+                            <ArrowDownToLine className="h-3.5 w-3.5" />
+                            {isAr ? 'واردة (جديدة)' : 'Entrante (Nouvelle)'}
+                          </span>
+                        </SelectItem>
+                        <SelectItem value="sortante">
+                          <span className="inline-flex items-center gap-1.5">
+                            <ArrowUpFromLine className="h-3.5 w-3.5" />
+                            {isAr ? 'مغادرة (منسحبة)' : 'Sortante (Retrait)'}
+                          </span>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="sm:col-span-2 space-y-1.5">
+                    <Label className="text-xs">{isAr ? 'المستفيدين' : 'Bénéficiaires'}</Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      step="1"
+                      value={m.beneficiaires}
+                      className="h-9 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" // Masque les flèches pour un style plus "tech clean"
+                      placeholder="0"
+                      disabled={disabled}
+                      onKeyDown={(e) => {
+                        if (['e', 'E', '+', '-', '.'].includes(e.key)) {
+                          e.preventDefault();
+                        }
+                      }}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/[^0-9]/g, ''); // Ne garde QUE les chiffres
+                        onUpdate(m.local_id, { 
+                          beneficiaires: val === '' ? '' : Number(val) 
+                        });
+                      }}
+                    />
+                  </div>
+                  {/* Champ Date */}
+                  <div className="sm:col-span-3 space-y-1.5">
+                    <Label className="text-xs">{isAr ? 'التاريخ' : 'Date'}</Label>
+                    <Input
+                      type="date"
+                      value={m.date_mouvement}
+                      className="h-9"
+                      disabled={disabled}
+                      onChange={(e) =>
+                        onUpdate(m.local_id, { date_mouvement: e.target.value })
+                      }
+                    />
+                  </div>
+
                 </div>
               </div>
             ))}

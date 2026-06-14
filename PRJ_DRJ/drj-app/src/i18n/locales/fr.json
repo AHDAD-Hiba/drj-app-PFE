@@ -1,4 +1,16 @@
 {
+  "directionDetails": {
+    "region": "Casablanca-Settat",
+    "notStarted": "Non commencé",
+    "progression": "Progression",
+    "lastUpdate": "MAJ",
+    "inputProgress": "Avancement de la saisie"
+  },
+  "status": {
+    "NON_COMMENCE": "Non commencé",
+    "EN_COURS": "En cours",
+    "TERMINE": "Terminé"
+  },
   "footer": {
     "ministryShort": "Ministère de la Jeunesse, de la Culture et de la Communication",
     "tagline": "Plateforme officielle de pilotage régional des activités jeunesse de la Wilaya de Casablanca-Settat.",
@@ -6,16 +18,11 @@
     "directionName": "Direction Régionale de la Jeunesse Casablanca-Settat",
     "address": "Boulevard Mohammed V, Casablanca · Maroc",
     "navigation": "Navigation",
-    "legal": "Mentions légales",
-    "legalNotices": "Mentions légales",
-    "privacy": "Politique de confidentialité",
-    "termsOfUse": "Conditions d'utilisation",
-    "accessibility": "Accessibilité",
     "officialApp": "Application officielle",
     "kingdom": "Royaume du Maroc",
     "version": "Version"
   },
-   "prefectures": {
+  "prefectures": {
     "settat": "Settat",
     "mohammedia": "Mohammedia",
     "mediouna": "Médiouna",
@@ -208,82 +215,7 @@
       }
     }  
   },
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+   
 
 
 
@@ -339,25 +271,10 @@
       "backToLogin": "Retour à la connexion"
     }
   },
-  "nav": {
-    "overview": "Vue d'ensemble",
-    "directions": "Directions",
-    "map": "Carte",
-    "comparison": "Comparaison",
-    "myDirection": "Ma direction",
-    "settings": "Paramètres",
-    "import": "Import Excel",
-    "entry": "Saisie"
-  },
   "roles": {
     "admin_regional": "Administrateur régional",
     "equipe_regionale": "Équipe régionale",
     "directeur_prefectoral": "Directeur préfectoral"
-  },
-  "status": {
-    "brouillon": "Brouillon",
-    "soumise": "Soumise",
-    "validee": "Validée"
   },
   "dashboard": {
     "title": "Tableau de bord régional",
@@ -629,5 +546,4 @@
       "tooLarge": "Valeur trop élevée"
     }
   }
-  
 }

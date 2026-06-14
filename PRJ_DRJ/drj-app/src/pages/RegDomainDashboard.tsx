@@ -190,6 +190,21 @@ const RegionDashboard = () => {
 
   }, [year, filterDomain]);
   // Access control: only regional team can access
+  if (loading) {
+    return (
+      <AppLayout>
+        <div className="grid gap-4">
+          {[...Array(8)].map((_, i) => (
+            <div
+              key={i}
+              className="h-24 bg-muted/50 rounded-xl animate-pulse"
+            />
+          ))}
+        </div>
+      </AppLayout>
+    );
+  }
+  
   if (!isRegional) {
     return (
       <AppLayout>
@@ -200,25 +215,17 @@ const RegionDashboard = () => {
               {t("common.accessDenied", "Accès refusé")}
             </h2>
             <p className="text-muted-foreground">
-              {t("common.regionalAccessOnly", "Cette page est réservée à l'équipe régionale.")}
+              {t(
+                "common.regionalAccessOnly",
+                "Cette page est réservée à l'équipe régionale."
+              )}
             </p>
           </div>
         </div>
       </AppLayout>
     );
   }
-
-  if (loading) {
-    return (
-      <AppLayout>
-        <div className="grid gap-4">
-          {[...Array(8)].map((_, i) => (
-            <div key={i} className="h-24 bg-muted/50 rounded-xl animate-pulse" />
-          ))}
-        </div>
-      </AppLayout>
-    );
-  }
+  
 
   // Global completion tracking
   const totalDirections = prefectures.length;

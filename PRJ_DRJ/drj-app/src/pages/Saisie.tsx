@@ -65,6 +65,10 @@ const DOMAIN_LABEL: Record<string, { fr: string; ar: string }> = {
   creche: { fr: 'Crèche', ar: 'الحضانة' },
 };
 
+export const DOMAIN_IDS = {
+  jeunesse: '9b15dc1d-5f39-4e5d-915c-33c465b3276e',
+};
+
 const Saisie = () => {
   const { t, i18n } = useTranslation();
 const { utilisateur: profile, isPrefectoral: isDirector, loading: authLoading } = useAuth();
@@ -128,10 +132,10 @@ const completeness = useMemo(() => {
 
   // Orchestrate form lifecycle: status, save, submit
   const domain = useDomainSubmission({
-    rapportId: currentId,
-    directionId: profile?.direction_id ?? '',
-    domain: '6a3a9ab9-2f5a-4775-a09e-ca4b4a6a8349',
-    completeness,
+  rapportId: currentId,
+  directionId: profile?.direction_id ?? '',
+  domaineId: DOMAIN_IDS.jeunesse,
+  completeness,
   });
 
   // Stabilized callbacks for steps
@@ -293,7 +297,7 @@ if (!isDirector || !profile?.direction_id) {
           </div>
           <PreFormSelection
             initial={selection}
-            onComplete={(sel) => { setSelection(sel); setSelectionDone(true); /* Removed setStep(1) as it's default */ }}
+            onComplete={(sel) => { setSelection(sel); setSelectionDone(true); }}
           />
         </div>
       </AppLayout>
@@ -559,13 +563,24 @@ const handleSaveDraft = async () => {
             <AlertDialogHeader>
               <AlertDialogTitle>{isAr ? 'تنبيه' : 'Attention'}</AlertDialogTitle>
               <AlertDialogDescription>
-                {isAr ? 'الاستمارة غير مكتملة بعد.' : "Le formulaire n'est pas encore complètement rempli."}
+                {isAr
+                  ? 'هل أنت متأكد من إرسال هذه الاستمارة؟ بعد التأكيد ستصبح للقراءة فقط.'
+                  : 'Êtes-vous sûr de vouloir soumettre ce formulaire ? Après validation, il sera en lecture seule.'}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel onClick={() => setWarningOpen(false)}>
-                {isAr ? 'حسنا' : 'OK'}
+              <AlertDialogCancel>
+                {isAr ? 'العودة للتعديل' : 'Continuer la saisie'}
               </AlertDialogCancel>
+
+              <AlertDialogAction
+                onClick={() => {
+                  setWarningOpen(false);
+                  setConfirmOpen(true);
+                }}
+              >
+                {isAr ? 'الإرسال رغم ذلك' : 'Soumettre quand même'}
+              </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
@@ -574,11 +589,11 @@ const handleSaveDraft = async () => {
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>{isAr ? 'تأكيد' : 'Confirmation'}</AlertDialogTitle>
-              <AlertDialogDescription>
-                {isAr 
-                  ? 'هل أنت متأكد من إرسال هذه الاستمارة؟ بعد التأكيد ستصبح للقراءة فقط.' 
-                  : 'Êtes-vous sûr de vouloir soumettre ce formulaire ? Après validation, il sera en lecture seule.'}
-              </AlertDialogDescription>
+                <AlertDialogDescription>
+                  {isAr
+                    ? 'هل أنت متأكد من إرسال هذه الاستمارة؟ بعد التأكيد ستصبح للقراءة فقط.'
+                    : 'Êtes-vous sûr de vouloir soumettre ce formulaire ? Après validation, il sera en lecture seule.'}
+                </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>{isAr ? 'إلغاء' : 'Annuler'}</AlertDialogCancel>

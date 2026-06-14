@@ -68,7 +68,7 @@ export const Footer = () => {
               <a
                 href="https://www.mjcc.gov.ma"
                 target="_blank"
-                rel="noreferrer"
+                rel="noopener noreferrer" 
                 className="hover:text-foreground transition-smooth"
               >
                 www.mjcc.gov.ma

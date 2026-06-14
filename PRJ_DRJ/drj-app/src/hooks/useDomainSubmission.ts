@@ -17,7 +17,7 @@ import { useDraftSubmission } from './useDraftSubmission';
 export interface UseDomainSubmissionOpts {
   rapportId: string;
   directionId: string;
-  domain: string;
+  domaineId: string;
   debounceMs?: number;
   completeness?: number;
 
@@ -26,7 +26,7 @@ export interface UseDomainSubmissionOpts {
 export const useDomainSubmission = ({
   rapportId,
   directionId,
-  domain,
+  domaineId,
   debounceMs = 2000,
   completeness = 0,
 }: UseDomainSubmissionOpts) => {
@@ -36,7 +36,7 @@ export const useDomainSubmission = ({
   const draft = useDraftSubmission({
     rapportId,
     directionId,
-    domain,
+    domaineId,
     completeness,
     debounceMs,
   });

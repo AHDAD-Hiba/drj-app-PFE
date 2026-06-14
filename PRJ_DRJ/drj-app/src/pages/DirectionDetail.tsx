@@ -113,6 +113,8 @@ const mapSection6Data = (data: any) => {
     associations: {
       entrants: d.assoc_entrants || 0,
       sortants: d.assoc_sortants || 0,
+      benef_entrants: d.benef_entrants || 0,
+      benef_sortants: d.benef_sortants || 0,
     },
     conventions: {
       total_conventions: d.conv_total_global || 0,
@@ -1007,36 +1009,51 @@ const DirectionDetail = () => {
                           <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-1.5">
                             <ArrowRightLeft className="h-4 w-4" /> Mouvements de la période
                           </h4>
+                          
                           <div className="grid grid-cols-2 gap-3">
-                            <div className={`col-span-2 p-4 rounded-xl border flex items-center justify-between ${
-                              (detailed.associations?.entrants || 0) - (detailed.associations?.sortants || 0) >= 0 
-                                ? 'bg-emerald-500/10 border-emerald-500/20' 
-                                : 'bg-destructive/10 border-destructive/20'
-                            }`}>
-                              <div className="flex items-center gap-3">
-                                <div className={`p-2 rounded-lg ${(detailed.associations?.entrants || 0) - (detailed.associations?.sortants || 0) >= 0 ? 'bg-emerald-500/20' : 'bg-destructive/20'}`}>
-                                  <Activity className={`h-5 w-5 ${(detailed.associations?.entrants || 0) - (detailed.associations?.sortants || 0) >= 0 ? 'text-emerald-600' : 'text-destructive'}`} />
-                                </div>
-                                <span className={`font-bold text-sm ${(detailed.associations?.entrants || 0) - (detailed.associations?.sortants || 0) >= 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-destructive'}`}>
-                                  Bilan Net du Flux
-                                </span>
-                              </div>
-                              <span className={`text-3xl font-black ${(detailed.associations?.entrants || 0) - (detailed.associations?.sortants || 0) >= 0 ? 'text-emerald-600' : 'text-destructive'}`}>
-                                {((detailed.associations?.entrants || 0) - (detailed.associations?.sortants || 0)) >= 0 ? `+${(detailed.associations?.entrants || 0) - (detailed.associations?.sortants || 0)}` : (detailed.associations?.entrants || 0) - (detailed.associations?.sortants || 0)}
-                              </span>
-                            </div>
-                            <div className="p-3 bg-emerald-500/5 rounded-xl border border-emerald-500/10 flex flex-col justify-center">
-                              <span className="text-emerald-600 font-semibold text-xs flex items-center gap-1.5 mb-1">
-                                <UserPlus className="h-3.5 w-3.5" /> Entrants
-                              </span>
-                              <span className="text-2xl font-bold text-foreground">{detailed.associations?.entrants || 0}</span>
-                            </div>
-                            <div className="p-3 bg-orange-500/5 rounded-xl border border-orange-500/10 flex flex-col justify-center">
-                              <span className="text-orange-600 font-semibold text-xs flex items-center gap-1.5 mb-1">
-                                <UserMinus className="h-3.5 w-3.5" /> Sortants
-                              </span>
-                              <span className="text-2xl font-bold text-foreground">{detailed.associations?.sortants || 0}</span>
-                            </div>
+                            {(() => {
+                              // Extraction depuis l'état 'detailed'
+                              const assocEntrants = detailed.associations?.entrants || 0;
+                              const assocSortants = detailed.associations?.sortants || 0;
+                              const benEntrants = detailed.associations?.benef_entrants || 0;
+                              const benSortants = detailed.associations?.benef_sortants || 0;
+
+                              return (
+                                <>
+                                  {/* Card 1: Associations Entrantes */}
+                                  <div className="p-3 bg-emerald-500/5 rounded-xl border border-emerald-500/10 flex flex-col justify-center">
+                                    <span className="text-emerald-600 font-semibold text-[11px] flex items-center gap-1.5 mb-1">
+                                      <TrendingUp className="h-3.5 w-3.5" /> Associations Entrantes
+                                    </span>
+                                    <span className="text-2xl font-bold text-foreground" dir="ltr">{assocEntrants}</span>
+                                  </div>
+
+                                  {/* Card 2: Bénéficiaires Entrants */}
+                                  <div className="p-3 bg-emerald-500/5 rounded-xl border border-emerald-500/10 flex flex-col justify-center">
+                                    <span className="text-emerald-600 font-semibold text-[11px] flex items-center gap-1.5 mb-1">
+                                      <UserPlus className="h-3.5 w-3.5" /> Bénéficiaires Entrants
+                                    </span>
+                                    <span className="text-2xl font-bold text-foreground" dir="ltr">{benEntrants}</span>
+                                  </div>
+
+                                  {/* Card 3: Associations Sortantes */}
+                                  <div className="p-3 bg-orange-500/5 rounded-xl border border-orange-500/10 flex flex-col justify-center">
+                                    <span className="text-orange-600 font-semibold text-[11px] flex items-center gap-1.5 mb-1">
+                                      <TrendingDown className="h-3.5 w-3.5" /> Associations Sortantes
+                                    </span>
+                                    <span className="text-2xl font-bold text-foreground" dir="ltr">{assocSortants}</span>
+                                  </div>
+
+                                  {/* Card 4: Bénéficiaires Sortants */}
+                                  <div className="p-3 bg-orange-500/5 rounded-xl border border-orange-500/10 flex flex-col justify-center">
+                                    <span className="text-orange-600 font-semibold text-[11px] flex items-center gap-1.5 mb-1">
+                                      <UserMinus className="h-3.5 w-3.5" /> Bénéficiaires Sortants
+                                    </span>
+                                    <span className="text-2xl font-bold text-foreground" dir="ltr">{benSortants}</span>
+                                  </div>
+                                </>
+                              );
+                            })()}
                           </div>
                         </div>
                       </div>

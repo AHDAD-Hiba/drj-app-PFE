@@ -9,30 +9,22 @@ export type SaveState = 'idle' | 'saving' | 'saved' | 'error';
 interface UseDraftOpts {
   rapportId: string;
   directionId: string;
-  domain: string;
+  domaineId: string;
   completeness?: number;
   debounceMs?: number;
 }
 
-const DOMAIN_IDS = {
-  jeunesse: '9b15dc1d-5f39-4e5d-915c-33c465b3276e',
-};
 
 // ─── Hook ─────────────────────────────────────────────────────────────────────
 
 export const useDraftSubmission = ({
   rapportId,
   directionId,
-  domain,
+  domaineId,
   completeness = 0,
   debounceMs = 2000,
 }: UseDraftOpts) => {
 
-  console.log('useDraftSubmission mounted', {
-  rapportId,
-  directionId,
-  domain,
-});
 
   const [status, setStatus] = useState<ReportStatus>('NON_COMMENCE');
   const [loading, setLoading] = useState(true);
@@ -49,7 +41,8 @@ export const useDraftSubmission = ({
   // ── Load existing suivi_remplissage on mount ──────────────────────────────
 
   useEffect(() => {
-    if (!rapportId || !directionId || !domain) {
+    
+    if (!rapportId || !directionId || !domaineId) {
       setLoading(false);
       return;
     }
@@ -62,31 +55,34 @@ export const useDraftSubmission = ({
         .select('statut, updated_at')
         .eq('rapport_id', rapportId)
         .eq('direction_id', directionId)
-        .eq('domaine_id', domain)
+        .eq('domaine_id', domaineId,)
         .maybeSingle();
 
       if (cancelled) return;
 
+      console.log('LOAD SUIVI', data);
+      console.log('LOAD ERROR', error);
+      
       if (error) {
         console.error('[useDraftSubmission] load error:', error.message);
       } else if (data) {
-        setStatus(data.statut as ReportStatus);
-        setLastSavedAt(
-  data.updated_at
-    ? new Date(
-        new Date(data.updated_at).toLocaleString('en-US', {
-          timeZone: 'Africa/Casablanca',
-        })
-      )
-    : null
-);
-      }
+          setStatus(data.statut as ReportStatus);
+          setLastSavedAt(
+    data.updated_at
+      ? new Date(
+          new Date(data.updated_at).toLocaleString('en-US', {
+            timeZone: 'Africa/Casablanca',
+          })
+        )
+        : null
+        );
+        }
 
       setLoading(false);
     })();
 
     return () => { cancelled = true; };
-  }, [rapportId, directionId, domain]);
+  }, [rapportId, directionId, domaineId]);
 
   // ── Core persist (UPSERT) ─────────────────────────────────────────────────
 
@@ -106,7 +102,7 @@ export const useDraftSubmission = ({
       return true;
     }
 
-    if (!rapportId || !directionId || !domain) {
+    if (!rapportId || !directionId || !domaineId) {
       setErrorMsg('Identifiants manquants (rapport, direction ou domaine).');
       setSaveState('error');
       return false;
@@ -115,13 +111,6 @@ export const useDraftSubmission = ({
     setSaveState('saving');
     setErrorMsg(null);
 
-console.log('UPSERT suivi_remplissage', {
-  rapportId,
-  directionId,
-  domain,
-  domaine_id_sent: DOMAIN_IDS['jeunesse'],
-});
-
     try {
       const { data, error } = await supabase
         .from('suivi_remplissage')
@@ -129,7 +118,7 @@ console.log('UPSERT suivi_remplissage', {
           {
             rapport_id: rapportId,
             direction_id: directionId,
-            domaine_id: DOMAIN_IDS['jeunesse'],
+            domaine_id: domaineId,
             statut: effectiveStatus,
             progression_pourcentage: Math.round(completeness),
             updated_at: new Date().toISOString(),
@@ -141,7 +130,10 @@ console.log('UPSERT suivi_remplissage', {
       console.log('UPSERT DATA:', data);
       console.log('UPSERT ERROR:', error);
 
-      if (error) throw error;
+      if (error) {
+        console.log('UPSERT ERROR FULL', error);
+        throw error;
+      }
 
 
           console.log(
@@ -162,7 +154,7 @@ console.log('UPSERT suivi_remplissage', {
       setErrorMsg(err.message ?? 'Erreur inconnue lors de la sauvegarde.');
       return false;
     }
-  }, [rapportId, directionId, domain, completeness]);
+  }, [rapportId, directionId, domaineId, completeness]);
 
   // ── Public API ────────────────────────────────────────────────────────────
 

@@ -7,6 +7,7 @@ export interface MouvementAssociation {
   nom_association: string;
   type_mouvement: 'entrante' | 'sortante';
   date_mouvement: string;
+  beneficiaires: number | string;
 }
 
 export function useMouvementsAssociations(rapportId: string | null) {
@@ -46,6 +47,7 @@ export function useMouvementsAssociations(rapportId: string | null) {
         nom_association: m.nom_association || '',
         type_mouvement: m.type_mouvement || 'entrante',
         date_mouvement: m.date_mouvement || '',
+        beneficiaires: m.beneficiaires ?? '',
       }));
 
       setItems(normalized);
@@ -124,6 +126,7 @@ export function useMouvementsAssociations(rapportId: string | null) {
       if (!entry.nom_association.trim()) {
         return true;
       }
+      
 
       try {
         const payload = {
@@ -132,6 +135,7 @@ export function useMouvementsAssociations(rapportId: string | null) {
           nom_association: entry.nom_association,
           type_mouvement: entry.type_mouvement,
           date_mouvement: entry.date_mouvement,
+          beneficiaires: entry.beneficiaires === '' ? null : Number(entry.beneficiaires),
         };
 
         const { data, error } = await supabase

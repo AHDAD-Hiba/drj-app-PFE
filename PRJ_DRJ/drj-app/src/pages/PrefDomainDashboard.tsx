@@ -172,6 +172,8 @@ const mapSection6Data = (data: any) => {
     associations: {
       entrants: d.assoc_entrants || 0,
       sortants: d.assoc_sortants || 0,
+      benef_entrants: d.benef_entrants || 0,
+      benef_sortants: d.benef_sortants || 0,
     },
     camping: {
       participants: {
@@ -1424,50 +1426,57 @@ const PrefDomainDashboard = () => {
                           </div>
                         </div>
 
-                        {/* MOUVEMENTS DE LA PÉRIODE */}
+                          {/* MOUVEMENTS DE LA PÉRIODE */}
                         <div className="space-y-4">
                           <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-1.5">
-                            <ArrowRightLeft className="h-4 w-4" /> {t("prefDomainDashboard.details.camping.movements", "Mouvements de la période") as string}
+                            <ArrowRightLeft className="h-4 w-4" /> {t("prefDomainDashboard.details.camping.movements", "Mouvements de la période")}
                           </h4>
+                          
+                          {(() => {
+                            const assocEntrants = dashboardData.detailed?.associations?.entrants || 0;
+                            const assocSortants = dashboardData.detailed?.associations?.sortants || 0;
+                            const benEntrants = dashboardData.detailed?.associations?.benef_entrants || 0;
+                            const benSortants = dashboardData.detailed?.associations?.benef_sortants || 0;
 
-                          <div className="grid grid-cols-2 gap-3">
-                            {/* Solde Net */}
-                            <div className={`col-span-2 p-4 rounded-xl border flex items-center justify-between ${
-                              soldeNet >= 0 
-                                ? 'bg-emerald-500/10 border-emerald-500/20' 
-                                : 'bg-destructive/10 border-destructive/20'
-                            }`}>
-                              <div className="flex items-center gap-3">
-                                <div className={`p-2 rounded-lg ${soldeNet >= 0 ? 'bg-emerald-500/20' : 'bg-destructive/20'}`}>
-                                  <Activity className={`h-5 w-5 ${soldeNet >= 0 ? 'text-emerald-600' : 'text-destructive'}`} />
+                            return (
+                              <div className="grid grid-cols-2 gap-3">
+                                
+                                {/* Card 1: Associations Entrantes */}
+                                <div className="p-3 bg-emerald-500/5 rounded-xl border border-emerald-500/10 flex flex-col justify-center">
+                                  <span className="text-emerald-600 font-semibold text-[11px] flex items-center gap-1.5 mb-1">
+                                    <TrendingUp className="h-3.5 w-3.5" /> {t("prefDomainDashboard.details.camping.assocEntrants", "Associations Entrantes")}
+                                  </span>
+                                  <span className="text-2xl font-bold text-foreground" dir="ltr">{assocEntrants}</span>
                                 </div>
-                                <span className={`font-bold text-sm ${soldeNet >= 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-destructive'}`}>
-                                  {t("prefDomainDashboard.details.camping.netBalance", "Bilan Net du Flux") as string}
-                                </span>
+
+                                {/* Card 2: Bénéficiaires Entrants */}
+                                <div className="p-3 bg-emerald-500/5 rounded-xl border border-emerald-500/10 flex flex-col justify-center">
+                                  <span className="text-emerald-600 font-semibold text-[11px] flex items-center gap-1.5 mb-1">
+                                    <UserPlus className="h-3.5 w-3.5" /> {t("prefDomainDashboard.details.camping.benEntrants", "Bénéficiaires Entrants")}
+                                  </span>
+                                  <span className="text-2xl font-bold text-foreground" dir="ltr">{benEntrants}</span>
+                                </div>
+
+                                {/* Card 3: Associations Sortantes */}
+                                <div className="p-3 bg-orange-500/5 rounded-xl border border-orange-500/10 flex flex-col justify-center">
+                                  <span className="text-orange-600 font-semibold text-[11px] flex items-center gap-1.5 mb-1">
+                                    <TrendingDown className="h-3.5 w-3.5" /> {t("prefDomainDashboard.details.camping.assocSortants", "Associations Sortantes")}
+                                  </span>
+                                  <span className="text-2xl font-bold text-foreground" dir="ltr">{assocSortants}</span>
+                                </div>
+
+                                {/* Card 4: Bénéficiaires Sortants */}
+                                <div className="p-3 bg-orange-500/5 rounded-xl border border-orange-500/10 flex flex-col justify-center">
+                                  <span className="text-orange-600 font-semibold text-[11px] flex items-center gap-1.5 mb-1">
+                                    <UserMinus className="h-3.5 w-3.5" /> {t("prefDomainDashboard.details.camping.benSortants", "Bénéficiaires Sortants")}
+                                  </span>
+                                  <span className="text-2xl font-bold text-foreground" dir="ltr">{benSortants}</span>
+                                </div>
+
                               </div>
-                              <span className={`text-3xl font-black ${soldeNet >= 0 ? 'text-emerald-600' : 'text-destructive'}`} dir="ltr">
-                                {soldeNet >= 0 ? `+${soldeNet}` : soldeNet}
-                              </span>
-                            </div>
-
-                            {/* Entrants */}
-                            <div className="p-3 bg-emerald-500/5 rounded-xl border border-emerald-500/10 flex flex-col justify-center">
-                              <span className="text-emerald-600 font-semibold text-xs flex items-center gap-1.5 mb-1">
-                                <UserPlus className="h-3.5 w-3.5" /> {t("prefDomainDashboard.details.camping.admissions", "Adhésions (Entrants)") as string}
-                              </span>
-                              <span className="text-2xl font-bold text-foreground" dir="ltr">{entrants}</span>
-                            </div>
-
-                            {/* Sortants */}
-                            <div className="p-3 bg-orange-500/5 rounded-xl border border-orange-500/10 flex flex-col justify-center">
-                              <span className="text-orange-600 font-semibold text-xs flex items-center gap-1.5 mb-1">
-                                <UserMinus className="h-3.5 w-3.5" /> {t("prefDomainDashboard.details.camping.withdrawals", "Retraits (Sortants)") as string}
-                              </span>
-                              <span className="text-2xl font-bold text-foreground" dir="ltr">{sortants}</span>
-                            </div>
-                          </div>
+                            );
+                          })()}
                         </div>
-
                       </div>
                     </div>
                   );

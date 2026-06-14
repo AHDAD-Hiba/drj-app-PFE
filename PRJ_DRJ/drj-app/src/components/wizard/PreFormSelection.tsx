@@ -51,13 +51,10 @@ export const PreFormSelection = ({ initial, onComplete }: Props) => {
   
   const [stage, setStage] = useState<1 | 2>(1);
   const [sel, setSel] = useState<ReportSelection>(initial);
-  const [loading, setLoading] = useState(false);
-
-  const DOMAIN_IDS = {
-  jeunesse: '9b15dc1d-5f39-4e5d-915c-33c465b3276e',
-};
+  const [loading, setLoading] = useState(false);  
 
   const handleStartReporting = async () => {
+    console.log('HANDLE START');
     // 1. Sécurité : Vérifier si l'utilisateur est bien chargé avec sa direction
     if (!utilisateur?.direction_id) {
       toast({ 
@@ -74,6 +71,34 @@ export const PreFormSelection = ({ initial, onComplete }: Props) => {
         description: isAr ? "المرجو اختيار الفصل" : "Veuillez sélectionner un trimestre.", 
         variant: "destructive" 
       });
+      return;
+    }
+
+  const { data: canCreate, error: checkError } =
+    await supabase.rpc(
+      'can_create_next_report',
+      {
+        p_direction_id: utilisateur.direction_id,
+        p_annee: sel.year,
+        p_trimestre: sel.quarter,
+      }
+    );
+
+    if (checkError) throw checkError;
+
+    console.log('canCreate=', canCreate);
+    console.log('year=', sel.year);
+    console.log('quarter=', sel.quarter);
+    if (!canCreate) {
+      toast({
+        title: isAr ? 'غير مسموح' : 'Action non autorisée',
+        description: isAr
+          ? 'يجب إتمام وإرسال جميع مجالات التقرير السابق أولاً'
+          : 'Tous les domaines du rapport précédent doivent être terminés avant de créer un nouveau rapport.',
+        variant: 'destructive',
+      });
+
+      setLoading(false);
       return;
     }
 
@@ -95,8 +120,6 @@ export const PreFormSelection = ({ initial, onComplete }: Props) => {
         onComplete({ ...sel, rapportId: existingRapport.id });
       } else {
         // 3. Le rapport n'existe pas, on le crée dans ta table SQL
-        const { data: { user } } = await supabase.auth.getUser();
-
         const { data: newRapport, error: insertError } = await supabase
           .from('rapports')
           .insert({
@@ -108,21 +131,40 @@ export const PreFormSelection = ({ initial, onComplete }: Props) => {
           .single();
 
         if (insertError) throw insertError;
-        console.log('CREATE SUIVI START');
+
+        if (!newRapport) {
+          throw new Error('Rapport non créé');
+        }
+        console.log('existingRapport=', existingRapport);
+
+        const { data: domaines, error: domainesError } = await supabase
+          .from('domaines')
+          .select('id');
 
         const { data, error } = await supabase
-          .from('suivi_remplissage')
-          .insert({
-            rapport_id: newRapport.id,
-            direction_id: utilisateur.direction_id,
-            domaine_id: DOMAIN_IDS[sel.domain],
-            statut: 'NON_COMMENCE',
-            progression_pourcentage: 0
-          })
-          .select();
+          .from('domaines')
+          .select('*');
 
-        console.log('CREATE SUIVI DATA', data);
-        console.log('CREATE SUIVI ERROR', error);
+        console.log(data);
+        console.log(error);
+        if (domainesError) throw domainesError;
+
+        const { error: suiviError } = await supabase
+          .from('suivi_remplissage')
+          .insert(
+            (domaines ?? []).map(d => ({
+              rapport_id: newRapport.id,
+              direction_id: utilisateur.direction_id,
+              domaine_id: d.id,
+              statut: 'NON_COMMENCE',
+              progression_pourcentage: 0
+            }))
+          );
+
+        console.log('domaines=', domaines);
+        console.log('suiviError=', suiviError);
+        if (suiviError) throw suiviError;
+
         onComplete({ ...sel, rapportId: newRapport.id });
       }
     } catch (error: any) {
