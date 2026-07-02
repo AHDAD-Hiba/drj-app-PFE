@@ -1,0 +1,1002 @@
+import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
+import i18n from '@/i18n';
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { AppLayout } from "@/components/AppLayout";
+import { handleExportExcel } from '@/lib/export';
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { useNavigate } from 'react-router-dom';
+import { exportRawDataToExcel, RawDashboardData } from "@/lib/excelExport";
+import { handleExportToPDF } from '@/lib/generatePdfHelper';
+import { useReactToPrint } from 'react-to-print';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
+import { useRef } from 'react';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  PieChart,
+  Pie,
+  Cell,
+  Tooltip,
+  ResponsiveContainer,
+  Legend,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,AreaChart,Area,CartesianGrid,
+} from "recharts";
+import {
+  Users,
+  Building2,
+  Handshake,
+  CheckCircle2,
+  Clock,
+  FileSpreadsheet,
+  Activity,
+  AlertCircle,
+  PersonStanding,
+  XCircle,
+  ArrowUpDown,
+  Trophy, Map ,FileText,Download
+} from "lucide-react";
+import { formatNumber } from "@/lib/data";
+import { DEFAULT_YEAR } from "@/components/YearSwitcher";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+const onExportClick = async () => {
+  await handleExportExcel();
+};
+
+const RegDomainDashboard = () => {
+  
+  const { t, i18n } = useTranslation();
+  const { utilisateur, isRegional } = useAuth();
+  const [submissions, setSubmissions] = useState<any[]>([]);
+  const [prefectures, setPrefectures] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [year, setYear] = useState<number>(DEFAULT_YEAR);
+  const [filterDomain, setFilterDomain] = useState<string>("jeunesse");
+  const navigate = useNavigate();
+  const dashboardRef = useRef<HTMLDivElement>(null);
+
+  // State variables needed for the second half
+  const [selectedDirection, setSelectedDirection] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [sortConfig, setSortConfig] = useState<{ key: string; direction: "asc" | "desc" } | null>(null);
+
+  const [dbDomains, setDbDomains] = useState<any[]>([]);
+
+useEffect(() => {
+  const fetchDomains = async () => {
+    const { data } = await supabase.from("domaines").select("*");
+    if (data) setDbDomains(data);
+  };
+  fetchDomains();
+}, []);
+
+  
+
+  const [kpiData, setKpiData] = useState({
+    total_beneficiaires: 0,
+    total_activites: 0,
+    etablissements_actifs: 0,
+    total_partenariats: 0,
+    taux_feminisation: 0,
+    taux_couverture: 0,
+  });
+
+  const [section3Data, setSection3Data] = useState({
+    domaine_educatif: 0,
+    domaine_culturel: 0,
+    domaine_sportif: 0,
+    domaine_capacite: 0,
+    femmes: 0,
+    hommes: 0,
+    rural: 0,
+    urbain: 0,
+  });
+
+  const [evolutionActivites, setEvolutionActivites] = useState<any[]>([]);
+  const [evolutionEtablissements, setEvolutionEtablissements] = useState<any[]>([]);
+  useEffect(() => {
+    setLoading(true);
+
+  Promise.all([
+    supabase.from("v_dashboard_reg_section1_annuel").select("*").eq("annee", year),
+    supabase.from("directions").select("*"),
+    supabase.from("v_dashboard_pref_score_jeunesse").select("*").eq("annee", year),
+    supabase.from("v_dashboard_reg_section2_annuel").select("*").eq("annee", year).maybeSingle(),
+    supabase.from("v_dashboard_reg_section3_annuel").select("*").eq("annee", year).maybeSingle(),
+    supabase.from("v_dashboard_reg_section4_trimestriel").select("*").eq("annee", year).order("trimestre", { ascending: true })
+    ]).then(([subs, dirs, scores, sec2, sec3, sec4]) => {
+      const dirsWithScores = (dirs.data ?? []).map((pref) => {
+        const scoreRow = (scores.data ?? []).find((s) => s.direction_id === pref.id) as any || {}; // 👈 Ajout de 'as any'
+        const sub = (subs.data ?? []).find((s) => s.direction_id === pref.id) as any || {}; // 👈 Ajout de 'as any'
+        
+        return {
+          ...pref,
+          score: scoreRow.score_jeunesse || 0,
+          rang_regional: scoreRow.rang_regional || 99,
+          pref_total_activites: scoreRow.pref_total_activites || 0,
+          pref_total_beneficiaires: scoreRow.pref_total_beneficiaires || 0,
+          statut: sub.statut || "NON_COMMENCE"
+        };
+      });
+
+      setSubmissions(subs.data ?? []);
+      setPrefectures(dirsWithScores);
+
+    // 💡 MISE À JOUR DE L'ÉTAT KPI
+    if (sec2.data) {
+      setKpiData({
+        total_beneficiaires: sec2.data.total_beneficiaires || 0,
+        total_activites: sec2.data.total_activites || 0,
+        etablissements_actifs: sec2.data.etablissements_actifs || 0,
+        total_partenariats: sec2.data.total_partenariats || 0,
+        taux_feminisation: sec2.data.taux_feminisation || 0,
+        taux_couverture: sec2.data.taux_couverture || 0,
+      });
+    } else {
+      // Remise à zéro si l'année est vide
+      setKpiData({ total_beneficiaires: 0, total_activites: 0, etablissements_actifs: 0, total_partenariats: 0, taux_feminisation: 0, taux_couverture: 0 });
+    }
+
+    if (sec3.data) {
+        setSection3Data({
+          domaine_educatif: sec3.data.act_educatives || 0,
+          domaine_culturel: sec3.data.act_culturelles || 0,
+          domaine_sportif: sec3.data.act_sportives || 0,
+          domaine_capacite: sec3.data.act_renforcement || 0,
+          femmes: sec3.data.total_femmes || 0,
+          hommes: sec3.data.total_hommes || 0,
+          rural: sec3.data.total_rural || 0,
+          urbain: sec3.data.total_urbain || 0,
+        });
+      } else {
+        setSection3Data({ domaine_educatif: 0, domaine_culturel: 0, domaine_sportif: 0, domaine_capacite: 0, femmes: 0, hommes: 0, rural: 0, urbain: 0 });
+      }
+
+      if (sec4.data) {
+        // On crée un squelette vide pour forcer l'axe X à toujours afficher les 4 trimestres
+        const trimestresVides = ["t1", "t2", "t3", "t4"];
+
+        const activitesData = trimestresVides.map((tLabel) => {
+          // On cherche si la BDD a retourné ce trimestre (en ignorant la casse et les "Tt")
+          const row = sec4.data.find(r => 
+             r.trimestre?.toString().includes(tLabel.replace('T', ''))
+          );
+          
+          return {
+            trimestre: tLabel, // "T1", "T2", etc. (Toujours propre)
+            // On utilise null et non 0 pour que la ligne s'arrête au lieu de plonger
+            total_activites: row ? row.total_activites : null 
+          };
+        });
+
+        const etablissementsData = trimestresVides.map((tLabel) => {
+          const row = sec4.data.find(r => 
+             r.trimestre?.toString().includes(tLabel.replace('T', ''))
+          );
+          
+          return {
+            trimestre: tLabel,
+            fonctionnels: row ? row.fonctionnels : null,
+            travaux: row ? row.travaux : null,
+            fermes: row ? row.fermes : null
+          };
+        });
+
+        setEvolutionActivites(activitesData);
+        setEvolutionEtablissements(etablissementsData);
+      } else {
+        // Si aucune donnée, on affiche quand même l'axe X vide
+        const emptyData = ["t1", "t2", "t3", "t4"].map(t => ({ trimestre: t }));
+        setEvolutionActivites(emptyData);
+        setEvolutionEtablissements(emptyData);
+      }
+    setLoading(false);
+  });
+
+  }, [year, filterDomain]);
+  // Access control: only regional team can access
+  if (loading) {
+    return (
+      <AppLayout>
+        <div className="grid gap-4">
+          {[...Array(8)].map((_, i) => (
+            <div
+              key={i}
+              className="h-24 bg-muted/50 rounded-xl animate-pulse"
+            />
+          ))}
+        </div>
+      </AppLayout>
+    );
+  }
+  
+  if (!isRegional) {
+    return (
+      <AppLayout>
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <XCircle className="h-16 w-16 text-destructive mx-auto mb-4" />
+            <h2 className="text-xl font-semibold mb-2">
+              {t("common.accessDenied", "Accès refusé")}
+            </h2>
+            <p className="text-muted-foreground">
+              {t(
+                "common.regionalAccessOnly",
+                "Cette page est réservée à l'équipe régionale."
+              )}
+            </p>
+          </div>
+        </div>
+      </AppLayout>
+    );
+  }
+
+  // Global completion tracking
+  const totalDirections = prefectures.length;
+  
+  //  On vérifie le vrai champ 'statut' retourné par la vue SQL
+  const completedCount = submissions.filter((s) => s.statut === "TERMINE" || s.statut === "validee").length;
+  const inProgressCount = submissions.filter((s) => s.statut === "EN_COURS" || s.statut === "soumise").length;
+  
+  // Ceux qui n'ont même pas de ligne dans la vue (ou statut non commencé)
+  const notStartedCount = totalDirections - completedCount - inProgressCount;
+
+  const completedPct = totalDirections > 0 ? Math.round((completedCount / totalDirections) * 100) : 0;
+  const inProgressPct = totalDirections > 0 ? Math.round((inProgressCount / totalDirections) * 100) : 0;
+  const notStartedPct = totalDirections > 0 ? Math.round((notStartedCount / totalDirections) * 100) : 0;
+
+  const handleSort = (key: string) => {
+    let direction: "asc" | "desc" = "asc";
+    if (sortConfig && sortConfig.key === key && sortConfig.direction === "asc") {
+      direction = "desc";
+    }
+    setSortConfig({ key, direction });
+  };
+// Processing comparative data for table and insights (À affiner dans la prochaine étape)
+// NOUVEAU FORMATAGE DES DONNÉES DU TABLEAU ET DES TOP 3
+const directionsData = prefectures.map((pref) => ({
+    id: pref.id,
+    name: pref.nom_fr || pref.nom || `Direction ${pref.id}`,
+    activities: pref.pref_total_activites || 0,
+    beneficiaries: pref.pref_total_beneficiaires || 0,
+    statut: pref.statut || "NON_COMMENCE",
+    score: pref.score || 0,
+    rang_regional: pref.rang_regional || 99
+  }));
+
+  const filteredDirections = directionsData.filter((d) =>
+    d.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const sortedDirections = [...filteredDirections].sort((a, b) => {
+    if (!sortConfig) return a.rang_regional - b.rang_regional;
+    const { key, direction } = sortConfig;
+    if ((a as any)[key] < (b as any)[key]) return direction === "asc" ? -1 : 1;
+    if ((a as any)[key] > (b as any)[key]) return direction === "asc" ? 1 : -1;
+    return 0;
+  });
+
+  const rankedDirections = sortedDirections.map((d, index) => ({
+    ...d,
+    rang: index + 1 
+  }));
+  const topActivites = [...directionsData]
+    .sort((a, b) => b.activities - a.activities)
+    .slice(0, 3);
+
+  const topBeneficiaires = [...directionsData]
+    .sort((a, b) => b.beneficiaries - a.beneficiaries)
+    .slice(0, 3);
+
+  const selectedDirectionData = directionsData.find((d) => d.id === selectedDirection);
+
+  const maxActivities = Math.max(...(rankedDirections.map(d => d.activities || 0)), 1);
+
+  return (
+    <AppLayout>
+      <div className="space-y-6 animate-fade-in">
+        
+        {/* Hero */}
+        <div className="relative overflow-hidden rounded-2xl gradient-hero p-6 sm:p-8 text-primary-foreground shadow-elegant">
+          <div className="relative z-10 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-extrabold mt-2">
+                {t("regionDashboard.title", "Tableau de bord régional DRJ")}
+              </h1>
+              <p className="text-sm sm:text-base opacity-90 mt-1">
+                {t("regionDashboard.subtitle", "Vue globale de la région Casablanca-Settat")}
+              </p>
+            </div>
+            
+            <div className="flex flex-wrap items-center gap-2 flex-shrink-0">
+              
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={handleExportExcel}
+                className="gap-1.5 bg-white/15 hover:bg-white/25 text-white border-0 backdrop-blur-sm font-bold"
+              >
+                <FileSpreadsheet className="h-4 w-4" />
+                {t("RegDomainDashboard.buttons.excel")}
+              </Button>
+
+            </div>
+          </div>
+          <div className="absolute -top-12 -end-12 w-48 h-48 rounded-full bg-secondary/30 blur-3xl" />
+          <div className="absolute -bottom-8 -start-8 w-40 h-40 rounded-full bg-primary-glow/40 blur-2xl" />
+        </div>
+
+        <div ref={dashboardRef} className="flex flex-col gap-6 w-full">
+
+        {/* Filters */}
+        <Card className="p-4 sm:p-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
+                {t("common.year", "Année")}
+              </span>
+              <input
+                id="year-selector"
+                title="Sélectionner l'année"
+                placeholder="Année"
+                type="number"
+                value={year}
+                onChange={(e) => setYear(Number(e.target.value) || DEFAULT_YEAR)}
+                min={2020}
+                max={2099}
+                className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+              />
+            </div>
+            <div className="space-y-1">
+              <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
+                {t("common.domain", "Domaine")}
+              </span>
+              <Select value={filterDomain} onValueChange={setFilterDomain}>
+                <SelectTrigger className="h-9">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {dbDomains.map((dom) => (
+                    <SelectItem key={dom.code} value={dom.code}>
+                      {i18n.language === "ar" ? (dom.nom_ar || dom.nom) : dom.nom}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </Card>
+
+        {/* SECTION 1 : Suivi de Remplissage */}
+        <section className="mb-6 w-full">
+          <div className="flex items-center justify-between gap-3 mb-4">
+            <div>
+              <h2 className="text-xl font-bold text-foreground">
+                {t('RegDomainDashboard.tracking', 'Suivi du remplissage')}
+              </h2>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {t('RegDomainDashboard.submittedCount', '{{n}} / {{total}} directions ont terminé', { 
+                  n: completedCount, 
+                  total: prefectures.length 
+                })}
+              </p>
+            </div>
+          </div>
+
+          <Card className="p-5 sm:p-6 shadow-sm border-muted">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-4">
+              {[
+                { key: 'completed', label: t('RegDomainDashboard.status.termine', 'Terminé'), pct: completedPct, count: completedCount, bg: 'bg-success/10', ring: 'ring-success/20', text: 'text-success', icon: CheckCircle2 },
+                { key: 'in_progress', label: t('RegDomainDashboard.status.en_cours', 'En cours'), pct: inProgressPct, count: inProgressCount, bg: 'bg-warning/10', ring: 'ring-warning/20', text: 'text-warning', icon: Clock },
+                { key: 'not_started', label: t('RegDomainDashboard.status.non_commence', 'Non commencé'), pct: notStartedPct, count: notStartedCount, bg: 'bg-destructive/10', ring: 'ring-destructive/20', text: 'text-destructive', icon: AlertCircle }
+              ].map((item) => {
+                const Icon = item.icon;
+                return (
+                  <div key={item.key} className={`rounded-lg p-3 ${item.bg} ring-1 ${item.ring}`}>
+                    <div className={`flex items-center gap-1.5 ${item.text}`}>
+                      <Icon className="h-3.5 w-3.5" />
+                      <span className="text-[11px] font-semibold">{item.label}</span>
+                    </div>
+                    <div className={`text-2xl font-extrabold tabular-nums mt-1 text-left ${item.text}`} dir="ltr">
+                      {Math.round(item.pct)}%
+                    </div>
+                    <div className="text-[10px] text-muted-foreground tabular-nums mt-0.5 text-left" dir="ltr">
+                      {item.count} / {prefectures.length}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </Card>
+        </section>
+
+        {/* SECTION 2 : KPI Cards */}
+        <section className="mb-8 w-full mt-8">
+          <div className="flex items-center justify-between gap-3 mb-4">
+            <div>
+              <h2 className="text-xl font-bold text-foreground">
+                {t("RegDomainDashboard.kpis.title", "Indicateurs de Pilotage Stratégique")}
+              </h2>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4">
+            <Card className="relative p-4 sm:p-5 border-border/60 hover:shadow-elegant overflow-hidden bg-card">
+              <span className="absolute inset-y-0 start-0 w-1 bg-primary" />
+              <Users className="h-8 w-8 mb-3 text-primary opacity-80" />
+              <div className="text-xl sm:text-2xl font-extrabold tracking-tight tabular-nums text-primary">
+                {formatNumber(kpiData.total_beneficiaires, i18n.language)}
+              </div>
+              <div className="text-xs text-muted-foreground mt-1 font-medium leading-tight">
+                {t("RegDomainDashboard.kpis.totalBeneficiaires", "Total Bénéficiaires")}
+              </div>
+            </Card>
+
+            <Card className="relative p-4 sm:p-5 border-border/60 hover:shadow-elegant overflow-hidden bg-card">
+              <span className="absolute inset-y-0 start-0 w-1 bg-info" />
+              <Activity className="h-8 w-8 mb-3 text-info opacity-80" />
+              <div className="text-xl sm:text-2xl font-extrabold tracking-tight tabular-nums text-info">
+                {formatNumber(kpiData.total_activites, i18n.language)}
+              </div>
+              <div className="text-xs text-muted-foreground mt-1 font-medium leading-tight">
+                {t("RegDomainDashboard.kpis.totalActivities", "Total activités")}
+              </div>
+            </Card>
+
+            <Card className="relative p-4 sm:p-5 border-border/60 hover:shadow-elegant overflow-hidden bg-card">
+              <span className="absolute inset-y-0 start-0 w-1 bg-warning" />
+              <Building2 className="h-8 w-8 mb-3 text-warning opacity-80" />
+              <div className="text-xl sm:text-2xl font-extrabold tracking-tight tabular-nums text-warning">
+                {formatNumber(kpiData.etablissements_actifs, i18n.language)} 
+              </div>
+              <div className="text-xs text-muted-foreground mt-1 font-medium leading-tight">
+                {t("RegDomainDashboard.kpis.activeEstablishments", "Établissements actifs")}
+              </div>
+            </Card>
+
+            <Card className="relative p-4 sm:p-5 border-border/60 hover:shadow-elegant overflow-hidden bg-card">
+              <span className="absolute inset-y-0 start-0 w-1 bg-success" />
+              <Handshake className="h-8 w-8 mb-3 text-success opacity-80" />
+              <div className="text-xl sm:text-2xl font-extrabold tracking-tight tabular-nums text-success">
+                {formatNumber(kpiData.total_partenariats, i18n.language)}
+              </div>
+              <div className="text-xs text-muted-foreground mt-1 font-medium leading-tight">
+                {t("RegDomainDashboard.kpis.totalPartnerships", "Partenariats conclus")}
+              </div>
+            </Card>
+
+            <Card className="relative p-4 sm:p-5 border-border/60 hover:shadow-elegant overflow-hidden bg-card">
+              <span className="absolute inset-y-0 start-0 w-1 bg-pink-500" />
+              <PersonStanding className="h-8 w-8 mb-3 text-pink-500 opacity-80" />
+              <div className="text-xl sm:text-2xl font-extrabold tracking-tight tabular-nums text-pink-500">
+                <span dir="ltr">{kpiData.taux_feminisation}%</span>
+              </div>
+              <div className="text-xs text-muted-foreground mt-1 font-medium leading-tight">
+                {t("RegDomainDashboard.kpis.feminisation", "Taux de Féminisation")}
+              </div>
+            </Card>
+
+            <Card className="relative p-4 sm:p-5 border-border/60 hover:shadow-elegant overflow-hidden bg-card">
+              <span className="absolute inset-y-0 start-0 w-1 bg-blue-600" />
+              <Map className="h-8 w-8 mb-3 text-blue-600 opacity-80" />
+              <div className="text-xl sm:text-2xl font-extrabold tracking-tight tabular-nums text-blue-600">
+                <span dir="ltr">{kpiData.taux_couverture}%</span>
+              </div>
+              <div className="text-xs text-muted-foreground mt-1 font-medium leading-tight">
+                {t("RegDomainDashboard.kpis.couverture", "Taux de Couverture")}
+              </div>
+            </Card>
+          </div>
+        </section>
+
+        {/* SECTION 3 : Structure & Inclusion sociale */}
+        <section className="mt-8 w-full">
+          <div className="mb-4">
+            <h3 className="font-bold text-lg text-foreground mb-1">
+              {t("RegDomainDashboard.section3.title", "Structure & Inclusion Sociale")}
+            </h3>
+            <p className="text-sm text-muted-foreground">
+              {t("RegDomainDashboard.section3.subtitle", "Analyse démographique et territoriale")}
+            </p>
+          </div>
+
+          <Card className="p-5 sm:p-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div>
+                <h4 className="text-sm font-semibold text-center mb-2">
+                  {t("RegDomainDashboard.section3.domainChartTitle", "Répartition par Domaine")}
+                </h4>
+                <ResponsiveContainer width="100%" height={220}>
+                  <PieChart margin={{ top: 15, right: 0, bottom: 0, left: 0 }}>
+                    <Pie
+                      data={[
+                        { name: t("RegDomainDashboard.section3.domains.educatif", "Éducatif"), value: section3Data.domaine_educatif },
+                        { name: t("RegDomainDashboard.section3.domains.culturel", "Culturel"), value: section3Data.domaine_culturel },
+                        { name: t("RegDomainDashboard.section3.domains.sportif", "Sportif"), value: section3Data.domaine_sportif },
+                        { name: t("RegDomainDashboard.section3.domains.capacite", "Capacité"), value: section3Data.domaine_capacite },
+                      ]}
+                      dataKey="value"
+                      cx="50%"
+                      cy="45%"
+                      outerRadius={80}
+                      strokeWidth={2}
+                    >
+                      <Cell fill="#3b82f6" />
+                      <Cell fill="#10b981" />
+                      <Cell fill="#f59e0b" />
+                      <Cell fill="#8b5cf6" />
+                    </Pie>
+                    <Tooltip />
+                    <Legend verticalAlign="bottom" wrapperStyle={{ paddingTop: "15px" }} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+
+              <div>
+                <h4 className="text-sm font-semibold text-center mb-2">
+                  {t("RegDomainDashboard.section3.genderChartTitle", "Inclusion Genre")}
+                </h4>
+                <ResponsiveContainer width="100%" height={220}>
+                  <PieChart margin={{ top: 15, right: 0, bottom: 0, left: 0 }}>
+                    <Pie
+                      data={[
+                        { name: t("RegDomainDashboard.section3.gender.femmes", "Femmes"), value: section3Data.femmes },
+                        { name: t("RegDomainDashboard.section3.gender.hommes", "Hommes"), value: section3Data.hommes }
+                      ]}
+                      dataKey="value"
+                      cx="50%"
+                      cy="45%"
+                      outerRadius={80}
+                      strokeWidth={2}
+                    >
+                      <Cell fill="#ec4899" />
+                      <Cell fill="#3b82f6" />
+                    </Pie>
+                    <Tooltip />
+                    <Legend verticalAlign="bottom" wrapperStyle={{ paddingTop: "15px" }} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+
+              <div>
+                <h4 className="text-sm font-semibold text-center mb-2">
+                  {t("RegDomainDashboard.section3.territoryChartTitle", "Structure Territoriale")}
+                </h4>
+                <ResponsiveContainer width="100%" height={220}>
+                  <PieChart margin={{ top: 15, right: 0, bottom: 0, left: 0 }}>
+                    <Pie
+                      data={[
+                        { name: t("RegDomainDashboard.section3.territory.rural", "Rural"), value: section3Data.rural },
+                        { name: t("RegDomainDashboard.section3.territory.urbain", "Urbain"), value: section3Data.urbain },
+                      ]}
+                      dataKey="value"
+                      cx="50%"
+                      cy="45%"
+                      outerRadius={80}
+                      strokeWidth={2}
+                    >
+                      <Cell fill="#10b981" />
+                      <Cell fill="#f59e0b" />
+                    </Pie>
+                    <Tooltip />
+                    <Legend verticalAlign="bottom" wrapperStyle={{ paddingTop: "15px" }} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </Card>
+        </section>
+
+        {/* SECTION 4 : Dynamique Régionale */}
+        <section className="mt-8 w-full">
+          <div className="mb-4">
+            <h2 className="text-xl font-bold text-foreground">
+              {t("RegDomainDashboard.section4.title", "Dynamique Régionale")}
+            </h2>
+            <p className="text-xs text-muted-foreground mt-1">
+              {t("RegDomainDashboard.section4.subtitle", "Évolution des activités et partenariats durant l'année")}
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+            {/* CARD 1 */}
+            <Card className="p-5 sm:p-6">
+              <h3 className="font-bold text-foreground mb-1">
+                {t("RegDomainDashboard.section4.activitiesTitle", "Évolution Trimestrielle des Activités")}
+              </h3>
+              <p className="text-xs text-muted-foreground mb-4">
+                {t("RegDomainDashboard.section4.activitiesSubtitle", "Volume global des activités réalisées")}
+              </p>
+
+              <div className="h-[280px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart 
+                    data={evolutionActivites}
+                    margin={{ 
+                      top: 10, 
+                      right: i18n.language === "ar" ? 45 : 10, 
+                      left: i18n.language === "ar" ? 10 : 30, 
+                      bottom: 0 
+                    }}
+                  >
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      stroke="hsl(var(--border))"
+                    />
+                    <XAxis
+                      dataKey="trimestre"
+                      fontSize={11}
+                      tickFormatter={(value) => t(`RegDomainDashboard.quarters.${String(value).toLowerCase()}`, String(value))}
+                    />
+                    <YAxis
+                      orientation="left"
+                      width={45}
+                      tick={{ 
+                        fontSize: 11, 
+                        dx: i18n.language === "ar" ? -18 : 0 
+                      }}
+                    />
+                    <Tooltip 
+                      labelFormatter={(label) => t(`RegDomainDashboard.quarters.${String(label).toLowerCase()}`, String(label))}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="total_activites"
+                      stroke="#10b981"
+                      fill="rgba(16, 185, 129, 0.20)"
+                      strokeWidth={3}
+                      connectNulls={false}
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            </Card>
+
+            {/* CARD 2 */}
+            <Card className="p-5 sm:p-6">
+              <h3 className="font-bold text-foreground mb-1">
+                {t("RegDomainDashboard.section4.establishmentsTitle", "Évolution de l'État des Établissements")}
+              </h3>
+              <p className="text-xs text-muted-foreground mb-4">
+                {t("RegDomainDashboard.section4.establishmentsSubtitle", "Suivi trimestriel de l'infrastructure")}
+              </p>
+              
+              <div className="h-[280px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart 
+                    data={evolutionEtablissements}
+                    margin={{ 
+                      top: 10, 
+                      right: i18n.language === "ar" ? 45 : 10, 
+                      left: i18n.language === "ar" ? 10 : 30, 
+                      bottom: 0 
+                    }}
+                  >
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      stroke="hsl(var(--border))"
+                      vertical={false} 
+                    />
+                    <XAxis
+                      dataKey="trimestre"
+                      fontSize={11}
+                      tickFormatter={(value) => t(`RegDomainDashboard.quarters.${String(value).toLowerCase()}`, String(value))}
+                    />
+                    <YAxis
+                      orientation="left"
+                      width={45}
+                      tick={{ 
+                        fontSize: 11, 
+                        dx: i18n.language === "ar" ? -18 : 0 
+                      }}
+                    />
+                    <Tooltip 
+                      contentStyle={{ borderRadius: '8px', fontSize: '12px' }} 
+                      labelFormatter={(label) => t(`RegDomainDashboard.quarters.${String(label).toLowerCase()}`, String(label))}
+                    />
+                    <Legend 
+                      iconType="circle" 
+                      wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} 
+                    />
+
+                    {/* Ligne Verte */}
+                    <Line
+                      type="monotone"
+                      dataKey="fonctionnels"
+                      name={t("RegDomainDashboard.section4.status.fonctionnels", "Fonctionnels")}
+                      stroke="#10B981" 
+                      strokeWidth={3}
+                      dot={{ strokeWidth: 2, r: 4 }}
+                      activeDot={{ r: 6, strokeWidth: 0 }}
+                      connectNulls={false}
+                    />
+
+                    {/* Ligne Bleue */}
+                    <Line
+                      type="monotone"
+                      dataKey="travaux"
+                      name={t("RegDomainDashboard.section4.status.travaux", "En travaux")}
+                      stroke="#3B82F6" 
+                      strokeWidth={3}
+                      dot={{ strokeWidth: 2, r: 4 }}
+                      activeDot={{ r: 6, strokeWidth: 0 }}
+                      connectNulls={false}
+                    />
+
+                    {/* Ligne Rouge */}
+                    <Line
+                      type="monotone"
+                      dataKey="fermes"
+                      name={t("RegDomainDashboard.section4.status.fermes", "Fermés")}
+                      stroke="#EF4444" 
+                      strokeWidth={3}
+                      dot={{ strokeWidth: 2, r: 4 }}
+                      activeDot={{ r: 6, strokeWidth: 0 }}
+                      connectNulls={false}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </Card>
+
+          </div>
+        </section>
+
+        {/* SECTION 5 (Partie 1) */}
+        <section className="mt-8 w-full">
+
+          <div className="mb-4">
+            <h2 className="text-xl font-bold">
+              {t("RegDomainDashboard.section5.title", "Performance des Directions")}
+            </h2>
+
+            <p className="text-xs text-muted-foreground">
+              {t("RegDomainDashboard.section5.subtitle", "Classement et comparaison régionale")}
+            </p>
+          </div>
+
+          <div className="grid lg:grid-cols-2 gap-6 mb-6">
+
+              {/* TOP ACTIVITES */}
+            <Card className="p-5 border-border/60 shadow-sm">
+              <div className="flex items-center gap-2 mb-4">
+                <Trophy className="h-5 w-5 text-primary" />
+                <h3 className="font-bold text-base text-foreground">
+                  {t("RegDomainDashboard.section5.topActivities", "Top 3 par Activités")}
+                </h3>
+              </div>
+
+              <div className="space-y-3">
+                {topActivites.map((item, index) => {
+                  let rowStyle = "bg-muted/40 border border-transparent";
+                  let badgeStyle = "bg-muted text-muted-foreground border-transparent";
+
+                  if (index === 0) {
+                    rowStyle = "bg-amber-500/10 border border-amber-500/20"; // Gold Row
+                    badgeStyle = "bg-amber-500/20 text-amber-800 border-amber-500/30"; // Gold Badge
+                  } else if (index === 1) {
+                    rowStyle = "bg-slate-400/10 border border-slate-400/20"; // Silver Row
+                    badgeStyle = "bg-slate-400/20 text-slate-800 border-slate-400/30"; // Silver Badge
+                  } else if (index === 2) {
+                    rowStyle = "bg-orange-500/10 border border-orange-500/20"; // Bronze Row
+                    badgeStyle = "bg-orange-500/20 text-orange-800 border-orange-500/30"; // Bronze Badge
+                  }
+
+                  return (
+                    <div
+                      key={item.name}
+                      className={`flex items-center justify-between p-3 rounded-xl transition-all duration-200 ${rowStyle}`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className={`h-8 w-8 rounded-full flex items-center justify-center font-extrabold text-xs border ${badgeStyle}`}>
+                          {index + 1}
+                        </div>
+                        <span className="font-semibold text-sm text-foreground">
+                          {t(`prefectures.${item.name.toLowerCase()}`, item.name) as string}
+                        </span>
+                      </div>
+                      <span className="font-bold text-sm text-foreground tabular-nums" dir="ltr">
+                        {formatNumber(item.activities || 0, i18n.language)}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </Card>
+
+              {/* TOP BENEFICIAIRES */}
+            <Card className="p-5 border-border/60 shadow-sm">
+              <div className="flex items-center gap-2 mb-4">
+                <Trophy className="h-5 w-5 text-success" />
+                <h3 className="font-bold text-base text-foreground">
+                  {t("RegDomainDashboard.section5.topBeneficiaries", "Top 3 par Bénéficiaires")}
+                </h3>
+              </div>
+
+              <div className="space-y-3">
+                {topBeneficiaires.map((item, index) => {
+                  let rowStyle = "bg-muted/40 border border-transparent";
+                  let badgeStyle = "bg-muted text-muted-foreground border-transparent";
+
+                  if (index === 0) {
+                    rowStyle = "bg-amber-500/10 border border-amber-500/20";
+                    badgeStyle = "bg-amber-500/20 text-amber-800 border-amber-500/30";
+                  } else if (index === 1) {
+                    rowStyle = "bg-slate-400/10 border border-slate-400/20";
+                    badgeStyle = "bg-slate-400/20 text-slate-800 border-slate-400/30";
+                  } else if (index === 2) {
+                    rowStyle = "bg-orange-500/10 border border-orange-500/20";
+                    badgeStyle = "bg-orange-500/20 text-orange-800 border-orange-500/30";
+                  }
+
+                  return (
+                    <div
+                      key={item.id || item.name}
+                      className={`flex items-center justify-between p-3 rounded-xl transition-all duration-200 ${rowStyle}`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className={`h-8 w-8 rounded-full flex items-center justify-center font-extrabold text-xs border ${badgeStyle}`}>
+                          {index + 1}
+                        </div>
+                        <span className="font-semibold text-sm text-foreground">
+                          {t(`prefectures.${item.name.toLowerCase()}`, item.name) as string}
+                        </span>
+                      </div>
+                      <span className="font-bold text-sm text-foreground tabular-nums" dir="ltr">
+                        {formatNumber(item.beneficiaries || 0, i18n.language)}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </Card>
+
+          </div>
+
+        {/* TABLEAU */}
+        <Card className="p-5 sm:p-6 border-border/60 shadow-sm">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h3 className="font-bold text-lg text-foreground">
+                  {t("RegDomainDashboard.section5.tableTitle", "Tableau Comparatif des Directions")}
+                </h3>
+                <p className="text-[12px] text-muted-foreground mt-1">
+                  {t("RegDomainDashboard.section5.tableSubtitle", "Classement détaillé et état d'avancement")}
+                </p>
+              </div>
+            </div>
+
+            <div className="rounded-md border border-border/50 overflow-hidden">
+              <Table>
+                <TableHeader className="bg-muted/30">
+                  <TableRow className="hover:bg-transparent border-border/50">
+                    <TableHead className="w-[80px] text-[11px] font-bold uppercase tracking-wider text-muted-foreground text-start">
+                      {t("RegDomainDashboard.section5.columns.rank", "Rang")}
+                    </TableHead>
+                    <TableHead className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground text-start">
+                      {t("RegDomainDashboard.section5.columns.direction", "Direction")}
+                    </TableHead>
+                    
+                    {/* Score Global */}
+                    <TableHead 
+                      className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground cursor-pointer hover:text-primary transition-colors group text-center"
+                      onClick={() => handleSort && handleSort("score")}
+                    >
+                      <div className="flex items-center justify-center gap-1.5">
+                        {t("RegDomainDashboard.section5.columns.score", "Score Global")}
+                        <ArrowUpDown className="h-3 w-3 text-muted-foreground/50 group-hover:text-primary transition-colors" />
+                      </div>
+                    </TableHead>
+                    
+                    <TableHead className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground text-end">
+                      {t("RegDomainDashboard.section5.columns.status", "Statut")}
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+
+                <TableBody>
+                  {rankedDirections.map((row, index) => {
+                    const rowStatus = row.statut || "NON_COMMENCE";
+                    
+                    let statusConfig = {
+                      label: t("RegDomainDashboard.section5.status.NON_COMMENCE", "Non commencé"),
+                      badgeClass: 'bg-destructive/10 ring-1 ring-destructive/20 text-destructive border-0',
+                      Icon: AlertCircle, 
+                    };
+
+                    if (rowStatus === 'TERMINE') {
+                      statusConfig = {
+                        label: t("RegDomainDashboard.section5.status.TERMINE", "Terminé"), 
+                        badgeClass: 'bg-success/10 ring-1 ring-success/20 text-success border-0',
+                        Icon: CheckCircle2,
+                      };
+                    } else if (rowStatus === 'EN_COURS') {
+                      statusConfig = {
+                        label: t("RegDomainDashboard.section5.status.EN_COURS", "En cours"),
+                        badgeClass: 'bg-warning/10 ring-1 ring-warning/20 text-warning border-0',
+                        Icon: Clock,
+                      };
+                    }
+
+                    let rankBadgeStyle = "bg-muted text-muted-foreground border-transparent";
+                    if (index === 0) { 
+                      rankBadgeStyle = "bg-amber-500/20 text-amber-800 border-amber-500/30"; 
+                    } else if (index === 1) { 
+                      rankBadgeStyle = "bg-slate-400/20 text-slate-800 border-slate-400/30"; 
+                    } else if (index === 2) { 
+                      rankBadgeStyle = "bg-orange-500/20 text-orange-800 border-orange-500/30"; 
+                    }
+
+                    const dirKey = row.name.toLowerCase() === 'médiouna' ? 'mediouna' : row.name.toLowerCase();
+
+                    return (
+                      <TableRow 
+                        key={row.id || index}
+                        className="cursor-pointer hover:bg-muted/30 transition-colors border-border/50" 
+                        onClick={() => navigate(`/directions/${row.id}`)}
+                      >
+                        {/* Rang */}
+                        <TableCell className="text-start">
+                          <div className={`w-7 h-7 flex items-center justify-center rounded-full text-xs font-extrabold border ${rankBadgeStyle}`}>
+                            {row.rang || index + 1}
+                          </div>
+                        </TableCell>
+
+                        {/* Direction */}
+                        <TableCell className="font-semibold text-sm text-foreground text-start">
+                          {t(`prefectures.${dirKey}`, row.name) as string}
+                        </TableCell>
+
+                        {/* Score Global */}
+                        <TableCell className="text-center">
+                          <span className="font-extrabold tabular-nums text-[15px] text-foreground" dir="ltr">
+                            {formatNumber(row.score || 0, i18n.language)}%
+                          </span>
+                        </TableCell>
+
+                        {/* Statut */}
+                        <TableCell className="text-end">
+                          <div className="flex justify-end">
+                            <Badge variant="outline" className={`gap-1.5 px-2.5 py-1 shadow-none ${statusConfig.badgeClass}`}>
+                              <statusConfig.Icon className="h-3.5 w-3.5" />
+                              <span className="font-semibold text-xs tracking-wide">{statusConfig.label}</span>
+                            </Badge>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+          </Card>
+        </section>
+        </div>
+
+      </div>
+    </AppLayout>
+  );
+};
+
+export default RegDomainDashboard;

@@ -1,0 +1,665 @@
+{   
+"form": {
+    "eyebrow": "Campagne {{year}}",
+    "title": "Saisie",
+    "completeness": "Complétude",
+    "score": "Score",
+    "fieldsFilled": "champs renseignés",
+    "steps": {
+      "Activités permanentes": "Activités permanentes"
+    },
+    "permanent": {
+      "nombreAssociations": "Nombre d'associations",
+      "nombreClubs": "Nombre de clubs",
+      "nombreConventions": "Nombre de conventions",
+      "activitesEducatives": "Activités éducatives",
+      "activitesCulturelles": "Activités culturelles et artistiques",
+      "activitesSportives": "Activités récréatives et physiques",
+      "renforcementCapacites": "Renforcement des capacités"
+    },
+    "save": {
+      "saving": "Enregistrement…",
+      "savedJustNow": "Enregistré",
+      "savedAt": "Enregistré à {{time}}",
+      "notYetSaved": "Non enregistré",
+      "error": "Échec de l'enregistrement",
+      "draftSavedTitle": "Brouillon enregistré",
+      "draftErrorTitle": "Échec de l'enregistrement"
+    },
+    "actions": {
+      "saveDraft": "Enregistrer brouillon",
+      "completeDomain": "Marquer le domaine comme complet"
+    },
+    "confirm": {
+      "title": "Confirmer la soumission",
+      "body": "Vous êtes sur le point de soumettre votre rapport {{year}} (complétude : {{completeness}}%). Après soumission, les données ne seront plus modifiables sans intervention de l'équipe régionale. Confirmez-vous ?",
+      "cancel": "Annuler",
+      "confirm": "Soumettre définitivement"
+    },
+    "submit": {
+      "successTitle": "Rapport soumis",
+      "successBody": "Votre rapport {{year}} a bien été transmis à l'équipe régionale.",
+      "errorTitle": "Échec de la soumission"
+    },
+    "forbidden": {
+      "title": "Accès réservé",
+      "body": "Seuls les directeurs préfectoraux peuvent saisir le rapport annuel. Si vous pensez qu'il s'agit d'une erreur, contactez votre administrateur régional."
+    },
+    "error": {
+      "invalid": "Valeur invalide",
+      "negative": "La valeur doit être ≥ 0",
+      "tooLarge": "Valeur trop élevée"
+    }
+  },
+    "PreFormSelection": {
+      "quarters": {
+      "t1": "T1",
+      "t2": "T2",
+      "t3": "T3",
+      "t4": "T4"
+    }
+  },
+    "directionsTab": {
+      "title": "Directions",
+      "searchPlaceholder": "Rechercher une direction...",
+      "countSuffix": "Directions - Année",
+      "scoreGlobal": "SCORE GLOBAL",
+      "trimestre": "TRIMESTRE",
+      "statuses": {
+        "non_commence": "Non commencé",
+        "en_cours": "En cours",
+        "termine": "Terminé"
+      }
+    },
+  "map": {
+    "eyebrow": "Carte régionale",
+    "title": "Région Casablanca-Settat",
+    "subtitle": "Vue cartographique des 13 directions préfectorales",
+    "prefectures": "Directions préfectorales",
+    "avgScore": "Score moyen régional",
+    "topPerformer": "Meilleure performance",
+    "choropleth": "Performance par préfecture",
+    "choroplethHint": "Couleur graduée du rouge (faible) au vert profond (élevé) selon le score global.",
+    "themeDark": "Sombre",
+    "themeLight": "Clair",
+    "casaWilaya": "Wilaya de Casablanca",
+    "casaHint": "Les 7 préfectures d'arrondissements sont regroupées. Zoomez (≥ niveau {{zoom}}) pour voir leurs positions réelles.",
+    "score": "Score",
+    "viewFile": "Voir la fiche",
+    "legend": {
+      "excellence": "Excellence",
+      "bon": "Bon",
+      "moyen": "Moyen",
+      "improve": "À améliorer"
+    },
+    "noData": "Aucune donnée"
+  },
+  "directionDetails": {
+    "region": "Casablanca-Settat",
+    "notStarted": "Non commencé",
+    "progression": "Progression",
+    "lastUpdate": "MAJ",
+    "inputProgress": "Avancement de la saisie"
+  },
+  "status": {
+    "NON_COMMENCE": "Non commencé",
+    "EN_COURS": "En cours",
+    "TERMINE": "Terminé"
+  },
+  "footer": {
+    "ministryShort": "Ministère de la Jeunesse, de la Culture et de la Communication",
+    "tagline": "Plateforme officielle de pilotage régional des activités jeunesse de la Wilaya de Casablanca-Settat.",
+    "contact": "Coordonnées",
+    "directionName": "Direction Régionale de la Jeunesse Casablanca-Settat",
+    "address": "Boulevard Mohammed V, Casablanca · Maroc",
+    "navigation": "Navigation",
+    "officialApp": "Application officielle",
+    "kingdom": "Royaume du Maroc",
+    "version": "Version"
+  },
+  "roles": {
+    "directeur_regional": "Directeur Régional",
+    "directeur_prefectoral": "Directeur Préfectoral",
+    "admin": "Administrateur"
+  },
+  "prefectures": {
+    "settat": "Settat",
+    "mohammedia": "Mohammedia",
+    "mediouna": "Médiouna",
+    "berrechid": "Berrechid",
+    "benslimane": "Benslimane",
+    "sidi bennour": "Sidi Bennour",
+    "sidi bernoussi": "Sidi Bernoussi",
+    "anfa": "Anfa",
+    "el jadida": "El Jadida",
+    "ben m'sick - moulay rachid": "Ben M'Sick - Moulay Rachid",
+    "fida - mers sultan": "Fida - Mers Sultan",
+    "aïn sebaâ - hay mohammadi": "Aïn Sebaâ - Hay Mohammadi",
+    "aïn chock - hay hassani": "Aïn Chock - Hay Hassani",
+    "regional": "Régional"
+  },
+  "nav": {
+    "entry": "Saisie",
+    "map": "Carte",
+    "directions": "Directions",
+    "domaines": "Domaines",
+    "directorTitle": "Directeur",
+    "export": "Export Excel"
+  },
+  "loadingIndicators": "Chargement des indicateurs...",
+  "prefDomainDashboard": {
+    "keyIndicators": "Indicateurs clés",
+    "workflow": {
+      "title": "Suivi du rapport",
+      "status": "Statut",
+      "filteredDomain": "Domaine Filtré",
+      "lastUpdate": "Dernière mise à jour",
+      "progress": "Progression"
+    },
+      "status": {
+      "en_cours": "En cours",
+      "termine": "Terminé",
+      "non_commence": "Non commencé"
+    },
+      "kpis": {
+      "title": "Top KPIs principaux",
+      "activities": "Total des Activités",
+      "beneficiaries": "Total Bénéficiaires",
+      "coverage": "Taux de Couverture",
+      "feminization": "Taux de Féminisation",
+      "partnerships": "Total Partenariats",
+      "establishments": "Établissements Actifs"
+    },
+      "charts": {
+      "axeTitle": "Répartition des bénéficiaires par axe",
+      "volumeTitle": "Volume Global par Programme",
+      "volumeSubtitle": "Nombre absolu de bénéficiaires impactés",
+      "mixityTitle": "Mixité H / F par Programme (%)",
+      "mixitySubtitle": "Taux de féminisation comparatif",
+      "men": "Hommes",
+      "women": "Femmes",
+      "coverageTitle": "Couverture Territorial (Urbain / Rural)",
+      "coverageSubtitle": "Analyse incluant les données estimées",
+      "urban": "Urbain",
+      "rural": "Rural",
+      "evolutionTitle": "Évolution trimestrielle des bénéficiaires",
+      "evolutionCardTitle": "Trajectoire des performances par programme",
+      "evolutionCardSubtitle": "Évolution du nombre de bénéficiaires (T1 à T4) pour les axes éligibles"
+    },
+      "programs": {
+      "camping": "Camping",
+      "formation": "Formation",
+      "festivals": "Festivals",
+      "insertion": "Insertion"
+    },
+      "quarters": {
+      "t1": "T1",
+      "t2": "T2",
+      "t3": "T3",
+      "t4": "T4"
+    },
+      "benchmark": {
+      "title": "Benchmark régional",
+      "columns": {
+        "indicator": "Indicateur",
+        "prefecture": "Préfecture",
+        "regionalAverage": "Moyenne Régionale",
+        "variance": "Écart"
+      },
+       "kpis": {
+        "totalActivities": "Total des Activités",
+        "totalBeneficiaries": "Total Bénéficiaires",
+        "coverageRate": "Taux de Couverture",
+        "feminisationRate": "Taux de Féminisation",
+        "activePartnerships": "Partenariats Actifs",
+        "operationalEstab": "Établ. Opérationnels"
+      }
+    },
+     "details": {
+      "title": "Lecture détaillée du rapport",
+      "activities": {
+        "title": "Activités (Permanentes & Rayonnantes)",
+        "ecosystem": "Écosystème & Structures",
+        "associations": "Associations",
+        "activeClubs": "Clubs Actifs",
+        "conventions": "Conventions",
+        "animationVolume": "Volume d'Animation",
+        "totalActions": "Total: {{count}} Actions",
+        "sportsActivities": "Activités Sportives",
+        "educActivities": "Activités Éducatives",
+        "cultActivities": "Activités Culturelles",
+        "capacityBuilding": "Renforcement des capacités"
+      },
+       "camping": {
+        "title": "Programme National de Camping & Formations",
+        "participants": "Bénéficiaires & Participants",
+        "totalBeneficiaries": "Total Bénéficiaires",
+        "summerCamps": "Colonies de vacances",
+        "mreChildren": "Enfants MRE",
+        "specialNeeds": "Besoins Spécifiques",
+        "staffingDevice": "Dispositif d'Encadrement",
+        "staffingRatio": "Ratio d'encadrement",
+        "ratioDesc": "(1 encadrant pour {{count}} bénéficiaires)",
+        "noData": "(Aucune donnée saisie)",
+        "mobilizedStaff": "Staff Mobilisé",
+        "menCount": "{{count}} Hommes",
+        "womenCount": "{{count}} Femmes",
+        "trainings": "Formations (Encadrement)",
+        "organizedSessions": "Sessions Organisées",
+        "trainedCadres": "Cadres Formés",
+        "movements": "Mouvements des associations",
+        "assocEntrants": "Associations Entrantes",
+        "benEntrants": "Bénéficiaires Entrants",
+        "assocSortants": "Associations Sortantes",
+        "benSortants": "Bénéficiaires Sortants"
+      },
+       "conventions": {
+        "title": "Conventions et Partenariats",
+        "summary": "Bilan des Conventions",
+        "totalConventions": "Total Conventions",
+        "partnerTypes": "Types de Partenaires Engagés",
+        "distributionByType": "Répartition par Type",
+        "noData": "Aucune donnée disponible",
+        "types": {
+          "Secteur privé": "Secteur privé",
+          "Société civile": "Société civile",
+          "Associations": "Associations",
+          "Secteur public": "Secteur public"
+        }
+      },
+        "insertion": {
+        "title": "Intégration Socio-Économique",
+        "summary": "Bilan des Activités",
+        "activitiesDone": "Activités Réalisées",
+        "activePartners": "Partenaires Actifs",
+        "globalVolume": "Volume Global",
+        "hours": "Heures",
+        "beneficiaries": "Bénéficiaires",
+        "total": "Total",
+        "genderDistribution": "Répartition par Genre",
+        "men": "Hommes",
+        "women": "Femmes",
+        "spatialDistribution": "Répartition Spatiale",
+        "urban": "Urbain",
+        "rural": "Rural"
+      },
+       "festivals": {
+        "title": "Festivals de Jeunesse",
+        "summary": "Événements & Éliminatoires",
+        "organized": "Festivals Organisés",
+        "provinces": "Provinces (Couverture)",
+        "qualified": "Qualifiés (Finales)",
+        "demographics": "Démographie des Participants",
+        "total": "Total",
+        "genderDistribution": "Répartition par Genre",
+        "men": "Hommes",
+        "women": "Femmes",
+        "spatialDistribution": "Répartition Spatiale",
+        "urban": "Urbain",
+        "rural": "Rural"
+      },
+        "etablissements": {
+        "title": "Établissements & Infrastructures",
+        "parcStatus": "Statut du Parc Actuel",
+        "total": "Total",
+        "operational": "Opérationnels / Actifs",
+        "newCreation": "Nouvelle création",
+        "underRealization": "En réalisation",
+        "fermeturesAnalysis": "Analyse des Fermetures",
+        "totalFermees": "Total Fermées",
+        "noFermeture": "Aucune fermeture signalée",
+        "causes": {
+          "Encadrement": "Encadrement",
+          "En attente d'inauguration": "En attente d'inauguration",
+          "Mise à niveau": "Mise à niveau",
+          "Équipement": "Équipement",
+          "Conflit juridique": "Conflit juridique"
+        }
+      }
+    }  
+  },
+    "RegDomainDashboard": {
+      "title": "Tableau de bord régional DRJ",
+      "tracking": "Suivi du remplissage",
+      "submittedCount": "{{n}} / {{total}} directions ont terminé",
+      "status": {
+        "termine": "Terminé",
+        "en_cours": "En cours",
+        "non_commence": "Non commencé"
+      },
+      "kpis": {
+      "title": "Indicateurs de Pilotage Stratégique",
+      "totalBeneficiaires": "Total Bénéficiaires",
+      "totalActivities": "Total activités",
+      "activeEstablishments": "Établissements actifs",
+      "totalPartnerships": "Partenariats conclus",
+      "feminisation": "Taux de Féminisation",
+      "couverture": "Taux de Couverture"
+    },
+    "section3": {
+      "title": "Structure & Inclusion Sociale",
+      "subtitle": "Analyse démographique et territoriale",
+      "domainChartTitle": "Répartition par Domaine",
+      "domains": {
+        "educatif": "Éducatif",
+        "culturel": "Culturel",
+        "sportif": "Sportif",
+        "capacite": "Capacité"
+      },
+      "genderChartTitle": "Inclusion Genre",
+      "gender": {
+        "femmes": "Femmes",
+        "hommes": "Hommes"
+      },
+      "territoryChartTitle": "Structure Territoriale",
+      "territory": {
+        "rural": "Rural",
+        "urbain": "Urbain"
+      }
+    },
+    "section4": {
+      "title": "Dynamique Régionale",
+      "subtitle": "Évolution des activités et partenariats durant l'année",
+      "activitiesTitle": "Évolution Trimestrielle des Activités",
+      "activitiesSubtitle": "Volume global des activités réalisées",
+      "establishmentsTitle": "Évolution de l'État des Établissements",
+      "establishmentsSubtitle": "Suivi trimestriel de l'infrastructure",
+      "status": {
+        "fonctionnels": "Fonctionnels",
+        "travaux": "En travaux",
+        "fermes": "Fermés"
+      }
+    },
+    "quarters": {
+      "t1": "T1",
+      "t2": "T2",
+      "t3": "T3",
+      "t4": "T4"
+    },
+    "section5": {
+      "title": "Performance des Directions",
+      "subtitle": "Classement et comparaison régionale",
+      "topActivities": "Top 3 Activités",
+      "topBeneficiaries": "Top 3 Bénéficiaires",
+      "tableTitle": "Tableau Comparatif des Directions",
+      "tableSubtitle": "Classement détaillé et état d'avancement",
+      "columns": {
+        "rank": "Rang",
+        "direction": "Direction",
+        "score": "Score Global",
+        "status": "Statut"
+      },
+      "status": {
+        "NON_COMMENCE": "Non commencé",
+        "TERMINE": "Terminé",
+        "EN_COURS": "En cours"
+      }
+    },
+    "loadingPrefecture": "Chargement de l'analyse détaillée de la préfecture...",
+    "buttons": {
+    "excel": "Données Excel",
+    "pdf": "Rapport PDF"
+  }
+    },
+  
+   
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  "app": {
+    "name": "DRJ Casablanca-Settat",
+    "fullName": "Direction Régionale de la Jeunesse",
+    "subtitle": "Système de pilotage régional",
+    "ministry": "Ministère de la Jeunesse, de la Culture et de la Communication"
+  },
+  "auth": {
+    "loginTitle": "Connexion",
+    "loginSubtitle": "Accédez à votre espace de pilotage régional",
+    "email": "Adresse e-mail",
+    "password": "Mot de passe",
+    "fullName": "Nom complet",
+    "signIn": "Se connecter",
+    "signUp": "Créer un compte",
+    "switchToSignUp": "Pas encore de compte ?",
+    "switchToSignIn": "Déjà inscrit ?",
+    "logout": "Déconnexion",
+    "demoAccounts": "Comptes de démonstration",
+    "useThisAccount": "Utiliser ce compte",
+    "loading": "Connexion en cours…",
+    "errorInvalid": "Identifiants invalides",
+    "errorGeneric": "Une erreur est survenue",
+    "demoBanner": "Cliquez sur un compte ci-dessous pour pré-remplir le formulaire.",
+    "demoAccess": "Accès démo (aperçu)",
+    "forgotPassword": "Mot de passe oublié ?",
+    "forgot": {
+      "title": "Mot de passe oublié",
+      "subtitle": "Saisissez votre adresse e-mail pour recevoir un lien de réinitialisation.",
+      "send": "Envoyer le lien de réinitialisation",
+      "sent": "Un lien de réinitialisation a été envoyé à votre adresse e-mail.",
+      "sentToast": "E-mail envoyé",
+      "backToLogin": "Retour à la connexion"
+    }
+  },
+  "dashboard": {
+    "title": "Tableau de bord régional",
+    "subtitle": "Pilotage des 13 directions préfectorales · Année {{year}}",
+    "kpi": {
+      "submitted": "Directions ayant soumis",
+      "completeness": "Taux de complétude moyen",
+      "beneficiaries": "Total bénéficiaires",
+      "associations": "Associations",
+      "conventions": "Conventions signées",
+      "clubs": "Clubs actifs",
+      "trainings": "Formations",
+      "festivals": "Participants festivals",
+      "camping": "Participants camping"
+    },
+    "ranking": "Classement par score global",
+    "byProgram": "Bénéficiaires par programme",
+    "comparison": "Comparaison entre directions",
+    "rank": "Rang",
+    "direction": "Direction",
+    "score": "Score",
+    "completeness": "Complétude",
+    "lastUpdate": "Dernière mise à jour",
+    "viewDetail": "Voir la fiche",
+    "noData": "Aucune donnée"
+  },
+  
+  "detail": {
+    "back": "Retour",
+    "globalScore": "Score global",
+    "completenessRate": "Complétude des données",
+    "lastUpdate": "Mise à jour",
+    "permanent": "Activités permanentes",
+    "outreach": "Activités rayonnantes",
+    "camping": "Programme camping",
+    "festivals": "Festivals jeunesse",
+    "integration": "Intégration socio-économique",
+    "institutions": "État des établissements",
+    "totalBeneficiaries": "Total bénéficiaires",
+    "associations": "Associations",
+    "conventions": "Conventions",
+    "clubs": "Clubs",
+    "educative": "Éducatives",
+    "cultural": "Culturelles",
+    "sportive": "Sportives & récréatives",
+    "capacity": "Renforcement des capacités",
+    "participants": "Participants",
+    "female": "Filles",
+    "male": "Garçons",
+    "rural": "Rural",
+    "urban": "Urbain",
+    "facilitators": "Encadrants",
+    "trainings": "Formations",
+    "qualified": "Qualifiés",
+    "beneficiaries": "Bénéficiaires",
+    "partners": "Partenaires",
+    "updated": "Mis à jour",
+    "inProgress": "En cours",
+    "dispute": "En litige",
+    "rehabNeeds": "Besoins de réhabilitation",
+    "strengths": "Points forts",
+    "weaknesses": "Axes d'amélioration",
+    "scoreFormula": "Formule de score : 40% volume d'activité · 25% bénéficiaires · 15% partenariats · 10% formation · 10% complétude"
+  },
+  "common": {
+    "loading": "Chargement…",
+    "search": "Rechercher",
+    "year": "Année",
+    "all": "Toutes",
+    "language": "Langue",
+    "show": "Afficher",
+    "hide": "Masquer",
+    "next": "Suivant",
+    "previous": "Précédent",
+    "domain": "Domaine",
+    "step": "Étape {{n}} / {{total}}",
+    "duplicateYear": "Dupliquer depuis l'année précédente",
+    "duplicateYearConfirm": "Copier toutes les données de {{from}} vers {{to}} ? Les valeurs existantes pour {{to}} seront écrasées.",
+    "duplicated": "Données copiées de {{from}} vers {{to}}"
+  },
+  "domain": {
+    "title": "Tableau de bord par domaine",
+    "subtitle": "Vue globale · suivi · comparaison entre directions",
+    "tracking": "Suivi des soumissions",
+    "submittedCount": "{{n}} / {{total}} directions ont soumis",
+    "options": {
+      "jeunesse": "Jeunesse",
+      "femme": "Femme / Fille",
+      "enfance": "Enfance",
+      "creche": "Crèche"
+    },
+    "status": {
+      "completed": "Complétée",
+      "in_progress": "En cours",
+      "not_started": "Non démarrée"
+    },
+    "kpi": {
+      "coverage": "Taux de couverture",
+      "coverageHint": "bénéficiaires / population",
+      "coverageShort": "Couverture",
+      "activities": "Total activités",
+      "activitiesShort": "Activités",
+      "participants": "Total participants",
+      "participantsShort": "Participants",
+      "partnerships": "Total partenariats",
+      "score": "Score global domaine",
+      "scoreHint": "moyenne /100"
+    },
+    "charts": {
+      "activitiesByDir": "Activités par direction",
+      "activitiesByDirHint": "Volume d'activités déclaré par chaque direction",
+      "byType": "Répartition par type",
+      "byTypeHint": "Types d'activités du domaine",
+      "evolution": "Évolution des participants",
+      "evolutionHint": "Volume trimestriel cumulé",
+      "gender": "Répartition F / H",
+      "vsAvg": "Direction vs Moyenne régionale"
+    },
+    "compare": {
+      "title": "Comparaison des directions",
+      "results": "{{n}} résultat(s)",
+      "searchPlaceholder": "Rechercher une direction…",
+      "statusPlaceholder": "Statut",
+      "allStatuses": "Tous statuts",
+      "noMatch": "Aucune direction ne correspond aux filtres."
+    },
+    "detail": {
+      "noReportTitle": "Aucun rapport encore soumis",
+      "noReportBody": "Aucun rapport n'a encore été soumis pour cette direction sur la période sélectionnée.",
+      "avg": "moy."
+    }
+  },
+  "regionDashboard": {
+    "title": "Tableau de bord régional DRJ",
+    "subtitle": "Vue globale de la région Casablanca-Settat",
+    "completionTracking": "Suivi global du remplissage",
+    "kpi": {
+      "coverageRate": "Taux de couverture global",
+      "totalActivities": "Total activités",
+      "totalParticipants": "Total participants",
+      "totalPartnerships": "Total partenariats",
+      "globalScore": "Score global moyen",
+      "partnerships": "Partenariats"
+    },
+    "charts": {
+      "activitiesPerDirection": "Activités par direction",
+      "genderDistribution": "Répartition par genre",
+      "evolution": "Évolution temporelle",
+      "participantsOverTime": "Participants sur 3 ans",
+      "activityTypes": "Types d'activités"
+    },
+    "comparisonTable": "Comparaison des directions",
+    "tabs": {
+      "overview": "Vue globale",
+      "detail": "Détail"
+    },
+    "table": {
+      "activities": "Activités",
+      "participants": "Participants",
+      "coverageRate": "Taux couverture"
+    },
+    "smartInsights": "Insights intelligents",
+    "insights": {
+      "goodPerformance": "Bonne performance régionale",
+      "aboveAverage": "Score moyen au-dessus de 70",
+      "average": "Performance moyenne satisfaisante",
+      "needsImprovement": "Amélioration nécessaire",
+      "topDirections": "Top directions",
+      "needsAttention": "Directions à surveiller"
+    },
+    "comparisonWithAverage": "Comparaison avec la moyenne régionale",
+    "average": "moyenne"
+  },
+  "import": {
+    "eyebrow": "Outil d'administration",
+    "title": "Import de données par fichier Excel",
+    "subtitle": "Téléchargez le modèle, remplissez-le, puis importez-le pour mettre à jour les soumissions des directions préfectorales en un clic.",
+    "step1": "Télécharger le modèle Excel",
+    "step1Hint": "Le modèle contient toutes les colonnes attendues, le dictionnaire des champs et la liste des codes des 13 préfectures.",
+    "downloadTemplate": "Télécharger le modèle vierge (.xlsx)",
+    "step2": "Téléverser le fichier rempli",
+    "dropZone": "Cliquez pour sélectionner un fichier .xlsx",
+    "maxSize": "20 Mo max",
+    "parsing": "Analyse du fichier en cours…",
+    "step3": "Vérifier et confirmer l'import",
+    "valid": "lignes valides",
+    "invalid": "lignes en erreur",
+    "fixErrorsHint": "Les lignes en erreur ne seront pas importées. Corrigez votre fichier Excel et téléversez-le à nouveau.",
+    "colStatus": "Statut",
+    "colDp": "Direction préfectorale",
+    "colDetail": "Détail",
+    "confirmImport": "Importer {{count}} ligne(s)",
+    "successTitle": "Import réussi",
+    "successBody": "{{count}} soumission(s) enregistrée(s).",
+    "forbiddenTitle": "Accès restreint",
+    "forbiddenBody": "Seuls l'administrateur régional et les directeurs préfectoraux peuvent importer des données.",
+    "errEmpty": "Le fichier ne contient aucune ligne exploitable.",
+    "errParse": "Impossible de lire le fichier",
+    "errImport": "Échec de l'import",
+    "errCodeMissing": "Code préfecture manquant",
+    "errCodeUnknown": "Code « {{code}} » inconnu",
+    "errNotYourDp": "Vous ne pouvez importer que les données de votre direction",
+    "errYear": "Année invalide",
+    "errStatus": "Statut invalide (brouillon | soumise | validee)"
+  }
+}
