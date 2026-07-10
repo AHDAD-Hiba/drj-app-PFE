@@ -90,7 +90,7 @@ export const useDraftSubmission = ({
    * Writes the current status into suivi_remplissage via UPSERT.
    * If the report is already TERMINE, calling persist() is a no-op.
    */
-  const persist = useCallback(async (overrideStatus?: ReportStatus): Promise<boolean> => {
+const persist = useCallback(async (overrideStatus?: ReportStatus): Promise<boolean> => {
 
     
 
@@ -135,11 +135,21 @@ export const useDraftSubmission = ({
         throw error;
       }
 
+      // 💡 NOUVEAU : 2. Mise à jour du statut global du rapport
+      if (effectiveStatus === 'EN_COURS') {
+        // On lance la requête sans l'attendre (fire-and-forget) pour ne pas ralentir l'UI
+        supabase
+          .from('rapports')
+          .update({ statut_rapport: 'EN_COURS' })
+          .eq('id', rapportId)
+          .eq('statut_rapport', 'NON_COMMENCE') // Sécurité : on modifie SEULEMENT si c'est non commencé
+          .then(({ error: rapportError }) => {
+            if (rapportError) {
+              console.error('[useDraftSubmission] Erreur mise à jour du rapport global:', rapportError);
+            }
+          });
+      }
 
-          console.log(
-      'persist effectiveStatus =',
-      effectiveStatus,
-    );
       setLastSavedAt(
   new Date(
     new Date().toLocaleString('en-US', {
@@ -155,7 +165,6 @@ export const useDraftSubmission = ({
       return false;
     }
   }, [rapportId, directionId, domaineId, completeness]);
-
   // ── Public API ────────────────────────────────────────────────────────────
 
   /**

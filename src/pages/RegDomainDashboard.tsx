@@ -378,7 +378,7 @@ const directionsData = prefectures.map((pref) => ({
                 <SelectContent>
                   {dbDomains.map((dom) => (
                     <SelectItem key={dom.code} value={dom.code}>
-                      {i18n.language === "ar" ? (dom.nom_ar || dom.nom) : dom.nom}
+                      {i18n.language === "ar" ? dom.nom_ar : dom.nom_fr}
                     </SelectItem>
                   ))}
                 </SelectContent>

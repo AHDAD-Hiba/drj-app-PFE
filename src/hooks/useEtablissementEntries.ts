@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/types';
 
@@ -106,6 +106,7 @@ if (!existing) return false;
             ...(existing.id ? { id: existing.id } : {}),
             direction_id: directionId,
             nom: updatedEntry.name.trim(),
+            type_etablissement: 'maison_jeunes',
             est_actif: true, // Sécurité : s'assurer qu'il est actif lors d'une modif
           };
 
@@ -235,6 +236,7 @@ if (!existing) return false;
         .select('*')
         .eq('direction_id', directionId)
         .eq('est_actif', true) // Filtre Soft Delete
+        .eq('type_etablissement', 'maison_jeunes')
         .order('nom', { ascending: true });
 
       if (etabsError) {
@@ -457,8 +459,10 @@ const update = useCallback(
     [],
   );
 
+  const publicItems = useMemo(() => items.map(toPublicEntry), [items]);
+
   return {
-    items: items.map(toPublicEntry),
+    items: publicItems,
     loading,
     reload,
     add,

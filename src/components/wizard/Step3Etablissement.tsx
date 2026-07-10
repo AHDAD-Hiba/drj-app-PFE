@@ -184,9 +184,8 @@ export const Step3Etablissement = memo(({
                           name: e.target.value.slice(0, 200),
                         })
                       }
-                    />
+                    />                    
                   </div>
-
 
                   <div
                     className={`space-y-1.5 ${

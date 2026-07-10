@@ -461,7 +461,7 @@ const PrefDomainDashboard = () => {
 
   const activeDomainLabel = useMemo(() => {
     const option = dbDomains.find((opt) => opt.code === domain);
-    return option ? (lang === "ar" ? (option.nom_ar || option.nom) : option.nom) : domain;
+    return option ? (lang === "ar" ? option.nom_ar : option.nom_fr) : domain;
   }, [domain, lang, dbDomains]);
 
   // LES CONDITIONS DE RETOUR VIENNENT APRÈS TOUS LES HOOKS
@@ -538,7 +538,7 @@ const PrefDomainDashboard = () => {
                 <SelectContent>
                   {dbDomains.map((dom) => (
                     <SelectItem key={dom.code} value={dom.code}>
-                      {lang === "ar" ? (dom.nom_ar || dom.nom) : dom.nom}
+                      {lang === "ar" ? dom.nom_ar : dom.nom_fr}
                     </SelectItem>
                   ))}
                 </SelectContent>

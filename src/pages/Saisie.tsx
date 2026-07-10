@@ -1,4 +1,4 @@
-import { useMemo, useState, useCallback } from 'react';
+import { useMemo, useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/hooks/useAuth';
@@ -92,6 +92,12 @@ const { utilisateur: profile, isPrefectoral: isDirector, loading: authLoading } 
 
   const currentId = selection.rapportId ?? null;
 
+  const ensureEnCoursTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+  return () => {
+    if (ensureEnCoursTimerRef.current) clearTimeout(ensureEnCoursTimerRef.current);
+  };
+}, []);
   // Entry hooks for each table
   const activites = useActivitesEntries(currentId);
   const partenaires = usePartenariatEntries(currentId);
@@ -160,19 +166,32 @@ const completeness = useMemo(() => {
     void facilities.add(f);
   }, [facilities.add, domain.ensureEnCours]);
 
-  const onUpdateFacility = useCallback(
-    async (id: string, patch: Partial<FacilityEntry>) => {
+  
+  const scheduleEnsureEnCours = useCallback(() => {
+  if (ensureEnCoursTimerRef.current) {
+    clearTimeout(ensureEnCoursTimerRef.current);
+  }
 
-      console.time('ensureEnCours');
-
+  ensureEnCoursTimerRef.current = setTimeout(async () => {
+    try {
       await domain.ensureEnCours();
+    } catch (err) {
+      console.error("Erreur lors du ensureEnCours en arrière-plan:", err);
+    }
+  }, 500); // 500ms après la fin de la frappe
+}, [domain.ensureEnCours]);
 
-      console.timeEnd('ensureEnCours');
+const onUpdateFacility = useCallback(
+  (id: string, patch: Partial<FacilityEntry>) => {
+    // 1. On met à jour l'état local INSTANTANÉMENT (Fin du bug de curseur)
+    void facilities.update(id, patch);
+    
+    // 2. On planifie la vérification de statut en arrière-plan
+    scheduleEnsureEnCours();
+  },
+  [facilities.update, scheduleEnsureEnCours]
+);
 
-      await facilities.update(id, patch);
-    },
-    [facilities.update, domain.ensureEnCours]
-  );
   const onRemoveFacility = useCallback((id: string) => { void facilities.remove(id); }, [facilities.remove]);
 
   const onAddCamp = useCallback(async (c: CampEntry) => {
@@ -211,20 +230,37 @@ const completeness = useMemo(() => {
 
   // IMPORTANT : Wrappers pour assurer que le statut EN_COURS est persisté en base
   // AVANT les UPSERTs métier. Cela évite les blocages RLS.
-  const onUpdateCampWrapper = useCallback(async (id: string, patch: any) => {
-    await domain.ensureEnCours();
-    return camps.update(id, patch);
-  }, [camps.update, domain.ensureEnCours]);
+  // L'UI est mise à jour instantanément, et Supabase est appelé en arrière-plan (Debounce)
+  
+  const onUpdateCampWrapper = useCallback((id: string, patch: any) => {
+    void camps.update(id, patch);
+    scheduleEnsureEnCours();
+  }, [camps.update, scheduleEnsureEnCours]);
 
-  const onUpdateAssociationValueWrapper = useCallback(async (id: string, patch: any) => {
-    await domain.ensureEnCours();
-    return associationValues.update(id, patch);
-  }, [associationValues.update, domain.ensureEnCours]);
+  const onUpdateAssociationValueWrapper = useCallback((id: string, patch: any) => {
+    void associationValues.update(id, patch);
+    scheduleEnsureEnCours();
+  }, [associationValues.update, scheduleEnsureEnCours]);
 
-  const onUpdateFormationWrapper = useCallback(async (id: string, patch: any) => {
-    await domain.ensureEnCours();
-    return formations.update(id, patch);
-  }, [formations.update, domain.ensureEnCours]);
+  const onUpdateFormationWrapper = useCallback((id: string, patch: any) => {
+    void formations.update(id, patch);
+    scheduleEnsureEnCours();
+  }, [formations.update, scheduleEnsureEnCours]);
+
+  const onUpdatePartenaireWrapper = useCallback((id: string, patch: any) => {
+    void partenaires.update(id, patch);
+    scheduleEnsureEnCours();
+  }, [partenaires.update, scheduleEnsureEnCours]);
+
+  const onUpdateFestivalWrapper = useCallback((id: string, patch: any) => {
+    void festivals.update(id, patch);
+    scheduleEnsureEnCours();
+  }, [festivals.update, scheduleEnsureEnCours]);
+
+  const onUpdateSocioWrapper = useCallback((id: string, patch: any) => {
+    void socios.update(id, patch);
+    scheduleEnsureEnCours();
+  }, [socios.update, scheduleEnsureEnCours]);
 
   const onAddFormationWrapper = useCallback(async (entry: any) => {
     await domain.ensureEnCours();
@@ -236,30 +272,15 @@ const completeness = useMemo(() => {
     return formations.remove(id);
   }, [formations.remove, domain.ensureEnCours]);
 
-  const onUpdatePartenaireWrapper = useCallback(async (id: string, patch: any) => {
-    await domain.ensureEnCours();
-    return partenaires.update(id, patch);
-  }, [partenaires.update, domain.ensureEnCours]);
-
   const onRemovePartenaireWrapper = useCallback(async (id: string) => {
     await domain.ensureEnCours();
     void partenaires.remove(id);
   }, [partenaires.remove, domain.ensureEnCours]);
 
-  const onUpdateFestivalWrapper = useCallback(async (id: string, patch: any) => {
-    await domain.ensureEnCours();
-    return festivals.update(id, patch);
-  }, [festivals.update, domain.ensureEnCours]);
-
   const onRemoveFestivalWrapper = useCallback(async (id: string) => {
     await domain.ensureEnCours();
     void festivals.remove(id);
   }, [festivals.remove, domain.ensureEnCours]);
-
-  const onUpdateSocioWrapper = useCallback(async (id: string, patch: any) => {
-    await domain.ensureEnCours();
-    return socios.update(id, patch);
-  }, [socios.update, domain.ensureEnCours]);
 
   const onRemoveSocioWrapper = useCallback(async (id: string) => {
     await domain.ensureEnCours();
