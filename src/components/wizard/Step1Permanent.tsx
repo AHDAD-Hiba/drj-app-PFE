@@ -12,23 +12,34 @@ import {
 } from '@/lib/schemas';
 import { useStepForm } from '@/hooks/useStepForm';
 
-interface Step1PermanentProps {
-  data?: PermanentActivityFormValues & { id?: string };
-  onSave?: (values: PermanentActivityFormValues) => Promise<boolean>;
-  onActivity?: () => Promise<void>;
-  disabled?: boolean;
-}
+// 1. NOUVEAUX IMPORTS
+import { StepComponentProps } from '@/config/wizard.types';
+import { useActivitesEntries } from '@/hooks/useActivitesEntries';
 
 export interface Step1PermanentRef {
   submit: () => Promise<void>;
 }
 
+// 2. UTILISATION DU CONTRAT GÉNÉRIQUE (StepComponentProps)
 export const Step1Permanent = memo(forwardRef<
   Step1PermanentRef,
-  Step1PermanentProps
->(({ data, onSave, onActivity, disabled }, ref) => {
+  StepComponentProps
+>(({ rapportId, disabled, onActivity }, ref) => {
   const { t, i18n } = useTranslation();
   const isAr = i18n.language === 'ar';
+
+  // 3. LE COMPOSANT GÈRE SES PROPRES DONNÉES
+  const activites = useActivitesEntries(rapportId);
+  const data = activites.permanente;
+
+  // 4. LE COMPOSANT GÈRE SA PROPRE SAUVEGARDE
+  const handleSave = async (values: PermanentActivityFormValues) => {
+    const success = await activites.savePermanente(values);
+    if (success && onActivity) {
+      await onActivity();
+    }
+    return success;
+  };
 
   const defaultValues = useMemo((): PermanentActivityFormValues => ({
     nombre_associations: 0,
@@ -44,11 +55,11 @@ export const Step1Permanent = memo(forwardRef<
     schema: permanentActivitySchema,
     data,
     defaultValues,
-    onSave,
+    onSave: handleSave, // <-- On utilise notre fonction locale
     onActivity,
     disabled,
     autoSaveDebounceMs: 1500,
-    autoSaveEnabled: !disabled && !!onSave,
+    autoSaveEnabled: !disabled,
   });
 
   const { control, formState: { isSubmitting } } = form;

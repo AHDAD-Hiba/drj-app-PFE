@@ -17,24 +17,34 @@ import {
 } from '@/lib/schemas';
 import { useStepForm } from '@/hooks/useStepForm';
 
-interface Step2RayonanteProps {
-  data?: RayonanteActivityFormValues & { id?: string };
-  onSave?: (values: RayonanteActivityFormValues) => Promise<boolean>;
-  onActivity?: () => Promise<void>;
-  disabled?: boolean;
-}
+// 1. NOUVEAUX IMPORTS
+import { StepComponentProps } from '@/config/wizard.types';
+import { useActivitesEntries } from '@/hooks/useActivitesEntries';
 
 export interface Step2RayonanteRef {
   submit: () => Promise<void>;
 }
 
+// 2. UTILISATION DU CONTRAT GÉNÉRIQUE
 export const Step2Rayonante = memo(forwardRef<
   Step2RayonanteRef,
-  Step2RayonanteProps
->(({ data, onSave, onActivity, disabled }, ref) => {
+  StepComponentProps
+>(({ rapportId, disabled, onActivity }, ref) => {
   const { t, i18n } = useTranslation();
   const isAr = i18n.language === 'ar';
   
+  // 3. LE COMPOSANT GÈRE SES PROPRES DONNÉES
+  const activites = useActivitesEntries(rapportId);
+  const data = activites.rayonnante;
+
+  // 4. LE COMPOSANT GÈRE SA PROPRE SAUVEGARDE
+  const handleSave = async (values: RayonanteActivityFormValues) => {
+    const success = await activites.saveRayonnante(values);
+    if (success && onActivity) {
+      await onActivity();
+    }
+    return success;
+  };
 
   const defaultValues = useMemo((): RayonanteActivityFormValues => ({
     activites_educatives: 0,
@@ -47,11 +57,11 @@ export const Step2Rayonante = memo(forwardRef<
     schema: rayonanteActivitySchema,
     data,
     defaultValues,
-    onSave,
+    onSave: handleSave, // <-- On utilise notre fonction locale
     onActivity,
     disabled,
     autoSaveDebounceMs: 1500,
-    autoSaveEnabled: !disabled && !!onSave,
+    autoSaveEnabled: !disabled,
   });
 
   const { control, formState: { isSubmitting } } = form;

@@ -6,15 +6,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Plus, Trash2, Trophy, AlertTriangle } from 'lucide-react';
 import { NumericField } from '@/components/form/NumericField';
-import type { FestivalEntry } from '@/hooks/useFestivalEntries';
 
-interface Props {
-  festivals: FestivalEntry[];
-  onAddFestival: (festival: FestivalEntry) => void | Promise<void>;
-  onUpdateFestival: (local_id: string, patch: Partial<FestivalEntry>) => void;
-  onRemoveFestival: (local_id: string) => void | Promise<void>;
-  disabled?: boolean;
-}
+// NOUVEAUX IMPORTS POUR L'AUTONOMIE
+import { StepComponentProps } from '@/config/wizard.types';
+import { useFestivalEntries, type FestivalEntry } from '@/hooks/useFestivalEntries';
 
 const createEmptyFestival = (): FestivalEntry => ({
   local_id: crypto.randomUUID(),
@@ -28,15 +23,32 @@ const createEmptyFestival = (): FestivalEntry => ({
 });
 
 export const Step6Festival = memo(({
-  festivals,
-  onAddFestival,
-  onUpdateFestival,
-  onRemoveFestival,
+  rapportId,
   disabled,
-}: Props) => {
+  onActivity,
+}: StepComponentProps) => {
   const { i18n } = useTranslation();
   const isAr = i18n.language === 'ar';
 
+  // 1. Appel autonome du hook métier
+  const festivalEntries = useFestivalEntries(rapportId);
+  const festivals = festivalEntries.items;
+
+  // 2. Encapsulation des actions avec support du onActivity
+  const handleAddFestival = async (festival: FestivalEntry) => {
+    if (onActivity) await onActivity();
+    void festivalEntries.add(festival);
+  };
+
+  const handleUpdateFestival = async (local_id: string, patch: Partial<FestivalEntry>) => {
+    void festivalEntries.update(local_id, patch);
+    if (onActivity) await onActivity();
+  };
+
+  const handleRemoveFestival = async (local_id: string) => {
+    void festivalEntries.remove(local_id);
+    if (onActivity) await onActivity();
+  };
 
   console.count('Step6Festival render');
   return (
@@ -55,7 +67,7 @@ export const Step6Festival = memo(({
           <Button
             type="button"
             size="sm"
-            onClick={() => void onAddFestival(createEmptyFestival())}
+            onClick={() => void handleAddFestival(createEmptyFestival())}
             disabled={disabled}
             className="gap-1.5"
           >
@@ -86,7 +98,7 @@ export const Step6Festival = memo(({
                     type="button"
                     size="icon"
                     variant="ghost"
-                    onClick={() => void onRemoveFestival(festival.local_id)}
+                    onClick={() => void handleRemoveFestival(festival.local_id)}
                     disabled={disabled}
                     className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
                   >
@@ -101,7 +113,7 @@ export const Step6Festival = memo(({
                     maxLength={200}
                     className="h-9"
                     disabled={disabled}
-                    onChange={(e) => onUpdateFestival(festival.local_id, { name: e.target.value.slice(0, 200) })}
+                    onChange={(e) => handleUpdateFestival(festival.local_id, { name: e.target.value.slice(0, 200) })}
                   />
                 </div>
 
@@ -113,13 +125,13 @@ export const Step6Festival = memo(({
                     <NumericField
                       label={isAr ? 'عدد الأقاليم المشاركة' : 'Nombre de provinces participantes'}
                       value={festival.provinces_participantes ?? 0}
-                      onChange={(value) => {console.log('NUMERIC CHANGE', festival.local_id); onUpdateFestival(festival.local_id, { provinces_participantes: value })}}
+                      onChange={(value) => handleUpdateFestival(festival.local_id, { provinces_participantes: value })}
                       disabled={disabled}
                     />
                     <NumericField
                       label={isAr ? 'عدد المشاركين المتأهلين' : 'Nombre de participants qualifiés'}
                       value={festival.participants_qualifies ?? 0}
-                      onChange={(value) => onUpdateFestival(festival.local_id, { participants_qualifies: value })}
+                      onChange={(value) => handleUpdateFestival(festival.local_id, { participants_qualifies: value })}
                       disabled={disabled}
                     />
                   </div>
@@ -133,13 +145,13 @@ export const Step6Festival = memo(({
                     <NumericField
                       label={isAr ? 'عدد (حضري)' : 'Nbr Urbain'}
                       value={festival.urbain ?? 0}
-                      onChange={(value) => onUpdateFestival(festival.local_id, { urbain: value })}
+                      onChange={(value) => handleUpdateFestival(festival.local_id, { urbain: value })}
                       disabled={disabled}
                     />
                     <NumericField
                       label={isAr ? 'عدد (قروي)' : 'Nbr Rural'}
                       value={festival.rural ?? 0}
-                      onChange={(value) => onUpdateFestival(festival.local_id, { rural: value })}
+                      onChange={(value) => handleUpdateFestival(festival.local_id, { rural: value })}
                       disabled={disabled}
                     />
                   </div>
@@ -153,13 +165,13 @@ export const Step6Festival = memo(({
                     <NumericField
                       label={isAr ? 'عدد النساء' : 'Nombre de femmes'}
                       value={festival.femmes ?? 0}
-                      onChange={(value) => onUpdateFestival(festival.local_id, { femmes: value })}
+                      onChange={(value) => handleUpdateFestival(festival.local_id, { femmes: value })}
                       disabled={disabled}
                     />
                     <NumericField
                       label={isAr ? 'عدد الرجال' : 'Nombre d’hommes'}
                       value={festival.hommes ?? 0}
-                      onChange={(value) => onUpdateFestival(festival.local_id, { hommes: value })}
+                      onChange={(value) => handleUpdateFestival(festival.local_id, { hommes: value })}
                       disabled={disabled}
                     />
                   </div>

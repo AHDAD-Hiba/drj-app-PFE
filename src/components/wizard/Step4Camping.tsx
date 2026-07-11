@@ -2,68 +2,85 @@ import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card } from '@/components/ui/card';
 import { Tent } from 'lucide-react';
-import type { CampEntry } from '@/hooks/useCampingEntries';
-import { useAssociationValues, type AssociationValue } from '@/hooks/useAssociationValues';
+
+// NOUVEAUX IMPORTS POUR NOTRE CONTRAT ET LES HOOKS INTERNES
+import { StepComponentProps } from '@/config/wizard.types';
+import { useCampingEntries } from '@/hooks/useCampingEntries';
+import { useAssociationValues } from '@/hooks/useAssociationValues';
 import { useMouvementsAssociations } from '@/hooks/useMouvementsAssociations';
-import { useFormationEntries, type FormationEntry } from '@/hooks/useFormationEntries';
+import { useFormationEntries } from '@/hooks/useFormationEntries';
+
 import { CampParticipantsSection } from '@/components/wizard/step4/CampParticipantsSection';
 import { AssociationsSection } from '@/components/wizard/step4/AssociationsSection';
 import { MouvementsSection } from '@/components/wizard/step4/MouvementsSection';
 import { FormationsSection } from '@/components/wizard/step4/FormationsSection';
 
-export type { CampEntry };
-
-interface Props {
-  camps: CampEntry[];
-  onAddCamp: (c: CampEntry) => void | Promise<void>;
-  onUpdateCamp: (local_id: string, patch: Partial<CampEntry>) => void;
-  onRemoveCamp: (local_id: string) => void | Promise<void>;
-  associationValues?: AssociationValue[];
-  onUpdateAssociationValue?: (local_id: string, patch: Partial<AssociationValue>) => void;
-  formations?: FormationEntry[];
-  onAddFormation?: (entry: FormationEntry) => Promise<boolean> | void;
-  onUpdateFormation?: (local_id: string, patch: Partial<FormationEntry>) => void;
-  onRemoveFormation?: (local_id: string) => Promise<boolean> | void;
-  disabled?: boolean;
-  rapportId?: string | null;
-}
-
 /**
- * Step4Camping - Main orchestrator component for camping section
- * Renders all subsections with independent modular components and hooks
+ * Step4Camping - Orchestrateur autonome pour la section camping
  */
 export const Step4Camping = memo(({
-  camps,
-  onAddCamp,
-  onUpdateCamp,
-  onRemoveCamp,
-  associationValues,
-  onUpdateAssociationValue,
-  formations,
-  onAddFormation,
-  onUpdateFormation,
-  onRemoveFormation,
-  disabled,
   rapportId,
-}: Props) => {
+  disabled,
+  onActivity,
+}: StepComponentProps) => {
   const { i18n } = useTranslation();
   const isAr = i18n.language === 'ar';
 
-  // Load association values
-  const internalAssociationValues = useAssociationValues(rapportId ?? null);
+  // 1. Centralisation et chargement de TOUS les hooks métiers requis pour cette étape
+  const camps = useCampingEntries(rapportId);
+  const associationValues = useAssociationValues(rapportId);
+  const mouvements = useMouvementsAssociations(rapportId);
+  const formations = useFormationEntries(rapportId);
 
-  // Load mouvements associations
-  const mouvements = useMouvementsAssociations(rapportId ?? null);
+// 2. Wrappers d'action corrigés pour correspondre exactement aux signatures des sous-sections
+const handleCampAdd = async (c: any) => {
+    if (onActivity) await onActivity();
+    await camps.add(c); // On attend la fin, mais on ne retourne pas le boolean
+  };
+  const handleCampUpdate = async (local_id: string, patch: any) => {
+    void camps.update(local_id, patch);
+    if (onActivity) await onActivity();
+  };
 
-  // Load formations
-  const internalFormations = useFormationEntries(rapportId ?? null);
+  const handleCampRemove = async (local_id: string) => {
+    if (onActivity) await onActivity();
+    await camps.remove(local_id); // On attend la fin, mais on ne retourne pas le boolean
+  };
 
-  const visibleAssociationValues = associationValues ?? internalAssociationValues.items;
-  const updateAssociationValue = onUpdateAssociationValue ?? internalAssociationValues.update;
-  const visibleFormations = formations ?? internalFormations.items;
-  const addFormation = onAddFormation ?? internalFormations.add;
-  const updateFormation = onUpdateFormation ?? internalFormations.update;
-  const removeFormation = onRemoveFormation ?? internalFormations.remove;
+  const handleAssociationUpdate = async (local_id: string, patch: any) => {
+    void associationValues.update(local_id, patch);
+    if (onActivity) await onActivity();
+  };
+
+  const handleMouvementAdd = async (m: any) => {
+    if (onActivity) await onActivity();
+    return mouvements.add(m); // Retourne la promesse du hook d'origine
+  };
+
+  const handleMouvementUpdate = async (local_id: string, patch: any) => {
+    void mouvements.update(local_id, patch);
+    if (onActivity) await onActivity();
+  };
+
+  const handleMouvementRemove = async (local_id: string) => {
+    if (onActivity) await onActivity();
+    return mouvements.remove(local_id); // Retourne la promesse du hook d'origine
+  };
+
+  const handleFormationAdd = async (f: any) => {
+    if (onActivity) await onActivity();
+    return formations.add(f); // Retourne la promesse du hook d'origine
+  };
+
+  const handleFormationUpdate = async (local_id: string, patch: any) => {
+    void formations.update(local_id, patch);
+    if (onActivity) await onActivity();
+  };
+
+  const handleFormationRemove = async (local_id: string) => {
+    if (onActivity) await onActivity();
+    return formations.remove(local_id); // Retourne la promesse du hook d'origine
+  };
 
   return (
     <div className="space-y-5">
@@ -80,35 +97,35 @@ export const Step4Camping = memo(({
 
         {/* Camp Participants Section */}
         <CampParticipantsSection
-          camps={camps}
-          onAddCamp={onAddCamp}
-          onUpdateCamp={onUpdateCamp}
-          onRemoveCamp={onRemoveCamp}
+          camps={camps.items}
+          onAddCamp={handleCampAdd}
+          onUpdateCamp={handleCampUpdate}
+          onRemoveCamp={handleCampRemove}
           disabled={disabled}
         />
 
         {/* Associations Section */}
         <AssociationsSection
-          items={visibleAssociationValues}
-          onUpdate={(localId, patch) => void updateAssociationValue(localId, patch)}
+          items={associationValues.items}
+          onUpdate={handleAssociationUpdate}
           disabled={disabled}
         />
 
         {/* Mouvements Associations Section */}
         <MouvementsSection
           items={mouvements.items}
-          onAdd={mouvements.add}
-          onUpdate={mouvements.update}
-          onRemove={mouvements.remove}
+          onAdd={handleMouvementAdd}
+          onUpdate={handleMouvementUpdate}
+          onRemove={handleMouvementRemove}
           disabled={disabled}
         />
 
         {/* Formations Section */}
         <FormationsSection
-          items={visibleFormations}
-          onAdd={addFormation}
-          onUpdate={(localId, patch) => void updateFormation(localId, patch)}
-          onRemove={removeFormation}
+          items={formations.items}
+          onAdd={handleFormationAdd}
+          onUpdate={handleFormationUpdate}
+          onRemove={handleFormationRemove}
           disabled={disabled}
         />
       </Card>

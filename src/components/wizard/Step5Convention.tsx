@@ -8,29 +8,56 @@ import {
 } from '@/components/ui/select';
 import { Plus, Trash2, Handshake } from 'lucide-react';
 import { NumericField } from '@/components/form/NumericField';
-import type { PartenariatEntry } from '@/hooks/usePartenariatEntries';
-import type { TypePartenaire } from '@/hooks/useTypesPartenaires';
 import { Input } from '../ui/input';
 
-interface Props {
-  disabled?: boolean;
-  items: PartenariatEntry[];
-  partnerTypes: TypePartenaire[];
-  onAdd: () => void;
-  onUpdate: (local_id: string, patch: Partial<PartenariatEntry>) => void;
-  onRemove: (local_id: string) => void;
+// NOUVEAUX IMPORTS POUR L'AUTONOMIE
+import { StepComponentProps } from '@/config/wizard.types';
+import { usePartenariatEntries } from '@/hooks/usePartenariatEntries';
+import { useTypesPartenaires } from '@/hooks/useTypesPartenaires';
+
+export interface PartenariatEntry {
+  local_id: string;
+  id?: string;
+  type_partenaire_id: string;
+  nombre_conventions: number;
+  autre_partenaire?: string;
 }
 
+// UTILISATION DE L'INTERFACE GÉNÉRIQUE DE NOTRE CONTRAT
 export const Step5Convention = memo(({
+  rapportId,
   disabled,
-  items,
-  partnerTypes,
-  onAdd,
-  onUpdate,
-  onRemove,
-}: Props) => {
+  onActivity,
+}: StepComponentProps) => {
   const { i18n } = useTranslation();
   const isAr = i18n.language === 'ar';
+
+  // 1. Appel autonome des hooks métiers
+  const partenaires = usePartenariatEntries(rapportId);
+  const typesPartenaires = useTypesPartenaires();
+
+  const items = partenaires.items;
+  const partnerTypes = typesPartenaires.items;
+
+  // 2. Actions encapsulées avec support de la sauvegarde auto
+  const handleAdd = async () => {
+    if (onActivity) await onActivity();
+    void partenaires.add({
+      local_id: crypto.randomUUID(),
+      type_partenaire_id: '',
+      nombre_conventions: 0,
+    });
+  };
+
+  const handleUpdate = async (local_id: string, patch: Partial<PartenariatEntry>) => {
+    void partenaires.update(local_id, patch);
+    if (onActivity) await onActivity();
+  };
+
+  const handleRemove = async (local_id: string) => {
+    void partenaires.remove(local_id);
+    if (onActivity) await onActivity();
+  };
 
   const autreType = partnerTypes.find(
     p => p.nom?.toLowerCase() === 'autre'
@@ -50,7 +77,7 @@ export const Step5Convention = memo(({
               {isAr ? 'أضف كل اتفاقية حسب نوع الشريك' : 'Ajoutez chaque convention par type de partenaire'}
             </p>
           </div>
-          <Button type="button" size="sm" onClick={onAdd} disabled={disabled} className="gap-1.5">
+          <Button type="button" size="sm" onClick={handleAdd} disabled={disabled} className="gap-1.5">
             <Plus className="h-4 w-4" />
             {isAr ? 'إضافة' : 'Ajouter'}
           </Button>
@@ -76,7 +103,7 @@ export const Step5Convention = memo(({
                     type="button"
                     size="icon"
                     variant="ghost"
-                    onClick={() => onRemove(item.local_id)}
+                    onClick={() => handleRemove(item.local_id)}
                     disabled={disabled}
                     className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
                   >
@@ -85,65 +112,60 @@ export const Step5Convention = memo(({
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-start">
-                <div className="space-y-1.5">
-                  <Label className="text-xs">{isAr ? 'نوع الشريك' : 'Type de partenaire'}</Label>
-                  <Select
-                    value={item.type_partenaire_id || 'none'}
-                    onValueChange={(value) =>
-                      onUpdate(item.local_id, {
-                        type_partenaire_id: value === 'none' ? '' : value,
-                        autre_partenaire:
-                          value === autreId
-                            ? item.autre_partenaire
-                            : '',
-                      })
-                    }
-                    
-                    disabled={disabled}
-                  >
-                    <SelectTrigger className="h-9">
-                      <SelectValue placeholder={isAr ? 'اختر' : 'Choisir'} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {partnerTypes.length === 0 ? (
-                        <SelectItem value="none">{isAr ? 'جارٍ التحميل...' : 'Chargement...'}</SelectItem>
-                      ) : null}
-                      {partnerTypes.map((partnerType) => (
-                        <SelectItem key={partnerType.id} value={partnerType.id}>
-                          {(isAr ? partnerType.nom_ar : partnerType.nom) ?? partnerType.nom}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">{isAr ? 'نوع الشريك' : 'Type de partenaire'}</Label>
+                    <Select
+                      value={item.type_partenaire_id || 'none'}
+                      onValueChange={(value) =>
+                        handleUpdate(item.local_id, {
+                          type_partenaire_id: value === 'none' ? '' : value,
+                          autre_partenaire: value === autreId ? item.autre_partenaire : '',
+                        })
+                      }
+                      disabled={disabled}
+                    >
+                      <SelectTrigger className="h-9">
+                        <SelectValue placeholder={isAr ? 'اختر' : 'Choisir'} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {partnerTypes.length === 0 ? (
+                          <SelectItem value="none">{isAr ? 'جارٍ التحميل...' : 'Chargement...'}</SelectItem>
+                        ) : null}
+                        {partnerTypes.map((partnerType) => (
+                          <SelectItem key={partnerType.id} value={partnerType.id}>
+                            {(isAr ? partnerType.nom_ar : partnerType.nom) ?? partnerType.nom}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-                {item.type_partenaire_id === autreId && (
+                  {item.type_partenaire_id === autreId && (
                     <div className="space-y-1.5 sm:col-span-2">
                       <Label className="text-xs">
                         {isAr ? 'تحديد الشريك' : 'Préciser le partenaire'}
                       </Label>
-
                       <Input
                         value={item.autre_partenaire ?? ''}
                         disabled={disabled}
                         onChange={(e) =>
-                          onUpdate(item.local_id, {
+                          handleUpdate(item.local_id, {
                             autre_partenaire: e.target.value,
                           })
                         }
                       />
                     </div>
                   )}
-                <div className="space-y-1.5">
-                  <Label className="text-xs">{isAr ? 'عدد الاتفاقيات' : 'Nombre de conventions'}</Label>
-                  <NumericField
-                    label=""
-                    value={typeof item.nombre_conventions === 'number' ? item.nombre_conventions : 0}
-                    onChange={(value) => onUpdate(item.local_id, { nombre_conventions: value })}
-                    disabled={disabled}
-                  />
-                </div>
 
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">{isAr ? 'عدد الاتفاقيات' : 'Nombre de conventions'}</Label>
+                    <NumericField
+                      label=""
+                      value={typeof item.nombre_conventions === 'number' ? item.nombre_conventions : 0}
+                      onChange={(value) => handleUpdate(item.local_id, { nombre_conventions: value })}
+                      disabled={disabled}
+                    />
+                  </div>
                 </div>
               </div>
             ))}

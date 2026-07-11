@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -14,12 +14,11 @@ import { Calendar, Layers, ArrowRight, ArrowLeft, FileText, CheckCircle2, Loader
 import { cn } from '@/lib/utils';
 
 export type Quarter = 't1' | 't2' | 't3' | 't4';
-export type Domain = 'jeunesse' | 'femme' | 'enfants' | 'creche' | string;
 
 export interface ReportSelection {
   year: number;
   quarter?: Quarter;
-  domain: Domain;
+  domain: string; // Devient une chaîne générique
   rapportId?: string;
 }
 
@@ -36,8 +35,11 @@ interface DomaineItem {
   statut: "NON_COMMENCE" | "EN_COURS" | "TERMINE";
 }
 
+// Configuration normalisée des trimestres disponibles
+const QUARTERS: Quarter[] = ['t1', 't2', 't3', 't4'];
+
 export const PreFormSelection = ({ initial, onComplete }: Props) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { utilisateur } = useAuth();
   const { toast } = useToast();
   const isAr = i18n.language === 'ar';
@@ -49,6 +51,20 @@ export const PreFormSelection = ({ initial, onComplete }: Props) => {
   const [rapportId, setRapportId] = useState<string | null>(null);
   const [domaines, setDomaines] = useState<DomaineItem[]>([]);
   const [canSubmitReport, setCanSubmitReport] = useState(false);
+
+  // ==========================================
+  // PRÉ-CHARGEMENT DES DOMAINES AU MONTAGE
+  // ==========================================
+  useEffect(() => {
+    const prefetchDomainesBase = async () => {
+      const { data, error } = await supabase.from('domaines').select('code');
+      if (!error && data && data.length > 0 && !sel.domain) {
+        // Initialise dynamiquement avec le premier domaine trouvé en BDD si aucun n'est défini
+        setSel(s => ({ ...s, domain: data[0].code }));
+      }
+    };
+    prefetchDomainesBase();
+  }, []);
 
   // ==========================================
   // ETAPE 1 -> ETAPE 2 : Création/Chargement
@@ -116,7 +132,6 @@ export const PreFormSelection = ({ initial, onComplete }: Props) => {
           .single();
 
         if (insertError) {
-            // Gestion d'une création simultanée (race condition)
             if (insertError.code === '23505') {
                 const { data: recoveredRapport } = await query.maybeSingle();
                 if (recoveredRapport) currentRapportId = recoveredRapport.id;
@@ -182,7 +197,6 @@ export const PreFormSelection = ({ initial, onComplete }: Props) => {
 
     setDomaines(formattedDomaines);
 
-    // Vérifier si TOUS les domaines sont TERMINÉS
     const allTermine = formattedDomaines.length > 0 && formattedDomaines.every(d => d.statut === "TERMINE");
     setCanSubmitReport(allTermine);
   };
@@ -205,10 +219,6 @@ export const PreFormSelection = ({ initial, onComplete }: Props) => {
             title: isAr ? "تم بنجاح" : "Succès", 
             description: isAr ? "تم إرسال التقرير بنجاح" : "Le rapport a été soumis avec succès." 
         });
-        
-        // Optionnel : Tu peux rediriger l'utilisateur vers le dashboard après soumission
-        // navigate('/dashboard');
-        
     } catch (error: any) {
         toast({ title: "Erreur", description: error.message, variant: "destructive" });
     } finally {
@@ -306,10 +316,11 @@ export const PreFormSelection = ({ initial, onComplete }: Props) => {
                   <SelectValue placeholder={isAr ? 'اختر الفصل' : 'Choisir le trimestre'} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="t1">T1</SelectItem>
-                  <SelectItem value="t2">T2</SelectItem>
-                  <SelectItem value="t3">T3</SelectItem>
-                  <SelectItem value="t4">T4</SelectItem>
+                  {QUARTERS.map(q => (
+                    <SelectItem key={q} value={q}>
+                      {t(`PreFormSelection.quarters.${q}`)}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -344,22 +355,18 @@ export const PreFormSelection = ({ initial, onComplete }: Props) => {
             {domaines.map((d) => {
               const selected = sel.domain === d.code;
               
-              // Définition des badges selon le statut
               const badgeClass =
                 d.statut === "TERMINE" ? "bg-success/15 text-success" :
                 d.statut === "EN_COURS" ? "bg-info/15 text-info" :
                 "bg-warning/15 text-warning";
                 
-              const badgeLabel = 
-                d.statut === "TERMINE" ? (isAr ? "مكتمل" : "Terminé") :
-                d.statut === "EN_COURS" ? (isAr ? "في طور الإنجاز" : "En cours") :
-                (isAr ? "لم يبدأ" : "Non commencé");
+              const badgeLabel = t(`status.${d.statut}`);
 
               return (
                 <button
                   key={d.id}
                   type="button"
-                  onClick={() => setSel((s) => ({ ...s, domain: d.code as Domain }))}
+                  onClick={() => setSel((s) => ({ ...s, domain: d.code }))}
                   className={cn(
                     "rounded-xl border-2 p-4 text-start transition-smooth flex items-center justify-between",
                     selected
@@ -399,9 +406,7 @@ export const PreFormSelection = ({ initial, onComplete }: Props) => {
               {isAr ? 'السابق' : 'Précédent'}
             </Button>
             
-            {/* Conteneur des actions à droite pour un alignement parfait */}
             <div className="flex items-center gap-3">
-              {/* Le bouton Soumettre avec EXACTEMENT le même style qu'Accéder au formulaire */}
               {canSubmitReport && (
                 <Button 
                   onClick={handleSubmitReport} 

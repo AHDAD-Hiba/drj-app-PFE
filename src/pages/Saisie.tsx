@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect, useCallback } from 'react';
+import { useState, useCallback, useRef, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/hooks/useAuth';
@@ -8,292 +8,282 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import {
   ChevronLeft, ChevronRight, Save, Send, ShieldAlert, Loader2, CheckCircle2, Pencil,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useDomainSubmission } from '@/hooks/useDomainSubmission';
-import { useEtablissementEntries } from '@/hooks/useEtablissementEntries';
-import { useFestivalEntries } from '@/hooks/useFestivalEntries';
-import { useTypesPartenaires } from '@/hooks/useTypesPartenaires';
-import { usePartenariatEntries } from '@/hooks/usePartenariatEntries';
 import { supabase } from '@/integrations/supabase/client';
-import type { ReportStatus } from '@/hooks/useDraftSubmission';
+
+import { useDomainSubmission } from '@/hooks/useDomainSubmission';
 import { SaveIndicator } from '@/components/form/SaveIndicator';
-import { Stepper, type Step } from '@/components/form/Stepper';
-import { useRef } from 'react';
-import { Step1Permanent } from '@/components/wizard/Step1Permanent';
-import { Step2Rayonante } from '@/components/wizard/Step2Rayonante';
-import { Step3Etablissement , FacilityEntry } from '@/components/wizard/Step3Etablissement';
-import { Step4Camping, type CampEntry } from '@/components/wizard/Step4Camping';
-import { useCampingEntries } from '@/hooks/useCampingEntries';
-import { useAssociationValues } from '@/hooks/useAssociationValues';
-import { useFormationEntries } from '@/hooks/useFormationEntries';
-import { Step5Convention } from '@/components/wizard/Step5Convention';
-import { Step6Festival } from '@/components/wizard/Step6Festival';
-import { Step7SocioEco } from '@/components/wizard/Step7SocioEco';
-import { useInsertionEntries, type InsertionEntry as SocioEcoEntry } from '@/hooks/useInsertionEntries';
+import { Stepper } from '@/components/form/Stepper';
 import { PreFormSelection, type ReportSelection } from '@/components/wizard/PreFormSelection';
 import { DEFAULT_YEAR } from '@/components/YearSwitcher';
-import { computeJeunesseCompleteness } from '@/lib/jeunesseCompleteness';
-import { useActivitesEntries } from '@/hooks/useActivitesEntries';
+import type { DomainConfig } from '@/config/wizard.types';
+// Import de notre nouveau système de configuration
+import { getDomainConfig } from '@/config/domainRegistry';
+import type { ReportStatus } from '@/hooks/useDraftSubmission';
+import { useDomaines } from '@/hooks/useDomaines';
 
-const STEPS: Step[] = [
-  { id: 1, labelFr: 'Permanentes', labelAr: 'الدائمة' },
-  { id: 2, labelFr: 'Rayonnantes', labelAr: 'الإشعاعية' },
-  { id: 3, labelFr: 'Établissements', labelAr: 'المؤسسات' },
-  { id: 4, labelFr: 'Camping', labelAr: 'التخييم' },
-  { id: 5, labelFr: 'Conventions', labelAr: 'الاتفاقيات' },
-  { id: 6, labelFr: 'Festivals', labelAr: 'المهرجانات' },
-  { id: 7, labelFr: 'Socio-éco', labelAr: 'سوسيو-اقتصادي' },
-];
-
-/** Libellés i18n existants (brouillon / soumise / validée) alignés sur les statuts DB. */
-const STATUS_I18N_KEY: Record<ReportStatus, 'brouillon' | 'soumise' | 'validee'> = {
-  NON_COMMENCE: 'brouillon',
-  EN_COURS: 'soumise',
-  TERMINE: 'validee',
-};
-
-const DOMAIN_LABEL: Record<string, { fr: string; ar: string }> = {
-  jeunesse: { fr: 'Jeunesse', ar: 'الشباب' },
-  femme: { fr: 'Femme / Fille', ar: 'المرأة / الفتاة' },
-  enfants: { fr: 'Enfants', ar: 'الأطفال' },
-  creche: { fr: 'Crèche', ar: 'الحضانة' },
-};
-
-export const DOMAIN_IDS = {
-  jeunesse: '9b15dc1d-5f39-4e5d-915c-33c465b3276e',
-};
-
-const Saisie = () => {
-  const { t, i18n } = useTranslation();
-const { utilisateur: profile, isPrefectoral: isDirector, loading: authLoading } = useAuth();
-  const navigate = useNavigate();
+// =========================================================================
+// 1. LE COMPOSANT DU WIZARD ACTIF
+// =========================================================================
+const ActiveWizard = ({ 
+  selection, 
+  currentId, 
+  domainConfig, 
+  onBack, 
+  domainLabel, 
+  periodLabel, 
+  isAr 
+}: { 
+  selection: ReportSelection, currentId: string, domainConfig: DomainConfig, onBack: () => void, domainLabel: string, periodLabel: string, isAr: boolean 
+}) => {
+  const { t } = useTranslation();
+  const { utilisateur: profile } = useAuth();
   const { toast } = useToast();
-  const isAr = i18n.language === 'ar';
-
-  // Pre-form selection
-  const [selectionDone, setSelectionDone] = useState(false);
-  const [selection, setSelection] = useState<ReportSelection>({
-  year: DEFAULT_YEAR,
-  quarter: 't1',
-  domain: 'jeunesse',
-});
 
   const [step, setStep] = useState<number>(1);
-  const [confirmOpen, setConfirmOpen] = useState(false);
-  const [warningOpen, setWarningOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [localLocked, setLocalLocked] = useState(false);
+  
+  // 1. Un compteur pour signaler les changements de données
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  // 2. On transmet ce trigger au système de complétude
+  const completeness = domainConfig.useCompleteness(currentId, refreshTrigger);
+
+  const domain = useDomainSubmission({
+    rapportId: currentId,
+    directionId: profile?.direction_id ?? '',
+    domaineId: domainConfig.id,
+    completeness,
+  });
+
+  // On stocke l'ancienne valeur pour ne déclencher la sauvegarde QUE si le % a réellement changé
+  const prevCompletenessRef = useRef(completeness);
+  const isFirstRender = useRef(true);
+  
+  useEffect(() => {
+    // 1. On ignore l'initialisation à l'ouverture de la page
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      prevCompletenessRef.current = completeness;
+      return;
+    }
+
+    // 2. Si le score a vraiment changé
+    if (prevCompletenessRef.current !== completeness) {
+      prevCompletenessRef.current = completeness;
+      
+      // 3. On attend 1.5 seconde que tous les micro-chargements se terminent
+      const timeoutId = setTimeout(() => {
+        domain.saveNow().catch(err => console.error("Erreur auto-save complétude:", err));
+      }, 1500);
+      
+      // 4. NETTOYAGE : Si le score re-change AVANT la fin des 1.5s, on annule le tir précédent
+      return () => clearTimeout(timeoutId);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [completeness]);
+
+  const isLocked = domain.isReadOnly || localLocked;
+
+  const ensureEnCoursTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  
+  //Encapsulation de la fonction mouvante dans une Ref
+  const ensureEnCoursRef = useRef(domain.ensureEnCours);
+  useEffect(() => {
+    ensureEnCoursRef.current = domain.ensureEnCours;
+  }, [domain.ensureEnCours]);
+
+  // Identité mémoire 100% stable : Le tableau de dépendances est vide []
+  const onActivityGlobal = useCallback(async () => {
+    if (ensureEnCoursTimerRef.current) clearTimeout(ensureEnCoursTimerRef.current);
+    
+    ensureEnCoursTimerRef.current = setTimeout(async () => {
+      try { 
+        await ensureEnCoursRef.current(); 
+      } catch (err) { 
+        console.error(err); 
+      }
+      setRefreshTrigger(prev => prev + 1); 
+    }, 1500); 
+  }, []);
+
+  const handleSaveDraft = async () => {
+    try {
+      const ok = await domain.saveNow();
+      toast({
+        title: ok ? t('form.save.draftSavedTitle') : t('form.save.draftErrorTitle'),
+        variant: ok ? 'default' : 'destructive',
+      });
+    } catch (err) {
+      toast({ title: 'Erreur', variant: 'destructive' });
+    }
+  };
+
+  const handleSubmit = async () => {
+    setSubmitting(true);
+    try {
+      const { error } = await supabase.from('suivi_remplissage').update({ statut: 'TERMINE' }).eq('rapport_id', currentId);
+      if (error) throw error;
+      const ok = await domain.submit();
+      setLocalLocked(true);
+      if (ok || !error) {
+        toast({ title: t('form.submit.successTitle'), description: t('form.submit.successBody', { year: selection.year }) });
+      }
+    } catch (err: any) {
+      toast({ title: t('form.submit.errorTitle'), description: err.message, variant: 'destructive' });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const goNext = async () => {
+    await handleSaveDraft();
+    setStep(s => Math.min(domainConfig.steps.length, s + 1));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const goPrev = () => {
+    setStep(s => Math.max(1, s - 1));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const CurrentStepComponent = domainConfig.steps.find(s => s.id === step)?.component;
+
+  if (domain.loading) {
+    return <div className="h-64 bg-muted/40 rounded-xl animate-pulse" />;
+  }
+
+  return (
+    <div className="space-y-5 sm:space-y-6 animate-fade-in pb-32" dir={isAr ? 'rtl' : 'ltr'}>
+      {/* 1. HEADER / HERO */}
+      <div className="relative overflow-hidden rounded-2xl gradient-hero p-5 sm:p-7 text-primary-foreground shadow-elegant">
+        <div className="relative z-10 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+          <div className="space-y-2 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              {isLocked && (
+                <Badge variant="outline" className="bg-success/30 text-white border-0 gap-1">
+                  <CheckCircle2 className="h-3 w-3" />
+                  {t(`status.${domain.status}`)}
+                </Badge>
+              )}
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-extrabold leading-tight">{t('form.title')}</h1>
+          </div>
+        </div>
+      </div>
+
+      {/* 2. RECAPITULATIF (Année, Trimestre, Domaine) */}
+      <Card className="p-4 sm:p-5 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge variant="outline" className="gap-1.5">
+            <span className="text-muted-foreground">{isAr ? 'السنة' : 'Année'}:</span>
+            <span className="font-bold tabular-nums">{selection.year}</span>
+          </Badge>
+          <Badge variant="outline" className="gap-1.5">
+            <span className="text-muted-foreground">{isAr ? 'النوع' : 'Type'}:</span>
+            <span className="font-bold">{periodLabel}</span>
+          </Badge>
+          <Badge variant="outline" className="gap-1.5">
+            <span className="text-muted-foreground">{isAr ? 'المجال' : 'Domaine'}:</span>
+            <span className="font-bold">{domainLabel}</span>
+          </Badge>
+        </div>
+        <Button variant="ghost" size="sm" onClick={onBack} className="gap-1.5">
+          <Pencil className="h-3.5 w-3.5" />
+          {isAr ? 'تعديل' : 'Modifier'}
+        </Button>
+      </Card>
+
+      {/* 3. BARRE DES ETAPES (STEPPER) */}
+      <Card className="p-4 sm:p-5">
+        <Stepper steps={domainConfig.steps} current={step} isAr={isAr} onJump={(id) => !isLocked && setStep(id)} />
+      </Card>
+
+      {/* 4. BARRE DE PROGRESSION COLLANTE */}
+      <div className="sticky top-16 z-30 -mx-4 px-4 py-2.5 bg-background/95 backdrop-blur border-y border-border">
+        <div className="flex items-center justify-between gap-3 mb-1.5">
+          <span className="text-xs font-semibold">
+            {t('common.step', { n: step, total: domainConfig.steps.length })} ·{' '}
+            {t('form.completeness')} <span className="text-primary tabular-nums">{domain.completeness}%</span>
+          </span>
+          <SaveIndicator state={domain.saveState} lastSavedAt={domain.lastSavedAt} errorMsg={domain.errorMsg} />
+        </div>
+        <Progress value={completeness} className="h-1.5" />
+      </div>
+
+      {/* 5. INJECTION DU COMPOSANT D'ETAPE ACTUEL */}
+      {CurrentStepComponent && (
+        <CurrentStepComponent rapportId={currentId} disabled={isLocked} onActivity={onActivityGlobal} />
+      )}
+
+      {/* 6. BARRE D'ACTIONS FLOTTANTE (BOTTOM) */}
+      <div className="fixed bottom-0 inset-x-0 z-40 bg-card/95 backdrop-blur border-t border-border">
+        <div className="container py-3 flex items-center justify-between gap-2">
+          <Button variant="outline" size="sm" onClick={goPrev} disabled={step === 1} className="gap-1.5">
+            {isAr ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+            <span className="hidden sm:inline">{t('common.previous')}</span>
+          </Button>
+
+          <div className="flex items-center gap-2">
+            {!isLocked && (
+              <Button variant="outline" size="sm" onClick={handleSaveDraft} disabled={domain.saveState === 'saving'} className="gap-1.5">
+                {domain.saveState === 'saving' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                <span className="hidden sm:inline">{t('form.actions.saveDraft')}</span>
+              </Button>
+            )}
+
+            {step < domainConfig.steps.length ? (
+              <Button size="sm" onClick={goNext} className="gap-1.5">
+                <span className="hidden sm:inline">{t('common.next')}</span>
+                {isAr ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+              </Button>
+            ) : (
+              !isLocked && (
+                <Button size="sm" onClick={handleSubmit} disabled={domain.saveState === 'saving' || submitting} className="gap-1.5">
+                  <Send className="h-4 w-4" />
+                  {t('form.actions.completeDomain')}
+                </Button>
+              )
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+// =========================================================================
+// 2. LE COMPOSANT PRINCIPAL
+// =========================================================================
+const Saisie = () => {
+  // 1. TOUS les hooks inconditionnels obligatoirement en haut
+  const { t, i18n } = useTranslation();
+  const { utilisateur: profile, isPrefectoral: isDirector, loading: authLoading } = useAuth();
+  const { domaines } = useDomaines(); // ✅ Placé tout en haut pour fixer l'ordre des hooks
+  const isAr = i18n.language === 'ar';
+
+  const [selectionDone, setSelectionDone] = useState(false);
+  const [selection, setSelection] = useState<ReportSelection>({
+    year: DEFAULT_YEAR,
+    quarter: 't1',
+    domain: 'jeunesse',
+  });
 
   const currentId = selection.rapportId ?? null;
 
-  const ensureEnCoursTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(() => {
-  return () => {
-    if (ensureEnCoursTimerRef.current) clearTimeout(ensureEnCoursTimerRef.current);
-  };
-}, []);
-  // Entry hooks for each table
-  const activites = useActivitesEntries(currentId);
-  const partenaires = usePartenariatEntries(currentId);
-  const typesPartenaires = useTypesPartenaires();
-  const camps = useCampingEntries(currentId);
-  const associationValues = useAssociationValues(currentId);
-  const formations = useFormationEntries(currentId);
-  const festivals = useFestivalEntries(currentId);
-  const socios = useInsertionEntries(currentId);
-  const facilities = useEtablissementEntries(currentId, profile?.direction_id ?? null);
+  // Configuration mémorisée
+  const domainConfig = useMemo(() => {
+    return selectionDone ? getDomainConfig(selection.domain) : null;
+  }, [selection.domain, selectionDone]);
 
-  const permanenteData = activites.permanente;
-  const rayonanteData = activites.rayonnante;
-
-const completeness = useMemo(() => {
-  return computeJeunesseCompleteness({
-    permanenteData,
-    rayonanteData,
-    facilities: facilities.items,
-    camps: camps.items,
-    partenaires: partenaires.items,
-    festivals: festivals.items,
-    socios: socios.items,
-    associationValues: associationValues.items,
-    formations: formations.items,
-  });
-}, [
-  associationValues.items,
-  camps.items,
-  facilities.items,
-  festivals.items,
-  formations.items,
-  partenaires.items,
-  permanenteData,
-  rayonanteData,
-  socios.items,
-]);
-
-  // Orchestrate form lifecycle: status, save, submit
-  const domain = useDomainSubmission({
-  rapportId: currentId,
-  directionId: profile?.direction_id ?? '',
-  domaineId: DOMAIN_IDS.jeunesse,
-  completeness,
-  });
-
-  // Stabilized callbacks for steps
-  const onSaveStep1 = useCallback(
-    async (values: any) => {
-      return activites.savePermanente(values);
-    },
-    [activites]
-  );
-  const onActivityGlobal = useCallback(async () => {
-    await domain.ensureEnCours();
-  }, [domain]);
-
-  const onSaveStep2 = useCallback(
-    async (values: any) => {
-      return activites.saveRayonnante(values);
-    },
-    [activites]
-  );
-  const onAddFacility = useCallback(async (f: FacilityEntry) => {
-    await domain.ensureEnCours();
-    void facilities.add(f);
-  }, [facilities.add, domain.ensureEnCours]);
-
-  
-  const scheduleEnsureEnCours = useCallback(() => {
-  if (ensureEnCoursTimerRef.current) {
-    clearTimeout(ensureEnCoursTimerRef.current);
+  // 2. Les gardes de sécurité (Loading / Rôles)
+  if (authLoading) {
+    return <AppLayout><div className="h-32 bg-muted/50 rounded-xl animate-pulse" /></AppLayout>;
   }
 
-  ensureEnCoursTimerRef.current = setTimeout(async () => {
-    try {
-      await domain.ensureEnCours();
-    } catch (err) {
-      console.error("Erreur lors du ensureEnCours en arrière-plan:", err);
-    }
-  }, 500); // 500ms après la fin de la frappe
-}, [domain.ensureEnCours]);
-
-const onUpdateFacility = useCallback(
-  (id: string, patch: Partial<FacilityEntry>) => {
-    // 1. On met à jour l'état local INSTANTANÉMENT (Fin du bug de curseur)
-    void facilities.update(id, patch);
-    
-    // 2. On planifie la vérification de statut en arrière-plan
-    scheduleEnsureEnCours();
-  },
-  [facilities.update, scheduleEnsureEnCours]
-);
-
-  const onRemoveFacility = useCallback((id: string) => { void facilities.remove(id); }, [facilities.remove]);
-
-  const onAddCamp = useCallback(async (c: CampEntry) => {
-    await domain.ensureEnCours();
-    void camps.add(c);
-  }, [camps.add, domain.ensureEnCours]);
-
-  const onRemoveCamp = useCallback((id: string) => { void camps.remove(id); }, [camps.remove]);
-
-  const onAddConvention = useCallback(async () => {
-    await domain.ensureEnCours();
-    void partenaires.add({
-      local_id: crypto.randomUUID(),
-      type_partenaire_id: '',
-      nombre_conventions: 0,
-    });
-  }, [partenaires.add, domain.ensureEnCours]);
-
-  const onAddFestival = useCallback(async (f: any) => {
-    await domain.ensureEnCours();
-    void festivals.add(f);
-  }, [festivals.add, domain.ensureEnCours]);
-
-  const onRemoveFestival = useCallback((id: string) => { void festivals.remove(id); }, [festivals.remove]);
-
-  const onAddSocio = useCallback(async (s: SocioEcoEntry) => {
-    await domain.ensureEnCours();
-    void socios.add(s);
-  }, [socios.add, domain.ensureEnCours]);
-
-  const onRemoveSocio = useCallback((id: string) => { void socios.remove(id); }, [socios.remove]);
-  const onActivityStep7 = useCallback(async () => {
-    domain.update();
-    await domain.saveNow();
-  }, [domain.update, domain.saveNow]);
-
-  // IMPORTANT : Wrappers pour assurer que le statut EN_COURS est persisté en base
-  // AVANT les UPSERTs métier. Cela évite les blocages RLS.
-  // L'UI est mise à jour instantanément, et Supabase est appelé en arrière-plan (Debounce)
-  
-  const onUpdateCampWrapper = useCallback((id: string, patch: any) => {
-    void camps.update(id, patch);
-    scheduleEnsureEnCours();
-  }, [camps.update, scheduleEnsureEnCours]);
-
-  const onUpdateAssociationValueWrapper = useCallback((id: string, patch: any) => {
-    void associationValues.update(id, patch);
-    scheduleEnsureEnCours();
-  }, [associationValues.update, scheduleEnsureEnCours]);
-
-  const onUpdateFormationWrapper = useCallback((id: string, patch: any) => {
-    void formations.update(id, patch);
-    scheduleEnsureEnCours();
-  }, [formations.update, scheduleEnsureEnCours]);
-
-  const onUpdatePartenaireWrapper = useCallback((id: string, patch: any) => {
-    void partenaires.update(id, patch);
-    scheduleEnsureEnCours();
-  }, [partenaires.update, scheduleEnsureEnCours]);
-
-  const onUpdateFestivalWrapper = useCallback((id: string, patch: any) => {
-    void festivals.update(id, patch);
-    scheduleEnsureEnCours();
-  }, [festivals.update, scheduleEnsureEnCours]);
-
-  const onUpdateSocioWrapper = useCallback((id: string, patch: any) => {
-    void socios.update(id, patch);
-    scheduleEnsureEnCours();
-  }, [socios.update, scheduleEnsureEnCours]);
-
-  const onAddFormationWrapper = useCallback(async (entry: any) => {
-    await domain.ensureEnCours();
-    return formations.add(entry);
-  }, [formations.add, domain.ensureEnCours]);
-
-  const onRemoveFormationWrapper = useCallback(async (id: string) => {
-    await domain.ensureEnCours();
-    return formations.remove(id);
-  }, [formations.remove, domain.ensureEnCours]);
-
-  const onRemovePartenaireWrapper = useCallback(async (id: string) => {
-    await domain.ensureEnCours();
-    void partenaires.remove(id);
-  }, [partenaires.remove, domain.ensureEnCours]);
-
-  const onRemoveFestivalWrapper = useCallback(async (id: string) => {
-    await domain.ensureEnCours();
-    void festivals.remove(id);
-  }, [festivals.remove, domain.ensureEnCours]);
-
-  const onRemoveSocioWrapper = useCallback(async (id: string) => {
-    await domain.ensureEnCours();
-    void socios.remove(id);
-  }, [socios.remove, domain.ensureEnCours]);
-
-  if (authLoading || domain.loading) {
-    return (
-      <AppLayout><div className="h-32 bg-muted/50 rounded-xl animate-pulse" /></AppLayout>
-    );
-  }
-
-if (!isDirector || !profile?.direction_id) {
+  if (!isDirector || !profile?.direction_id) {
     return (
       <AppLayout>
         <Card className="p-8 text-center max-w-md mx-auto">
@@ -305,10 +295,13 @@ if (!isDirector || !profile?.direction_id) {
     );
   }
 
-  // PRE-FORM SELECTION FLOW (Stages 1 & 2)
-  if (!selectionDone || !currentId) {
-    return (
-      <AppLayout>
+  const activeDomaineRow = domaines.find(d => d.code === selection.domain);
+  const domainLabel = activeDomaineRow ? (isAr ? activeDomaineRow.nom_ar : activeDomaineRow.nom_fr) : selection.domain;
+  const periodLabel = `${isAr ? 'فصلي' : 'Trimestriel'} · ${selection.quarter?.toUpperCase() ?? ''}`;
+
+  return (
+    <AppLayout>
+      {!selectionDone || !currentId || !domainConfig ? (
         <div className="space-y-5 sm:space-y-6 animate-fade-in" dir={isAr ? 'rtl' : 'ltr'}>
           <div className="relative overflow-hidden rounded-2xl gradient-hero p-5 sm:p-7 text-primary-foreground shadow-elegant">
             <div className="relative z-10">
@@ -321,311 +314,17 @@ if (!isDirector || !profile?.direction_id) {
             onComplete={(sel) => { setSelection(sel); setSelectionDone(true); }}
           />
         </div>
-      </AppLayout>
-    );
-  }
-
-  const isLocked = domain.isReadOnly || localLocked;
-
-  const periodLabel =
-    `${isAr ? 'فصلي' : 'Trimestriel'} · ${selection.quarter?.toUpperCase() ?? ''}`;
-  const domainLabel = DOMAIN_LABEL[selection.domain]?.[isAr ? 'ar' : 'fr'] ?? selection.domain;
-
-const handleSaveDraft = async () => {
-  try {
-    const ok = await domain.saveNow();
-
-    if (ok) {
-      toast({
-        title: t('form.save.draftSavedTitle'),
-      });
-    } else {
-      toast({
-        title: t('form.save.draftErrorTitle'),
-        variant: 'destructive',
-      });
-    }
-  } catch (err) {
-    console.error(err);
-
-    toast({
-      title: 'Erreur enregistrement',
-      variant: 'destructive',
-    });
-  }
-};
-
-  const handleSubmit = async () => {
-    setSubmitting(true);
-    try {
-      const { error } = await supabase
-        .from('suivi_remplissage')
-        .update({
-          statut: 'TERMINE',
-        })
-        .eq('rapport_id', currentId);
-
-      if (error) {
-        toast({ title: t('form.submit.errorTitle'), description: error.message, variant: 'destructive' });
-        return;
-      }
-      
-
-      const ok = await domain.submit();
-      setLocalLocked(true);
-      
-      if (ok || !error) {
-        toast({ title: t('form.submit.successTitle'), description: t('form.submit.successBody', { year: selection.year }) });
-      } else {
-        toast({ title: t('form.submit.errorTitle'), description: domain.errorMsg ?? '', variant: 'destructive' });
-      }
-    } finally {
-      setSubmitting(false);
-      setConfirmOpen(false);
-    }
-  };
-
-  const goNext = async () => {
-    // It's assumed that child components will save their own data when navigating between steps or on blur.
-    // The parent Saisie component only needs to ensure the `suivi_remplissage` status is updated to EN_COURS.
-    await handleSaveDraft(); // Updates suivi_remplissage status to EN_COURS
-    setStep(s => Math.min(STEPS.length, s + 1));
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-  const goPrev = () => {
-    setStep(s => Math.max(1, s - 1));
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  const totalActivities = socios.items.length; // Still valid, as socios is now for `activites_insertion`
-
-  return (
-    <AppLayout>
-      <div className="space-y-5 sm:space-y-6 animate-fade-in pb-32" dir={isAr ? 'rtl' : 'ltr'}>
-        {/* Hero */}
-        <div className="relative overflow-hidden rounded-2xl gradient-hero p-5 sm:p-7 text-primary-foreground shadow-elegant">
-          <div className="relative z-10 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
-            <div className="space-y-2 min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                {isLocked && (
-                  <Badge variant="outline" className="bg-success/30 text-white border-0 gap-1">
-                    <CheckCircle2 className="h-3 w-3" />
-                    {t(`status.${STATUS_I18N_KEY[domain.status]}`)}
-                  </Badge>
-                )}
-              </div>
-              <h1 className="text-2xl sm:text-3xl font-extrabold leading-tight">{t('form.title')}</h1>
-            </div>
-          </div>
-          <div className="absolute -top-12 -end-12 w-48 h-48 rounded-full bg-secondary/30 blur-3xl" />
-        </div>
-
-        {/* Selection summary */}
-        <Card className="p-4 sm:p-5 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex flex-wrap items-center gap-2">
-            <Badge variant="outline" className="gap-1.5">
-              <span className="text-muted-foreground">{isAr ? 'السنة' : 'Année'}:</span>
-              <span className="font-bold tabular-nums">{selection.year}</span>
-            </Badge>
-            <Badge variant="outline" className="gap-1.5">
-              <span className="text-muted-foreground">{isAr ? 'النوع' : 'Type'}:</span>
-              <span className="font-bold">{periodLabel}</span>
-            </Badge>
-            <Badge variant="outline" className="gap-1.5">
-              <span className="text-muted-foreground">{isAr ? 'المجال' : 'Domaine'}:</span>
-              <span className="font-bold">{domainLabel}</span>
-            </Badge>
-          </div>
-          <Button variant="ghost" size="sm" onClick={() => setSelectionDone(false)} className="gap-1.5">
-            <Pencil className="h-3.5 w-3.5" />
-            {isAr ? 'تعديل' : 'Modifier'}
-          </Button>
-        </Card>
-
-        {/* Stepper */}
-        <Card className="p-4 sm:p-5">
-          <Stepper steps={STEPS} current={step} isAr={isAr} onJump={(id) => !isLocked && setStep(id)} />
-        </Card>
-
-        {/* Progress sticky */}
-        <div className="sticky top-16 z-30 -mx-4 px-4 py-2.5 bg-background/95 backdrop-blur border-y border-border">
-          <div className="flex items-center justify-between gap-3 mb-1.5">
-            <span className="text-xs font-semibold">
-              {t('common.step', { n: step, total: STEPS.length })} ·{' '}
-              {t('form.completeness')} <span className="text-primary tabular-nums">{domain.completeness}%</span>
-            </span>
-            <SaveIndicator state={domain.saveState} lastSavedAt={domain.lastSavedAt} errorMsg={domain.errorMsg} />
-          </div>
-          <Progress value={completeness} className="h-1.5" />
-        </div>
-        {/* Step content */}
-        {domain.loading ? (
-          <div className="h-64 bg-muted/40 rounded-xl animate-pulse" />
-        ) : (
-          <>
-            {step === 1 && (
-              <Step1Permanent
-                data={permanenteData}
-                onSave={onSaveStep1}
-                onActivity={onActivityGlobal}
-                disabled={isLocked}
-              />
-            )}
-            {step === 2 && (
-              <Step2Rayonante
-                data={rayonanteData}
-                onSave={onSaveStep2}
-                onActivity={onActivityGlobal}
-                disabled={isLocked}
-              />
-            )}
-            {step === 3 && (
-              <Step3Etablissement
-                items={facilities.items}
-                onAdd={onAddFacility}
-                onUpdate={onUpdateFacility}
-                onRemove={onRemoveFacility}
-                disabled={isLocked}
-              />
-            )}
-            {step === 4 && (
-              <Step4Camping
-                camps={camps.items}
-                onAddCamp={onAddCamp}
-                onUpdateCamp={onUpdateCampWrapper}
-                onRemoveCamp={onRemoveCamp}
-                associationValues={associationValues.items}
-                onUpdateAssociationValue={onUpdateAssociationValueWrapper}
-                formations={formations.items}
-                onAddFormation={onAddFormationWrapper}
-                onUpdateFormation={onUpdateFormationWrapper}
-                onRemoveFormation={onRemoveFormationWrapper}
-                disabled={isLocked}
-                rapportId={currentId}
-              />
-            )}
-            {step === 5 && (
-              <Step5Convention
-                disabled={isLocked}
-                items={partenaires.items}
-                partnerTypes={typesPartenaires.items}
-                onAdd={onAddConvention}
-                onUpdate={onUpdatePartenaireWrapper}
-                onRemove={onRemovePartenaireWrapper}
-              />
-            )}
-            {step === 6 && (
-              <Step6Festival
-                festivals={festivals.items}
-                onAddFestival={onAddFestival}
-                onUpdateFestival={onUpdateFestivalWrapper}
-                onRemoveFestival={onRemoveFestivalWrapper}
-                disabled={isLocked}
-              />
-            )}
-            {step === 7 && (
-              <Step7SocioEco
-                socioeco={socios.items}
-                onAddSocio={onAddSocio}
-                onUpdateSocio={onUpdateSocioWrapper}
-                onRemoveSocio={onRemoveSocioWrapper}
-                rapportId={currentId}
-                domain={selection.domain}
-                onActivity={onActivityStep7}
-                disabled={isLocked}
-              />
-            )}
-          </>
-        )}
-
-        {/* Bottom action bar */}
-        <div className="fixed bottom-0 inset-x-0 z-40 bg-card/95 backdrop-blur border-t border-border">
-          <div className="container py-3 flex items-center justify-between gap-2">
-            <Button variant="outline" size="sm" onClick={goPrev} disabled={step === 1} className="gap-1.5">
-              {isAr ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
-              <span className="hidden sm:inline">{t('common.previous')}</span>
-            </Button>
-
-            <div className="flex items-center gap-2">
-              {!isLocked && (
-                <Button variant="outline" size="sm" type="submit"  form="step1-form"
-                  disabled={domain.saveState === 'saving'} className="gap-1.5">
-                  {domain.saveState === 'saving' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                  <span className="hidden sm:inline">{t('form.actions.saveDraft')}</span>
-                </Button>
-              )}
-
-              {step < STEPS.length ? (
-                <Button size="sm" onClick={goNext} className="gap-1.5">
-                  <span className="hidden sm:inline">{t('common.next')}</span>
-                  {isAr ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-                </Button>
-              ) : (
-                !isLocked && (
-                  <Button size="sm" onClick={() => {
-                    if (completeness < 100) {
-                      setWarningOpen(true);
-                    } else {
-                      setConfirmOpen(true);
-                    }
-                  }}
-                    disabled={domain.saveState === 'saving' || submitting} className="gap-1.5">
-                    <Send className="h-4 w-4" />
-                    {t('form.actions.completeDomain')}
-                  </Button>
-                )
-              )}
-            </div>
-          </div>
-        </div>
-
-        <AlertDialog open={warningOpen} onOpenChange={setWarningOpen}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>{isAr ? 'تنبيه' : 'Attention'}</AlertDialogTitle>
-              <AlertDialogDescription>
-                {isAr
-                  ? 'هل أنت متأكد من إرسال هذه الاستمارة؟ بعد التأكيد ستصبح للقراءة فقط.'
-                  : 'Êtes-vous sûr de vouloir soumettre ce formulaire ? Après validation, il sera en lecture seule.'}
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>
-                {isAr ? 'العودة للتعديل' : 'Continuer la saisie'}
-              </AlertDialogCancel>
-
-              <AlertDialogAction
-                onClick={() => {
-                  setWarningOpen(false);
-                  setConfirmOpen(true);
-                }}
-              >
-                {isAr ? 'الإرسال رغم ذلك' : 'Soumettre quand même'}
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-
-        <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>{isAr ? 'تأكيد' : 'Confirmation'}</AlertDialogTitle>
-                <AlertDialogDescription>
-                  {isAr
-                    ? 'هل أنت متأكد من إرسال هذه الاستمارة؟ بعد التأكيد ستصبح للقراءة فقط.'
-                    : 'Êtes-vous sûr de vouloir soumettre ce formulaire ? Après validation, il sera en lecture seule.'}
-                </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>{isAr ? 'إلغاء' : 'Annuler'}</AlertDialogCancel>
-              <AlertDialogAction onClick={handleSubmit} disabled={submitting}>
-                {submitting ? <Loader2 className="h-4 w-4 animate-spin me-2" /> : null}
-                {isAr ? 'تأكيد' : 'Confirmer'}
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      </div>
+      ) : (
+        <ActiveWizard 
+          selection={selection}
+          currentId={currentId}
+          domainConfig={domainConfig}
+          onBack={() => setSelectionDone(false)}
+          domainLabel={domainLabel}
+          periodLabel={periodLabel}
+          isAr={isAr}
+        />
+      )}
     </AppLayout>
   );
 };
