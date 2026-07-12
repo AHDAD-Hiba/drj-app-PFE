@@ -7,9 +7,9 @@ import {
 } from '@/components/ui/select';
 import { Plus, Trash2, AlertTriangle } from 'lucide-react';
 import { NumericField } from '@/components/form/NumericField';
-import { useProgrammesCamping } from '@/hooks/useProgrammesCamping';
-import { useNiveauxFormation } from '@/hooks/useNiveauxFormation';
-import type { CampEntry } from '@/hooks/useCampingEntries';
+import { useProgrammesCamping } from '@/hooks/Jeunesse/useProgrammesCamping';
+import { useNiveauxFormation } from '@/hooks/Jeunesse/useNiveauxFormation';
+import type { CampEntry } from '@/hooks/Jeunesse/useCampingEntries';
 import { Input } from '@/components/ui/input';
 
 interface CampParticipantsSectionProps {

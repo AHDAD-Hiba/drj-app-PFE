@@ -3,7 +3,9 @@ import { exportRawDataToExcel } from './excelExport';
 import i18n from '@/i18n';
 
 
-export const handleExportExcel = async () => {
+export const handleExportExcel = async (
+  trimestre?: string
+) => {
     try {
       const { data, error } = await supabase
         .from('directions')
@@ -103,7 +105,9 @@ export const handleExportExcel = async () => {
       if (!data) return;
   
       const formattedData: any[] = []; 
-      const trimestresList = ['t1', 't2', 't3', 't4'];
+      const trimestresList = trimestre
+      ? [trimestre]
+      : ['t1', 't2', 't3', 't4'];
       const isAr = i18n.language === 'ar';
   
       data.forEach((dir: any) => {

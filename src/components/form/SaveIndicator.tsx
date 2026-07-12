@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { Cloud, CloudOff, Loader2, CheckCircle2 } from 'lucide-react';
-import type { SaveState } from '@/hooks/useDraftSubmission';
+import type { SaveState } from '@/hooks/common/useDraftSubmission';
 import { cn } from '@/lib/utils';
 
 interface Props {

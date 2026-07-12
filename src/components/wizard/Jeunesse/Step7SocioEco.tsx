@@ -9,11 +9,11 @@ import {
 } from '@/components/ui/select';
 import { Plus, Trash2, Landmark, AlertTriangle } from 'lucide-react';
 import { NumericField } from '@/components/form/NumericField';
-import { useTypesPartenaires } from '@/hooks/useTypesPartenaires';
+import { useTypesPartenaires } from '@/hooks/Jeunesse/useTypesPartenaires';
 
 // NOUVEAUX IMPORTS POUR L'AUTONOMIE
 import { StepComponentProps } from '@/config/wizard.types';
-import { useInsertionEntries, type InsertionEntry as SocioEcoEntry } from '@/hooks/useInsertionEntries';
+import { useInsertionEntries, type InsertionEntry as SocioEcoEntry } from '@/hooks/Jeunesse/useInsertionEntries';
 
 const createEmptySocioEco = (): SocioEcoEntry => ({
   local_id: crypto.randomUUID(),

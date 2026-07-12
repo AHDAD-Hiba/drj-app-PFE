@@ -10,9 +10,6 @@ import { useDraftSubmission } from './useDraftSubmission';
  * - submit / lock workflow
  * - expose readonly state
  *
- * IMPORTANT:
- * Entry tables are already persisted directly by useSubmissionEntries.
- * This hook DOES NOT manage DB rows anymore.
  */
 export interface UseDomainSubmissionOpts {
   rapportId: string;

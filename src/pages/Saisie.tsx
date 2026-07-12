@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/hooks/common/useAuth';
 import { AppLayout } from '@/components/AppLayout';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,10 +10,10 @@ import { Progress } from '@/components/ui/progress';
 import {
   ChevronLeft, ChevronRight, Save, Send, ShieldAlert, Loader2, CheckCircle2, Pencil,
 } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/hooks/common/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
-import { useDomainSubmission } from '@/hooks/useDomainSubmission';
+import { useDomainSubmission } from '@/hooks/common/useDomainSubmission';
 import { SaveIndicator } from '@/components/form/SaveIndicator';
 import { Stepper } from '@/components/form/Stepper';
 import { PreFormSelection, type ReportSelection } from '@/components/wizard/PreFormSelection';
@@ -21,8 +21,8 @@ import { DEFAULT_YEAR } from '@/components/YearSwitcher';
 import type { DomainConfig } from '@/config/wizard.types';
 // Import de notre nouveau système de configuration
 import { getDomainConfig } from '@/config/domainRegistry';
-import type { ReportStatus } from '@/hooks/useDraftSubmission';
-import { useDomaines } from '@/hooks/useDomaines';
+import type { ReportStatus } from '@/hooks/common/useDraftSubmission';
+import { useDomaines } from '@/hooks/common/useDomaines';
 
 // =========================================================================
 // 1. LE COMPOSANT DU WIZARD ACTIF

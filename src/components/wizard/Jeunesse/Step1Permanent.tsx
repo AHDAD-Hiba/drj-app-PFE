@@ -10,11 +10,11 @@ import {
   permanentActivitySchema,
   PermanentActivityFormValues,
 } from '@/lib/schemas';
-import { useStepForm } from '@/hooks/useStepForm';
+import { useStepForm } from '@/hooks/Jeunesse/useStepForm';
 
 // 1. NOUVEAUX IMPORTS
 import { StepComponentProps } from '@/config/wizard.types';
-import { useActivitesEntries } from '@/hooks/useActivitesEntries';
+import { useActivitesEntries } from '@/hooks/Jeunesse/useActivitesEntries';
 
 export interface Step1PermanentRef {
   submit: () => Promise<void>;

@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Moon, Sun } from 'lucide-react';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/hooks/common/useAuth';
 import {
   PREFECTURE_COORDS,
   REGION_CENTER,

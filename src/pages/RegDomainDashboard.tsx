@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import i18n from '@/i18n';
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/hooks/common/useAuth";
 import { AppLayout } from "@/components/AppLayout";
 import { handleExportExcel } from '@/lib/export';
 import { Card } from "@/components/ui/card";
@@ -58,10 +58,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
-const onExportClick = async () => {
-  await handleExportExcel();
-};
 
 const RegDomainDashboard = () => {
   
@@ -329,17 +325,6 @@ const directionsData = prefectures.map((pref) => ({
             </div>
             
             <div className="flex flex-wrap items-center gap-2 flex-shrink-0">
-              
-              <Button
-                size="sm"
-                variant="secondary"
-                onClick={handleExportExcel}
-                className="gap-1.5 bg-white/15 hover:bg-white/25 text-white border-0 backdrop-blur-sm font-bold"
-              >
-                <FileSpreadsheet className="h-4 w-4" />
-                {t("RegDomainDashboard.buttons.excel")}
-              </Button>
-
             </div>
           </div>
           <div className="absolute -top-12 -end-12 w-48 h-48 rounded-full bg-secondary/30 blur-3xl" />
@@ -378,7 +363,7 @@ const directionsData = prefectures.map((pref) => ({
                 <SelectContent>
                   {dbDomains.map((dom) => (
                     <SelectItem key={dom.code} value={dom.code}>
-                      {i18n.language === "ar" ? dom.nom_ar : dom.nom_fr}
+                      {i18n.language === "ar" ? (dom.nom_ar || dom.nom) : dom.nom}
                     </SelectItem>
                   ))}
                 </SelectContent>

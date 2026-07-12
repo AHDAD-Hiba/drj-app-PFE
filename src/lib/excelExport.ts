@@ -283,90 +283,236 @@ export const exportRawDataToExcel = (data: RawDashboardData[], lang: string) => 
     XLSX.utils.book_append_sheet(wb, wsStep3, isAr ? "وضعية المؤسسات" : "Statut Établissements");
   }
 
- // ==========================================
-  // (Camp Participants)
-  // ==========================================
-  const campPartDataFormatted: any[] = [];
+// ==========================================
+// (Camp Participants)
+// ==========================================
+const campPartDataFormatted: any[] = [];
 
-  data.forEach((row) => {
-    const isTotal = row.trimestre === 'Total' || row.trimestre === 'المجموع';
-    
-    const prog = row.camping?.programmes?.[0];
+data.forEach((row) => {
+  const isTotal = row.trimestre === 'Total' || row.trimestre === 'المجموع';
+
+  if (isTotal) {
+    let hommes = 0;
+    let femmes = 0;
+    let urbain = 0;
+    let rural = 0;
+    let mre = 0;
+    let besoins = 0;
+    let encH = 0;
+    let encF = 0;
+
+    if (row.camping?.programmes?.length) {
+      row.camping.programmes.forEach((prog) => {
+        hommes += prog.part.hommes || 0;
+        femmes += prog.part.femmes || 0;
+        urbain += prog.part.urbain || 0;
+        rural += prog.part.rural || 0;
+        mre += prog.part.mre || 0;
+        besoins += prog.part.besoins || 0;
+        encH += prog.encad.hommes || 0;
+        encF += prog.encad.femmes || 0;
+      });
+    }
 
     campPartDataFormatted.push({
       [isAr ? "المديرية الإقليمية" : "Direction Provinciale"]: row.directionName,
       [isAr ? "الفصل" : "Trimestre"]: row.trimestre,
-      [isAr ? "البرنامج" : "Programme"]: prog ? prog.nom : "-",
-      [isAr ? "برنامج آخر" : "Autre programme"]: prog && prog.part.autre_programme ? prog.part.autre_programme : "-",
-      [isAr ? "المستفيدون (ذكور)" : "Bénéficiaires (H)"]: prog ? prog.part.hommes : 0,
-      [isAr ? "المستفيدون (إناث)" : "Bénéficiaires (F)"]: prog ? prog.part.femmes : 0,
-      [isAr ? "الوسط الحضري" : "Milieu urbain"]: prog ? prog.part.urbain : 0,
-      [isAr ? "الوسط القروي" : "Milieu rural"]: prog ? prog.part.rural : 0,
-      [isAr ? "أبناء المهاجرين" : "Enfants des immigrés"]: prog ? prog.part.mre : 0,
-      [isAr ? "احتياجات خاصة" : "Besoins spécifiques"]: prog ? prog.part.besoins : 0,
-      [isAr ? "التأطير (ذكور)" : "Encadrement (H)"]: prog ? prog.encad.hommes : 0,
-      [isAr ? "التأطير (إناث)" : "Encadrement (F)"]: prog ? prog.encad.femmes : 0,
-      [isAr ? "مستوى تكوين آخر" : "Autre niveau formation"]: prog?.encad?.autre_niveau_formation || "-",
+      [isAr ? "البرنامج" : "Programme"]: "-",
+      [isAr ? "برنامج آخر" : "Autre programme"]: "-",
+      [isAr ? "المستفيدون (ذكور)" : "Bénéficiaires (H)"]: hommes,
+      [isAr ? "المستفيدون (إناث)" : "Bénéficiaires (F)"]: femmes,
+      [isAr ? "الوسط الحضري" : "Milieu urbain"]: urbain,
+      [isAr ? "الوسط القروي" : "Milieu rural"]: rural,
+      [isAr ? "أبناء المهاجرين" : "Enfants des immigrés"]: mre,
+      [isAr ? "احتياجات خاصة" : "Besoins spécifiques"]: besoins,
+      [isAr ? "التأطير (ذكور)" : "Encadrement (H)"]: encH,
+      [isAr ? "التأطير (إناث)" : "Encadrement (F)"]: encF,
+      [isAr ? "مستوى تكوين آخر" : "Autre niveau formation"]: "-",
     });
 
-  });
+  } else if (row.camping?.programmes?.length) {
 
-  const wsCampPart = createStyledSheet(campPartDataFormatted, lang, 5);
-  if (isAr) wsCampPart['!views'] = [{ RTL: true }];
-  XLSX.utils.book_append_sheet(wb, wsCampPart, isAr ? "تخييم - المشاركون" : "Camping - Participants");
+    row.camping.programmes.forEach((prog) => {
+      campPartDataFormatted.push({
+        [isAr ? "المديرية الإقليمية" : "Direction Provinciale"]: row.directionName,
+        [isAr ? "الفصل" : "Trimestre"]: row.trimestre,
+        [isAr ? "البرنامج" : "Programme"]: prog.nom,
+        [isAr ? "برنامج آخر" : "Autre programme"]: prog.part.autre_programme || "-",
+        [isAr ? "المستفيدون (ذكور)" : "Bénéficiaires (H)"]: prog.part.hommes,
+        [isAr ? "المستفيدون (إناث)" : "Bénéficiaires (F)"]: prog.part.femmes,
+        [isAr ? "الوسط الحضري" : "Milieu urbain"]: prog.part.urbain,
+        [isAr ? "الوسط القروي" : "Milieu rural"]: prog.part.rural,
+        [isAr ? "أبناء المهاجرين" : "Enfants des immigrés"]: prog.part.mre,
+        [isAr ? "احتياجات خاصة" : "Besoins spécifiques"]: prog.part.besoins,
+        [isAr ? "التأطير (ذكور)" : "Encadrement (H)"]: prog.encad.hommes,
+        [isAr ? "التأطير (إناث)" : "Encadrement (F)"]: prog.encad.femmes,
+        [isAr ? "مستوى تكوين آخر" : "Autre niveau formation"]:
+          prog.encad.autre_niveau_formation || "-",
+      });
+    });
 
+  } else {
 
-  // ==========================================
-  // (Camp Mouvements)
-  // ==========================================
-  const campMovDataFormatted: any[] = [];
+    campPartDataFormatted.push({
+      [isAr ? "المديرية الإقليمية" : "Direction Provinciale"]: row.directionName,
+      [isAr ? "الفصل" : "Trimestre"]: row.trimestre,
+      [isAr ? "البرنامج" : "Programme"]: "-",
+      [isAr ? "برنامج آخر" : "Autre programme"]: "-",
+      [isAr ? "المستفيدون (ذكور)" : "Bénéficiaires (H)"]: 0,
+      [isAr ? "المستفيدون (إناث)" : "Bénéficiaires (F)"]: 0,
+      [isAr ? "الوسط الحضري" : "Milieu urbain"]: 0,
+      [isAr ? "الوسط القروي" : "Milieu rural"]: 0,
+      [isAr ? "أبناء المهاجرين" : "Enfants des immigrés"]: 0,
+      [isAr ? "احتياجات خاصة" : "Besoins spécifiques"]: 0,
+      [isAr ? "التأطير (ذكور)" : "Encadrement (H)"]: 0,
+      [isAr ? "التأطير (إناث)" : "Encadrement (F)"]: 0,
+      [isAr ? "مستوى تكوين آخر" : "Autre niveau formation"]: "-",
+    });
 
-  data.forEach((row) => {
-    const isTotal = row.trimestre === 'Total' || row.trimestre === 'المجموع';
-    const mov = row.camping?.mouvements?.[0];
+  }
+});
+
+const wsCampPart = createStyledSheet(campPartDataFormatted, lang, 5);
+if (isAr) wsCampPart["!views"] = [{ RTL: true }];
+XLSX.utils.book_append_sheet(
+  wb,
+  wsCampPart,
+  isAr ? "تخييم - المشاركون" : "Camping - Participants"
+);
+
+// ==========================================
+// (Camp Mouvements)
+// ==========================================
+const campMovDataFormatted: any[] = [];
+
+data.forEach((row) => {
+  const isTotal = row.trimestre === "Total" || row.trimestre === "المجموع";
+
+  if (isTotal) {
+    let totalBenef = 0;
+
+    if (row.camping?.mouvements?.length) {
+      row.camping.mouvements.forEach((mov) => {
+        totalBenef += mov.beneficiaires || 0;
+      });
+    }
 
     campMovDataFormatted.push({
       [isAr ? "المديرية الإقليمية" : "Direction Provinciale"]: row.directionName,
       [isAr ? "الفصل" : "Trimestre"]: row.trimestre,
-      [isAr ? "اسم الجمعية" : "Nom de l'association"]: mov ? mov.nom : "-",
-      [isAr ? "نوع الحركة" : "Type de mouvement"]: mov ? mov.type : "-",
-      [isAr ? "تاريخ الحركة" : "Date de mouvement"]: mov ? mov.date : "-",
-      [isAr ? "عدد المستفيدين" : "Nombre de bénéficiaires"]: mov ? mov.beneficiaires : 0,
+      [isAr ? "اسم الجمعية" : "Nom de l'association"]: "-",
+      [isAr ? "نوع الحركة" : "Type de mouvement"]: "-",
+      [isAr ? "تاريخ الحركة" : "Date de mouvement"]: "-",
+      [isAr ? "عدد المستفيدين" : "Nombre de bénéficiaires"]: totalBenef,
     });
 
-  });
+  } else if (row.camping?.mouvements?.length) {
 
-  const wsCampMov = createStyledSheet(campMovDataFormatted, lang, 5);
-  if (isAr) wsCampMov['!views'] = [{ RTL: true }];
-  XLSX.utils.book_append_sheet(wb, wsCampMov, isAr ? "تخييم - حركية الجمعيات" : "Camping - Mouvements");
+    row.camping.mouvements.forEach((mov) => {
+      campMovDataFormatted.push({
+        [isAr ? "المديرية الإقليمية" : "Direction Provinciale"]: row.directionName,
+        [isAr ? "الفصل" : "Trimestre"]: row.trimestre,
+        [isAr ? "اسم الجمعية" : "Nom de l'association"]: mov.nom,
+        [isAr ? "نوع الحركة" : "Type de mouvement"]: mov.type,
+        [isAr ? "تاريخ الحركة" : "Date de mouvement"]: mov.date,
+        [isAr ? "عدد المستفيدين" : "Nombre de bénéficiaires"]: mov.beneficiaires,
+      });
+    });
 
+  } else {
 
-  // ==========================================
-  //  (Camp Formations)
-  // ==========================================
-  const campFormDataFormatted: any[] = [];
+    campMovDataFormatted.push({
+      [isAr ? "المديرية الإقليمية" : "Direction Provinciale"]: row.directionName,
+      [isAr ? "الفصل" : "Trimestre"]: row.trimestre,
+      [isAr ? "اسم الجمعية" : "Nom de l'association"]: "-",
+      [isAr ? "نوع الحركة" : "Type de mouvement"]: "-",
+      [isAr ? "تاريخ الحركة" : "Date de mouvement"]: "-",
+      [isAr ? "عدد المستفيدين" : "Nombre de bénéficiaires"]: 0,
+    });
 
-  data.forEach((row) => {
-    const isTotal = row.trimestre === 'Total' || row.trimestre === 'المجموع';
-    const form = row.camping?.formations?.[0];
+  }
+});
+
+const wsCampMov = createStyledSheet(campMovDataFormatted, lang, 5);
+if (isAr) wsCampMov["!views"] = [{ RTL: true }];
+XLSX.utils.book_append_sheet(
+  wb,
+  wsCampMov,
+  isAr ? "تخييم - حركية الجمعيات" : "Camping - Mouvements"
+);
+
+// ==========================================
+// (Camp Formations)
+// ==========================================
+const campFormDataFormatted: any[] = [];
+
+data.forEach((row) => {
+  const isTotal = row.trimestre === "Total" || row.trimestre === "المجموع";
+
+  if (isTotal) {
+    let totalFormH = 0;
+    let totalFormF = 0;
+    let totalBenefH = 0;
+    let totalBenefF = 0;
+
+    if (row.camping?.formations?.length) {
+      row.camping.formations.forEach((form) => {
+        totalFormH += form.formateurs_h || 0;
+        totalFormF += form.formateurs_f || 0;
+        totalBenefH += form.benef_h || 0;
+        totalBenefF += form.benef_f || 0;
+      });
+    }
 
     campFormDataFormatted.push({
       [isAr ? "المديرية الإقليمية" : "Direction Provinciale"]: row.directionName,
       [isAr ? "الفصل" : "Trimestre"]: row.trimestre,
-      [isAr ? "رقم الدورة" : "N° Session"]: form ? form.session : "-",
-      [isAr ? "مركز التكوين" : "Centre de formation"]: form ? form.centre : "-",
-      [isAr ? "المكونون (ذكور)" : "Formateurs (H)"]: form ? form.formateurs_h : 0,
-      [isAr ? "المكونون (إناث)" : "Formateurs (F)"]: form ? form.formateurs_f : 0,
-      [isAr ? "المستفيدون (ذكور)" : "Bénéficiaires (H)"]: form ? form.benef_h : 0,
-      [isAr ? "المستفيدون (إناث)" : "Bénéficiaires (F)"]: form ? form.benef_f : 0,
+      [isAr ? "رقم الدورة" : "N° Session"]: "-",
+      [isAr ? "مركز التكوين" : "Centre de formation"]: "-",
+      [isAr ? "المكونون (ذكور)" : "Formateurs (H)"]: totalFormH,
+      [isAr ? "المكونون (إناث)" : "Formateurs (F)"]: totalFormF,
+      [isAr ? "المستفيدون (ذكور)" : "Bénéficiaires (H)"]: totalBenefH,
+      [isAr ? "المستفيدون (إناث)" : "Bénéficiaires (F)"]: totalBenefF,
     });
 
-  });
+  } else if (row.camping?.formations?.length) {
 
-  const wsCampForm = createStyledSheet(campFormDataFormatted, lang, 5);
-  if (isAr) wsCampForm['!views'] = [{ RTL: true }];
-  XLSX.utils.book_append_sheet(wb, wsCampForm, isAr ? "تخييم - التكوينات" : "Camping - Formations");
+    row.camping.formations.forEach((form) => {
+      campFormDataFormatted.push({
+        [isAr ? "المديرية الإقليمية" : "Direction Provinciale"]: row.directionName,
+        [isAr ? "الفصل" : "Trimestre"]: row.trimestre,
+        [isAr ? "رقم الدورة" : "N° Session"]: form.session,
+        [isAr ? "مركز التكوين" : "Centre de formation"]: form.centre,
+        [isAr ? "المكونون (ذكور)" : "Formateurs (H)"]: form.formateurs_h,
+        [isAr ? "المكونون (إناث)" : "Formateurs (F)"]: form.formateurs_f,
+        [isAr ? "المستفيدون (ذكور)" : "Bénéficiaires (H)"]: form.benef_h,
+        [isAr ? "المستفيدون (إناث)" : "Bénéficiaires (F)"]: form.benef_f,
+      });
+    });
 
+  } else {
+
+    campFormDataFormatted.push({
+      [isAr ? "المديرية الإقليمية" : "Direction Provinciale"]: row.directionName,
+      [isAr ? "الفصل" : "Trimestre"]: row.trimestre,
+      [isAr ? "رقم الدورة" : "N° Session"]: "-",
+      [isAr ? "مركز التكوين" : "Centre de formation"]: "-",
+      [isAr ? "المكونون (ذكور)" : "Formateurs (H)"]: 0,
+      [isAr ? "المكونون (إناث)" : "Formateurs (F)"]: 0,
+      [isAr ? "المستفيدون (ذكور)" : "Bénéficiaires (H)"]: 0,
+      [isAr ? "المستفيدون (إناث)" : "Bénéficiaires (F)"]: 0,
+    });
+
+  }
+});
+
+const wsCampForm = createStyledSheet(campFormDataFormatted, lang, 5);
+if (isAr) wsCampForm["!views"] = [{ RTL: true }];
+XLSX.utils.book_append_sheet(
+  wb,
+  wsCampForm,
+  isAr ? "تخييم - التكوينات" : "Camping - Formations"
+);
   // ==========================================
   // (Conventions & Partenariats)
   // ==========================================

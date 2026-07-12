@@ -1,14 +1,14 @@
 // src/config/jeunesse.config.ts
 import { DomainConfig } from './wizard.types';
-import { useJeunesseCompleteness } from '@/hooks/useJeunesseCompleteness';
+import { useJeunesseCompleteness } from '@/hooks/Jeunesse/useJeunesseCompleteness';
 // Import de tes composants autonomes
-import { Step1Permanent } from '@/components/wizard/Step1Permanent';
-import { Step2Rayonante } from '@/components/wizard/Step2Rayonante';
-import { Step3Etablissement } from '@/components/wizard/Step3Etablissement';
-import { Step4Camping } from '@/components/wizard/Step4Camping';
-import { Step5Convention } from '@/components/wizard/Step5Convention';
-import { Step6Festival } from '@/components/wizard/Step6Festival';
-import { Step7SocioEco } from '@/components/wizard/Step7SocioEco';
+import { Step1Permanent } from '@/components/wizard/Jeunesse/Step1Permanent';
+import { Step2Rayonante } from '@/components/wizard/Jeunesse/Step2Rayonante';
+import { Step3Etablissement } from '@/components/wizard/Jeunesse/Step3Etablissement';
+import { Step4Camping } from '@/components/wizard/Jeunesse/Step4Camping';
+import { Step5Convention } from '@/components/wizard/Jeunesse/Step5Convention';
+import { Step6Festival } from '@/components/wizard/Jeunesse/Step6Festival';
+import { Step7SocioEco } from '@/components/wizard/Jeunesse/Step7SocioEco';
 
 export const jeunesseConfig: DomainConfig = {
   id: '9b15dc1d-5f39-4e5d-915c-33c465b3276e',

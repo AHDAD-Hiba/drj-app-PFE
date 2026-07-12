@@ -9,7 +9,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Trash2, ArrowDownToLine, ArrowUpFromLine,CalendarIcon } from 'lucide-react';
-import type { MouvementAssociation } from '@/hooks/useMouvementsAssociations';
+import type { MouvementAssociation } from '@/hooks/Jeunesse/useMouvementsAssociations';
 import { Card } from '@/components/ui/card';
 
 interface MouvementsSectionProps {

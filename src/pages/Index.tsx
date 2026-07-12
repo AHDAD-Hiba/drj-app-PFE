@@ -1,9 +1,10 @@
-import { Navigate } from 'react-router-dom';
-import { useAuth } from '@/hooks/useAuth';
-import { Loader2 } from 'lucide-react';
+import { Navigate } from "react-router-dom";
+import { useAuth } from "@/hooks/common/useAuth";
+import { Loader2 } from "lucide-react";
 
 const Index = () => {
-  const { user, loading } = useAuth();
+  const { user, loading, roleRedirectPath } = useAuth();
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center gradient-soft">
@@ -11,7 +12,12 @@ const Index = () => {
       </div>
     );
   }
-  return <Navigate to={user ? '/dashboard' : '/auth'} replace />;
+
+  if (!user) {
+    return <Navigate to="/auth" replace />;
+  }
+
+  return <Navigate to={roleRedirectPath} replace />;
 };
 
 export default Index;

@@ -9,7 +9,7 @@ import { NumericField } from '@/components/form/NumericField';
 
 // NOUVEAUX IMPORTS POUR L'AUTONOMIE
 import { StepComponentProps } from '@/config/wizard.types';
-import { useFestivalEntries, type FestivalEntry } from '@/hooks/useFestivalEntries';
+import { useFestivalEntries, type FestivalEntry } from '@/hooks/Jeunesse/useFestivalEntries';
 
 const createEmptyFestival = (): FestivalEntry => ({
   local_id: crypto.randomUUID(),

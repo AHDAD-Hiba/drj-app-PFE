@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/types';
-import { toast } from 'sonner'; // Optionnel pour le debug
 
 export function useSubmissionEntries<T extends Record<string, any>>(
   tableName: keyof Database['public']['Tables'],

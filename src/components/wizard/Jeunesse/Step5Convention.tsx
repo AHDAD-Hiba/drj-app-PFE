@@ -12,8 +12,8 @@ import { Input } from '../ui/input';
 
 // NOUVEAUX IMPORTS POUR L'AUTONOMIE
 import { StepComponentProps } from '@/config/wizard.types';
-import { usePartenariatEntries } from '@/hooks/usePartenariatEntries';
-import { useTypesPartenaires } from '@/hooks/useTypesPartenaires';
+import { usePartenariatEntries } from '@/hooks/Jeunesse/usePartenariatEntries';
+import { useTypesPartenaires } from '@/hooks/Jeunesse/useTypesPartenaires';
 
 export interface PartenariatEntry {
   local_id: string;

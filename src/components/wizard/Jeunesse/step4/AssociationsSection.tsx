@@ -1,8 +1,8 @@
 import { useTranslation } from 'react-i18next';
 import { Card } from '@/components/ui/card';
 import { NumericField } from '@/components/form/NumericField';
-import { useCategoriesAssociations } from '@/hooks/useCategoriesAssociations';
-import type { AssociationValue } from '@/hooks/useAssociationValues';
+import { useCategoriesAssociations } from '@/hooks/Jeunesse/useCategoriesAssociations';
+import type { AssociationValue } from '@/hooks/Jeunesse/useAssociationValues';
 
 interface AssociationsSectionProps {
   items: AssociationValue[];

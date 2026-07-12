@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/hooks/common/useAuth';
 import { AppLayout } from '@/components/AppLayout';
 import { LeafletMap } from '@/components/LeafletMap';
 import { Card } from '@/components/ui/card';

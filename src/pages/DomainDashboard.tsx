@@ -1,4 +1,5 @@
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/hooks/common/useAuth';
+import { Navigate } from "react-router-dom";
 import PrefDomainDashboard from './PrefDomainDashboard';
 import RegDomainDashboard from './RegDomainDashboard';
 import { Loader2 } from 'lucide-react';
@@ -14,17 +15,16 @@ const DomainDashboard = () => {
     );
   }
 
-  // التوجيه الذاتي (Le Routage Interne)
+  // (Le Routage Interne)
   if (isRegional) {
     return <RegDomainDashboard />;
-  }
-
-  if (isPrefectoral) {
+ }
+ 
+ if (isPrefectoral) {
     return <PrefDomainDashboard />;
-  }
-
-  // إيلا كان Admin مثلاً، نعطيوه حتى هو ديال الجهة أو لي بغيتي
-  return <RegDomainDashboard />;
+ }
+ 
+ return <Navigate to="/auth" replace />;
 };
 
 export default DomainDashboard;

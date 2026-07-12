@@ -11,13 +11,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useTypesFermeture } from '@/hooks/useTypesFermeture';
+import { useTypesFermeture } from '@/hooks/Jeunesse/useTypesFermeture';
 import { Plus, Trash2, Building2, Search } from 'lucide-react';
 
 // NOUVEAUX IMPORTS POUR L'AUTONOMIE
 import { StepComponentProps } from '@/config/wizard.types';
-import { useEtablissementEntries } from '@/hooks/useEtablissementEntries';
-import { useAuth } from '@/hooks/useAuth';
+import { useEtablissementEntries } from '@/hooks/Jeunesse/useEtablissementEntries';
+import { useAuth } from '@/hooks/common/useAuth';
 
 export interface FacilityEntry {
   local_id: string;

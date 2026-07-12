@@ -2,16 +2,17 @@ import { createContext, useContext, useEffect, useState, ReactNode } from 'react
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 
-export type AppRole = 'directeur_regional' | 'directeur_prefectoral';
+export type AppRole = 'directeur_regional' | 'directeur_prefectoral' | 'equipe_regional';
 
 interface Utilisateur {
   id: string;
-  auth_user_id: string;  // ← ajoute cette ligne
+  auth_user_id: string;
   nom: string;
   email: string;
   role: AppRole | null;
   direction_id: string | null;
 }
+
 interface AuthContextValue {
   user: User | null;
   session: Session | null;
@@ -21,6 +22,7 @@ interface AuthContextValue {
   signOut: () => Promise<void>;
   isRegional: boolean;
   isPrefectoral: boolean;
+  isEquipeRegional: boolean; 
   roleRedirectPath: string;
 }
 
@@ -33,13 +35,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading]       = useState(true);
 
   const fetchUtilisateur = async (userId: string) => {
-  const { data, error } = await (supabase as any)
-    .from('utilisateurs')
-    .select('*')
-    .eq('auth_user_id', userId)
-    .maybeSingle();
+    const { data, error } = await (supabase as any)
+      .from('utilisateurs')
+      .select('*')
+      .eq('auth_user_id', userId)
+      .maybeSingle();
 
-  setUtilisateur((data as Utilisateur) ?? null);
+    setUtilisateur((data as Utilisateur) ?? null);
   };
 
   useEffect(() => {
@@ -71,20 +73,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setUtilisateur(null);
   };
 
-  const role           = utilisateur?.role ?? null;
-  const isRegional     = role === 'directeur_regional';
-  const isPrefectoral  = role === 'directeur_prefectoral';
+  const role             = utilisateur?.role ?? null;
+  const isRegional       = role === 'directeur_regional';
+  const isPrefectoral    = role === 'directeur_prefectoral';
+  const isEquipeRegional = role === 'equipe_regional'; 
 
   const roleRedirectPath =
-    role === 'directeur_regional'    ? '/dashboard' :
-    role === 'directeur_prefectoral' ? '/saisie'    :
-    '/dashboard';
+    role === 'equipe_regional'       ? '/regional-dashboard' :
+    role === 'directeur_regional'    ? '/domain-dashboard' :
+    role === 'directeur_prefectoral' ? '/saisie' : '/auth';
 
   return (
     <AuthContext.Provider value={{
       user, session, utilisateur, role,
       loading, signOut,
-      isRegional, isPrefectoral,
+      isRegional, isPrefectoral, isEquipeRegional, 
       roleRedirectPath,
     }}>
       {children}

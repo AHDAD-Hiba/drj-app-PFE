@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
 import { Navigate } from 'react-router-dom';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/hooks/common/useAuth';
 import { Loader2, XCircle, LogOut } from 'lucide-react'; // <-- زدت LogOut باش نديرو أيكون فالبوطون
 import { supabase } from '@/integrations/supabase/client'; // <-- ضروري نعيطو لـ supabase باش نديرو signout
 

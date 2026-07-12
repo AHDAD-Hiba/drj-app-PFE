@@ -5,7 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Plus, Trash2 } from 'lucide-react';
 import { NumericField } from '@/components/form/NumericField';
-import type { FormationEntry } from '@/hooks/useFormationEntries';
+import type { FormationEntry } from '@/hooks/Jeunesse/useFormationEntries';
 
 interface FormationsSectionProps {
   items: FormationEntry[];

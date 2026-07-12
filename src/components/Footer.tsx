@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { MapPin, Phone, Mail, Globe, Building2 } from 'lucide-react';
 import mjccLogo from '@/assets/mjcc-official-logo.jpeg';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/hooks/common/useAuth';
 import { handleExportExcel } from "@/lib/export";
 
 export const Footer = () => {

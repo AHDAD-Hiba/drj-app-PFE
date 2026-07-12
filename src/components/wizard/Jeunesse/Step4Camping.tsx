@@ -5,15 +5,15 @@ import { Tent } from 'lucide-react';
 
 // NOUVEAUX IMPORTS POUR NOTRE CONTRAT ET LES HOOKS INTERNES
 import { StepComponentProps } from '@/config/wizard.types';
-import { useCampingEntries } from '@/hooks/useCampingEntries';
-import { useAssociationValues } from '@/hooks/useAssociationValues';
-import { useMouvementsAssociations } from '@/hooks/useMouvementsAssociations';
-import { useFormationEntries } from '@/hooks/useFormationEntries';
+import { useCampingEntries } from '@/hooks/Jeunesse/useCampingEntries';
+import { useAssociationValues } from '@/hooks/Jeunesse/useAssociationValues';
+import { useMouvementsAssociations } from '@/hooks/Jeunesse/useMouvementsAssociations';
+import { useFormationEntries } from '@/hooks/Jeunesse/useFormationEntries';
 
-import { CampParticipantsSection } from '@/components/wizard/step4/CampParticipantsSection';
-import { AssociationsSection } from '@/components/wizard/step4/AssociationsSection';
-import { MouvementsSection } from '@/components/wizard/step4/MouvementsSection';
-import { FormationsSection } from '@/components/wizard/step4/FormationsSection';
+import { CampParticipantsSection } from '@/components/wizard/Jeunesse/step4/CampParticipantsSection';
+import { AssociationsSection } from '@/components/wizard/Jeunesse/step4/AssociationsSection';
+import { MouvementsSection } from '@/components/wizard/Jeunesse/step4/MouvementsSection';
+import { FormationsSection } from '@/components/wizard/Jeunesse/step4/FormationsSection';
 
 /**
  * Step4Camping - Orchestrateur autonome pour la section camping

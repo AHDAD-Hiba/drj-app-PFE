@@ -7,7 +7,7 @@ import {
 } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { ZodType } from 'zod';
-import { useAutoSave } from '@/hooks/useAutoSave';
+import { useAutoSave } from '@/hooks/common/useAutoSave';
 
 export interface UseStepFormOptions<T extends FieldValues> {
   schema: ZodType<T>;

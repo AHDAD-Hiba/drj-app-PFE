@@ -1,7 +1,7 @@
 import { DomainConfig } from './wizard.types';
 
 // Le futur hook de calcul de complétude
-import { useAfCompleteness } from '@/hooks/useAfCompleteness';
+import { useAfCompleteness } from '@/hooks/AffairesFeminines/useAfCompleteness';
 
 // Les futurs composants visuels
 import { Step1Formation } from '@/components/wizard/AffairesFeminines/Step1Formation';

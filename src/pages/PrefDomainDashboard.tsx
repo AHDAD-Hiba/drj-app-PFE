@@ -5,7 +5,7 @@ import { AppLayout } from "@/components/AppLayout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useCategoriesAssociations } from "@/hooks/useCategoriesAssociations";
+import { useCategoriesAssociations } from "@/hooks/Jeunesse/useCategoriesAssociations";
 import {
   Select,
   SelectContent,
@@ -74,7 +74,7 @@ import {
   Shield,
   HeartHandshake,UserMinus,UserPlus,ArrowRightLeft
 } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/hooks/common/useAuth";
 import { type Domain } from "@/lib/domainData";
 const fmt = (n: number, lang: string) =>
   new Intl.NumberFormat(lang === "ar" ? "ar-MA" : "fr-FR").format(Math.round(n));
