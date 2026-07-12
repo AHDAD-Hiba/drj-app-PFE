@@ -1,4 +1,4 @@
-import { memo, useEffect } from 'react';
+import { memo, useEffect, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -12,7 +12,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useTypesFermeture } from '@/hooks/useTypesFermeture';
-import { Plus, Trash2, Building2 } from 'lucide-react';
+import { Plus, Trash2, Building2, Search } from 'lucide-react';
 
 // NOUVEAUX IMPORTS POUR L'AUTONOMIE
 import { StepComponentProps } from '@/config/wizard.types';
@@ -59,6 +59,18 @@ export const Step3Etablissement = memo(({
   const facilities = useEtablissementEntries(rapportId, profile?.direction_id ?? null);
   const items = facilities.items;
 
+  // ==========================================
+  // BARRE DE RECHERCHE
+  // ==========================================
+  const [searchTerm, setSearchTerm] = useState('');
+
+  // Filtrer les items : on garde ceux qui matchent la recherche OU ceux qui viennent d'être créés (!id)
+  const filteredItems = useMemo(() => {
+    return items.filter((item) =>
+      !item.id || item.name?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [items, searchTerm]);
+
   // 3. Encapsulation des actions avec déclenchement de la sauvegarde auto en tâche de fond (onActivity)
   const handleAdd = async () => {
     if (onActivity) await onActivity();
@@ -70,6 +82,8 @@ export const Step3Etablissement = memo(({
       closure_status: '',
       autre_precision: '',
     });
+    // Optionnel : effacer la recherche pour bien voir la nouvelle ligne
+    setSearchTerm('');
   };
 
   const handleUpdate = async (local_id: string, patch: Partial<FacilityEntry>) => {
@@ -96,8 +110,8 @@ export const Step3Etablissement = memo(({
     })) ?? [];
 
   return (
-    <Card className="p-5 sm:p-6 space-y-4">
-      <div className="flex items-center justify-between gap-3 flex-wrap">
+    <Card className="p-5 sm:p-6 space-y-5">
+      <div className="flex items-center justify-between gap-3 flex-wrap border-b border-border pb-4">
         <div>
           <h2 className="text-lg font-bold flex items-center gap-2">
             <Building2 className="h-5 w-5 text-primary" />
@@ -120,20 +134,34 @@ export const Step3Etablissement = memo(({
         </Button>
       </div>
 
-      {items.length === 0 ? (
-        <div className="text-center py-8 text-sm text-muted-foreground border-2 border-dashed border-border rounded-lg">
-          {isAr ? 'لا توجد مؤسسات مسجلة' : 'Aucun établissement enregistré'}
+      {/* 🔍 BARRE DE RECHERCHE INTEGRÉE */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          type="text"
+          placeholder={isAr ? 'ابحث عن اسم المؤسسة لتغيير وضعيتها...' : 'Rechercher un établissement par son nom...'}
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="pl-9 h-10 bg-muted/20 focus-visible:ring-primary"
+        />
+      </div>
+
+      {filteredItems.length === 0 ? (
+        <div className="text-center py-8 text-sm text-muted-foreground border-2 border-dashed border-border rounded-lg bg-muted/10">
+          {searchTerm 
+            ? (isAr ? 'لا توجد مؤسسة تطابق هذا البحث' : 'Aucun établissement ne correspond à votre recherche.')
+            : (isAr ? 'لا توجد مؤسسات مسجلة' : 'Aucun établissement enregistré')}
         </div>
       ) : (
-        <div className="space-y-3">
-          {items.map((it, idx) => (
+        <div className="space-y-4">
+          {filteredItems.map((it, idx) => (
             <div
               key={it.local_id}
-              className="border border-border rounded-lg p-4 bg-muted/20 space-y-3"
+              className="border border-border rounded-lg p-4 bg-muted/10 space-y-3 transition-all hover:border-primary/30"
             >
               <div className="flex items-center justify-between gap-2">
                 <span className="text-xs font-semibold text-muted-foreground">
-                  #{idx + 1}
+                  {!it.id ? (isAr ? '✨ مؤسسة جديدة' : '✨ Nouvelle') : `#${idx + 1}`}
                 </span>
 
                 <Button
@@ -150,13 +178,15 @@ export const Step3Etablissement = memo(({
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1.5 sm:col-span-2">
-                  <Label className="text-xs">
+                  <Label className="text-xs font-semibold">
                     {isAr ? 'اسم المؤسسة' : "Nom de l'établissement"}
                   </Label>
+                  {/* S'il s'agit d'une nouvelle carte (sans ID), on la laisse éditable. 
+                      Sinon on peut la laisser éditable ou grisée selon la préférence, ici je garde l'Input par défaut */}
                   <Input
                     value={it.name}
                     disabled={disabled}
-                    className="h-9"
+                    className="h-9 bg-background"
                     maxLength={200}
                     onChange={(e) =>
                       handleUpdate(it.local_id, {
@@ -167,7 +197,7 @@ export const Step3Etablissement = memo(({
                 </div>
 
                 <div className={`space-y-1.5 ${it.project_status !== 'ferme' ? 'sm:col-span-2' : ''}`}>
-                  <Label className="text-xs">
+                  <Label className="text-xs font-semibold">
                     {isAr ? 'حالة المؤسسة' : "Statut de l'établissement"}
                   </Label>
 
@@ -203,7 +233,7 @@ export const Step3Etablissement = memo(({
 
                 {it.project_status === 'ferme' && (
                   <div className="space-y-1.5">
-                    <Label className="text-xs">
+                    <Label className="text-xs font-semibold">
                       {isAr ? 'سبب الإغلاق' : 'Cause de fermeture'}
                     </Label>
                     <Select
@@ -232,10 +262,11 @@ export const Step3Etablissement = memo(({
 
                 {it.other_status === autreId && (
                   <div className="space-y-1.5">
-                    <Label>{isAr ? 'التوضيح' : 'Précision'}</Label>
+                    <Label className="text-xs font-semibold">{isAr ? 'التوضيح' : 'Précision'}</Label>
                     <Input
                       value={it.autre_precision}
                       disabled={disabled}
+                      className="h-9 bg-background"
                       onChange={(e) =>
                         handleUpdate(it.local_id, {
                           autre_precision: e.target.value,

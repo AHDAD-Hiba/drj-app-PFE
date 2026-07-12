@@ -9,7 +9,9 @@ import { Step2Insertion } from '@/components/wizard/AffairesFeminines/Step2Inser
 import { Step3Sensibilisation } from '@/components/wizard/AffairesFeminines/Step3Sensibilisation';
 import { Step4Ecoute } from '@/components/wizard/AffairesFeminines/Step4Ecoute';
 import { Step5RH } from '@/components/wizard/AffairesFeminines/Step5RH';
-import { Step6Reseau } from '@/components/wizard/AffairesFeminines/Step6Reseau';
+import { Step6Infra } from '@/components/wizard/AffairesFeminines/Step6Infra';
+import { Step7Partenariats } from '@/components/wizard/AffairesFeminines/Step7Partenariats';
+
 
 export const affairesFemininesConfig: DomainConfig = {
   // Remplace cette chaîne par le vrai UUID de la table 'domaines' pour AF
@@ -49,9 +51,15 @@ export const affairesFemininesConfig: DomainConfig = {
     },
     { 
       id: 6, 
-      labelFr: 'Réseau & Partenariats', 
-      labelAr: 'شبكة المؤسسات والشراكات', 
-      component: Step6Reseau 
+      labelFr: 'Infrastructure', 
+      labelAr: 'شبكة المؤسسات ', 
+      component: Step6Infra 
     },
+    {
+      id: 7, 
+      labelFr: 'Partenariats', 
+      labelAr: 'الشراكات', 
+      component: Step7Partenariats 
+    }
   ],
 };

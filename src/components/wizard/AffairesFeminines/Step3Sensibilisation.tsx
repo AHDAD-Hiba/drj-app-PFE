@@ -58,6 +58,7 @@ export const Step3Sensibilisation = memo(({ rapportId, disabled, onActivity }: S
       ...prev, 
       { 
         local_id: crypto.randomUUID(), 
+        etablissement_id: '', 
         type_activite_id: '', 
         contenu_activite: '', 
         nombre_beneficiaires: 0, 
@@ -108,12 +109,13 @@ export const Step3Sensibilisation = memo(({ rapportId, disabled, onActivity }: S
           <div className="space-y-4 pt-2">
             {sensibilisations.map((item, idx) => (
               <div key={item.local_id} className="border border-border rounded-xl p-4 bg-muted/10 space-y-4 relative group transition-colors hover:border-primary/30">
+                {/* En-tête épuré type "Jeunesse" */}
                 <div className="flex items-center justify-between gap-2">
-                  <span className="text-xs font-bold text-muted-foreground bg-muted px-2 py-1 rounded-md">#{idx + 1}</span>
+                  <span className="text-xs font-semibold text-muted-foreground">#{idx + 1}</span>
                   <Button
                     type="button" size="icon" variant="ghost"
                     onClick={() => handleRemoveSensibilisation(item.local_id)} disabled={disabled}
-                    className="h-8 w-8 text-destructive hover:bg-destructive/10"
+                    className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
@@ -201,14 +203,33 @@ export const Step3Sensibilisation = memo(({ rapportId, disabled, onActivity }: S
           <div className="space-y-4 pt-2">
             {portesOuvertes.map((item, idx) => (
               <div key={item.local_id} className="border border-border rounded-xl p-4 bg-muted/10 space-y-4 transition-colors hover:border-primary/30">
+                {/* En-tête épuré type "Jeunesse" */}
                 <div className="flex items-center justify-between gap-2">
-                  <span className="text-xs font-bold text-muted-foreground bg-muted px-2 py-1 rounded-md">#{idx + 1}</span>
-                  <Button type="button" size="icon" variant="ghost" onClick={() => handleRemovePortesOuvertes(item.local_id)} disabled={disabled} className="h-8 w-8 text-destructive hover:bg-destructive/10">
+                  <span className="text-xs font-semibold text-muted-foreground">#{idx + 1}</span>
+                  <Button 
+                    type="button" size="icon" variant="ghost" 
+                    onClick={() => handleRemovePortesOuvertes(item.local_id)} disabled={disabled} 
+                    className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                  >
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
                 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {/* Sélecteur d'établissement placé dans la grille */}
+                  <div className="space-y-1.5 sm:col-span-2 lg:col-span-3">
+                    <Label className="text-xs font-semibold">{isAr ? 'المؤسسة' : 'Nom de l\'établissement'}</Label>
+                    <Select disabled={disabled} value={item.etablissement_id} onValueChange={(v) => handleUpdatePortesOuvertes(item.local_id, { etablissement_id: v })}>
+                      <SelectTrigger className="h-10">
+                         <SelectValue placeholder={isAr ? 'اختر المؤسسة' : 'Sélectionner l\'établissement'} />
+                      </SelectTrigger>
+                      <SelectContent>
+                         <SelectItem value="etab_1">{isAr ? 'النادي النسوي درب القاضي' : 'Foyer Féminin Derb El Kadi'}</SelectItem>
+                         <SelectItem value="etab_2">{isAr ? 'مركز التأهيل' : 'Centre de Qualification'}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
                   <div className="space-y-1.5">
                     <Label className="text-xs font-semibold">{isAr ? 'نوع النشاط' : 'Type d\'activité'}</Label>
                     <Select disabled={disabled} value={item.type_activite_id} onValueChange={(v) => handleUpdatePortesOuvertes(item.local_id, { type_activite_id: v })}>

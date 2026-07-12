@@ -27,8 +27,9 @@ export const Step5RH = memo(({ rapportId, disabled, onActivity }: StepComponentP
       ...prev, 
       { 
         local_id: crypto.randomUUID(), 
+        etablissement_id: '', 
         type_rh: '', 
-        nom_cadre: '', 
+        profile: '', // 🔄 Changé de nom_cadre à profile
         mission: '', 
         nombre: 0, 
         observations: '' 
@@ -51,17 +52,7 @@ export const Step5RH = memo(({ rapportId, disabled, onActivity }: StepComponentP
   // ACTIONS FORMATION DES CADRES
   // ==========================================
   const handleAddFormation = () => {
-    setFormations(prev => [
-      ...prev, 
-      { 
-        local_id: crypto.randomUUID(), 
-        nombre_cadres: 0, 
-        domaine_formation: '', 
-        duree_valeur: 0, 
-        unite_duree: '', 
-        observations: '' 
-      }
-    ]);
+    setFormations(prev => [...prev, { local_id: crypto.randomUUID(), nombre_cadres: 0, domaine_formation: '', duree_valeur: 0, unite_duree: '', observations: '' }]);
     if (onActivity) onActivity();
   };
 
@@ -88,12 +79,12 @@ export const Step5RH = memo(({ rapportId, disabled, onActivity }: StepComponentP
             </div>
             <div>
               <h2 className="text-lg font-bold">{isAr ? 'الموارد البشرية' : 'Ressources Humaines'}</h2>
-              <p className="text-sm text-muted-foreground">{isAr ? 'تتبع الأطر المتوفرة والخصاص' : 'Suivi des cadres disponibles et des besoins'}</p>
+              <p className="text-sm text-muted-foreground">{isAr ? 'تتبع الأطر المتوفرة والخصاص لكل مؤسسة' : 'Suivi des cadres disponibles et des besoins par établissement'}</p>
             </div>
           </div>
           <Button type="button" size="sm" onClick={handleAddRh} disabled={disabled} className="gap-1.5 shadow-sm">
             <Plus className="h-4 w-4" />
-            {isAr ? 'إضافة' : 'Ajouter'}
+            {isAr ? 'إضافة مورد بشري' : 'Ajouter une ressource'}
           </Button>
         </div>
 
@@ -104,46 +95,69 @@ export const Step5RH = memo(({ rapportId, disabled, onActivity }: StepComponentP
         ) : (
           <div className="space-y-4 pt-2">
             {rh.map((item, idx) => (
-              <div key={item.local_id} className="border border-border rounded-xl p-4 bg-muted/10 space-y-4 relative group transition-colors hover:border-primary/30">
+              <div key={item.local_id} className="border border-border rounded-xl p-4 bg-muted/10 space-y-4 transition-colors hover:border-primary/30">
+                
+                {/* En-tête épuré */}
                 <div className="flex items-center justify-between gap-2">
-                  <span className="text-xs font-bold text-muted-foreground bg-muted px-2 py-1 rounded-md">#{idx + 1}</span>
-                  <Button
-                    type="button" size="icon" variant="ghost"
-                    onClick={() => handleRemoveRh(item.local_id)} disabled={disabled}
-                    className="h-8 w-8 text-destructive hover:bg-destructive/10"
-                  >
+                  <span className="text-xs font-semibold text-muted-foreground">#{idx + 1}</span>
+                  <Button type="button" size="icon" variant="ghost" onClick={() => handleRemoveRh(item.local_id)} disabled={disabled} className="h-8 w-8 text-destructive hover:bg-destructive/10">
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {/* Grille principale corrigée */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pt-1">
+                  
+                  {/* Établissement */}
+                  <div className="space-y-1.5 lg:col-span-2">
+                    <Label className="text-xs font-semibold">{isAr ? 'المؤسسة' : 'Établissement'}</Label>
+                    <Select disabled={disabled} value={item.etablissement_id} onValueChange={(v) => handleUpdateRh(item.local_id, { etablissement_id: v })}>
+                      <SelectTrigger className="h-10"><SelectValue placeholder={isAr ? 'اختر المؤسسة' : 'Sélectionner l\'établissement'} /></SelectTrigger>
+                      <SelectContent>
+                         <SelectItem value="etab_1">{isAr ? 'النادي النسوي درب القاضi' : 'Foyer Féminin Derb El Kadi'}</SelectItem>
+                         <SelectItem value="etab_2">{isAr ? 'مركز التأهيل حي عادل' : 'Centre de Qualification Hay Adel'}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Statut / Type RH */}
                   <div className="space-y-1.5">
                     <Label className="text-xs font-semibold">{isAr ? 'الوضعية' : 'Statut (Type RH)'}</Label>
                     <Select disabled={disabled} value={item.type_rh} onValueChange={(v) => handleUpdateRh(item.local_id, { type_rh: v })}>
                       <SelectTrigger className="h-10"><SelectValue placeholder={isAr ? 'اختر الوضعية' : 'Sélectionner'} /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="disponible">{isAr ? 'متوفر' : 'Disponible'}</SelectItem>
-                        <SelectItem value="besoin">{isAr ? 'خصاص (حاجة)' : 'Besoin'}</SelectItem>
+                        <SelectItem value="disponible">{isAr ? 'متوفر (الموارد الحالية)' : 'Disponible (Ressource actuelle)'}</SelectItem>
+                        <SelectItem value="besoin">{isAr ? 'خصاص (حاجة)' : 'Besoin (Ressource manquante)'}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
 
+                  {/* Profil / Fonction 🔄 Connecté au champ 'profile' */}
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-semibold">{isAr ? 'الإطار / التخصص' : 'Cadre / Profil'}</Label>
-                    <Input value={item.nom_cadre} onChange={e => handleUpdateRh(item.local_id, { nom_cadre: e.target.value })} disabled={disabled} className="h-10" />
+                    <Label className="text-xs font-semibold">{isAr ? 'الإطار / الوظيفة' : 'Profil / Fonction'}</Label>
+                    <Input 
+                      placeholder={isAr ? 'مثال: مدربة حلاقة، مديرة...' : 'Ex: Formatrice coiffure, Directrice...'} 
+                      value={item.profile} 
+                      onChange={e => handleUpdateRh(item.local_id, { profile: e.target.value })} 
+                      disabled={disabled} 
+                      className="h-10" 
+                    />
                   </div>
 
+                  {/* Mission / Filière */}
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-semibold">{isAr ? 'المهمة' : 'Mission'}</Label>
-                    <Input value={item.mission} onChange={e => handleUpdateRh(item.local_id, { mission: e.target.value })} disabled={disabled} className="h-10" />
+                    <Label className="text-xs font-semibold text-muted-foreground">{isAr ? 'المهمة / الشعبة (اختياري)' : 'Mission / Filière (Optionnel)'}</Label>
+                    <Input placeholder={isAr ? 'مثال: تأطير شعبة الفصالة...' : 'Ex: Encadrement couture...'} value={item.mission} onChange={e => handleUpdateRh(item.local_id, { mission: e.target.value })} disabled={disabled} className="h-10" />
                   </div>
 
+                  {/* Nombre */}
                   <div className="space-y-1.5">
                     <Label className="text-xs font-semibold">{isAr ? 'العدد' : 'Nombre'}</Label>
                     <NumericField label="" value={item.nombre} onChange={(v) => handleUpdateRh(item.local_id, { nombre: v })} disabled={disabled} />
                   </div>
 
-                  <div className="space-y-1.5 sm:col-span-2">
+                  {/* Observations */}
+                  <div className="space-y-1.5 sm:col-span-2 lg:col-span-3">
                     <Label className="text-xs font-semibold">{isAr ? 'ملاحظات' : 'Observations'}</Label>
                     <Input value={item.observations} onChange={e => handleUpdateRh(item.local_id, { observations: e.target.value })} disabled={disabled} className="h-10" />
                   </div>
@@ -183,20 +197,20 @@ export const Step5RH = memo(({ rapportId, disabled, onActivity }: StepComponentP
             {formations.map((item, idx) => (
               <div key={item.local_id} className="border border-border rounded-xl p-4 bg-muted/10 space-y-4 transition-colors hover:border-primary/30">
                 <div className="flex items-center justify-between gap-2">
-                  <span className="text-xs font-bold text-muted-foreground bg-muted px-2 py-1 rounded-md">#{idx + 1}</span>
-                  <Button type="button" size="icon" variant="ghost" onClick={() => handleRemoveFormation(item.local_id)} disabled={disabled} className="h-8 w-8 text-destructive hover:bg-destructive/10">
+                  <span className="text-xs font-semibold text-muted-foreground">#{idx + 1}</span>
+                  <Button type="button" size="icon" variant="ghost" onClick={() => handleRemoveFormation(item.local_id)} disabled={disabled} className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10">
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
                 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pt-1">
                   <div className="space-y-1.5 sm:col-span-2 lg:col-span-1">
                     <Label className="text-xs font-semibold">{isAr ? 'مجال التكوين' : 'Domaine de formation'}</Label>
                     <Input value={item.domaine_formation} onChange={e => handleUpdateFormation(item.local_id, { domaine_formation: e.target.value })} disabled={disabled} className="h-10" />
                   </div>
 
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-semibold">{isAr ? 'عدد المستفيدين' : 'Nombre de cadres'}</Label>
+                    <Label className="text-xs font-semibold">{isAr ? 'عدد الأطر' : 'Nombre de cadres'}</Label>
                     <NumericField label="" value={item.nombre_cadres} onChange={(v) => handleUpdateFormation(item.local_id, { nombre_cadres: v })} disabled={disabled} />
                   </div>
 
