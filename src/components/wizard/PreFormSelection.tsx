@@ -195,6 +195,18 @@ export const PreFormSelection = ({ initial, onComplete }: Props) => {
       statut: row.statut,
     }));
 
+    // 🛠️ INJECTION SÉCURISÉE : Si le domaine 'femme' manque dans suivi_remplissage pour ce vieux rapport
+    const hasFemme = formattedDomaines.some(d => d.code === 'femme');
+    if (!hasFemme) {
+      formattedDomaines.push({
+        id: '9b9cca95-74dd-42b7-afca-19a19e1e70c3', // L'UUID officiel déclaré dans ta BDD
+        code: 'femme',
+        nom_fr: 'Affaires Féminines',
+        nom_ar: 'الشؤون النسوية',
+        statut: 'NON_COMMENCE',
+      });
+    }
+
     setDomaines(formattedDomaines);
 
     const allTermine = formattedDomaines.length > 0 && formattedDomaines.every(d => d.statut === "TERMINE");
