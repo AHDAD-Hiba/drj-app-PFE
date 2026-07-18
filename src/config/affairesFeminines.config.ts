@@ -1,6 +1,5 @@
 import { DomainConfig } from './wizard.types';
 
-// Le futur hook de calcul de complétude
 import { useAfCompleteness } from '@/hooks/AffairesFeminines/useAfCompleteness';
 
 // Les futurs composants visuels
@@ -17,7 +16,9 @@ export const affairesFemininesConfig: DomainConfig = {
   // Remplace cette chaîne par le vrai UUID de la table 'domaines' pour AF
   id: '9b9cca95-74dd-42b7-afca-19a19e1e70c3', 
   name: 'femme',
-  useCompleteness: useAfCompleteness,
+  useCompleteness: (rapportId: string | null, refreshTrigger?: number) => {
+    return useAfCompleteness(rapportId, refreshTrigger);
+  },
   steps: [
     { 
       id: 1, 

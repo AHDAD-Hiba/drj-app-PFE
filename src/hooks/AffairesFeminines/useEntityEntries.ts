@@ -137,7 +137,7 @@ export function useEntityEntries<TEntry extends BaseEntry>({
 
       const nextEntry: TEntry = {
         ...existing,
-        ...(onSaveSuccess ? onSaveSuccess(existing, data) : { id: data.id }),
+        ...(onSaveSuccess ? onSaveSuccess(existing, data) : { id: (data as any).id }),
       } as TEntry;
 
       setItems(prev =>

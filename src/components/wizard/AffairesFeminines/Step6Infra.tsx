@@ -1,4 +1,4 @@
-import { memo, useState, useMemo } from 'react';
+import { memo, useState, useMemo, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,31 +8,57 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Plus, Trash2, Building2, Search } from 'lucide-react';
 import { StepComponentProps } from '@/config/wizard.types';
 
+import { useAfEtablissements } from '@/hooks/AffairesFeminines/useAfEtablissements';
+import { useAfMiseAJourReseau, AfMouvementEntry } from '@/hooks/AffairesFeminines/useAfMiseAJourReseau';
+
 export const Step6Infra = memo(({ rapportId, disabled, onActivity }: StepComponentProps) => {
   const { i18n } = useTranslation();
   const isAr = i18n.language === 'ar';
 
+  const { items: tousLesEtablissements, loading: loadingEtabs } = useAfEtablissements();
+  const reseau = useAfMiseAJourReseau(rapportId);
+
+  // État local hybride qui fusionne les établissements de base et les mouvements enregistrés
+  const [localMouvements, setLocalMouvements] = useState<AfMouvementEntry[]>([]);
+
   // ==========================================
-  // ÉTATS LOCAUX (SIMULATION DU HOOK AF)
+  // LOGIQUE DE FUSION DYNAMIQUE
   // ==========================================
-  const [mouvements, setMouvements] = useState<any[]>([
-    { 
-      local_id: crypto.randomUUID(), 
-      is_new_entry: false, 
-      etablissement_id: 'etab_1', 
-      nom_etablissement: isAr ? 'النادي النسوي درب القاضي' : 'Foyer Féminin Derb El Kadi', 
-      type_mise_a_jour: 'sans_changement', 
-      statut_juridique: '', date_mouvement: '', raisons: '', suggestions: '', observations: '' 
-    },
-    { 
-      local_id: crypto.randomUUID(), 
-      is_new_entry: false, 
-      etablissement_id: 'etab_2', 
-      nom_etablissement: isAr ? 'مركز التأهيل حي عادل' : 'Centre de Qualification Hay Adel', 
-      type_mise_a_jour: 'sans_changement', 
-      statut_juridique: '', date_mouvement: '', raisons: '', suggestions: '', observations: '' 
-    }
-  ]);
+  useEffect(() => {
+    if (loadingEtabs || reseau.loading) return;
+
+    // 1. Filtrer les établissements de base (uniquement AF)
+    const etabsDeBase = tousLesEtablissements.filter(
+      e => e.type_etablissement === 'club_feminin' || e.type_etablissement === 'ofppt'
+    );
+
+    // 2. Créer une liste de base avec 'sans_changement'
+    const baseList: AfMouvementEntry[] = etabsDeBase.map(etab => {
+      // Chercher si ce centre a un mouvement enregistré dans le rapport
+      const mouvementExistant = reseau.items.find(m => m.etablissement_id === etab.id);
+      
+      if (mouvementExistant) {
+        // S'il a un mouvement, on retourne les données du mouvement en ajoutant son nom
+        return { ...mouvementExistant, nom_etablissement: etab.nom, is_new_entry: false };
+      }
+
+      // Sinon, on retourne un état vide 'sans_changement'
+      return {
+        local_id: crypto.randomUUID(),
+        is_new_entry: false,
+        etablissement_id: etab.id,
+        nom_etablissement: etab.nom,
+        type_mise_a_jour: 'sans_changement',
+        statut_juridique: '', date_mouvement: '', raisons: '', suggestions: '', observations: ''
+      };
+    });
+
+    // 3. Ajouter les mouvements "nouvel" (qui n'ont pas d'etablissement_id de base)
+    const nouveauxCentres = reseau.items.filter(m => !m.etablissement_id);
+    
+    // On met les nouveaux en haut, suivis de la base de référence
+    setLocalMouvements([...nouveauxCentres, ...baseList]);
+  }, [tousLesEtablissements, reseau.items, loadingEtabs, reseau.loading]);
 
   // ==========================================
   // BARRE DE RECHERCHE
@@ -40,40 +66,68 @@ export const Step6Infra = memo(({ rapportId, disabled, onActivity }: StepCompone
   const [searchTerm, setSearchTerm] = useState('');
 
   const filteredItems = useMemo(() => {
-    return mouvements.filter((item) =>
+    return localMouvements.filter((item) =>
       item.is_new_entry || item.nom_etablissement?.toLowerCase().includes(searchTerm.toLowerCase())
     );
-  }, [mouvements, searchTerm]);
+  }, [localMouvements, searchTerm]);
 
   // ==========================================
-  // ACTIONS
+  // ACTIONS ET SYNCHRONISATION
   // ==========================================
-  const handleAddMouvement = () => {
-    setMouvements(prev => [
-      { 
-        local_id: crypto.randomUUID(), 
-        is_new_entry: true, 
-        etablissement_id: '', 
-        nom_etablissement: '', 
-        type_mise_a_jour: 'nouvel', 
-        statut_juridique: '', 
-        date_mouvement: '', 
-        raisons: '', 
-        suggestions: '', 
-        observations: '' 
-      },
-      ...prev
-    ]);
+  
+  const handleAddMouvement = async () => {
+    const newEntry: AfMouvementEntry = {
+      local_id: crypto.randomUUID(), 
+      is_new_entry: true, 
+      etablissement_id: null, // Pas d'ID car c'est un nouveau bâtiment virtuel
+      nom_etablissement: '', 
+      type_mise_a_jour: 'nouvel', 
+      statut_juridique: '', date_mouvement: '', raisons: '', suggestions: '', observations: '' 
+    };
+    
+    // Ajout local pour réactivité UI
+    setLocalMouvements(prev => [newEntry, ...prev]);
+    // Ajout en base
+    await reseau.add(newEntry);
     if (onActivity) onActivity();
   };
 
-  const handleUpdateMouvement = (local_id: string, patch: any) => {
-    setMouvements(prev => prev.map(m => m.local_id === local_id ? { ...m, ...patch } : m));
+  const handleUpdateMouvement = async (local_id: string, patch: Partial<AfMouvementEntry>) => {
+    // 1. Mise à jour de l'UI instantanée
+    setLocalMouvements(prev => prev.map(m => m.local_id === local_id ? { ...m, ...patch } : m));
+    
+    // 2. On récupère l'élément complet pour déterminer la logique de sauvegarde
+    const currentItem = localMouvements.find(m => m.local_id === local_id);
+    if (!currentItem) return;
+    
+    const isNowSansChangement = patch.type_mise_a_jour === 'sans_changement';
+    const wasAlreadyInDB = reseau.items.some(m => m.local_id === local_id || m.etablissement_id === currentItem.etablissement_id);
+
+    // Si on repasse à "Sans changement", on supprime l'entrée en base de données si elle existait
+    if (isNowSansChangement && wasAlreadyInDB) {
+       const dbItem = reseau.items.find(m => m.local_id === local_id || m.etablissement_id === currentItem.etablissement_id);
+       if (dbItem) await reseau.remove(dbItem.local_id);
+    } 
+    // Sinon, c'est une création ou mise à jour normale en BDD
+    else if (!isNowSansChangement) {
+        // Si c'est un centre existant qui passe à "fermeture" pour la première fois, il faut l'ajouter au hook
+        if (!wasAlreadyInDB) {
+           await reseau.add({ ...currentItem, ...patch });
+        } else {
+           // Si c'était déjà en base, on update
+           const dbItem = reseau.items.find(m => m.local_id === local_id || m.etablissement_id === currentItem.etablissement_id);
+           if (dbItem) await reseau.update(dbItem.local_id, patch);
+        }
+    }
+    
     if (onActivity) onActivity();
   };
 
-  const handleRemoveMouvement = (local_id: string) => {
-    setMouvements(prev => prev.filter(m => m.local_id !== local_id));
+  const handleRemoveMouvement = async (local_id: string) => {
+    // UI Local
+    setLocalMouvements(prev => prev.filter(m => m.local_id !== local_id));
+    // Base de données
+    await reseau.remove(local_id);
     if (onActivity) onActivity();
   };
 
@@ -122,7 +176,7 @@ export const Step6Infra = memo(({ rapportId, disabled, onActivity }: StepCompone
             {filteredItems.map((item, idx) => (
               <div 
                 key={item.local_id} 
-                className="border border-border rounded-xl p-4 bg-muted/10 space-y-4 transition-colors hover:border-primary/30"
+                className={`border rounded-xl p-4 space-y-4 transition-colors ${item.type_mise_a_jour !== 'sans_changement' ? 'bg-primary/5 border-primary/30 shadow-sm' : 'bg-muted/10 border-border hover:border-primary/30'}`}
               >
                 
                 {/* En-tête de la carte */}
@@ -165,7 +219,7 @@ export const Step6Infra = memo(({ rapportId, disabled, onActivity }: StepCompone
                       disabled={disabled}
                       onValueChange={(v) => handleUpdateMouvement(item.local_id, { type_mise_a_jour: v })}
                     >
-                      <SelectTrigger className="h-10">
+                      <SelectTrigger className="h-10 border-primary/30 font-medium">
                         <SelectValue placeholder={isAr ? 'اختر الحركة' : 'Choisir'} />
                       </SelectTrigger>
                       <SelectContent>

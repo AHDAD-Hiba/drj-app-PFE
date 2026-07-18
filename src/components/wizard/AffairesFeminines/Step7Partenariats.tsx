@@ -1,4 +1,4 @@
-import { memo, useState } from 'react';
+import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,41 +7,31 @@ import { Input } from '@/components/ui/input';
 import { Plus, Trash2, Handshake } from 'lucide-react';
 import { StepComponentProps } from '@/config/wizard.types';
 
+// Import du hook
+import { useAfSuiviPartenariats } from '@/hooks/AffairesFeminines/useAfSuiviPartenariats';
+
 export const Step7Partenariats = memo(({ rapportId, disabled, onActivity }: StepComponentProps) => {
   const { i18n } = useTranslation();
   const isAr = i18n.language === 'ar';
 
   // ==========================================
-  // ÉTATS LOCAUX TEMPORAIRES
+  // HOOKS DE PERSISTANCE (AUTO-SAVE)
   // ==========================================
-  const [partenariats, setPartenariats] = useState<any[]>([]);
+  const partenariats = useAfSuiviPartenariats(rapportId);
 
   // ==========================================
   // ACTIONS SUIVI PARTENARIATS
   // ==========================================
-  const handleAddPartenariat = () => {
-    setPartenariats(prev => [
-      ...prev, 
-      { 
-        local_id: crypto.randomUUID(), 
-        partenaires: '', 
-        sujet_partenariat: '', 
-        evaluation: '', 
-        obstacles: '', 
-        solutions_proposees: '' 
-      }
-    ]);
-    if (onActivity) onActivity();
-  };
-
-  const handleUpdatePartenariat = (local_id: string, patch: any) => {
-    setPartenariats(prev => prev.map(p => p.local_id === local_id ? { ...p, ...patch } : p));
-    if (onActivity) onActivity();
-  };
-
-  const handleRemovePartenariat = (local_id: string) => {
-    setPartenariats(prev => prev.filter(p => p.local_id !== local_id));
-    if (onActivity) onActivity();
+  const handleAddPartenariat = async () => {
+    if (onActivity) await onActivity();
+    await partenariats.add({ 
+      local_id: crypto.randomUUID(), 
+      partenaires: '', 
+      sujet_partenariat: '', 
+      evaluation: '', 
+      obstacles: '', 
+      solutions_proposees: '' 
+    });
   };
 
   return (
@@ -66,13 +56,13 @@ export const Step7Partenariats = memo(({ rapportId, disabled, onActivity }: Step
         </div>
 
         {/* LISTE DES PARTENARIATS */}
-        {partenariats.length === 0 ? (
+        {partenariats.items.length === 0 ? (
           <div className="text-center py-10 text-sm text-muted-foreground border-2 border-dashed border-border rounded-xl bg-muted/10">
             {isAr ? 'لا توجد شراكات مسجلة' : 'Aucun partenariat enregistré.'}
           </div>
         ) : (
           <div className="space-y-4 pt-2">
-            {partenariats.map((item, idx) => (
+            {partenariats.items.map((item, idx) => (
               <div key={item.local_id} className="border border-border rounded-xl p-4 bg-muted/5 space-y-4 transition-colors hover:border-primary/30">
                 
                 {/* En-tête épuré */}
@@ -80,7 +70,7 @@ export const Step7Partenariats = memo(({ rapportId, disabled, onActivity }: Step
                   <span className="text-xs font-semibold text-muted-foreground">#{idx + 1}</span>
                   <Button 
                     type="button" size="icon" variant="ghost" 
-                    onClick={() => handleRemovePartenariat(item.local_id)} disabled={disabled} 
+                    onClick={() => { partenariats.remove(item.local_id); if(onActivity) onActivity(); }} disabled={disabled} 
                     className="h-8 w-8 text-destructive hover:bg-destructive/10"
                   >
                     <Trash2 className="h-4 w-4" />
@@ -96,7 +86,7 @@ export const Step7Partenariats = memo(({ rapportId, disabled, onActivity }: Step
                     <Input 
                       placeholder={isAr ? 'مثال: المنظمة الدولية...' : 'Ex: ONG internationale...'} 
                       value={item.partenaires} 
-                      onChange={e => handleUpdatePartenariat(item.local_id, { partenaires: e.target.value })} 
+                      onChange={e => { partenariats.update(item.local_id, { partenaires: e.target.value }); if(onActivity) onActivity(); }} 
                       disabled={disabled} 
                       className="h-10 bg-background" 
                     />
@@ -108,7 +98,7 @@ export const Step7Partenariats = memo(({ rapportId, disabled, onActivity }: Step
                     <Input 
                       placeholder={isAr ? 'مثال: مشروع عناية...' : 'Ex: Projet Inaya...'} 
                       value={item.sujet_partenariat} 
-                      onChange={e => handleUpdatePartenariat(item.local_id, { sujet_partenariat: e.target.value })} 
+                      onChange={e => { partenariats.update(item.local_id, { sujet_partenariat: e.target.value }); if(onActivity) onActivity(); }} 
                       disabled={disabled} 
                       className="h-10 bg-background" 
                     />
@@ -120,7 +110,7 @@ export const Step7Partenariats = memo(({ rapportId, disabled, onActivity }: Step
                     <Input 
                       placeholder={isAr ? 'مثال: جيد، في طور الإنجاز...' : 'Ex: Positif, en cours...'} 
                       value={item.evaluation} 
-                      onChange={e => handleUpdatePartenariat(item.local_id, { evaluation: e.target.value })} 
+                      onChange={e => { partenariats.update(item.local_id, { evaluation: e.target.value }); if(onActivity) onActivity(); }} 
                       disabled={disabled} 
                       className="h-10 bg-background" 
                     />
@@ -132,7 +122,7 @@ export const Step7Partenariats = memo(({ rapportId, disabled, onActivity }: Step
                     <Input 
                       placeholder={isAr ? 'مثال: تأخر في التمويل...' : 'Ex: Retard de financement...'} 
                       value={item.obstacles} 
-                      onChange={e => handleUpdatePartenariat(item.local_id, { obstacles: e.target.value })} 
+                      onChange={e => { partenariats.update(item.local_id, { obstacles: e.target.value }); if(onActivity) onActivity(); }} 
                       disabled={disabled} 
                       className="h-10 bg-background" 
                     />
@@ -144,7 +134,7 @@ export const Step7Partenariats = memo(({ rapportId, disabled, onActivity }: Step
                     <Input 
                       placeholder={isAr ? 'مثال: تمديد فترة المشروع...' : 'Ex: Prolongation du délai...'} 
                       value={item.solutions_proposees} 
-                      onChange={e => handleUpdatePartenariat(item.local_id, { solutions_proposees: e.target.value })} 
+                      onChange={e => { partenariats.update(item.local_id, { solutions_proposees: e.target.value }); if(onActivity) onActivity(); }} 
                       disabled={disabled} 
                       className="h-10 bg-background" 
                     />

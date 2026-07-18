@@ -1,13 +1,13 @@
-import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router-dom';
-import { MapPin, Phone, Mail, Globe, Building2 } from 'lucide-react';
-import mjccLogo from '@/assets/mjcc-official-logo.jpeg';
-import { useAuth } from '@/hooks/common/useAuth';
+import { useTranslation } from "react-i18next";
+import { Link } from "react-router-dom";
+import { MapPin, Phone, Mail, Globe, Building2 } from "lucide-react";
+import mjccLogo from "@/assets/mjcc-official-logo.jpeg";
+import { useAuth } from "@/hooks/common/useAuth";
 import { handleExportExcel } from "@/lib/export";
 
 export const Footer = () => {
   const { t } = useTranslation();
-  const { isRegional } = useAuth();
+  const { isRegional, isEquipeRegional } = useAuth();
   const year = new Date().getFullYear();
 
   return (
@@ -25,29 +25,27 @@ export const Footer = () => {
             </div>
             <div className="leading-tight">
               <div className="text-sm font-extrabold text-foreground">MJCC</div>
-              <div className="text-[11px] text-muted-foreground">
-                {t('footer.ministryShort')}
-              </div>
+              <div className="text-[11px] text-muted-foreground">{t("footer.ministryShort")}</div>
             </div>
           </div>
           <p className="mt-4 text-xs text-muted-foreground leading-relaxed">
-            {t('footer.tagline')}
+            {t("footer.tagline")}
           </p>
         </div>
 
         {/* Coordonnées */}
         <div>
           <h3 className="text-xs font-bold uppercase tracking-wider text-foreground mb-3">
-            {t('footer.contact')}
+            {t("footer.contact")}
           </h3>
           <ul className="space-y-2 text-xs text-muted-foreground">
             <li className="flex items-start gap-2">
               <Building2 className="h-3.5 w-3.5 mt-0.5 text-primary flex-shrink-0" />
-              <span>{t('footer.directionName')}</span>
+              <span>{t("footer.directionName")}</span>
             </li>
             <li className="flex items-start gap-2">
               <MapPin className="h-3.5 w-3.5 mt-0.5 text-primary flex-shrink-0" />
-              <span>{t('footer.address')}</span>
+              <span>{t("footer.address")}</span>
             </li>
             <li className="flex items-center gap-2">
               <Phone className="h-3.5 w-3.5 text-primary flex-shrink-0" />
@@ -69,7 +67,7 @@ export const Footer = () => {
               <a
                 href="https://www.mjcc.gov.ma"
                 target="_blank"
-                rel="noopener noreferrer" 
+                rel="noopener noreferrer"
                 className="hover:text-foreground transition-smooth"
               >
                 www.mjcc.gov.ma
@@ -81,22 +79,28 @@ export const Footer = () => {
         {/* Navigation */}
         <div>
           <h3 className="text-xs font-bold uppercase tracking-wider text-foreground mb-3">
-            {t('footer.navigation')}
+            {t("footer.navigation")}
           </h3>
           <ul className="space-y-2 text-xs mb-4">
             {[
-              // Préfectoral
-              { to: '/saisie', l: 'nav.entry', show: !isRegional }, 
-              { to: '/dashboard', l: 'nav.domaines', show: true },
-              { to: '/carte', l: 'nav.map', show: true },
-              { to: '/directions', l: 'nav.directions', show: isRegional },
+              { to: "/saisie", l: "nav.entry", show: !isRegional && !isEquipeRegional },
+              { to: "/dashboard", l: "nav.domaines", show: !isEquipeRegional },
+              { to: "/carte", l: "nav.map", show: !isEquipeRegional },
+              { to: "/directions", l: "nav.directions", show: isRegional },
+              {
+                to: "/regional-dashboard",
+                l: "nav.reports",
+                defaultLabel: "Rapports",
+                show: isEquipeRegional,
+              },
+
               // Régional
-              { action: 'export', l: 'nav.export', show: isRegional }, 
+              { action: "export", l: "nav.export", show: isRegional },
             ]
-              .filter(i => i.show)
-              .map(i => (
+              .filter((i) => i.show)
+              .map((i) => (
                 <li key={i.to || i.action}>
-                  {i.action === 'export' ? (
+                  {i.action === "export" ? (
                     <button
                       onClick={() => handleExportExcel()}
                       className="text-muted-foreground hover:text-foreground transition-smooth text-left bg-transparent border-none p-0 cursor-pointer"
@@ -104,31 +108,31 @@ export const Footer = () => {
                       {t(i.l)}
                     </button>
                   ) : (
-                    <Link to={i.to!} className="text-muted-foreground hover:text-foreground transition-smooth">
-                      {t(i.l)}
+                    <Link
+                      to={i.to!}
+                      className="text-muted-foreground hover:text-foreground transition-smooth"
+                    >
+                      {i.defaultLabel ? t(i.l, i.defaultLabel) : t(i.l)}
                     </Link>
                   )}
                 </li>
               ))}
           </ul>
-          
+
           <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-primary-soft text-primary text-[10px] font-semibold">
-            {t('footer.officialApp')}
+            {t("footer.officialApp")}
           </div>
         </div>
       </div>
-
 
       {/* Bandeau bas */}
       <div className="border-t border-border bg-muted/30">
         <div className="container py-4 flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] text-muted-foreground">
           <div>
-            © {year} {t('app.ministry')} —{' '}
-            <span className="font-medium text-foreground">{t('footer.kingdom')}</span>
+            © {year} {t("app.ministry")} —{" "}
+            <span className="font-medium text-foreground">{t("footer.kingdom")}</span>
           </div>
-          <div className="font-mono">
-            {t('footer.version')} 1.0 · DRJ-CS
-          </div>
+          <div className="font-mono">{t("footer.version")} 1.0 · DRJ-CS</div>
         </div>
       </div>
     </footer>

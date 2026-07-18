@@ -1,4 +1,4 @@
-import { memo, useState } from 'react';
+import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,59 +8,62 @@ import { Plus, Trash2, School, GraduationCap } from 'lucide-react';
 import { NumericField } from '@/components/form/NumericField';
 import { StepComponentProps } from '@/config/wizard.types';
 
+// Import de tes hooks
+import { useAfInscriptionsClubs } from '@/hooks/AffairesFeminines/useAfInscriptionsClubs';
+import { useAfInscriptionsOfppt } from '@/hooks/AffairesFeminines/useAfInscriptionsOfppt';
+import { useAfSecteurs } from '@/hooks/AffairesFeminines/useAfSecteurs';
+import { useAfFilieres } from '@/hooks/AffairesFeminines/useAfFilieres';
+import { useAfEtablissements } from '@/hooks/AffairesFeminines/useAfEtablissements';
+
 export const Step1Formation = memo(({ rapportId, disabled, onActivity }: StepComponentProps) => {
   const { i18n } = useTranslation();
   const isAr = i18n.language === 'ar';
 
-  // ==========================================
-  // ÉTATS LOCAUX TEMPORAIRES
-  // ==========================================
-  const [clubs, setClubs] = useState<any[]>([]);
-  const [ofppt, setOfppt] = useState<any[]>([]);
+  // Chargement des données sauvegardées
+  const clubs = useAfInscriptionsClubs(rapportId);
+  const ofppt = useAfInscriptionsOfppt(rapportId);
+  
+  // Chargement des référentiels
+  const { items: secteurs } = useAfSecteurs();
+  const { items: filieres } = useAfFilieres();
+  const { items: etablissements } = useAfEtablissements();
+
+  // Filtrage intelligent des établissements selon leur type
+  const foyersEtabs = etablissements.filter(e => e.type_etablissement === 'club_feminin');
+  const ofpptEtabs = etablissements.filter(e => e.type_etablissement === 'ofppt');
 
   // ==========================================
   // ACTIONS CLUBS
   // ==========================================
-  const handleAddClub = () => {
-    setClubs(prev => [
-      ...prev, 
-      { local_id: crypto.randomUUID(), filiere_id: '', fondamental_a1: 0, fondamental_a2: 0, rapide_a1: 0, rapide_a2: 0 }
-    ]);
-    if (onActivity) onActivity();
-  };
-
-  const handleUpdateClub = (local_id: string, patch: any) => {
-    setClubs(prev => prev.map(c => c.local_id === local_id ? { ...c, ...patch } : c));
-    if (onActivity) onActivity();
-  };
-
-  const handleRemoveClub = (local_id: string) => {
-    setClubs(prev => prev.filter(c => c.local_id !== local_id));
-    if (onActivity) onActivity();
+  const handleAddClub = async () => {
+    if (onActivity) await onActivity();
+    await clubs.add({
+      local_id: crypto.randomUUID(), 
+      etablissement_id: '', 
+      filiere_id: '', 
+      type_formation: '', // 'fondamental' | 'rapide'
+      inscrites_annee_1: 0, 
+      inscrites_annee_2: 0 
+    });
   };
 
   // ==========================================
   // ACTIONS OFPPT
   // ==========================================
-  const handleAddOfppt = () => {
-    setOfppt(prev => [
-      ...prev, 
-      { local_id: crypto.randomUUID(), secteur_id: '', filiere_id: '', spec_a1: 0, spec_a2: 0, qual_a1: 0, qual_a2: 0, tech_a1: 0, tech_a2: 0, ts_a1: 0, ts_a2: 0 }
-    ]);
-    if (onActivity) onActivity();
+  const handleAddOfppt = async () => {
+    if (onActivity) await onActivity();
+    await ofppt.add({
+      local_id: crypto.randomUUID(), 
+      etablissement_id: '', 
+      secteur_id: '', 
+      filiere_id: '', 
+      niveau_formation: '', // 'specialisation' | 'qualification' | 'technicien' | 'technicien_specialise'
+      inscrites_annee_1: 0, 
+      inscrites_annee_2: 0 
+    });
   };
 
-  const handleUpdateOfppt = (local_id: string, patch: any) => {
-    setOfppt(prev => prev.map(o => o.local_id === local_id ? { ...o, ...patch } : o));
-    if (onActivity) onActivity();
-  };
-
-  const handleRemoveOfppt = (local_id: string) => {
-    setOfppt(prev => prev.filter(o => o.local_id !== local_id));
-    if (onActivity) onActivity();
-  };
-
-  return (
+return (
     <div className="space-y-6">
       {/* ======================================================== */}
       {/* BLOC 1 : CLUBS FÉMININS (Foyers)                         */}
@@ -73,76 +76,78 @@ export const Step1Formation = memo(({ rapportId, disabled, onActivity }: StepCom
             </div>
             <div>
               <h2 className="text-lg font-bold">{isAr ? 'الأندية النسوية' : 'Clubs Féminins'}</h2>
-              <p className="text-sm text-muted-foreground">{isAr ? 'إحصائيات حسب الشعبة (أساسي / سريع)' : 'Statistiques par filière (Fondamental / Rapide)'}</p>
+              <p className="text-sm text-muted-foreground">{isAr ? 'إحصائيات حسب المؤسسة، الشعبة ونوع التكوين' : 'Statistiques par établissement, filière et type'}</p>
             </div>
           </div>
           <Button type="button" size="sm" onClick={handleAddClub} disabled={disabled} className="gap-1.5 shadow-sm">
             <Plus className="h-4 w-4" />
-            {isAr ? 'إضافة شعبة' : 'Ajouter une filière'}
+            {isAr ? 'إضافة تسجيل' : 'Ajouter une ligne'}
           </Button>
         </div>
 
-        {clubs.length === 0 ? (
+        {clubs.items.length === 0 ? (
           <div className="text-center py-8 text-sm text-muted-foreground border-2 border-dashed border-border rounded-xl bg-muted/30">
             {isAr ? 'لا توجد بيانات مسجلة' : 'Aucune donnée enregistrée.'}
           </div>
         ) : (
           <div className="space-y-4 pt-2">
-            {clubs.map((item, idx) => (
+            {clubs.items.map((item, idx) => (
               <div key={item.local_id} className="border border-border rounded-xl p-4 bg-muted/10 space-y-4 relative group transition-colors hover:border-primary/30">
                 
-                {/* En-tête épuré */}
                 <div className="flex items-center justify-between gap-2 mb-2">
                   <span className="text-xs font-semibold text-muted-foreground">#{idx + 1}</span>
-                  <Button type="button" size="icon" variant="ghost" onClick={() => handleRemoveClub(item.local_id)} disabled={disabled} className="h-8 w-8 text-destructive hover:bg-destructive/10">
+                  <Button type="button" size="icon" variant="ghost" onClick={() => { clubs.remove(item.local_id); if(onActivity) onActivity(); }} disabled={disabled} className="h-8 w-8 text-destructive hover:bg-destructive/10">
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
 
-                <div className="space-y-4">
-                  {/* Sélecteur de filière au-dessus de la sous-grille */}
-                  <div className="space-y-1.5 sm:max-w-md">
-                    <Label className="text-xs font-semibold">{isAr ? 'الشعبة' : 'Filière'}</Label>
-                    <Select disabled={disabled} value={item.filiere_id} onValueChange={(v) => handleUpdateClub(item.local_id, { filiere_id: v })}>
-                      <SelectTrigger className="h-10"><SelectValue placeholder={isAr ? 'اختر الشعبة' : 'Sélectionner la filière'} /></SelectTrigger>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                  {/* Établissement (Dynamique & Filtré) */}
+                  <div className="space-y-1.5 lg:col-span-1">
+                    <Label className="text-xs font-semibold">{isAr ? 'المؤسسة' : 'Établissement'}</Label>
+                    <Select disabled={disabled} value={item.etablissement_id} onValueChange={(v) => { clubs.update(item.local_id, { etablissement_id: v }); if(onActivity) onActivity(); }}>
+                      <SelectTrigger className="h-10"><SelectValue placeholder={isAr ? 'اختر المؤسسة' : 'Sélectionner'} /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="couture">{isAr ? 'الفصالة والخياطة العصرية' : 'Coupe et couture moderne'}</SelectItem>
-                        <SelectItem value="coiffure">{isAr ? 'الحلاقة والتجميل' : 'Coiffure et esthétique'}</SelectItem>
+                        {foyersEtabs.map(etab => (
+                          <SelectItem key={etab.id} value={etab.id}>{etab.nom}</SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
 
-                  {/* Sous-grille des types de formation */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* Type: Fondamental */}
-                    <div className="p-3 bg-background rounded-lg border border-border/50 space-y-3">
-                      <h4 className="text-sm font-semibold text-primary">{isAr ? 'تكوين أساسي' : 'Formation Fondamentale'}</h4>
-                      <div className="grid grid-cols-2 gap-3">
-                        <div className="space-y-1.5">
-                          <Label className="text-xs">{isAr ? 'السنة الأولى' : 'Année 1'}</Label>
-                          <NumericField label="" value={item.fondamental_a1} onChange={(v) => handleUpdateClub(item.local_id, { fondamental_a1: v })} disabled={disabled} />
-                        </div>
-                        <div className="space-y-1.5">
-                          <Label className="text-xs">{isAr ? 'السنة الثانية' : 'Année 2'}</Label>
-                          <NumericField label="" value={item.fondamental_a2} onChange={(v) => handleUpdateClub(item.local_id, { fondamental_a2: v })} disabled={disabled} />
-                        </div>
-                      </div>
-                    </div>
+                  {/* Filière (Dynamique) */}
+                  <div className="space-y-1.5 lg:col-span-1">
+                    <Label className="text-xs font-semibold">{isAr ? 'الشعبة' : 'Filière'}</Label>
+                    <Select disabled={disabled} value={item.filiere_id} onValueChange={(v) => { clubs.update(item.local_id, { filiere_id: v }); if(onActivity) onActivity(); }}>
+                      <SelectTrigger className="h-10"><SelectValue placeholder={isAr ? 'الشعبة' : 'Filière'} /></SelectTrigger>
+                      <SelectContent>
+                        {filieres.map(f => (
+                          <SelectItem key={f.id} value={f.id}>{isAr ? f.nom_ar : (f.nom_fr || f.nom_ar)}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-                    {/* Type: Rapide */}
-                    <div className="p-3 bg-background rounded-lg border border-border/50 space-y-3">
-                      <h4 className="text-sm font-semibold text-primary">{isAr ? 'تكوين سريع' : 'Formation Rapide'}</h4>
-                      <div className="grid grid-cols-2 gap-3">
-                        <div className="space-y-1.5">
-                          <Label className="text-xs">{isAr ? 'السنة الأولى' : 'Année 1'}</Label>
-                          <NumericField label="" value={item.rapide_a1} onChange={(v) => handleUpdateClub(item.local_id, { rapide_a1: v })} disabled={disabled} />
-                        </div>
-                        <div className="space-y-1.5">
-                          <Label className="text-xs">{isAr ? 'السنة الثانية' : 'Année 2'}</Label>
-                          <NumericField label="" value={item.rapide_a2} onChange={(v) => handleUpdateClub(item.local_id, { rapide_a2: v })} disabled={disabled} />
-                        </div>
-                      </div>
-                    </div>
+                  {/* Type de Formation */}
+                  <div className="space-y-1.5 lg:col-span-1">
+                    <Label className="text-xs font-semibold">{isAr ? 'نوع التكوين' : 'Type formation'}</Label>
+                    <Select disabled={disabled} value={item.type_formation} onValueChange={(v) => { clubs.update(item.local_id, { type_formation: v }); if(onActivity) onActivity(); }}>
+                      <SelectTrigger className="h-10"><SelectValue placeholder={isAr ? 'النوع' : 'Type'} /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="fondamental">{isAr ? 'تكوين أساسي' : 'Fondamental'}</SelectItem>
+                        <SelectItem value="rapide">{isAr ? 'تكوين سريع' : 'Rapide'}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Nombres (Année 1 & 2) */}
+                  <div className="space-y-1.5 lg:col-span-1">
+                    <Label className="text-xs font-semibold">{isAr ? 'مسجلات السنة 1' : 'Inscrites A1'}</Label>
+                    <NumericField label="" value={item.inscrites_annee_1} onChange={(v) => { clubs.update(item.local_id, { inscrites_annee_1: v }); if(onActivity) onActivity(); }} disabled={disabled} />
+                  </div>
+                  <div className="space-y-1.5 lg:col-span-1">
+                    <Label className="text-xs font-semibold">{isAr ? 'مسجلات السنة 2' : 'Inscrites A2'}</Label>
+                    <NumericField label="" value={item.inscrites_annee_2} onChange={(v) => { clubs.update(item.local_id, { inscrites_annee_2: v }); if(onActivity) onActivity(); }} disabled={disabled} />
                   </div>
                 </div>
               </div>
@@ -162,96 +167,101 @@ export const Step1Formation = memo(({ rapportId, disabled, onActivity }: StepCom
             </div>
             <div>
               <h2 className="text-lg font-bold">{isAr ? 'مكتب التكوين المهني' : 'Inscriptions OFPPT'}</h2>
-              <p className="text-sm text-muted-foreground">{isAr ? 'إحصائيات حسب الشعبة والمستويات' : 'Statistiques par filière et niveaux'}</p>
+              <p className="text-sm text-muted-foreground">{isAr ? 'إحصائيات حسب المؤسسة، القطاع والمستوى' : 'Statistiques par établissement, secteur et niveau'}</p>
             </div>
           </div>
           <Button type="button" size="sm" onClick={handleAddOfppt} disabled={disabled} className="gap-1.5 shadow-sm">
             <Plus className="h-4 w-4" />
-            {isAr ? 'إضافة شعبة' : 'Ajouter une filière'}
+            {isAr ? 'إضافة تسجيل' : 'Ajouter une ligne'}
           </Button>
         </div>
 
-        {ofppt.length === 0 ? (
+        {ofppt.items.length === 0 ? (
           <div className="text-center py-8 text-sm text-muted-foreground border-2 border-dashed border-border rounded-xl bg-muted/30">
             {isAr ? 'لا توجد بيانات مسجلة' : 'Aucune donnée enregistrée.'}
           </div>
         ) : (
           <div className="space-y-4 pt-2">
-            {ofppt.map((item, idx) => (
-              <div key={item.local_id} className="border border-border rounded-xl p-4 bg-muted/10 space-y-4 transition-colors hover:border-primary/30">
-                
-                {/* En-tête épuré */}
-                <div className="flex items-center justify-between gap-2 mb-2">
-                  <span className="text-xs font-semibold text-muted-foreground">#{idx + 1}</span>
-                  <Button type="button" size="icon" variant="ghost" onClick={() => handleRemoveOfppt(item.local_id)} disabled={disabled} className="h-8 w-8 text-destructive hover:bg-destructive/10">
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-                
-                <div className="space-y-4">
-                  {/* Sélecteurs Secteur et Filière */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-1.5">
+            {ofppt.items.map((item, idx) => {
+              // Filtrer les filières pour n'afficher que celles du secteur sélectionné
+              const filieresDuSecteur = filieres.filter(f => f.secteur_id === item.secteur_id);
+
+              return (
+                <div key={item.local_id} className="border border-border rounded-xl p-4 bg-muted/10 space-y-4 transition-colors hover:border-primary/30">
+                  <div className="flex items-center justify-between gap-2 mb-2">
+                    <span className="text-xs font-semibold text-muted-foreground">#{idx + 1}</span>
+                    <Button type="button" size="icon" variant="ghost" onClick={() => { ofppt.remove(item.local_id); if(onActivity) onActivity(); }} disabled={disabled} className="h-8 w-8 text-destructive hover:bg-destructive/10">
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
+                    {/* Établissement (Dynamique & Filtré) */}
+                    <div className="space-y-1.5 lg:col-span-1">
+                      <Label className="text-xs font-semibold">{isAr ? 'المؤسسة' : 'Établissement'}</Label>
+                      <Select disabled={disabled} value={item.etablissement_id} onValueChange={(v) => { ofppt.update(item.local_id, { etablissement_id: v }); if(onActivity) onActivity(); }}>
+                        <SelectTrigger className="h-10"><SelectValue placeholder={isAr ? 'المؤسسة' : 'Établissement'} /></SelectTrigger>
+                        <SelectContent>
+                          {ofpptEtabs.map(etab => (
+                            <SelectItem key={etab.id} value={etab.id}>{etab.nom}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Secteur (Dynamique) */}
+                    <div className="space-y-1.5 lg:col-span-1">
                       <Label className="text-xs font-semibold">{isAr ? 'القطاع' : 'Secteur'}</Label>
-                      <Select disabled={disabled} value={item.secteur_id} onValueChange={(v) => handleUpdateOfppt(item.local_id, { secteur_id: v })}>
-                        <SelectTrigger className="h-10"><SelectValue placeholder={isAr ? 'اختر القطاع' : 'Sélectionner le secteur'} /></SelectTrigger>
+                      <Select disabled={disabled} value={item.secteur_id} onValueChange={(v) => { ofppt.update(item.local_id, { secteur_id: v, filiere_id: '' }); if(onActivity) onActivity(); }}>
+                        <SelectTrigger className="h-10"><SelectValue placeholder={isAr ? 'القطاع' : 'Secteur'} /></SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="artisanat">{isAr ? 'الصناعة التقليدية' : 'Artisanat'}</SelectItem>
+                          {secteurs.map(s => (
+                            <SelectItem key={s.id} value={s.id}>{isAr ? s.nom_ar : (s.nom_fr || s.nom_ar)}</SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </div>
-                    <div className="space-y-1.5">
+
+                    {/* Filière (Dynamique et filtrée) */}
+                    <div className="space-y-1.5 lg:col-span-1">
                       <Label className="text-xs font-semibold">{isAr ? 'الشعبة' : 'Filière'}</Label>
-                      <Select disabled={disabled} value={item.filiere_id} onValueChange={(v) => handleUpdateOfppt(item.local_id, { filiere_id: v })}>
-                        <SelectTrigger className="h-10"><SelectValue placeholder={isAr ? 'اختر الشعبة' : 'Sélectionner la filière'} /></SelectTrigger>
+                      <Select disabled={disabled || !item.secteur_id} value={item.filiere_id} onValueChange={(v) => { ofppt.update(item.local_id, { filiere_id: v }); if(onActivity) onActivity(); }}>
+                        <SelectTrigger className="h-10"><SelectValue placeholder={isAr ? 'الشعبة' : 'Filière'} /></SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="couture">{isAr ? 'الفصالة والخياطة العصرية' : 'Coupe et couture moderne'}</SelectItem>
+                          {filieresDuSecteur.map(f => (
+                            <SelectItem key={f.id} value={f.id}>{isAr ? f.nom_ar : (f.nom_fr || f.nom_ar)}</SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </div>
-                  </div>
 
-                  {/* Sous-grille des Niveaux OFPPT pour cette filière */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                    {/* Spécialisation */}
-                    <div className="p-3 bg-background rounded-lg border border-border/50 space-y-3">
-                      <h4 className="text-xs font-semibold text-primary">{isAr ? 'التخصص' : 'Spécialisation'}</h4>
-                      <div className="grid grid-cols-2 gap-2">
-                        <div className="space-y-1"><Label className="text-[10px]">{isAr ? 'سنة 1' : 'Année 1'}</Label><NumericField label="" value={item.spec_a1} onChange={(v) => handleUpdateOfppt(item.local_id, { spec_a1: v })} disabled={disabled} /></div>
-                        <div className="space-y-1"><Label className="text-[10px]">{isAr ? 'سنة 2' : 'Année 2'}</Label><NumericField label="" value={item.spec_a2} onChange={(v) => handleUpdateOfppt(item.local_id, { spec_a2: v })} disabled={disabled} /></div>
-                      </div>
+                    {/* Niveau OFPPT */}
+                    <div className="space-y-1.5 lg:col-span-1">
+                      <Label className="text-xs font-semibold">{isAr ? 'المستوى' : 'Niveau'}</Label>
+                      <Select disabled={disabled} value={item.niveau_formation} onValueChange={(v) => { ofppt.update(item.local_id, { niveau_formation: v }); if(onActivity) onActivity(); }}>
+                        <SelectTrigger className="h-10"><SelectValue placeholder={isAr ? 'المستوى' : 'Niveau'} /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="specialisation">{isAr ? 'التخصص' : 'Spécialisation'}</SelectItem>
+                          <SelectItem value="qualification">{isAr ? 'التأهيل' : 'Qualification'}</SelectItem>
+                          <SelectItem value="technicien">{isAr ? 'التقني' : 'Technicien'}</SelectItem>
+                          <SelectItem value="technicien_specialise">{isAr ? 'التقني المتخصص' : 'Tech. Spécialisé'}</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
 
-                    {/* Qualification */}
-                    <div className="p-3 bg-background rounded-lg border border-border/50 space-y-3">
-                      <h4 className="text-xs font-semibold text-primary">{isAr ? 'التأهيل' : 'Qualification'}</h4>
-                      <div className="grid grid-cols-2 gap-2">
-                        <div className="space-y-1"><Label className="text-[10px]">{isAr ? 'سنة 1' : 'Année 1'}</Label><NumericField label="" value={item.qual_a1} onChange={(v) => handleUpdateOfppt(item.local_id, { qual_a1: v })} disabled={disabled} /></div>
-                        <div className="space-y-1"><Label className="text-[10px]">{isAr ? 'سنة 2' : 'Année 2'}</Label><NumericField label="" value={item.qual_a2} onChange={(v) => handleUpdateOfppt(item.local_id, { qual_a2: v })} disabled={disabled} /></div>
-                      </div>
+                    {/* Nombres (Année 1 & 2) */}
+                    <div className="space-y-1.5 lg:col-span-1">
+                      <Label className="text-xs font-semibold">{isAr ? 'مسجلات السنة 1' : 'Inscrites A1'}</Label>
+                      <NumericField label="" value={item.inscrites_annee_1} onChange={(v) => { ofppt.update(item.local_id, { inscrites_annee_1: v }); if(onActivity) onActivity(); }} disabled={disabled} />
                     </div>
-
-                    {/* Technicien */}
-                    <div className="p-3 bg-background rounded-lg border border-border/50 space-y-3">
-                      <h4 className="text-xs font-semibold text-primary">{isAr ? 'التقني' : 'Technicien'}</h4>
-                      <div className="grid grid-cols-2 gap-2">
-                        <div className="space-y-1"><Label className="text-[10px]">{isAr ? 'سنة 1' : 'Année 1'}</Label><NumericField label="" value={item.tech_a1} onChange={(v) => handleUpdateOfppt(item.local_id, { tech_a1: v })} disabled={disabled} /></div>
-                        <div className="space-y-1"><Label className="text-[10px]">{isAr ? 'سنة 2' : 'Année 2'}</Label><NumericField label="" value={item.tech_a2} onChange={(v) => handleUpdateOfppt(item.local_id, { tech_a2: v })} disabled={disabled} /></div>
-                      </div>
-                    </div>
-
-                    {/* Technicien Spécialisé */}
-                    <div className="p-3 bg-background rounded-lg border border-border/50 space-y-3">
-                      <h4 className="text-xs font-semibold text-primary">{isAr ? 'التقني المتخصص' : 'Tech. Spécialisé'}</h4>
-                      <div className="grid grid-cols-2 gap-2">
-                        <div className="space-y-1"><Label className="text-[10px]">{isAr ? 'سنة 1' : 'Année 1'}</Label><NumericField label="" value={item.ts_a1} onChange={(v) => handleUpdateOfppt(item.local_id, { ts_a1: v })} disabled={disabled} /></div>
-                        <div className="space-y-1"><Label className="text-[10px]">{isAr ? 'سنة 2' : 'Année 2'}</Label><NumericField label="" value={item.ts_a2} onChange={(v) => handleUpdateOfppt(item.local_id, { ts_a2: v })} disabled={disabled} /></div>
-                      </div>
+                    <div className="space-y-1.5 lg:col-span-1">
+                      <Label className="text-xs font-semibold">{isAr ? 'مسجلات السنة 2' : 'Inscrites A2'}</Label>
+                      <NumericField label="" value={item.inscrites_annee_2} onChange={(v) => { ofppt.update(item.local_id, { inscrites_annee_2: v }); if(onActivity) onActivity(); }} disabled={disabled} />
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </Card>

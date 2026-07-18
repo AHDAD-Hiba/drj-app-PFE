@@ -1,4 +1,4 @@
-import { memo, useState } from 'react';
+import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,74 +9,63 @@ import { Plus, Trash2, Megaphone, DoorOpen } from 'lucide-react';
 import { NumericField } from '@/components/form/NumericField';
 import { StepComponentProps } from '@/config/wizard.types';
 
+// Import de nos hooks
+import { useAfSensibilisations } from '@/hooks/AffairesFeminines/useAfSensibilisations';
+import { useAfPortesOuvertes } from '@/hooks/AffairesFeminines/useAfPortesOuvertes';
+import { useAfTypesActivite } from '@/hooks/AffairesFeminines/useAfTypesActivite';
+import { useAfEtablissements } from '@/hooks/AffairesFeminines/useAfEtablissements';
+
 export const Step3Sensibilisation = memo(({ rapportId, disabled, onActivity }: StepComponentProps) => {
   const { i18n } = useTranslation();
   const isAr = i18n.language === 'ar';
 
   // ==========================================
-  // ÉTATS LOCAUX TEMPORAIRES
+  // HOOKS DE PERSISTANCE (AUTO-SAVE)
   // ==========================================
-  const [sensibilisations, setSensibilisations] = useState<any[]>([]);
-  const [portesOuvertes, setPortesOuvertes] = useState<any[]>([]);
+  const sensibilisations = useAfSensibilisations(rapportId);
+  const portesOuvertes = useAfPortesOuvertes(rapportId);
+
+  // Chargement des référentiels
+  const { items: typesActivite } = useAfTypesActivite();
+  const { items: tousLesEtablissements } = useAfEtablissements();
+
+  // Filtrage intelligent des établissements (exclure maisons de jeunes)
+  const etablissementsFiltres = tousLesEtablissements.filter(
+    e => e.type_etablissement === 'club_feminin' || e.type_etablissement === 'ofppt'
+  );
 
   // ==========================================
   // ACTIONS SENSIBILISATION
   // ==========================================
-  const handleAddSensibilisation = () => {
-    setSensibilisations(prev => [
-      ...prev, 
-      { 
-        local_id: crypto.randomUUID(), 
-        type_activite_id: '', 
-        lieu: '', 
-        sujet: '', 
-        date_activite: '', 
-        partenaires: '', 
-        benef_urbain: 0, 
-        benef_rural: 0, 
-        resultats_evaluation: '' 
-      }
-    ]);
-    if (onActivity) onActivity();
-  };
-
-  const handleUpdateSensibilisation = (local_id: string, patch: any) => {
-    setSensibilisations(prev => prev.map(s => s.local_id === local_id ? { ...s, ...patch } : s));
-    if (onActivity) onActivity();
-  };
-
-  const handleRemoveSensibilisation = (local_id: string) => {
-    setSensibilisations(prev => prev.filter(s => s.local_id !== local_id));
-    if (onActivity) onActivity();
+  const handleAddSensibilisation = async () => {
+    if (onActivity) await onActivity();
+    await sensibilisations.add({ 
+      local_id: crypto.randomUUID(), 
+      type_activite_id: '', 
+      lieu: '', 
+      sujet: '', 
+      date_activite: '', 
+      partenaires: '', 
+      benef_urbain: 0, 
+      benef_rural: 0, 
+      resultats_evaluation: '' 
+    });
   };
 
   // ==========================================
   // ACTIONS PORTES OUVERTES
   // ==========================================
-  const handleAddPortesOuvertes = () => {
-    setPortesOuvertes(prev => [
-      ...prev, 
-      { 
-        local_id: crypto.randomUUID(), 
-        etablissement_id: '', 
-        type_activite_id: '', 
-        contenu_activite: '', 
-        nombre_beneficiaires: 0, 
-        partenaires: '', 
-        evaluation: '' 
-      }
-    ]);
-    if (onActivity) onActivity();
-  };
-
-  const handleUpdatePortesOuvertes = (local_id: string, patch: any) => {
-    setPortesOuvertes(prev => prev.map(p => p.local_id === local_id ? { ...p, ...patch } : p));
-    if (onActivity) onActivity();
-  };
-
-  const handleRemovePortesOuvertes = (local_id: string) => {
-    setPortesOuvertes(prev => prev.filter(p => p.local_id !== local_id));
-    if (onActivity) onActivity();
+  const handleAddPortesOuvertes = async () => {
+    if (onActivity) await onActivity();
+    await portesOuvertes.add({ 
+      local_id: crypto.randomUUID(), 
+      etablissement_id: '', 
+      type_activite_id: '', 
+      contenu_activite: '', 
+      nombre_beneficiaires: 0, 
+      partenaires: '', 
+      evaluation: '' 
+    });
   };
 
   return (
@@ -101,20 +90,19 @@ export const Step3Sensibilisation = memo(({ rapportId, disabled, onActivity }: S
           </Button>
         </div>
 
-        {sensibilisations.length === 0 ? (
+        {sensibilisations.items.length === 0 ? (
           <div className="text-center py-8 text-sm text-muted-foreground border-2 border-dashed border-border rounded-xl bg-muted/30">
             {isAr ? 'لا توجد أنشطة مسجلة' : 'Aucune activité de sensibilisation enregistrée.'}
           </div>
         ) : (
           <div className="space-y-4 pt-2">
-            {sensibilisations.map((item, idx) => (
+            {sensibilisations.items.map((item, idx) => (
               <div key={item.local_id} className="border border-border rounded-xl p-4 bg-muted/10 space-y-4 relative group transition-colors hover:border-primary/30">
-                {/* En-tête épuré type "Jeunesse" */}
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-xs font-semibold text-muted-foreground">#{idx + 1}</span>
                   <Button
                     type="button" size="icon" variant="ghost"
-                    onClick={() => handleRemoveSensibilisation(item.local_id)} disabled={disabled}
+                    onClick={() => { sensibilisations.remove(item.local_id); if(onActivity) onActivity(); }} disabled={disabled}
                     className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
                   >
                     <Trash2 className="h-4 w-4" />
@@ -124,49 +112,49 @@ export const Step3Sensibilisation = memo(({ rapportId, disabled, onActivity }: S
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   <div className="space-y-1.5">
                     <Label className="text-xs font-semibold">{isAr ? 'نوع النشاط' : 'Type d\'activité'}</Label>
-                    <Select disabled={disabled} value={item.type_activite_id} onValueChange={(v) => handleUpdateSensibilisation(item.local_id, { type_activite_id: v })}>
+                    <Select disabled={disabled} value={item.type_activite_id} onValueChange={(v) => { sensibilisations.update(item.local_id, { type_activite_id: v }); if(onActivity) onActivity(); }}>
                       <SelectTrigger className="h-10"><SelectValue placeholder={isAr ? 'اختر النوع' : 'Sélectionner'} /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="conference">{isAr ? 'ندوة' : 'Conférence'}</SelectItem>
-                        <SelectItem value="atelier">{isAr ? 'ورشة' : 'Atelier'}</SelectItem>
-                        <SelectItem value="campagne">{isAr ? 'حملة تحسيسية' : 'Campagne'}</SelectItem>
+                        {typesActivite.map(type => (
+                          <SelectItem key={type.id} value={type.id}>{isAr ? type.nom_ar : (type.nom_fr || type.nom_ar)}</SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
 
                   <div className="space-y-1.5">
                     <Label className="text-xs font-semibold">{isAr ? 'الموضوع' : 'Sujet'}</Label>
-                    <Input value={item.sujet} onChange={e => handleUpdateSensibilisation(item.local_id, { sujet: e.target.value })} disabled={disabled} className="h-10" />
+                    <Input value={item.sujet} onChange={e => { sensibilisations.update(item.local_id, { sujet: e.target.value }); if(onActivity) onActivity(); }} disabled={disabled} className="h-10" />
                   </div>
 
                   <div className="space-y-1.5">
                     <Label className="text-xs font-semibold">{isAr ? 'المكان' : 'Lieu'}</Label>
-                    <Input value={item.lieu} onChange={e => handleUpdateSensibilisation(item.local_id, { lieu: e.target.value })} disabled={disabled} className="h-10" />
+                    <Input value={item.lieu} onChange={e => { sensibilisations.update(item.local_id, { lieu: e.target.value }); if(onActivity) onActivity(); }} disabled={disabled} className="h-10" />
                   </div>
 
                   <div className="space-y-1.5">
                     <Label className="text-xs font-semibold">{isAr ? 'التاريخ' : 'Date'}</Label>
-                    <Input type="date" value={item.date_activite} onChange={e => handleUpdateSensibilisation(item.local_id, { date_activite: e.target.value })} disabled={disabled} className="h-10" />
+                    <Input type="date" value={item.date_activite} onChange={e => { sensibilisations.update(item.local_id, { date_activite: e.target.value }); if(onActivity) onActivity(); }} disabled={disabled} className="h-10" />
                   </div>
 
                   <div className="space-y-1.5">
                     <Label className="text-xs font-semibold">{isAr ? 'المستفيدين (حضري)' : 'Bénéficiaires (Urbain)'}</Label>
-                    <NumericField label="" value={item.benef_urbain} onChange={(v) => handleUpdateSensibilisation(item.local_id, { benef_urbain: v })} disabled={disabled} />
+                    <NumericField label="" value={item.benef_urbain} onChange={(v) => { sensibilisations.update(item.local_id, { benef_urbain: v }); if(onActivity) onActivity(); }} disabled={disabled} />
                   </div>
 
                   <div className="space-y-1.5">
                     <Label className="text-xs font-semibold">{isAr ? 'المستفيدين (قروي)' : 'Bénéficiaires (Rural)'}</Label>
-                    <NumericField label="" value={item.benef_rural} onChange={(v) => handleUpdateSensibilisation(item.local_id, { benef_rural: v })} disabled={disabled} />
+                    <NumericField label="" value={item.benef_rural} onChange={(v) => { sensibilisations.update(item.local_id, { benef_rural: v }); if(onActivity) onActivity(); }} disabled={disabled} />
                   </div>
 
                   <div className="space-y-1.5 sm:col-span-2 lg:col-span-1">
                     <Label className="text-xs font-semibold">{isAr ? 'الشركاء' : 'Partenaires'}</Label>
-                    <Input value={item.partenaires} onChange={e => handleUpdateSensibilisation(item.local_id, { partenaires: e.target.value })} disabled={disabled} className="h-10" />
+                    <Input value={item.partenaires} onChange={e => { sensibilisations.update(item.local_id, { partenaires: e.target.value }); if(onActivity) onActivity(); }} disabled={disabled} className="h-10" />
                   </div>
 
                   <div className="space-y-1.5 sm:col-span-2 lg:col-span-2">
                     <Label className="text-xs font-semibold">{isAr ? 'النتائج / التقييم' : 'Résultats / Évaluation'}</Label>
-                    <Input value={item.resultats_evaluation} onChange={e => handleUpdateSensibilisation(item.local_id, { resultats_evaluation: e.target.value })} disabled={disabled} className="h-10" />
+                    <Input value={item.resultats_evaluation} onChange={e => { sensibilisations.update(item.local_id, { resultats_evaluation: e.target.value }); if(onActivity) onActivity(); }} disabled={disabled} className="h-10" />
                   </div>
                 </div>
               </div>
@@ -195,20 +183,19 @@ export const Step3Sensibilisation = memo(({ rapportId, disabled, onActivity }: S
           </Button>
         </div>
 
-        {portesOuvertes.length === 0 ? (
+        {portesOuvertes.items.length === 0 ? (
           <div className="text-center py-8 text-sm text-muted-foreground border-2 border-dashed border-border rounded-xl bg-muted/30">
             {isAr ? 'لا توجد بيانات مسجلة' : 'Aucune donnée enregistrée.'}
           </div>
         ) : (
           <div className="space-y-4 pt-2">
-            {portesOuvertes.map((item, idx) => (
+            {portesOuvertes.items.map((item, idx) => (
               <div key={item.local_id} className="border border-border rounded-xl p-4 bg-muted/10 space-y-4 transition-colors hover:border-primary/30">
-                {/* En-tête épuré type "Jeunesse" */}
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-xs font-semibold text-muted-foreground">#{idx + 1}</span>
                   <Button 
                     type="button" size="icon" variant="ghost" 
-                    onClick={() => handleRemovePortesOuvertes(item.local_id)} disabled={disabled} 
+                    onClick={() => { portesOuvertes.remove(item.local_id); if(onActivity) onActivity(); }} disabled={disabled} 
                     className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
                   >
                     <Trash2 className="h-4 w-4" />
@@ -216,49 +203,50 @@ export const Step3Sensibilisation = memo(({ rapportId, disabled, onActivity }: S
                 </div>
                 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {/* Sélecteur d'établissement placé dans la grille */}
                   <div className="space-y-1.5 sm:col-span-2 lg:col-span-3">
                     <Label className="text-xs font-semibold">{isAr ? 'المؤسسة' : 'Nom de l\'établissement'}</Label>
-                    <Select disabled={disabled} value={item.etablissement_id} onValueChange={(v) => handleUpdatePortesOuvertes(item.local_id, { etablissement_id: v })}>
+                    <Select disabled={disabled} value={item.etablissement_id} onValueChange={(v) => { portesOuvertes.update(item.local_id, { etablissement_id: v }); if(onActivity) onActivity(); }}>
                       <SelectTrigger className="h-10">
                          <SelectValue placeholder={isAr ? 'اختر المؤسسة' : 'Sélectionner l\'établissement'} />
                       </SelectTrigger>
                       <SelectContent>
-                         <SelectItem value="etab_1">{isAr ? 'النادي النسوي درب القاضي' : 'Foyer Féminin Derb El Kadi'}</SelectItem>
-                         <SelectItem value="etab_2">{isAr ? 'مركز التأهيل' : 'Centre de Qualification'}</SelectItem>
+                        {etablissementsFiltres.map(etab => (
+                          <SelectItem key={etab.id} value={etab.id}>{etab.nom}</SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
 
                   <div className="space-y-1.5">
                     <Label className="text-xs font-semibold">{isAr ? 'نوع النشاط' : 'Type d\'activité'}</Label>
-                    <Select disabled={disabled} value={item.type_activite_id} onValueChange={(v) => handleUpdatePortesOuvertes(item.local_id, { type_activite_id: v })}>
+                    <Select disabled={disabled} value={item.type_activite_id} onValueChange={(v) => { portesOuvertes.update(item.local_id, { type_activite_id: v }); if(onActivity) onActivity(); }}>
                       <SelectTrigger className="h-10"><SelectValue placeholder={isAr ? 'اختر النوع' : 'Sélectionner'} /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="exposition">{isAr ? 'معرض' : 'Exposition'}</SelectItem>
-                        <SelectItem value="visite">{isAr ? 'زيارة موجهة' : 'Visite guidée'}</SelectItem>
+                        {typesActivite.map(type => (
+                          <SelectItem key={type.id} value={type.id}>{isAr ? type.nom_ar : (type.nom_fr || type.nom_ar)}</SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
 
                   <div className="space-y-1.5 lg:col-span-2">
                     <Label className="text-xs font-semibold">{isAr ? 'مضمون النشاط' : 'Contenu de l\'activité'}</Label>
-                    <Input value={item.contenu_activite} onChange={e => handleUpdatePortesOuvertes(item.local_id, { contenu_activite: e.target.value })} disabled={disabled} className="h-10" />
+                    <Input value={item.contenu_activite} onChange={e => { portesOuvertes.update(item.local_id, { contenu_activite: e.target.value }); if(onActivity) onActivity(); }} disabled={disabled} className="h-10" />
                   </div>
 
                   <div className="space-y-1.5">
                     <Label className="text-xs font-semibold">{isAr ? 'عدد المستفيدين' : 'Nombre de bénéficiaires'}</Label>
-                    <NumericField label="" value={item.nombre_beneficiaires} onChange={(v) => handleUpdatePortesOuvertes(item.local_id, { nombre_beneficiaires: v })} disabled={disabled} />
+                    <NumericField label="" value={item.nombre_beneficiaires} onChange={(v) => { portesOuvertes.update(item.local_id, { nombre_beneficiaires: v }); if(onActivity) onActivity(); }} disabled={disabled} />
                   </div>
 
                   <div className="space-y-1.5">
                     <Label className="text-xs font-semibold">{isAr ? 'الشركاء' : 'Partenaires'}</Label>
-                    <Input value={item.partenaires} onChange={e => handleUpdatePortesOuvertes(item.local_id, { partenaires: e.target.value })} disabled={disabled} className="h-10" />
+                    <Input value={item.partenaires} onChange={e => { portesOuvertes.update(item.local_id, { partenaires: e.target.value }); if(onActivity) onActivity(); }} disabled={disabled} className="h-10" />
                   </div>
 
                   <div className="space-y-1.5">
                     <Label className="text-xs font-semibold">{isAr ? 'التقييم' : 'Évaluation'}</Label>
-                    <Input value={item.evaluation} onChange={e => handleUpdatePortesOuvertes(item.local_id, { evaluation: e.target.value })} disabled={disabled} className="h-10" />
+                    <Input value={item.evaluation} onChange={e => { portesOuvertes.update(item.local_id, { evaluation: e.target.value }); if(onActivity) onActivity(); }} disabled={disabled} className="h-10" />
                   </div>
                 </div>
               </div>

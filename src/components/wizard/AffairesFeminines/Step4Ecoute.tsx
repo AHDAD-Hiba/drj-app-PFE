@@ -1,4 +1,4 @@
-import { memo, useState } from 'react';
+import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,40 +9,37 @@ import { Plus, Trash2, HeartHandshake } from 'lucide-react';
 import { NumericField } from '@/components/form/NumericField';
 import { StepComponentProps } from '@/config/wizard.types';
 
+// Import de nos hooks
+import { useAfCentresEcoute } from '@/hooks/AffairesFeminines/useAfCentresEcoute';
+import { useAfEtablissements } from '@/hooks/AffairesFeminines/useAfEtablissements';
+
 export const Step4Ecoute = memo(({ rapportId, disabled, onActivity }: StepComponentProps) => {
   const { i18n } = useTranslation();
   const isAr = i18n.language === 'ar';
 
   // ==========================================
-  // ÉTATS LOCAUX TEMPORAIRES
+  // HOOKS DE PERSISTANCE (AUTO-SAVE)
   // ==========================================
-  const [seances, setSeances] = useState<any[]>([]);
+  const seances = useAfCentresEcoute(rapportId);
+
+  // Chargement des établissements filtrés (pas de maison de jeunes)
+  const { items: tousLesEtablissements } = useAfEtablissements();
+  const etablissementsFiltres = tousLesEtablissements.filter(
+    e => e.type_etablissement === 'club_feminin' || e.type_etablissement === 'ofppt'
+  );
 
   // ==========================================
   // ACTIONS
   // ==========================================
-  const handleAddSeance = () => {
-    setSeances(prev => [
-      ...prev, 
-      { 
-        local_id: crypto.randomUUID(), 
-        etablissement_id: '', 
-        nombre_cas: 0, 
-        nombre_seances: 0, 
-        type_soutien: '' 
-      }
-    ]);
-    if (onActivity) onActivity();
-  };
-
-  const handleUpdateSeance = (local_id: string, patch: any) => {
-    setSeances(prev => prev.map(s => s.local_id === local_id ? { ...s, ...patch } : s));
-    if (onActivity) onActivity();
-  };
-
-  const handleRemoveSeance = (local_id: string) => {
-    setSeances(prev => prev.filter(s => s.local_id !== local_id));
-    if (onActivity) onActivity();
+  const handleAddSeance = async () => {
+    if (onActivity) await onActivity();
+    await seances.add({ 
+      local_id: crypto.randomUUID(), 
+      etablissement_id: '', 
+      nombre_cas: 0, 
+      nombre_seances: 0, 
+      type_soutien: '' 
+    });
   };
 
   return (
@@ -64,13 +61,13 @@ export const Step4Ecoute = memo(({ rapportId, disabled, onActivity }: StepCompon
           </Button>
         </div>
 
-        {seances.length === 0 ? (
+        {seances.items.length === 0 ? (
           <div className="text-center py-8 text-sm text-muted-foreground border-2 border-dashed border-border rounded-xl bg-muted/30">
-            {isAr ? 'لا توجد جلسات مسجلة' : 'Aucune donnée enregistrée pour les centres d\'écoute.'}
+            {isAr ? 'لا توجد بيانات مسجلة' : 'Aucune donnée enregistrée pour les centres d\'écoute.'}
           </div>
         ) : (
           <div className="space-y-4 pt-2">
-            {seances.map((item, idx) => (
+            {seances.items.map((item, idx) => (
               <div key={item.local_id} className="border border-border rounded-xl p-4 bg-muted/10 space-y-4 transition-colors hover:border-primary/30">
                 
                 {/* En-tête épuré */}
@@ -78,7 +75,7 @@ export const Step4Ecoute = memo(({ rapportId, disabled, onActivity }: StepCompon
                   <span className="text-xs font-semibold text-muted-foreground">#{idx + 1}</span>
                   <Button
                     type="button" size="icon" variant="ghost"
-                    onClick={() => handleRemoveSeance(item.local_id)} disabled={disabled}
+                    onClick={() => { seances.remove(item.local_id); if(onActivity) onActivity(); }} disabled={disabled}
                     className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
                   >
                     <Trash2 className="h-4 w-4" />
@@ -88,13 +85,14 @@ export const Step4Ecoute = memo(({ rapportId, disabled, onActivity }: StepCompon
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pt-1">
                   <div className="space-y-1.5 sm:col-span-2 lg:col-span-3">
                     <Label className="text-xs font-semibold">{isAr ? 'مقر نقطة الاستماع (المؤسسة)' : 'Établissement (Point d\'écoute)'}</Label>
-                    <Select disabled={disabled} value={item.etablissement_id} onValueChange={(v) => handleUpdateSeance(item.local_id, { etablissement_id: v })}>
+                    <Select disabled={disabled} value={item.etablissement_id} onValueChange={(v) => { seances.update(item.local_id, { etablissement_id: v }); if(onActivity) onActivity(); }}>
                       <SelectTrigger className="h-10">
                          <SelectValue placeholder={isAr ? 'اختر المؤسسة' : 'Sélectionner l\'établissement'} />
                       </SelectTrigger>
                       <SelectContent>
-                         <SelectItem value="etab_1">{isAr ? 'النادي النسوي درب القاضي' : 'Foyer Féminin Derb El Kadi'}</SelectItem>
-                         <SelectItem value="etab_2">{isAr ? 'مركز التكوين والتأهيل المهني حي عادل' : 'Centre de Qualification Hay Adel'}</SelectItem>
+                        {etablissementsFiltres.map(etab => (
+                          <SelectItem key={etab.id} value={etab.id}>{etab.nom}</SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
@@ -104,7 +102,7 @@ export const Step4Ecoute = memo(({ rapportId, disabled, onActivity }: StepCompon
                     <Input 
                       placeholder={isAr ? 'مثال: توجيه، دعم نفسي، إنصات...' : 'Ex: Orientation, écoute, soutien psy...'} 
                       value={item.type_soutien} 
-                      onChange={e => handleUpdateSeance(item.local_id, { type_soutien: e.target.value })} 
+                      onChange={e => { seances.update(item.local_id, { type_soutien: e.target.value }); if(onActivity) onActivity(); }} 
                       disabled={disabled} 
                       className="h-10" 
                     />
@@ -115,7 +113,7 @@ export const Step4Ecoute = memo(({ rapportId, disabled, onActivity }: StepCompon
                     <NumericField 
                       label="" 
                       value={item.nombre_cas} 
-                      onChange={(v) => handleUpdateSeance(item.local_id, { nombre_cas: v })} 
+                      onChange={(v) => { seances.update(item.local_id, { nombre_cas: v }); if(onActivity) onActivity(); }} 
                       disabled={disabled} 
                     />
                   </div>
@@ -125,7 +123,7 @@ export const Step4Ecoute = memo(({ rapportId, disabled, onActivity }: StepCompon
                     <NumericField 
                       label="" 
                       value={item.nombre_seances} 
-                      onChange={(v) => handleUpdateSeance(item.local_id, { nombre_seances: v })} 
+                      onChange={(v) => { seances.update(item.local_id, { nombre_seances: v }); if(onActivity) onActivity(); }} 
                       disabled={disabled} 
                     />
                   </div>

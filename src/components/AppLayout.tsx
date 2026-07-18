@@ -1,12 +1,20 @@
-import { ReactNode } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
-import { useAuth } from '@/hooks/common/useAuth';
-import { Brand } from '@/components/Brand';
-import { Footer } from '@/components/Footer';
-import { LanguageSwitcher } from '@/components/LanguageSwitcher';
-import { Button } from '@/components/ui/button';
-import { LayoutDashboard, Building2, LogOut, ChevronDown, Map, FilePlus2, Layers } from 'lucide-react';
+import { ReactNode } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useTranslation } from "react-i18next";
+import { useAuth } from "@/hooks/common/useAuth";
+import { Brand } from "@/components/Brand";
+import { Footer } from "@/components/Footer";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { Button } from "@/components/ui/button";
+import {
+  LayoutDashboard,
+  Building2,
+  LogOut,
+  ChevronDown,
+  Map,
+  FilePlus2,
+  Layers,
+} from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,74 +22,87 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from "@/components/ui/dropdown-menu";
 
 export const AppLayout = ({ children }: { children: ReactNode }) => {
   const { t } = useTranslation();
-  const { utilisateur, signOut, role, isRegional, isPrefectoral } = useAuth();
+  const { utilisateur, signOut, role, isRegional, isPrefectoral, isEquipeRegional } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
   const navItems = [
-    { path: '/saisie',          label: t('nav.entry'),        icon: FilePlus2,       show: isPrefectoral },
-    { path: '/domain-dashboard', label: t('nav.domaines', 'Domaines'), icon: Layers,  show: true },
-    { path: '/carte',            label: t('nav.map'),          icon: Map,             show: true },
-    { path: '/directions',       label: t('nav.directions'),   icon: Building2,       show: isRegional },
+    { path: "/saisie", label: t("nav.entry"), icon: FilePlus2, show: isPrefectoral },
+    {
+      path: "/domain-dashboard",
+      label: t("nav.domaines", "Domaines"),
+      icon: Layers,
+      show: !isEquipeRegional,
+    },
+    { path: "/carte", label: t("nav.map"), icon: Map, show: !isEquipeRegional },
+    { path: "/directions", label: t("nav.directions"), icon: Building2, show: isRegional },
+    {
+      path: "/regional-dashboard",
+      label: t("nav.reports", "Rapports"),
+      icon: LayoutDashboard,
+      show: isEquipeRegional,
+    },
   ];
 
-  // 1. كنزيدو الدالة ديال الترجمة هنا
   const formatDirectorName = (rawName: string) => {
-    if (!rawName) return '';
-    
-    if (rawName.toLowerCase().startsWith('directeur')) {
-      const prefectureKey = rawName.toLowerCase().replace('directeur', '').trim();
-      const translatedTitle = t('nav.directorTitle', 'Directeur');
+    if (!rawName) return "";
+
+    if (rawName.toLowerCase().startsWith("directeur")) {
+      const prefectureKey = rawName.toLowerCase().replace("directeur", "").trim();
+      const translatedTitle = t("nav.directorTitle", "Directeur");
       const translatedPrefecture = t(`prefectures.${prefectureKey}`, prefectureKey);
-      
+
       return `${translatedTitle} ${translatedPrefecture}`;
     }
-    
+
     return rawName;
   };
 
-  const fullName = formatDirectorName(utilisateur?.nom ?? '');
+  const fullName = formatDirectorName(utilisateur?.nom ?? "");
 
-  const initials = fullName
-    .split(' ')
-    .map((s: string) => s[0])
-    .slice(0, 2)
-    .join('')
-    .toUpperCase() || '?';
+  const initials =
+    fullName
+      .split(" ")
+      .map((s: string) => s[0])
+      .slice(0, 2)
+      .join("")
+      .toUpperCase() || "?";
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
       {/* Header */}
       <header className="sticky top-0 z-40 bg-card/95 backdrop-blur border-b border-border">
         <div className="container flex items-center justify-between h-16 gap-4">
-          <button onClick={() => navigate('/dashboard')} className="flex-shrink-0">
+          <button onClick={() => navigate("/dashboard")} className="flex-shrink-0">
             <Brand compact />
           </button>
 
           {/* Desktop nav */}
           <nav className="hidden md:flex items-center gap-1">
-            {navItems.filter(n => n.show).map(item => {
-              const Icon = item.icon;
-              const active = location.pathname.startsWith(item.path);
-              return (
-                <button
-                  key={item.path}
-                  onClick={() => navigate(item.path)}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-smooth ${
-                    active
-                      ? 'bg-primary-soft text-primary'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-muted'
-                  }`}
-                >
-                  <Icon className="h-4 w-4" />
-                  {item.label}
-                </button>
-              );
-            })}
+            {navItems
+              .filter((n) => n.show)
+              .map((item) => {
+                const Icon = item.icon;
+                const active = location.pathname.startsWith(item.path);
+                return (
+                  <button
+                    key={item.path}
+                    onClick={() => navigate(item.path)}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-smooth ${
+                      active
+                        ? "bg-primary-soft text-primary"
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                    }`}
+                  >
+                    <Icon className="h-4 w-4" />
+                    {item.label}
+                  </button>
+                );
+              })}
           </nav>
 
           <div className="flex items-center gap-2">
@@ -95,7 +116,7 @@ export const AppLayout = ({ children }: { children: ReactNode }) => {
                   <div className="hidden sm:flex flex-col items-start leading-tight">
                     <span className="text-xs font-semibold">{fullName}</span>
                     <span className="text-[10px] text-muted-foreground">
-                      {role ? t(`roles.${role}`) : ''}
+                      {role ? t(`roles.${role}`) : ""}
                     </span>
                   </div>
                   <ChevronDown className="h-3.5 w-3.5 text-muted-foreground hidden sm:block" />
@@ -113,7 +134,7 @@ export const AppLayout = ({ children }: { children: ReactNode }) => {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={signOut}>
                   <LogOut className="h-4 w-4 me-2" />
-                  {t('auth.logout')}
+                  {t("auth.logout")}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -122,22 +143,24 @@ export const AppLayout = ({ children }: { children: ReactNode }) => {
 
         {/* Mobile nav */}
         <nav className="md:hidden flex items-center gap-1 px-4 pb-2 overflow-x-auto">
-          {navItems.filter(n => n.show).map(item => {
-            const Icon = item.icon;
-            const active = location.pathname.startsWith(item.path);
-            return (
-              <button
-                key={item.path}
-                onClick={() => navigate(item.path)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-smooth ${
-                  active ? 'bg-primary-soft text-primary' : 'text-muted-foreground bg-muted/50'
-                }`}
-              >
-                <Icon className="h-3.5 w-3.5" />
-                {item.label}
-              </button>
-            );
-          })}
+          {navItems
+            .filter((n) => n.show)
+            .map((item) => {
+              const Icon = item.icon;
+              const active = location.pathname.startsWith(item.path);
+              return (
+                <button
+                  key={item.path}
+                  onClick={() => navigate(item.path)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-smooth ${
+                    active ? "bg-primary-soft text-primary" : "text-muted-foreground bg-muted/50"
+                  }`}
+                >
+                  <Icon className="h-3.5 w-3.5" />
+                  {item.label}
+                </button>
+              );
+            })}
         </nav>
       </header>
 

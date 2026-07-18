@@ -8,7 +8,7 @@ import {
 } from '@/components/ui/select';
 import { Plus, Trash2, Handshake } from 'lucide-react';
 import { NumericField } from '@/components/form/NumericField';
-import { Input } from '../ui/input';
+import { Input } from '@/components/ui/input';
 
 // NOUVEAUX IMPORTS POUR L'AUTONOMIE
 import { StepComponentProps } from '@/config/wizard.types';
