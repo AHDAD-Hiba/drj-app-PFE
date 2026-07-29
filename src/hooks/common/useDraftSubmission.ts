@@ -92,9 +92,16 @@ export const useDraftSubmission = ({
    */
 const persist = useCallback(async (overrideStatus?: ReportStatus): Promise<boolean> => {
 
-    
-
     console.log('persist CALLED');
+    console.log("STEP 1");
+    console.log({
+    rapportId,
+    directionId,
+    domaineId,
+    overrideStatus,
+    completeness
+  });
+
     const effectiveStatus = overrideStatus ?? statusRef.current;
 
     // Guard: never overwrite a TERMINE record except when explicitly submitting.
@@ -102,16 +109,26 @@ const persist = useCallback(async (overrideStatus?: ReportStatus): Promise<boole
       return true;
     }
 
+    console.log("STEP 2");
+
     if (!rapportId || !directionId || !domaineId) {
       setErrorMsg('Identifiants manquants (rapport, direction ou domaine).');
       setSaveState('error');
       return false;
     }
 
+    console.log("STEP 3", {
+  rapportId,
+  directionId,
+  domaineId,
+});
+
     setSaveState('saving');
     setErrorMsg(null);
 
     try {
+
+      console.log("STEP 4");
       const { data, error } = await supabase
         .from('suivi_remplissage')
         .upsert(
@@ -126,6 +143,7 @@ const persist = useCallback(async (overrideStatus?: ReportStatus): Promise<boole
           { onConflict: 'rapport_id,direction_id,domaine_id' }
         )
         .select();
+        console.log("STEP 5");
 
       console.log('UPSERT DATA:', data);
       console.log('UPSERT ERROR:', error);
@@ -207,6 +225,8 @@ const persist = useCallback(async (overrideStatus?: ReportStatus): Promise<boole
   const saveNow = useCallback(async (): Promise<boolean> => {
     if (statusRef.current === 'TERMINE') return true;
     if (timerRef.current) clearTimeout(timerRef.current);
+
+    console.log("saveNow CALLED");
     return persist('EN_COURS');
   }, [persist]);
 

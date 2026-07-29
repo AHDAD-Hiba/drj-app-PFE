@@ -13,7 +13,7 @@ import { StepComponentProps } from '@/config/wizard.types';
 import { useAfSensibilisations } from '@/hooks/AffairesFeminines/useAfSensibilisations';
 import { useAfPortesOuvertes } from '@/hooks/AffairesFeminines/useAfPortesOuvertes';
 import { useAfTypesActivite } from '@/hooks/AffairesFeminines/useAfTypesActivite';
-import { useAfEtablissements } from '@/hooks/AffairesFeminines/useAfEtablissements';
+import { useAfEtablissements } from '@/hooks/common/useAfEtablissements';
 
 export const Step3Sensibilisation = memo(({ rapportId, disabled, onActivity }: StepComponentProps) => {
   const { i18n } = useTranslation();

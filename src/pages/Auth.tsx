@@ -46,9 +46,7 @@ const Auth = () => {
 
   setError(authError.message);
   toast.error(authError.message);
-  } else {
-      navigate('/dashboard', { replace: true });
-    }
+  } 
   };
 
   return (

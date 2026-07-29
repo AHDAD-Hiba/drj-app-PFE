@@ -1,4 +1,4 @@
-import { useEntityEntries, BaseEntry } from './useEntityEntries';
+import { useEntityEntries, BaseEntry } from '../common/useEntityEntries';
 
 export interface AfMouvementEntry extends BaseEntry {
   etablissement_id: string | null; // Null si c'est un nouvel établissement pas encore dans la table de référence

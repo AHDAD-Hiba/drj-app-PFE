@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Plus, Trash2, Building2, Search } from 'lucide-react';
 import { StepComponentProps } from '@/config/wizard.types';
 
-import { useAfEtablissements } from '@/hooks/AffairesFeminines/useAfEtablissements';
+import { useAfEtablissements } from '@/hooks/common/useAfEtablissements';
 import { useAfMiseAJourReseau, AfMouvementEntry } from '@/hooks/AffairesFeminines/useAfMiseAJourReseau';
 
 export const Step6Infra = memo(({ rapportId, disabled, onActivity }: StepComponentProps) => {

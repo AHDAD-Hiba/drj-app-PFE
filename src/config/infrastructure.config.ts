@@ -1,12 +1,15 @@
 import { DomainConfig } from './wizard.types';
 
-//import { useInfraCompleteness } from '@/hooks/Infrastructure/useInfraCompleteness';
+import { useInfraCompleteness } from '@/hooks/Infrastructure/useInfraCompleteness';
 
 // Les composants visuels (nous ajouterons les autres au fur et à mesure)
-//import { Step1Depenses } from '@/components/wizard/Infrastructure/Step1Depenses';
+import { Step1Depenses } from '@/components/wizard/Infrastructure/Step1Depenses';
+import { Step2EauElectricite } from '@/components/wizard/Infrastructure/Step2EauElectricite';
+import { Step3Partenariats } from '@/components/wizard/Infrastructure/Step3Partenariats';
+import { Step4BTP } from '@/components/wizard/Infrastructure/Step4BTP';
+import { Step5ProjetsEnSouffrance } from '@/components/wizard/Infrastructure/Step5ProjetsEnSouffrance';
 
 export const infrastructureConfig: DomainConfig = {
-  // ⚠️ Remplace cette chaîne par le vrai UUID du domaine Infra généré dans ta base de données
   id: 'bf2cc627-577f-4028-a904-04172676ecfa', 
   name: 'infra',
   useCompleteness: (rapportId: string | null, refreshTrigger?: number) => {
@@ -17,31 +20,31 @@ export const infrastructureConfig: DomainConfig = {
       id: 1, 
       labelFr: 'Dépenses', 
       labelAr: 'نفقات التسيير والاستثمار', 
-      component: () => null
+      component: Step1Depenses
     },
     { 
       id: 2, 
       labelFr: 'Eau & Électricité', 
       labelAr: 'الماء والكهرباء', 
-      component: () => null // Placeholder pour Step2
+      component: Step2EauElectricite
     },
     { 
       id: 3, 
       labelFr: 'Partenariats', 
       labelAr: 'مشاريع الشراكة', 
-      component: () => null // Placeholder pour Step3
+      component: Step3Partenariats
     },
     { 
       id: 4, 
       labelFr: 'Projets BTP', 
       labelAr: 'مشاريع البناء والتهيئة', 
-      component: () => null // Placeholder pour Step4
+      component: Step4BTP
     },
     { 
       id: 5, 
       labelFr: 'Projets Bloqués', 
       labelAr: 'المشاريع المتعثرة', 
-      component: () => null // Placeholder pour Step5
+      component: Step5ProjetsEnSouffrance
     }
   ],
 };

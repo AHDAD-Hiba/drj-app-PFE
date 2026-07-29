@@ -1,4 +1,4 @@
-import { useEntityEntries, BaseEntry } from './useEntityEntries';
+import { useEntityEntries, BaseEntry } from '../common/useEntityEntries';
 
 export interface AfPortesOuvertesEntry extends BaseEntry {
   etablissement_id: string;

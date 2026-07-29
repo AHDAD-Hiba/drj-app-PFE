@@ -13,7 +13,7 @@ import { useAfInscriptionsClubs } from '@/hooks/AffairesFeminines/useAfInscripti
 import { useAfInscriptionsOfppt } from '@/hooks/AffairesFeminines/useAfInscriptionsOfppt';
 import { useAfSecteurs } from '@/hooks/AffairesFeminines/useAfSecteurs';
 import { useAfFilieres } from '@/hooks/AffairesFeminines/useAfFilieres';
-import { useAfEtablissements } from '@/hooks/AffairesFeminines/useAfEtablissements';
+import { useAfEtablissements } from '@/hooks/common/useAfEtablissements';
 
 export const Step1Formation = memo(({ rapportId, disabled, onActivity }: StepComponentProps) => {
   const { i18n } = useTranslation();

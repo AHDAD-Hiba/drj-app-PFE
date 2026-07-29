@@ -1,0 +1,472 @@
+import { memo, useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Plus, Trash2, Palette, Mic, Gift, AlertTriangle, Building2, Globe } from 'lucide-react';
+import { StepComponentProps } from '@/config/wizard.types';
+import { NumericField } from '@/components/form/NumericField';
+
+import { useAfEtablissements } from '@/hooks/common/useAfEtablissements';
+import { useAuth } from '@/hooks/common/useAuth';
+
+// ⚠️ MODIFIE CE CHEMIN SELON L'EMPLACEMENT DE TON CLIENT SUPABASE
+import { supabase } from '@/integrations/supabase/client'; 
+
+import { 
+  usePeActivites, 
+  usePeConseilEnfant, 
+  usePeDons, 
+  usePeIncidents 
+} from '@/hooks/ProtectionEnfance/usePeStep2';
+
+export const Step2Animation = memo(({ disabled, onActivity, rapportId }: StepComponentProps & { rapportId?: string | null }) => {
+  const { i18n } = useTranslation();
+  const isAr = i18n.language === 'ar';
+
+  const { utilisateur } = useAuth();
+  const directionId = utilisateur?.direction_id;
+
+  const { items: etablissements, loading: loadingEtab } = useAfEtablissements(directionId);
+  const centresProtection = etablissements.filter(e => e.type_etablissement === 'centre_protection_enfance');
+  const [centers, setCenters] = useState<{ local_id: string; etablissement_id: string }[]>([]);
+
+  const [refDomaines, setRefDomaines] = useState<any[]>([]);
+  const [refIncidents, setRefIncidents] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchRefs = async () => {
+      const { data: domaines } = await supabase.from('ref_domaines_activite').select('*').order('ordre_affichage');
+      if (domaines) setRefDomaines(domaines);
+
+      const { data: incidents } = await supabase.from('ref_types_incident').select('*').order('ordre_affichage');
+      if (incidents) setRefIncidents(incidents);
+    };
+    fetchRefs();
+  }, []);
+
+  const { items: activites, add: addAct, update: updateAct, remove: removeAct } = usePeActivites(rapportId);
+  const { items: conseils, add: addConseil, update: updateConseil, remove: removeConseil } = usePeConseilEnfant(rapportId);
+  const { items: dons, add: addDon, update: updateDon, remove: removeDon } = usePeDons(rapportId);
+  const { items: incidents, add: addIncident, update: updateIncident, remove: removeIncident } = usePeIncidents(rapportId);
+
+  useEffect(() => {
+    // 1. Récupérer tous les IDs d'établissements uniques depuis les données existantes
+    const allEtabIds = new Set<string>();
+    
+    activites.forEach(a => { if (a.etablissement_id) allEtabIds.add(a.etablissement_id); });
+    conseils.forEach(c => { if (c.etablissement_id) allEtabIds.add(c.etablissement_id); });
+    dons.forEach(d => { if (d.etablissement_id) allEtabIds.add(d.etablissement_id); });
+    
+    // 2. Vérifier ceux qui sont déjà dans l'état local 'centers'
+    const currentCenterIds = new Set(centers.map(c => c.etablissement_id).filter(Boolean));
+
+    // 3. Trouver les IDs manquants (qui sont dans la BDD mais pas encore affichés)
+    const missingIds = Array.from(allEtabIds).filter(id => !currentCenterIds.has(id));
+
+    // 4. Mettre à jour l'état si on a trouvé des centres manquants
+    if (missingIds.length > 0) {
+      const newCenters = missingIds.map(id => ({
+        local_id: crypto.randomUUID(),
+        etablissement_id: id
+      }));
+      setCenters(prev => [...prev, ...newCenters]);
+    }
+  }, [activites, conseils, dons, centers]); // Se déclenche à la réception des données
+
+  const globalActivites = activites.filter(a => !a.etablissement_id);
+  const getCenterActivites = (etabId: string) => activites.filter(a => a.etablissement_id === etabId);
+
+  const handleAddGlobalActivite = () => {
+    addAct({ local_id: crypto.randomUUID(), etablissement_id: null, domaine_id: '', nom_activite: '', nombre_beneficiaires: 0 });
+    if (onActivity) onActivity();
+  };
+
+  const handleAddCenterActivite = (etabId: string) => {
+    const compVieId = refDomaines.find(d => d.code === 'COMPETENCES_VIE')?.id || '';
+    addAct({ local_id: crypto.randomUUID(), etablissement_id: etabId, domaine_id: compVieId, nom_activite: '', nombre_beneficiaires: 0 });
+    if (onActivity) onActivity();
+  };
+
+  const handleAddData = (addFn: Function, etabId: string, initialData = {}) => {
+    addFn({ local_id: crypto.randomUUID(), etablissement_id: etabId, ...initialData });
+    if (onActivity) onActivity();
+  };
+
+  // دالة جديدة لإضافة تقرير استثنائي (بدون etablissement_id)
+  const handleAddGlobalIncident = () => {
+    addIncident({ local_id: crypto.randomUUID(), type_incident_id: '', type_incident_autre: '', sujet_detaille: '', nombre_cas: 0, observations: '' });
+    if (onActivity) onActivity();
+  };
+
+  const handleAddCentre = () => {
+    setCenters(prev => [...prev, { local_id: crypto.randomUUID(), etablissement_id: '' }]);
+    if (onActivity) onActivity();
+  };
+
+  const handleRemoveCentre = (local_id: string) => {
+    setCenters(prev => prev.filter(c => c.local_id !== local_id));
+    if (onActivity) onActivity();
+  };
+
+  const handleUpdateEtablissement = (local_id: string, new_etab_id: string) => {
+    setCenters(prev => prev.map(c => c.local_id === local_id ? { ...c, etablissement_id: new_etab_id } : c));
+    if (onActivity) onActivity();
+  };
+
+  const getAvailableEtablissements = (current_id: string) => {
+    const selectedIds = centers.map(c => c.etablissement_id).filter(id => id !== '' && id !== current_id);
+    return centresProtection.filter(e => !selectedIds.includes(e.id));
+  };
+
+  const domaineAutreId = refDomaines.find(d => d.code === 'AUTRE')?.id;
+  const incidentAutreId = refIncidents.find(i => i.code === 'AUTRE')?.id;
+
+  return (
+    <div className="space-y-8">
+      
+      {/* ========================================================================= */}
+      {/* SECTION GLOBALE 1 : الأنشطة الإقليمية (الجدول 12 و 20) */}
+      {/* ========================================================================= */}
+      <Card className="p-5 sm:p-6 bg-card border-border shadow-sm border-t-4 border-t-primary">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-border pb-4 mb-5">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+              <Globe className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <h2 className="text-lg font-bold">
+                {isAr ? 'الأنشطة الإقليمية المجمعة' : 'Activités Provinciales Globales'}
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                {isAr ? 'أنشطة تخص المديرية ككل' : 'Activités transversales'}
+              </p>
+            </div>
+          </div>
+          <Button type="button" size="sm" onClick={handleAddGlobalActivite} disabled={disabled || refDomaines.length === 0} className="gap-1.5">
+            <Plus className="h-4 w-4" />
+            {isAr ? 'إضافة نشاط إقليمي' : 'Ajouter une activité'}
+          </Button>
+        </div>
+
+        <div className="space-y-3">
+          {globalActivites.map((act) => (
+            <div key={act.local_id} className="grid grid-cols-1 md:grid-cols-12 gap-3 border border-border p-3 rounded-lg bg-muted/5 items-start">
+              <div className="md:col-span-3 space-y-1.5">
+                <Label className="text-xs">{isAr ? 'المجال' : 'Domaine'}</Label>
+                <Select value={act.domaine_id} disabled={disabled} onValueChange={(v) => { updateAct(act.local_id, { domaine_id: v }); if(onActivity) onActivity(); }}>
+                  <SelectTrigger className="h-9 bg-background text-xs"><SelectValue placeholder={isAr ? 'اختر...' : 'Choisir...'} /></SelectTrigger>
+                  <SelectContent>
+                    {refDomaines
+                      .filter(d => d.code !== 'COMPETENCES_VIE') // إخفاء المهارات الحياتية هنا
+                      .map(d => (
+                        <SelectItem key={d.id} value={d.id}>
+                          {isAr ? d.libelle_ar : d.libelle_fr}
+                        </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {act.domaine_id === domaineAutreId && (
+                  <Input placeholder={isAr ? 'يرجى التحديد...' : 'Préciser...'} value={act.domaine_autre || ''} onChange={(e) => { updateAct(act.local_id, { domaine_autre: e.target.value }); if(onActivity) onActivity(); }} disabled={disabled} className="h-9 mt-2 text-xs bg-background" />
+                )}
+              </div>
+              <div className="md:col-span-3 space-y-1.5">
+                <Label className="text-xs">{isAr ? 'نوع النشاط' : 'Type d\'activité'}</Label>
+                <Input value={act.nom_activite} onChange={(e) => { updateAct(act.local_id, { nom_activite: e.target.value }); if(onActivity) onActivity(); }} disabled={disabled} className="h-9 bg-background text-xs" />
+              </div>
+              <div className="md:col-span-3 space-y-1.5">
+                <Label className="text-xs">{isAr ? 'الشركاء' : 'Partenaires'}</Label>
+                <Input value={act.partenaires || ''} onChange={(e) => { updateAct(act.local_id, { partenaires: e.target.value }); if(onActivity) onActivity(); }} disabled={disabled} className="h-9 bg-background text-xs" />
+              </div>
+              <div className="md:col-span-2">
+                <NumericField label={isAr ? 'المستفيدين' : 'Bénéficiaires'} value={act.nombre_beneficiaires} onChange={(v) => { updateAct(act.local_id, { nombre_beneficiaires: v }); if(onActivity) onActivity(); }} disabled={disabled} />
+              </div>
+              <div className="md:col-span-1 flex justify-end mt-6">
+                <Button type="button" size="icon" variant="ghost" onClick={() => { removeAct(act.local_id); if(onActivity) onActivity(); }} disabled={disabled} className="h-9 w-9 text-destructive hover:bg-destructive/10">
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          ))}
+          {globalActivites.length === 0 && <div className="text-center py-4 text-xs text-muted-foreground border border-dashed rounded-lg">{isAr ? 'لا توجد أنشطة إقليمية مسجلة' : 'Aucune activité globale'}</div>}
+        </div>
+      </Card>
+
+      {/* ========================================================================= */}
+      {/* SECTION GLOBALE 2 : التقارير الاستثنائية (الجدول 21) */}
+      {/* ========================================================================= */}
+      <Card className="p-5 sm:p-6 bg-card border-border shadow-sm border-t-4 border-t-destructive">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-border pb-4 mb-5">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-full bg-destructive/10 flex items-center justify-center">
+              <AlertTriangle className="h-5 w-5 text-destructive" />
+            </div>
+            <div>
+              <h2 className="text-lg font-bold">
+                {isAr ? 'التقارير الاستثنائية الإقليمية' : 'Rapports Exceptionnels Provinciaux'}
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                {isAr ? 'تقارير حول نقطة محددة عند الطلب' : 'Rapports ponctuels'}
+              </p>
+            </div>
+          </div>
+          <Button type="button" size="sm" variant="outline" onClick={handleAddGlobalIncident} disabled={disabled || refIncidents.length === 0} className="gap-1.5 border-destructive/50 text-destructive hover:bg-destructive/10">
+            <Plus className="h-4 w-4" />
+            {isAr ? 'إضافة تقرير' : 'Ajouter un incident'}
+          </Button>
+        </div>
+
+        <div className="space-y-3">
+          {incidents.map((inc) => (
+            <div key={inc.local_id} className="grid grid-cols-1 md:grid-cols-12 gap-3 border border-destructive/20 p-3 rounded-lg bg-destructive/5 items-start">
+              <div className="md:col-span-3 space-y-1.5">
+                <Label className="text-xs">{isAr ? 'نوع الحادث' : 'Type incident'}</Label>
+                <Select value={inc.type_incident_id} disabled={disabled} onValueChange={(v) => { updateIncident(inc.local_id, { type_incident_id: v }); if(onActivity) onActivity(); }}>
+                  <SelectTrigger className="h-9 bg-background text-xs"><SelectValue placeholder={isAr ? 'اختر...' : 'Choisir...'} /></SelectTrigger>
+                  <SelectContent>
+                    {refIncidents.map(r => <SelectItem key={r.id} value={r.id}>{isAr ? r.libelle_ar : r.libelle_fr}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                {inc.type_incident_id === incidentAutreId && (
+                  <Input placeholder={isAr ? 'يرجى التحديد...' : 'Préciser...'} value={inc.type_incident_autre || ''} onChange={(e) => { updateIncident(inc.local_id, { type_incident_autre: e.target.value }); if(onActivity) onActivity(); }} disabled={disabled} className="h-9 mt-2 text-xs bg-background" />
+                )}
+              </div>
+              <div className="md:col-span-4 space-y-1.5">
+                <Label className="text-xs">{isAr ? 'موضوع التقرير بالتفصيل' : 'Sujet détaillé'}</Label>
+                <Input value={inc.sujet_detaille} onChange={(e) => { updateIncident(inc.local_id, { sujet_detaille: e.target.value }); if(onActivity) onActivity(); }} disabled={disabled} className="h-9 bg-background text-xs" />
+              </div>
+              <div className="md:col-span-4 space-y-1.5">
+                <Label className="text-xs">{isAr ? 'ملاحظات وتدخلات' : 'Observations'}</Label>
+                <Input value={inc.observations || ''} onChange={(e) => { updateIncident(inc.local_id, { observations: e.target.value }); if(onActivity) onActivity(); }} disabled={disabled} className="h-9 bg-background text-xs" />
+              </div>
+              <div className="md:col-span-1 flex flex-col justify-between h-full">
+                <NumericField label={isAr ? 'العدد' : 'Cas'} value={inc.nombre_cas} onChange={(v) => { updateIncident(inc.local_id, { nombre_cas: v }); if(onActivity) onActivity(); }} disabled={disabled} />
+                <Button type="button" size="icon" variant="ghost" onClick={() => { removeIncident(inc.local_id); if(onActivity) onActivity(); }} disabled={disabled} className="h-9 w-9 text-destructive self-end mt-2">
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          ))}
+          {incidents.length === 0 && <div className="text-center py-4 text-xs text-muted-foreground border border-dashed border-destructive/30 rounded-lg">{isAr ? 'لا توجد تقارير مسجلة' : 'Aucun rapport enregistré'}</div>}
+        </div>
+      </Card>
+
+      {/* ========================================================================= */}
+      {/* SECTION CENTRES : أنشطة المراكز، مجلس الطفل، والهبات */}
+      {/* ========================================================================= */}
+      <Card className="p-5 sm:p-6 bg-card border-border shadow-sm">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-border pb-4">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+              <Building2 className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <h2 className="text-lg font-bold">
+                {isAr ? 'التنشيط داخل المراكز' : 'Animation dans les Centres'}
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                {isAr ? 'المهارات الحياتية، مجلس الطفل، والهبات' : 'Compétences de vie, conseil de l\'enfant, dons'}
+              </p>
+            </div>
+          </div>
+
+          <Button 
+            type="button" size="sm" onClick={handleAddCentre} 
+            disabled={disabled || loadingEtab || centers.length >= centresProtection.length} 
+            className="gap-1.5"
+          >
+            <Plus className="h-4 w-4" />
+            {isAr ? 'إضافة مركز' : 'Ajouter un centre'}
+          </Button>
+        </div>
+
+        {loadingEtab ? (
+          <div className="text-center py-10 text-sm text-muted-foreground">{isAr ? 'جاري التحميل...' : 'Chargement...'}</div>
+        ) : centers.length === 0 ? (
+          <div className="text-center py-10 text-sm text-muted-foreground border-2 border-dashed border-border rounded-lg bg-muted/5 mt-4">
+            {isAr ? 'لم يتم تسجيل أي مركز بعد. اضغط على "إضافة مركز" للبدء.' : 'Aucun centre enregistré.'}
+          </div>
+        ) : (
+          <div className="space-y-6 pt-6">
+            {centers.map((center, idx) => {
+              const availableEtabs = getAvailableEtablissements(center.etablissement_id);
+              const activitesDuCentre = getCenterActivites(center.etablissement_id);
+              const conseilsDuCentre = conseils.filter(c => c.etablissement_id === center.etablissement_id);
+              const donsDuCentre = dons.filter(d => d.etablissement_id === center.etablissement_id);
+
+              return (
+                <div key={center.local_id} className="border border-border rounded-lg p-5 bg-card space-y-8 shadow-sm">
+                  
+                  {/* HEADER DU CENTRE */}
+                  <div className="flex flex-col md:flex-row gap-4 items-start md:items-end border-b border-border pb-4">
+                    <div className="space-y-1.5 flex-1">
+                      <Label className="text-xs font-semibold">
+                        {isAr ? `اسم المركز #${idx + 1}` : `Nom du centre #${idx + 1}`}
+                      </Label>
+                      <Select value={center.etablissement_id} disabled={disabled} onValueChange={(v) => handleUpdateEtablissement(center.local_id, v)}>
+                        <SelectTrigger className="h-10 bg-muted/50 border-primary/30">
+                          <SelectValue placeholder={isAr ? 'اختر المركز...' : 'Choisir le centre...'} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {availableEtabs.length === 0 && !center.etablissement_id ? (
+                            <div className="p-2 text-sm text-muted-foreground text-center">
+                              {isAr ? 'تمت إضافة جميع المراكز' : 'Tous les centres sont ajoutés'}
+                            </div>
+                          ) : (
+                            centresProtection
+                              .filter(e => availableEtabs.some(a => a.id === e.id) || e.id === center.etablissement_id)
+                              .map(e => <SelectItem key={e.id} value={e.id}>{e.nom}</SelectItem>)
+                          )}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <Button type="button" variant="outline" onClick={() => handleRemoveCentre(center.local_id)} disabled={disabled} className="text-destructive border-destructive/30 hover:bg-destructive/10">
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      {isAr ? 'حذف المركز' : 'Supprimer'}
+                    </Button>
+                  </div>
+
+                  {center.etablissement_id ? (
+                    <div className="space-y-10 pt-2">
+                      
+                      {/* SECTION 1: برامج المهارات الحياتية */}
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                          <Label className="text-sm font-bold flex items-center gap-1.5 text-primary">
+                            <Palette className="h-4 w-4" />
+                            {isAr ? '1. برامج المهارات الحياتية' : '1. Programmes Compétences de vie'}
+                          </Label>
+                          <Button type="button" size="sm" variant="outline" onClick={() => handleAddCenterActivite(center.etablissement_id)} disabled={disabled || refDomaines.length === 0} className="h-8 gap-1 text-xs">
+                            <Plus className="h-3.5 w-3.5" /> {isAr ? 'إضافة برنامج' : 'Ajouter un programme'}
+                          </Button>
+                        </div>
+                        
+                        <div className="space-y-3">
+                          {activitesDuCentre.map((act) => (
+                            <div key={act.local_id} className="grid grid-cols-1 md:grid-cols-12 gap-3 border border-border p-3 rounded-lg bg-muted/5 items-start">
+                              <div className="md:col-span-3 space-y-1.5">
+                                <Label className="text-xs text-muted-foreground">{isAr ? 'المجال' : 'Domaine'}</Label>
+                                <Input value={isAr ? 'المهارات الحياتية' : 'Compétences de vie'} disabled={true} className="h-9 bg-muted text-xs" />
+                              </div>
+                              <div className="md:col-span-5 space-y-1.5">
+                                <Label className="text-xs">{isAr ? 'اسم البرنامج' : 'Nom du programme'}</Label>
+                                <Input value={act.nom_activite} onChange={(e) => { updateAct(act.local_id, { nom_activite: e.target.value }); if(onActivity) onActivity(); }} disabled={disabled} className="h-9 bg-background text-xs" />
+                              </div>
+                              <div className="md:col-span-3">
+                                <NumericField label={isAr ? 'المستفيدين' : 'Bénéficiaires'} value={act.nombre_beneficiaires} onChange={(v) => { updateAct(act.local_id, { nombre_beneficiaires: v }); if(onActivity) onActivity(); }} disabled={disabled} />
+                              </div>
+                              <div className="md:col-span-1 flex justify-end mt-6">
+                                <Button type="button" size="icon" variant="ghost" onClick={() => { removeAct(act.local_id); if(onActivity) onActivity(); }} disabled={disabled} className="h-9 w-9 text-destructive hover:bg-destructive/10">
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </div>
+                          ))}
+                          {activitesDuCentre.length === 0 && <div className="text-center py-4 text-xs text-muted-foreground border border-dashed rounded-lg">{isAr ? 'لا توجد برامج مسجلة' : 'Aucun programme'}</div>}
+                        </div>
+                      </div>
+
+                      {/* SECTION 2: مجلس الطفل */}
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                          <Label className="text-sm font-bold flex items-center gap-1.5 text-primary">
+                            <Mic className="h-4 w-4" />
+                            {isAr ? '2. دورات مجلس الطفل' : '2. Sessions du Conseil'}
+                          </Label>
+                          <Button type="button" size="sm" variant="outline" onClick={() => handleAddData(addConseil, center.etablissement_id, { nom_session: '', date_session: '' })} disabled={disabled} className="h-8 gap-1 text-xs">
+                            <Plus className="h-3.5 w-3.5" /> {isAr ? 'إضافة دورة' : 'Ajouter une session'}
+                          </Button>
+                        </div>
+                        
+                        <div className="space-y-3">
+                          {conseilsDuCentre.map((cons) => (
+                            <div key={cons.local_id} className="flex flex-col md:flex-row gap-3 border border-border p-3 rounded-lg bg-muted/5 items-center">
+                              <div className="flex-1 w-full space-y-1.5">
+                                <Label className="text-xs">{isAr ? 'اسم الدورة' : 'Nom de la session'}</Label>
+                                <Input value={cons.nom_session} onChange={(e) => { updateConseil(cons.local_id, { nom_session: e.target.value }); if(onActivity) onActivity(); }} disabled={disabled} className="h-9 bg-background text-xs" />
+                              </div>
+                              <div className="flex-1 w-full space-y-1.5">
+                                <Label className="text-xs">{isAr ? 'تاريخ الانعقاد' : 'Date de la session'}</Label>
+                                <Input type="date" value={cons.date_session} onChange={(e) => { updateConseil(cons.local_id, { date_session: e.target.value }); if(onActivity) onActivity(); }} disabled={disabled} className="h-9 bg-background text-xs" />
+                              </div>
+                              <Button type="button" size="icon" variant="ghost" onClick={() => { removeConseil(cons.local_id); if(onActivity) onActivity(); }} disabled={disabled} className="h-9 w-9 text-destructive mt-6 shrink-0">
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* SECTION 3: الهبات والمساعدات */}
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                          <Label className="text-sm font-bold flex items-center gap-1.5 text-primary">
+                            <Gift className="h-4 w-4" />
+                            {isAr ? '3. الهبات والمساعدات' : '3. Dons et Aides'}
+                          </Label>
+                          <Button type="button" size="sm" variant="outline" onClick={() => handleAddData(addDon, center.etablissement_id, { donateur: '', nature_don: '', date_reception: '', beneficiaires: 0, observations: '' })} disabled={disabled} className="h-8 gap-1 text-xs">
+                            <Plus className="h-3.5 w-3.5" /> {isAr ? 'إضافة هبة' : 'Ajouter un don'}
+                          </Button>
+                        </div>
+                        
+                        <div className="space-y-3">
+                          {donsDuCentre.map((don) => (
+                            <div key={don.local_id} className="grid grid-cols-1 md:grid-cols-12 gap-3 border border-border p-3 rounded-lg bg-muted/5 items-start">
+                              <div className="md:col-span-3 space-y-1.5">
+                                <Label className="text-xs">{isAr ? 'الجهة المانحة' : 'Donateur'}</Label>
+                                <Input value={don.donateur} onChange={(e) => { updateDon(don.local_id, { donateur: e.target.value }); if(onActivity) onActivity(); }} disabled={disabled} className="h-9 bg-background text-xs" />
+                              </div>
+                              <div className="md:col-span-3 space-y-1.5">
+                                <Label className="text-xs">{isAr ? 'نوع الهبة' : 'Nature du don'}</Label>
+                                <Input value={don.nature_don} onChange={(e) => { updateDon(don.local_id, { nature_don: e.target.value }); if(onActivity) onActivity(); }} disabled={disabled} className="h-9 bg-background text-xs" />
+                              </div>
+                              <div className="md:col-span-3 space-y-1.5">
+                                <Label className="text-xs">{isAr ? 'التاريخ' : 'Date'}</Label>
+                                <Input type="date" value={don.date_reception} onChange={(e) => { updateDon(don.local_id, { date_reception: e.target.value }); if(onActivity) onActivity(); }} disabled={disabled} className="h-9 bg-background text-xs" />
+                              </div>
+                              <div className="md:col-span-2">
+                                <NumericField label={isAr ? 'المستفيدين' : 'Bénéficiaires'} value={don.beneficiaires} onChange={(v) => { updateDon(don.local_id, { beneficiaires: v }); if(onActivity) onActivity(); }} disabled={disabled} />
+                              </div>
+                              <div className="md:col-span-1 flex justify-end mt-6">
+                                <Button type="button" size="icon" variant="ghost" onClick={() => { removeDon(don.local_id); if(onActivity) onActivity(); }} disabled={disabled} className="h-9 w-9 text-destructive hover:bg-destructive/10">
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                              
+                              {/* Ligne 2 : Observations */}
+                              <div className="md:col-span-12 space-y-1.5 pt-2 border-t border-border/50 mt-1">
+                                <Label className="text-xs">{isAr ? 'ملاحظات' : 'Observations'}</Label>
+                                <Input 
+                                  value={don.observations || ''} 
+                                  onChange={(e) => { updateDon(don.local_id, { observations: e.target.value }); if(onActivity) onActivity(); }} 
+                                  disabled={disabled} 
+                                  className="h-9 bg-background text-xs" 
+                                  placeholder={isAr ? 'أضف ملاحظات (اختياري)...' : 'Ajouter des observations (optionnel)...'}
+                                />
+                              </div>
+                            </div>
+                          ))}
+                          {donsDuCentre.length === 0 && <div className="text-center py-4 text-xs text-muted-foreground border border-dashed rounded-lg">{isAr ? 'لا توجد هبات مسجلة' : 'Aucun don enregistré'}</div>}
+                        </div>
+                      </div>
+
+                    </div>
+                  ) : (
+                    <div className="p-4 text-center text-sm text-muted-foreground bg-muted/10 rounded-lg border border-border/50">
+                      {isAr ? 'يرجى اختيار المركز لإظهار الاستمارات' : 'Veuillez sélectionner un centre'}
+                    </div>
+                  )}
+
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </Card>
+    </div>
+  );
+});
+
+Step2Animation.displayName = 'Step2Animation';

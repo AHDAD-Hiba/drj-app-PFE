@@ -11,7 +11,7 @@ import { StepComponentProps } from '@/config/wizard.types';
 
 // Import de nos hooks
 import { useAfCentresEcoute } from '@/hooks/AffairesFeminines/useAfCentresEcoute';
-import { useAfEtablissements } from '@/hooks/AffairesFeminines/useAfEtablissements';
+import { useAfEtablissements } from '@/hooks/common/useAfEtablissements';
 
 export const Step4Ecoute = memo(({ rapportId, disabled, onActivity }: StepComponentProps) => {
   const { i18n } = useTranslation();

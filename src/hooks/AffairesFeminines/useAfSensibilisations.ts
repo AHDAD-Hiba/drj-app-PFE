@@ -1,4 +1,4 @@
-import { useEntityEntries, BaseEntry } from './useEntityEntries';
+import { useEntityEntries, BaseEntry } from '../common/useEntityEntries';
 
 export interface AfSensibilisationEntry extends BaseEntry {
   type_activite_id: string;

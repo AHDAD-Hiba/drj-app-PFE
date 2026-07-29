@@ -20,6 +20,7 @@ export interface ReportSelection {
   quarter?: Quarter;
   domain: string; // Devient une chaîne générique
   rapportId?: string;
+  directionId?: string;
 }
 
 interface Props {
@@ -40,7 +41,7 @@ const QUARTERS: Quarter[] = ['t1', 't2', 't3', 't4'];
 
 export const PreFormSelection = ({ initial, onComplete }: Props) => {
   const { t, i18n } = useTranslation();
-  const { utilisateur } = useAuth();
+  const { utilisateur, isEquipeRegional } = useAuth();
   const { toast } = useToast();
   const isAr = i18n.language === 'ar';
   
@@ -65,6 +66,19 @@ export const PreFormSelection = ({ initial, onComplete }: Props) => {
     };
     prefetchDomainesBase();
   }, []);
+
+  // ==========================================
+ // MODE REVIEW : ouvrir directement l'étape 2
+// ==========================================
+useEffect(() => {
+  if (!initial.rapportId) return;
+
+  setRapportId(initial.rapportId);
+
+  loadDomaines(initial.rapportId);
+
+  setStage(2);
+}, [initial.rapportId]);
 
   // ==========================================
   // ETAPE 1 -> ETAPE 2 : Création/Chargement
@@ -177,6 +191,8 @@ export const PreFormSelection = ({ initial, onComplete }: Props) => {
   // CHARGEMENT DYNAMIQUE DES DOMAINES
   // ==========================================
   const loadDomaines = async (rId: string) => {
+
+    console.log("rapportId =", rId);
     const { data, error } = await supabase
       .from("suivi_remplissage")
       .select(`
@@ -185,27 +201,21 @@ export const PreFormSelection = ({ initial, onComplete }: Props) => {
       `)
       .eq("rapport_id", rId);
 
+      console.log("suivi_remplissage =", data);
+
     if (error) throw error;
 
-    const formattedDomaines: DomaineItem[] = (data || []).map((row: any) => ({
-      id: row.domaine.id,
-      code: row.domaine.code,
-      nom_fr: row.domaine.nom_fr,
-      nom_ar: row.domaine.nom_ar,
-      statut: row.statut,
-    }));
+    const formattedDomaines: DomaineItem[] = (data || []).map((row: any) => {
+    console.log("code from supabase =", row.domaine.code);
 
-    // 🛠️ INJECTION SÉCURISÉE : Si le domaine 'femme' manque dans suivi_remplissage pour ce vieux rapport
-    const hasFemme = formattedDomaines.some(d => d.code === 'femme');
-    if (!hasFemme) {
-      formattedDomaines.push({
-        id: '9b9cca95-74dd-42b7-afca-19a19e1e70c3', // L'UUID officiel déclaré dans ta BDD
-        code: 'femme',
-        nom_fr: 'Affaires Féminines',
-        nom_ar: 'الشؤون النسوية',
-        statut: 'NON_COMMENCE',
-      });
-    }
+  return {
+    id: row.domaine.id,
+    code: row.domaine.code.toLowerCase(),
+    nom_fr: row.domaine.nom_fr,
+    nom_ar: row.domaine.nom_ar,
+    statut: row.statut,
+  };
+});
 
     setDomaines(formattedDomaines);
 
@@ -240,6 +250,9 @@ export const PreFormSelection = ({ initial, onComplete }: Props) => {
 
   const handleOpenForm = () => {
     if (!rapportId || !sel.domain) return;
+
+    console.log("sel =", sel);
+    console.log("Before onComplete:", sel);
     onComplete({ ...sel, rapportId });
   };
 
@@ -413,10 +426,19 @@ export const PreFormSelection = ({ initial, onComplete }: Props) => {
           </div>
 
           <div className="flex flex-wrap items-center justify-between pt-4 mt-2 border-t border-border gap-4">
-            <Button variant="outline" onClick={() => setStage(1)} className="gap-1.5 h-10" disabled={loading}>
-              {isAr ? <ArrowRight className="h-4 w-4" /> : <ArrowLeft className="h-4 w-4" />}
-              {isAr ? 'السابق' : 'Précédent'}
-            </Button>
+            {!isEquipeRegional ? (
+          <Button
+            variant="outline"
+            onClick={() => setStage(1)}
+            className="gap-1.5 h-10"
+            disabled={loading}
+          >
+            {isAr ? <ArrowRight className="h-4 w-4" /> : <ArrowLeft className="h-4 w-4" />}
+            {isAr ? "السابق" : "Précédent"}
+          </Button>
+        ) : (
+          <div className="h-10 w-24" />
+        )}
             
             <div className="flex items-center gap-3">
               {canSubmitReport && (

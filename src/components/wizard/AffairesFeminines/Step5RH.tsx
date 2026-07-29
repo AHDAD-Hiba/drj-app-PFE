@@ -12,7 +12,7 @@ import { StepComponentProps } from '@/config/wizard.types';
 // Import de nos hooks
 import { useAfRessourcesHumaines } from '@/hooks/AffairesFeminines/useAfRessourcesHumaines';
 import { useAfFormationCadres } from '@/hooks/AffairesFeminines/useAfFormationCadres';
-import { useAfEtablissements } from '@/hooks/AffairesFeminines/useAfEtablissements';
+import { useAfEtablissements } from '@/hooks/common/useAfEtablissements';
 
 export const Step5RH = memo(({ rapportId, disabled, onActivity }: StepComponentProps) => {
   const { i18n } = useTranslation();

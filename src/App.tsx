@@ -44,6 +44,8 @@ const App = () => (
             <Route path="/carte"                 element={<ProtectedRoute><RegionMapPage /></ProtectedRoute>} />
             <Route path="/domain-dashboard"      element={<ProtectedRoute><DomainDashboard /></ProtectedRoute>} />
             <Route path="/saisie" element={<ProtectedRoute><Saisie /></ProtectedRoute>} />
+            <Route path="/saisie/:rapportId" element={<ProtectedRoute><Saisie /></ProtectedRoute>} />
+
             <Route path="*"                      element={<NotFound />} />
           </Routes>
         </AuthProvider>

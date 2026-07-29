@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useMemo, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/hooks/common/useAuth';
 import { AppLayout } from '@/components/AppLayout';
@@ -52,9 +52,12 @@ const ActiveWizard = ({
   // 2. On transmet ce trigger au système de complétude
   const completeness = domainConfig.useCompleteness(currentId, refreshTrigger);
 
+  console.log("ACTIVE WIZARD selection =", selection);
+console.log("ACTIVE WIZARD directionId =", selection.directionId);
+
   const domain = useDomainSubmission({
     rapportId: currentId,
-    directionId: profile?.direction_id ?? '',
+    directionId: selection.directionId ?? profile?.direction_id ?? '',
     domaineId: domainConfig.id,
     completeness,
   });
@@ -111,13 +114,18 @@ const ActiveWizard = ({
   }, []);
 
   const handleSaveDraft = async () => {
+
+    console.log("CLICK SAVE");
     try {
       const ok = await domain.saveNow();
+
+      console.log("RESULT =", ok);
       toast({
         title: ok ? t('form.save.draftSavedTitle') : t('form.save.draftErrorTitle'),
         variant: ok ? 'default' : 'destructive',
       });
     } catch (err) {
+      console.error(err);
       toast({ title: 'Erreur', variant: 'destructive' });
     }
   };
@@ -260,8 +268,17 @@ const ActiveWizard = ({
 const Saisie = () => {
   // 1. TOUS les hooks inconditionnels obligatoirement en haut
   const { t, i18n } = useTranslation();
-  const { utilisateur: profile, isPrefectoral: isDirector, loading: authLoading } = useAuth();
+  const { 
+    utilisateur: profile,
+    isPrefectoral: isDirector,
+    isEquipeRegional,
+    loading: authLoading
+} = useAuth();
   const { domaines } = useDomaines(); // ✅ Placé tout en haut pour fixer l'ordre des hooks
+  const [searchParams] = useSearchParams();
+
+  const reviewMode = searchParams.get("mode") === "review";
+  const rapportIdFromUrl = searchParams.get("rapport");
   const isAr = i18n.language === 'ar';
 
   const [selectionDone, setSelectionDone] = useState(false);
@@ -271,29 +288,90 @@ const Saisie = () => {
     domain: 'jeunesse',
   });
 
-  const currentId = selection.rapportId ?? null;
+  useEffect(() => {
+  if (!reviewMode || !rapportIdFromUrl) return;
+
+  const loadReport = async () => {
+    const { data: rapport } = await supabase
+      .from("rapports")
+      .select("id, annee, trimestre, direction_id")
+      .eq("id", rapportIdFromUrl)
+      .single();
+
+      console.log("rapport =", rapport);
+
+    if (!rapport) return;
+
+    console.log("RAPPORT =", rapport);
+    setSelection({
+      rapportId: rapport.id,
+      year: rapport.annee,
+      quarter: rapport.trimestre,
+      directionId: rapport.direction_id,
+      domain: "",
+   });
+
+   console.log("direction from report =", rapport.direction_id);
+
+    setSelectionDone(true);
+  };
+
+  loadReport();
+}, [reviewMode, rapportIdFromUrl]);
+
+  const currentId = rapportIdFromUrl ?? selection.rapportId ?? null;
+
+  console.log("selection =", selection);
 
   // Configuration mémorisée
   const domainConfig = useMemo(() => {
-    return selectionDone ? getDomainConfig(selection.domain) : null;
-  }, [selection.domain, selectionDone]);
+  if (!selectionDone) return null;
+  if (!selection.domain) return null;
+
+  return getDomainConfig(selection.domain);
+}, [selection.domain, selectionDone]);
 
   // 2. Les gardes de sécurité (Loading / Rôles)
   if (authLoading) {
     return <AppLayout><div className="h-32 bg-muted/50 rounded-xl animate-pulse" /></AppLayout>;
   }
 
-  if (!isDirector || !profile?.direction_id) {
-    return (
-      <AppLayout>
-        <Card className="p-8 text-center max-w-md mx-auto">
-          <ShieldAlert className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
-          <h2 className="font-bold text-lg">{t('form.forbidden.title')}</h2>
-          <p className="text-sm text-muted-foreground mt-2">{t('form.forbidden.body')}</p>
-        </Card>
-      </AppLayout>
-    );
-  }
+  console.log({
+  isDirector,
+  isEquipeRegional,
+  profile,
+  directionId: profile?.direction_id,
+});
+
+  // أي دور آخر ممنوع
+if (!isDirector && !isEquipeRegional) {
+  return (
+    <AppLayout>
+      <Card className="p-8 text-center max-w-md mx-auto">
+        <ShieldAlert className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
+        <h2 className="font-bold text-lg">{t('form.forbidden.title')}</h2>
+        <p className="text-sm text-muted-foreground mt-2">
+          {t('form.forbidden.body')}
+        </p>
+      </Card>
+    </AppLayout>
+  );
+}
+
+// المدير الإقليمي خاصو direction_id
+if (isDirector && !profile?.direction_id) {
+  return (
+    <AppLayout>
+      <Card className="p-8 text-center max-w-md mx-auto">
+        <ShieldAlert className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
+        <h2 className="font-bold text-lg">{t('form.forbidden.title')}</h2>
+        <p className="text-sm text-muted-foreground mt-2">
+          {t('form.forbidden.body')}
+        </p>
+      </Card>
+    </AppLayout>
+  );
+}
 
   const activeDomaineRow = domaines.find(d => d.code === selection.domain);
   const domainLabel = activeDomaineRow ? (isAr ? activeDomaineRow.nom_ar : activeDomaineRow.nom_fr) : selection.domain;
@@ -311,7 +389,13 @@ const Saisie = () => {
           </div>
           <PreFormSelection
             initial={selection}
-            onComplete={(sel) => { setSelection(sel); setSelectionDone(true); }}
+            onComplete={(sel) => {
+              setSelection(prev => ({
+                ...prev,
+                ...sel,
+              }));
+              setSelectionDone(true);
+            }}
           />
         </div>
       ) : (
