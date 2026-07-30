@@ -4,16 +4,14 @@ export interface AfAgrEntry extends BaseEntry {
   etablissement_id: string;
   nombre_beneficiaires: number;
   partenaires: string;
-  observations: string;
 }
 
 const buildPayload = (entry: AfAgrEntry, rId: string) => ({
   ...(entry.id ? { id: entry.id } : {}),
   rapport_id: rId,
   etablissement_id: entry.etablissement_id || null,
-  nombre_beneficiaires: entry.nombre_beneficiaires || 0,
-  partenaires: entry.partenaires || null,
-  observations: entry.observations || null,
+  nombre_beneficiaires: Number(entry.nombre_beneficiaires) || 0,
+  partenaires: entry.partenaires?.trim() || null,
 });
 
 const mapRowToEntry = (row: any, local_id: string): AfAgrEntry => ({
@@ -22,7 +20,6 @@ const mapRowToEntry = (row: any, local_id: string): AfAgrEntry => ({
   etablissement_id: row.etablissement_id ?? '',
   nombre_beneficiaires: row.nombre_beneficiaires ?? 0,
   partenaires: row.partenaires ?? '',
-  observations: row.observations ?? '',
 });
 
 export function useAfAgrs(rapportId: string | null) {
@@ -31,5 +28,7 @@ export function useAfAgrs(rapportId: string | null) {
     tableName: 'af_activites_generatrices_revenus',
     buildPayload,
     mapRowToEntry,
+    // 🛡️ Sauvegarde si un établissement ou partenaire est saisi
+    validateBeforeSave: (entry) => Boolean(entry.etablissement_id || entry.partenaires?.trim()),
   });
 }

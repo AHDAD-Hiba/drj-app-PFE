@@ -51,93 +51,119 @@ const normalizeStats = (stats: DbStatRow[] | DbStatRow | null | undefined): DbSt
 };
 
 export function useFestivalEntries(rapportId: string | null) {
+  // 🛡️ DÉCLARATION DES HOOKS AU SOMMET
   const [items, setItems] = useState<InternalFestivalEntry[]>([]);
   const [loading, setLoading] = useState(false);
+
   const itemsRef = useRef<InternalFestivalEntry[]>([]);
+  const saveTimersRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+  const savingEntriesRef = useRef<Set<string>>(new Set());
+  const pendingSaveRef = useRef<Set<string>>(new Set());
 
-  useEffect(() => {
-    itemsRef.current = items;
-  }, [items]);
-
+  // Mise à jour synchrone de itemsRef
+  const updateItems = useCallback((newItemsOrUpdater: React.SetStateAction<InternalFestivalEntry[]>) => {
+    setItems((prev) => {
+      const next = typeof newItemsOrUpdater === 'function' ? newItemsOrUpdater(prev) : newItemsOrUpdater;
+      itemsRef.current = next;
+      return next;
+    });
+  }, []);
 
   const updateLocal = useCallback(
-  (local_id: string, patch: Partial<FestivalEntry>) => {
-    setItems((prev) =>
-      prev.map((item) =>
-        item.local_id === local_id
-          ? { ...item, ...patch }
-          : item
-      )
-    );
-  },
-  [],
-);
-
-  const savingEntriesRef = useRef<Set<string>>(new Set());
+    (local_id: string, patch: Partial<FestivalEntry>) => {
+      updateItems((prev) =>
+        prev.map((item) => (item.local_id === local_id ? { ...item, ...patch } : item))
+      );
+    },
+    [updateItems]
+  );
 
   const saveEntry = useCallback(
-  async (local_id: string): Promise<boolean> => {
-    if (savingEntriesRef.current.has(local_id)) {
-      return true;
-    }
+    async (local_id: string): Promise<boolean> => {
+      if (savingEntriesRef.current.has(local_id)) {
+        pendingSaveRef.current.add(local_id);
+        return true;
+      }
 
-savingEntriesRef.current.add(local_id);
-    const existing = itemsRef.current.find((item) => item.local_id === local_id);
-    if (!existing) {
-      return false;
-    }
+      savingEntriesRef.current.add(local_id);
+      const existing = itemsRef.current.find((item) => item.local_id === local_id);
 
-    const updatedEntry = existing;
-    
-    try {
-      const festivalPayload = {
-        ...(existing.id ? { id: existing.id } : {}),
-        rapport_id: rapportId,
-        nom: updatedEntry.name.trim(),
-      };
+      if (!existing || !rapportId) {
+        savingEntriesRef.current.delete(local_id);
+        return false;
+      }
 
-      const { data: festivalData, error: festivalError } = await supabase
-        .from('festivals')
-        .upsert(festivalPayload as any, { onConflict: existing.id ? 'id' : 'rapport_id,nom' })
-        .select('id')
-        .single();
-      if (festivalError) throw festivalError;
+      const updatedEntry = existing;
+      const nomClean = updatedEntry.name?.trim() ?? '';
 
-      const statsFields = {
-        ...(existing.statistiques_id ? { id: existing.statistiques_id } : {}),
-        festival_id: festivalData.id,
-        nbr_participants_qualifies: updatedEntry.participants_qualifies,
-        nbr_provinces_participantes: updatedEntry.provinces_participantes,
-        nbr_rural: updatedEntry.rural,
-        nbr_urbain: updatedEntry.urbain,
-        nombre_femmes: updatedEntry.femmes,
-        nombre_hommes: updatedEntry.hommes,
-      };
-      const { data: statsData, error: statsError } = await supabase
-        .from('statistiques_festivals')
-        .upsert(statsFields as any, { onConflict: existing.statistiques_id ? 'id' : 'festival_id' })
-        .select('id')
-        .single();
-      if (statsError) throw statsError;
+      // 🛡️ NE PAS ENVOYER EN BDD SI LE NOM EST VIDE
+      if (!nomClean) {
+        savingEntriesRef.current.delete(local_id);
+        return true;
+      }
 
-      setItems((prev) => prev.map((item) =>
-        item.local_id === local_id ? { ...item, id: festivalData.id, statistiques_id: statsData.id } : item,
-      ));
+      try {
+        const festivalPayload = {
+          ...(existing.id ? { id: existing.id } : {}),
+          rapport_id: rapportId,
+          nom: nomClean,
+        };
 
-      return true;
-    } catch (error) {
-      console.error('[useFestivalEntries] update unexpected error:', error);
-      return false;
-    } finally {
-      savingEntriesRef.current.delete(local_id);
-    }
-},
-[rapportId],
-);
+        const { data: festivalData, error: festivalError } = await supabase
+          .from('festivals')
+          .upsert(festivalPayload as any, { onConflict: existing.id ? 'id' : 'rapport_id,nom' })
+          .select('id')
+          .single();
+
+        if (festivalError) throw festivalError;
+
+        const statsFields = {
+          ...(existing.statistiques_id ? { id: existing.statistiques_id } : {}),
+          festival_id: festivalData.id,
+          nbr_participants_qualifies: Number(updatedEntry.participants_qualifies) || 0,
+          nbr_provinces_participantes: Number(updatedEntry.provinces_participantes) || 0,
+          nbr_rural: Number(updatedEntry.rural) || 0,
+          nbr_urbain: Number(updatedEntry.urbain) || 0,
+          nombre_femmes: Number(updatedEntry.femmes) || 0,
+          nombre_hommes: Number(updatedEntry.hommes) || 0,
+        };
+
+        const { data: statsData, error: statsError } = await supabase
+          .from('statistiques_festivals')
+          .upsert(statsFields as any, { onConflict: existing.statistiques_id ? 'id' : 'festival_id' })
+          .select('id')
+          .single();
+
+        if (statsError) throw statsError;
+
+        updateItems((prev) =>
+          prev.map((item) =>
+            item.local_id === local_id
+              ? { ...item, id: festivalData.id, statistiques_id: statsData.id }
+              : item
+          )
+        );
+
+        return true;
+      } catch (error) {
+        console.error('[useFestivalEntries] update error:', error);
+        return false;
+      } finally {
+        savingEntriesRef.current.delete(local_id);
+        if (pendingSaveRef.current.has(local_id)) {
+          pendingSaveRef.current.delete(local_id);
+          setTimeout(() => {
+            void saveEntry(local_id);
+          }, 50);
+        }
+      }
+    },
+    [rapportId, updateItems]
+  );
 
   const reload = useCallback(async (): Promise<InternalFestivalEntry[]> => {
     if (!rapportId) {
-      setItems([]);
+      updateItems([]);
       return [];
     }
 
@@ -152,7 +178,6 @@ savingEntriesRef.current.add(local_id);
 
       if (error) {
         console.error('[useFestivalEntries] reload error:', error);
-        setItems([]);
         return [];
       }
 
@@ -160,52 +185,61 @@ savingEntriesRef.current.add(local_id);
       const localIdById = new Map(
         itemsRef.current
           .filter((item): item is InternalFestivalEntry & { id: string } => Boolean(item.id))
-          .map((item) => [item.id as string, item.local_id] as const),
+          .map((item) => [item.id as string, item.local_id] as const)
       );
 
       const normalized = rows.map((row) =>
         toFestivalEntry(
           row,
           normalizeStats(row.statistiques_festivals),
-          localIdById.get(row.id) ?? crypto.randomUUID(),
-        ),
+          localIdById.get(row.id) ?? crypto.randomUUID()
+        )
       );
 
-      setItems(normalized);
+      updateItems((prev) => {
+        const normalizedByLocalId = new Map(normalized.map((item) => [item.local_id, item] as const));
+        const merged = normalized.map((serverItem) => {
+          const currentItem = prev.find((item) => item.local_id === serverItem.local_id);
+          const hasPendingLocalChange =
+            Boolean(saveTimersRef.current[serverItem.local_id]) ||
+            savingEntriesRef.current.has(serverItem.local_id) ||
+            pendingSaveRef.current.has(serverItem.local_id);
+
+          return currentItem && hasPendingLocalChange ? currentItem : serverItem;
+        });
+        const unsavedLocalItems = prev.filter((item) => !item.id && !normalizedByLocalId.has(item.local_id));
+        return [...merged, ...unsavedLocalItems];
+      });
       return normalized;
+    } catch (e) {
+      console.error('[useFestivalEntries] unexpected reload error:', e);
+      return [];
     } finally {
       setLoading(false);
     }
-  }, [rapportId]);
+  }, [rapportId, updateItems]);
 
   useEffect(() => {
     let cancelled = false;
 
     if (!rapportId) {
-      setItems([]);
+      updateItems([]);
       setLoading(false);
       return;
     }
 
-    setLoading(true);
     (async () => {
-      try {
-        if (!cancelled) await reload();
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
+      if (!cancelled) await reload();
     })();
 
     return () => {
       cancelled = true;
     };
-  }, [rapportId, reload]);
+  }, [rapportId, reload, updateItems]);
 
   const add = useCallback(
     async (entry: FestivalEntryDraft): Promise<boolean> => {
-      if (!rapportId) {
-        return false;
-      }
+      if (!rapportId) return false;
 
       const local_id = entry.local_id ?? crypto.randomUUID();
       const optimisticItem: InternalFestivalEntry = {
@@ -220,83 +254,57 @@ savingEntriesRef.current.add(local_id);
         hommes: entry.hommes ?? 0,
       };
 
-      setItems((prev) => [...prev, optimisticItem]);
+      updateItems((prev) => [...prev, optimisticItem]);
       return true;
     },
-    [rapportId],
+    [rapportId, updateItems]
   );
-  
-  const saveTimersRef = useRef<
-  Record<string, ReturnType<typeof setTimeout>>
->({});
 
-const update = useCallback(
-  async (
-    local_id: string,
-    patch: Partial<FestivalEntry>,
-  ): Promise<boolean> => {
+  const update = useCallback(
+    async (local_id: string, patch: Partial<FestivalEntry>): Promise<boolean> => {
+      updateLocal(local_id, patch);
 
-    console.log('UPDATE PATCH', patch);
-    updateLocal(local_id, patch);
+      if (saveTimersRef.current[local_id]) {
+        clearTimeout(saveTimersRef.current[local_id]);
+      }
 
-    if (saveTimersRef.current[local_id]) {
-      clearTimeout(saveTimersRef.current[local_id]);
-    }
+      saveTimersRef.current[local_id] = setTimeout(() => {
+        delete saveTimersRef.current[local_id];
+        void saveEntry(local_id);
+      }, 1200);
 
-    saveTimersRef.current[local_id] = setTimeout(() => {
-      delete saveTimersRef.current[local_id];
-      void saveEntry(local_id);
-    }, 1500);
+      return true;
+    },
+    [updateLocal, saveEntry]
+  );
 
-    return true;
-  },
-  [updateLocal, saveEntry],
-);
   const remove = useCallback(
     async (local_id: string): Promise<boolean> => {
       const existing = itemsRef.current.find((item) => item.local_id === local_id);
-      if (!existing) {
-        return false;
-      }
+      if (!existing) return false;
 
-      const previousItems = itemsRef.current;
-      setItems((prev) => prev.filter((item) => item.local_id !== local_id));
+      updateItems((prev) => prev.filter((item) => item.local_id !== local_id));
 
-      if (!existing.id) {
-        return true;
-      }
+      if (!existing.id) return true;
 
       try {
-        const { error: statsDeleteError } = await supabase
+        await supabase
           .from('statistiques_festivals')
           .delete()
           .eq('festival_id', existing.id);
 
-        if (statsDeleteError) {
-          console.error('[useFestivalEntries] remove stats error:', statsDeleteError);
-          setItems(previousItems);
-          return false;
-        }
-
-        const { error: festivalDeleteError } = await supabase
+        await supabase
           .from('festivals')
           .delete()
           .eq('id', existing.id);
 
-        if (festivalDeleteError) {
-          console.error('[useFestivalEntries] remove festival error:', festivalDeleteError);
-          setItems(previousItems);
-          return false;
-        }
-
         return true;
       } catch (error) {
-        console.error('[useFestivalEntries] remove unexpected error:', error);
-        setItems(previousItems);
+        console.error('[useFestivalEntries] remove error:', error);
         return false;
       }
     },
-    [],
+    [updateItems]
   );
 
   return {

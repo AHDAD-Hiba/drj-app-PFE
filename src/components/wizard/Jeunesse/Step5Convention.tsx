@@ -8,22 +8,12 @@ import {
 } from '@/components/ui/select';
 import { Plus, Trash2, Handshake } from 'lucide-react';
 import { NumericField } from '@/components/form/NumericField';
-import { Input } from '@/components/ui/input';
+import { SafeInput } from '@/components/form/SafeInput';
 
-// NOUVEAUX IMPORTS POUR L'AUTONOMIE
 import { StepComponentProps } from '@/config/wizard.types';
-import { usePartenariatEntries } from '@/hooks/Jeunesse/usePartenariatEntries';
+import { usePartenariatEntries, PartenariatEntry } from '@/hooks/Jeunesse/usePartenariatEntries';
 import { useTypesPartenaires } from '@/hooks/Jeunesse/useTypesPartenaires';
 
-export interface PartenariatEntry {
-  local_id: string;
-  id?: string;
-  type_partenaire_id: string;
-  nombre_conventions: number;
-  autre_partenaire?: string;
-}
-
-// UTILISATION DE L'INTERFACE GÉNÉRIQUE DE NOTRE CONTRAT
 export const Step5Convention = memo(({
   rapportId,
   disabled,
@@ -32,14 +22,12 @@ export const Step5Convention = memo(({
   const { i18n } = useTranslation();
   const isAr = i18n.language === 'ar';
 
-  // 1. Appel autonome des hooks métiers
   const partenaires = usePartenariatEntries(rapportId);
   const typesPartenaires = useTypesPartenaires();
 
   const items = partenaires.items;
   const partnerTypes = typesPartenaires.items;
 
-  // 2. Actions encapsulées avec support de la sauvegarde auto
   const handleAdd = async () => {
     if (onActivity) await onActivity();
     void partenaires.add({
@@ -145,12 +133,12 @@ export const Step5Convention = memo(({
                       <Label className="text-xs">
                         {isAr ? 'تحديد الشريك' : 'Préciser le partenaire'}
                       </Label>
-                      <Input
+                      <SafeInput
                         value={item.autre_partenaire ?? ''}
                         disabled={disabled}
-                        onChange={(e) =>
+                        onValueChange={(val) =>
                           handleUpdate(item.local_id, {
-                            autre_partenaire: e.target.value,
+                            autre_partenaire: val,
                           })
                         }
                       />

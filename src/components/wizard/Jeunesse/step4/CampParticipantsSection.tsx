@@ -10,7 +10,7 @@ import { NumericField } from '@/components/form/NumericField';
 import { useProgrammesCamping } from '@/hooks/Jeunesse/useProgrammesCamping';
 import { useNiveauxFormation } from '@/hooks/Jeunesse/useNiveauxFormation';
 import type { CampEntry } from '@/hooks/Jeunesse/useCampingEntries';
-import { Input } from '@/components/ui/input';
+import { SafeInput } from '@/components/form/SafeInput';
 
 interface CampParticipantsSectionProps {
   camps: CampEntry[];
@@ -143,7 +143,7 @@ export const CampParticipantsSection = ({
                           {isAr ? 'تحديد نوع المخيم' : 'Préciser le type'}
                         </Label>
 
-                        <Input
+                        <SafeInput
                           value={c.autre_programme ?? ''}
                           onChange={(e) =>
                             onUpdateCamp(c.local_id, {
@@ -359,7 +359,7 @@ export const CampParticipantsSection = ({
                                   : 'Préciser le niveau'}
                               </Label>
 
-                              <Input
+                              <SafeInput
                                 value={enc.autre_niveau_formation ?? ''}
                                 onChange={(e) =>
                                   onUpdateCamp(c.local_id, {

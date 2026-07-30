@@ -9,16 +9,15 @@ export interface AfPortesOuvertesEntry extends BaseEntry {
   evaluation: string;
 }
 
-// Fonctions sorties du hook pour la stabilité
 const buildPayload = (entry: AfPortesOuvertesEntry, rId: string) => ({
   ...(entry.id ? { id: entry.id } : {}),
   rapport_id: rId,
   etablissement_id: entry.etablissement_id || null,
   type_activite_id: entry.type_activite_id || null,
-  contenu_activite: entry.contenu_activite || null,
-  nombre_beneficiaires: entry.nombre_beneficiaires || 0,
-  partenaires: entry.partenaires || null,
-  evaluation: entry.evaluation || null,
+  contenu_activite: entry.contenu_activite?.trim() || null,
+  nombre_beneficiaires: Number(entry.nombre_beneficiaires) || 0,
+  partenaires: entry.partenaires?.trim() || null,
+  evaluation: entry.evaluation?.trim() || null,
 });
 
 const mapRowToEntry = (row: any, local_id: string): AfPortesOuvertesEntry => ({
@@ -38,5 +37,7 @@ export function useAfPortesOuvertes(rapportId: string | null) {
     tableName: 'af_portes_ouvertes',
     buildPayload,
     mapRowToEntry,
+    // 🛡️ Valide si un établissement ou du contenu est spécifié
+    validateBeforeSave: (entry) => Boolean(entry.etablissement_id || entry.contenu_activite?.trim()),
   });
 }

@@ -11,11 +11,11 @@ export interface AfSuiviPartenariatEntry extends BaseEntry {
 const buildPayload = (entry: AfSuiviPartenariatEntry, rId: string) => ({
   ...(entry.id ? { id: entry.id } : {}),
   rapport_id: rId,
-  partenaires: entry.partenaires || null,
-  sujet_partenariat: entry.sujet_partenariat || null,
-  evaluation: entry.evaluation || null,
-  obstacles: entry.obstacles || null,
-  solutions_proposees: entry.solutions_proposees || null,
+  partenaires: entry.partenaires?.trim() || null,
+  sujet_partenariat: entry.sujet_partenariat?.trim() || null,
+  evaluation: entry.evaluation?.trim() || null,
+  obstacles: entry.obstacles?.trim() || null,
+  solutions_proposees: entry.solutions_proposees?.trim() || null,
 });
 
 const mapRowToEntry = (row: any, local_id: string): AfSuiviPartenariatEntry => ({
@@ -34,5 +34,8 @@ export function useAfSuiviPartenariats(rapportId: string | null) {
     tableName: 'af_suivi_partenariats',
     buildPayload,
     mapRowToEntry,
+    // 🛡️ Garde-fou : Ne déclenche l'upsert BDD que si le nom du partenaire ou le sujet est renseigné
+    validateBeforeSave: (entry) =>
+      Boolean(entry.partenaires?.trim() || entry.sujet_partenariat?.trim()),
   });
 }

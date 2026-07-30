@@ -146,6 +146,17 @@
     "directorTitle": "Directeur",
     "export": "Export Excel"
   },
+  "etablissements": {
+    "types": {
+      "maison_jeunes": "Maison de Jeunes",
+      "club_feminin": "Club Féminin",
+      "centre_socio_sportif": "Centre Socio-Sportif",
+      "ofppt": "OFPPT",
+      "direction_regional": "Direction Régionale",
+      "centre_protection_enfance": "Centre de Protection de l'Enfance",
+      "creche_publique": "Crèche Publique"
+    }
+  },
   "loadingIndicators": "Chargement des indicateurs...",
   "prefDomainDashboard": {
     "keyIndicators": "Indicateurs clés",

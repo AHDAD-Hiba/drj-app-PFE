@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
+import { SafeInput } from '@/components/form/SafeInput';
 import { Plus, Trash2 } from 'lucide-react';
 import { NumericField } from '@/components/form/NumericField';
 import type { FormationEntry } from '@/hooks/Jeunesse/useFormationEntries';
@@ -84,6 +84,7 @@ export const FormationsSection = ({
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <NumericField
                     label={isAr ? 'رقم الدورة' : 'Numéro de session'}
@@ -97,18 +98,20 @@ export const FormationsSection = ({
                     <Label className="text-xs">
                       {isAr ? 'المركز' : 'Centre'}
                     </Label>
-                    <Input
+                    <SafeInput
                       value={fr.centre}
                       className="h-9"
                       disabled={disabled}
-                      onChange={(e) =>
+                      placeholder={isAr ? 'اسم المركز...' : 'Nom du centre...'}
+                      onValueChange={(val) =>
                         onUpdate(fr.local_id, {
-                          centre: e.target.value.slice(0, 200),
+                          centre: val.slice(0, 200),
                         })
                       }
                     />
                   </div>
                 </div>
+
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   <NumericField
                     label={isAr ? 'مستفيدات (فتيات)' : 'Bénéficiaires (Filles)'}

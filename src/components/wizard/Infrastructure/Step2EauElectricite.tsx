@@ -12,33 +12,20 @@ import { useAfEtablissements } from '@/hooks/common/useAfEtablissements';
 import { useAuth } from '@/hooks/common/useAuth';
 import { useInfraEauElectricite } from '@/hooks/Infrastructure/useInfraEauElectricite';
 
-// Fonction locale de formatage
-const formatTypeEtablissement = (val: string, isAr: boolean) => {
-  switch (val) {
-    case 'maison_jeunes': return isAr ? 'دار الشباب' : 'Maison de Jeunes';
-    case 'club_feminin': return isAr ? 'نادي نسوي' : 'Club Féminin';
-    case 'centre_socio_sportif': return isAr ? 'مركز سوسيو-رياضي' : 'Centre Socio-Sportif';
-    case 'ofppt': return isAr ? 'مركز التكوين المهني' : 'OFPPT';
-    case 'direction_regional': return isAr ? 'المديرية الجهوية' : 'Direction Régionale';
-    default: return val;
-  }
-};
-
 export const Step2EauElectricite = memo(({ disabled, onActivity, rapportId }: StepComponentProps & { rapportId?: string | null }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isAr = i18n.language === 'ar';
 
   const { utilisateur } = useAuth();
   const directionId = utilisateur?.direction_id;
   
-  // 🚀 Récupération dynamique (inclut typesDisponibles)
   const { items: etablissements, typesDisponibles, loading: loadingEtab } = useAfEtablissements(directionId);
-
   const { items, add: addEntry, remove: removeEntry, update: updateEntry, loading } = useInfraEauElectricite(rapportId || null);
 
   const handleAdd = () => {
-    void addEntry({
+    addEntry({
       local_id: crypto.randomUUID(),
+      id: undefined as any,
       type_filtre: '',
       etablissement_id: '',
       arrieres_eau: 0,
@@ -46,17 +33,17 @@ export const Step2EauElectricite = memo(({ disabled, onActivity, rapportId }: St
       consommation_eau: 0,
       consommation_electricite: 0,
     });
-    if (onActivity) onActivity();
+    if (onActivity) void onActivity();
   };
 
   const handleRemove = (local_id: string) => {
     void removeEntry(local_id);
-    if (onActivity) onActivity();
+    if (onActivity) void onActivity();
   };
 
   const handleUpdate = (local_id: string, patch: Partial<any>) => {
     void updateEntry(local_id, patch);
-    if (onActivity) onActivity();
+    if (onActivity) void onActivity();
   };
 
   return (
@@ -119,6 +106,7 @@ export const Step2EauElectricite = memo(({ disabled, onActivity, rapportId }: St
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Type d'établissement */}
                     <div className="space-y-1.5">
                       <Label className="text-xs font-semibold">{isAr ? 'نوع المؤسسة' : "Type d'établissement"}</Label>
                       <Select 
@@ -130,31 +118,32 @@ export const Step2EauElectricite = memo(({ disabled, onActivity, rapportId }: St
                           <SelectValue placeholder={isAr ? 'اختر نوع المؤسسة' : 'Choisir le type'} />
                         </SelectTrigger>
                         <SelectContent>
-                          {/* 💡 MAP SUR TYPES DISPONIBLES */}
                           {typesDisponibles.map((typeVal) => (
                             <SelectItem key={typeVal} value={typeVal}>
-                              {formatTypeEtablissement(typeVal, isAr)}
+                              {/* 💡 Traduction dynamique depuis i18n avec fallback */}
+                              {t(`etablissements.types.${typeVal}`, { defaultValue: typeVal })}
                             </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                     </div>
 
+                    {/* Nom de l'établissement */}
                     <div className="space-y-1.5">
-                      <Label className="text-xs font-semibold">{isAr ? 'اسم المؤسسة' : 'Nom de l\'établissement'}</Label>
+                      <Label className="text-xs font-semibold">{isAr ? 'اسم المؤسسة' : "Nom de l'établissement"}</Label>
                       <Select 
                         value={item.etablissement_id} 
                         disabled={disabled || loadingEtab || !typeFiltreActuel}
                         onValueChange={(v) => handleUpdate(item.local_id, { etablissement_id: v })}
                       >
                         <SelectTrigger className="h-10 bg-background">
-                          <SelectValue placeholder={isAr ? 'اختر المؤسسة' : 'Choisir l\'établissement'} />
+                          <SelectValue placeholder={isAr ? 'اختر المؤسسة' : "Choisir l'établissement"} />
                         </SelectTrigger>
                         <SelectContent>
                           {filteredEtablissements.length === 0 ? (
                             <div className="p-2 text-sm text-muted-foreground text-center">
                               {!typeFiltreActuel 
-                                ? (isAr ? 'اختر نوع المؤسسة أولاً' : 'Choisir d\'abord un type')
+                                ? (isAr ? 'اختر نوع المؤسسة أولاً' : "Choisir d'abord un type")
                                 : (isAr ? 'لا توجد مؤسسات من هذا النوع' : 'Aucun établissement')}
                             </div>
                           ) : (
@@ -169,7 +158,7 @@ export const Step2EauElectricite = memo(({ disabled, onActivity, rapportId }: St
                     </div>
                   </div>
 
-                  {/* Ligne 2 : Arriérés */}
+                  {/* Arriérés */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-border/50 pt-4">
                     <div className="space-y-1.5">
                       <NumericField 
@@ -189,7 +178,7 @@ export const Step2EauElectricite = memo(({ disabled, onActivity, rapportId }: St
                     </div>
                   </div>
 
-                  {/* Ligne 3 : Consommation */}
+                  {/* Consommation */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-border/50 pt-4">
                     <div className="space-y-1.5">
                       <NumericField 

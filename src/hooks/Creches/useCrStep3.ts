@@ -18,7 +18,7 @@ const buildStatsPayload = (entry: CrStatistiquesEnfantsEntry, rId: string) => ({
   filles: Number(entry.filles) || 0,
   urbain: Number(entry.urbain) || 0,
   rural: Number(entry.rural) || 0,
-  observations: entry.observations || '',
+  observations: entry.observations?.trim() || '',
 });
 
 const mapStatsRow = (row: any, local_id: string): CrStatistiquesEnfantsEntry => ({
@@ -55,12 +55,12 @@ export interface CrActivitesEnfantsEntry extends BaseEntry {
 const buildActivitePayload = (entry: CrActivitesEnfantsEntry, rId: string) => ({
   ...(entry.id ? { id: entry.id } : {}),
   rapport_id: rId,
-  nom_activite: entry.nom_activite || '',
+  nom_activite: entry.nom_activite?.trim() || '',
   garcons: Number(entry.garcons) || 0,
   filles: Number(entry.filles) || 0,
   urbain: Number(entry.urbain) || 0,
   rural: Number(entry.rural) || 0,
-  observations: entry.observations || '',
+  observations: entry.observations?.trim() || '',
 });
 
 const mapActiviteRow = (row: any, local_id: string): CrActivitesEnfantsEntry => ({
@@ -80,6 +80,8 @@ export function useCrActivitesEnfants(rapportId: string | null) {
     tableName: 'cr_activites_enfants',
     buildPayload: buildActivitePayload,
     mapRowToEntry: mapActiviteRow,
+    // 🛡️ Garde-fou : Ne tente de sauvegarde que si le nom de l'activité est renseigné
+    validateBeforeSave: (entry) => Boolean(entry.nom_activite?.trim()),
   });
 }
 
@@ -98,10 +100,10 @@ const buildFormationPayload = (entry: CrFormationsCadresEntry, rId: string) => (
   ...(entry.id ? { id: entry.id } : {}),
   rapport_id: rId,
   nombre_cadres: Number(entry.nombre_cadres) || 0,
-  domaine_formation: entry.domaine_formation || '',
+  domaine_formation: entry.domaine_formation?.trim() || '',
   duree_valeur: Number(entry.duree_valeur) || 1,
   duree_unite: entry.duree_unite || 'jour',
-  observations: entry.observations || '',
+  observations: entry.observations?.trim() || '',
 });
 
 const mapFormationRow = (row: any, local_id: string): CrFormationsCadresEntry => ({
@@ -120,5 +122,7 @@ export function useCrFormationsCadres(rapportId: string | null) {
     tableName: 'cr_formations_cadres',
     buildPayload: buildFormationPayload,
     mapRowToEntry: mapFormationRow,
+    // 🛡️ Garde-fou : Ne sauvegarde que si le domaine de formation est spécifié
+    validateBeforeSave: (entry) => Boolean(entry.domaine_formation?.trim()),
   });
 }

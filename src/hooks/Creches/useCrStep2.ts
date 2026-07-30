@@ -16,7 +16,7 @@ const buildStatsPayload = (entry: CrStatsInfraEntry, rId: string) => ({
   nombre_creches_creees: Number(entry.nombre_creches_creees) || 0,
   nombre_creches_qualifiees: Number(entry.nombre_creches_qualifiees) || 0,
   nombre_creches_equipees: Number(entry.nombre_creches_equipees) || 0,
-  observations: entry.observations || '',
+  observations: entry.observations?.trim() || '',
 });
 
 const mapStatsRow = (row: any, local_id: string): CrStatsInfraEntry => ({
@@ -54,8 +54,8 @@ const buildMouvementPayload = (entry: CrMouvementFermetureEntry, rId: string) =>
   type_mouvement: entry.type_mouvement || 'fermeture',
   nombre_creches: Number(entry.nombre_creches) || 1,
   secteur: entry.secteur || 'prive',
-  raisons: entry.raisons || '',
-  observations: entry.observations || '',
+  raisons: entry.raisons?.trim() || '',
+  observations: entry.observations?.trim() || '',
 });
 
 const mapMouvementRow = (row: any, local_id: string): CrMouvementFermetureEntry => ({
@@ -74,6 +74,8 @@ export function useCrMouvementsFermetures(rapportId: string | null) {
     tableName: 'cr_mouvements_fermetures',
     buildPayload: buildMouvementPayload,
     mapRowToEntry: mapMouvementRow,
+    // 🛡️ Garde-fou : N'enregistre que si le type de mouvement et le secteur sont définis
+    validateBeforeSave: (entry) => Boolean(entry.type_mouvement && entry.secteur),
   });
 }
 
@@ -91,12 +93,14 @@ export interface CrPartenariatEntry extends BaseEntry {
 const buildPartenariatPayload = (entry: CrPartenariatEntry, rId: string) => ({
   ...(entry.id ? { id: entry.id } : {}),
   rapport_id: rId,
-  partenaire: entry.partenaire || '',
+  partenaire: entry.partenaire?.trim() || '',
   nombre_conventions: Number(entry.nombre_conventions) || 1,
-  objectif: entry.objectif || null,
-  // Envoi de null si vide pour éviter l'erreur sur le type ENUM
-  evaluation_engagement: entry.evaluation_engagement && entry.evaluation_engagement.trim() !== '' ? entry.evaluation_engagement : null,
-  observations: entry.observations || '',
+  objectif: entry.objectif?.trim() || null,
+  evaluation_engagement:
+    entry.evaluation_engagement && entry.evaluation_engagement.trim() !== ''
+      ? entry.evaluation_engagement
+      : null,
+  observations: entry.observations?.trim() || '',
 });
 
 const mapPartenariatRow = (row: any, local_id: string): CrPartenariatEntry => ({
@@ -115,6 +119,8 @@ export function useCrPartenariats(rapportId: string | null) {
     tableName: 'cr_partenariats_conventions',
     buildPayload: buildPartenariatPayload,
     mapRowToEntry: mapPartenariatRow,
+    // 🛡️ Garde-fou : Ne tente d'upsert que si le nom du partenaire est renseigné
+    validateBeforeSave: (entry) => Boolean(entry.partenaire?.trim()),
   });
 }
 
@@ -130,10 +136,10 @@ export interface CrControleCrecheEntry extends BaseEntry {
 const buildControlePayload = (entry: CrControleCrecheEntry, rId: string) => ({
   ...(entry.id ? { id: entry.id } : {}),
   rapport_id: rId,
-  // Gestion stricte du UUID pour Supabase
-  creche_privee_id: entry.creche_privee_id && entry.creche_privee_id.trim() !== '' ? entry.creche_privee_id : null,
-  resultats_controle: entry.resultats_controle || null,
-  observations: entry.observations || '',
+  creche_privee_id:
+    entry.creche_privee_id && entry.creche_privee_id.trim() !== '' ? entry.creche_privee_id : null,
+  resultats_controle: entry.resultats_controle?.trim() || null,
+  observations: entry.observations?.trim() || '',
 });
 
 const mapControleRow = (row: any, local_id: string): CrControleCrecheEntry => ({
@@ -150,6 +156,7 @@ export function useCrControleCreches(rapportId: string | null) {
     tableName: 'cr_controle_creches',
     buildPayload: buildControlePayload,
     mapRowToEntry: mapControleRow,
+    validateBeforeSave: (entry) => Boolean(entry.creche_privee_id?.trim()),
   });
 }
 
@@ -166,11 +173,11 @@ export interface CrCadresAssermentesEntry extends BaseEntry {
 const buildCadrePayload = (entry: CrCadresAssermentesEntry, rId: string) => ({
   ...(entry.id ? { id: entry.id } : {}),
   rapport_id: rId,
-  // Gestion stricte du UUID pour Supabase
-  statut_cadre_id: entry.statut_cadre_id && entry.statut_cadre_id.trim() !== '' ? entry.statut_cadre_id : null,
-  statut_cadre_autre: entry.statut_cadre_autre || null,
+  statut_cadre_id:
+    entry.statut_cadre_id && entry.statut_cadre_id.trim() !== '' ? entry.statut_cadre_id : null,
+  statut_cadre_autre: entry.statut_cadre_autre?.trim() || null,
   nombre_cadres: Number(entry.nombre_cadres) || 0,
-  observations: entry.observations || '',
+  observations: entry.observations?.trim() || '',
 });
 
 const mapCadreRow = (row: any, local_id: string): CrCadresAssermentesEntry => ({
@@ -188,6 +195,8 @@ export function useCrCadresAssermentes(rapportId: string | null) {
     tableName: 'cr_cadres_assermentes',
     buildPayload: buildCadrePayload,
     mapRowToEntry: mapCadreRow,
+    // 🛡️ Garde-fou : Ne sauvegarde que si le statut du cadre est sélectionné
+    validateBeforeSave: (entry) => Boolean(entry.statut_cadre_id?.trim()),
   });
 }
 
@@ -205,12 +214,13 @@ export interface CrLabelQualiteEntry extends BaseEntry {
 const buildLabelPayload = (entry: CrLabelQualiteEntry, rId: string) => ({
   ...(entry.id ? { id: entry.id } : {}),
   rapport_id: rId,
-  // Gestion stricte du UUID pour Supabase
-  etablissement_id: entry.etablissement_id && entry.etablissement_id.trim() !== '' ? entry.etablissement_id : null,
-  creche_privee_id: entry.creche_privee_id && entry.creche_privee_id.trim() !== '' ? entry.creche_privee_id : null,
+  etablissement_id:
+    entry.etablissement_id && entry.etablissement_id.trim() !== '' ? entry.etablissement_id : null,
+  creche_privee_id:
+    entry.creche_privee_id && entry.creche_privee_id.trim() !== '' ? entry.creche_privee_id : null,
   statut_label: entry.statut_label || 'proposee',
-  motif_refus: entry.motif_refus || null,
-  observations: entry.observations || '',
+  motif_refus: entry.motif_refus?.trim() || null,
+  observations: entry.observations?.trim() || '',
 });
 
 const mapLabelRow = (row: any, local_id: string): CrLabelQualiteEntry => ({

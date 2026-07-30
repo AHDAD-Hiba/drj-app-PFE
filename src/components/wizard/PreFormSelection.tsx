@@ -6,7 +6,7 @@ import { useToast } from '@/hooks/common/use-toast';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
+import { SafeInput } from '@/components/form/SafeInput';
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
@@ -319,7 +319,7 @@ useEffect(() => {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label className="text-xs font-medium">{isAr ? 'السنة' : 'Année'}</Label>
-              <Input
+              <SafeInput
                 type="number"
                 min={2026}
                 max={2099}

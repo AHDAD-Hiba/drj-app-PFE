@@ -1,10 +1,10 @@
-import { useState, useEffect, useId } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Lock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { validateNumericField } from '@/lib/formSchema';
+import { SafeInput } from '@/components/form/SafeInput';
 
 interface Props {
   label: string;
@@ -27,11 +27,13 @@ export const NumericField = ({ label, value, onChange, hint, computed, disabled 
   const id = useId();
   const [raw, setRaw] = useState<string>(String(value ?? 0));
   const [error, setError] = useState<string | null>(null);
+  const [isFocused, setIsFocused] = useState(false);
 
   useEffect(() => {
-    // Synchronise quand la valeur (calculée par exemple) change depuis l'extérieur
-    setRaw(String(value ?? 0));
-  }, [value]);
+    if (!isFocused) {
+      setRaw(String(value ?? 0));
+    }
+  }, [value, isFocused]);
 
   const handleChange = (next: string) => {
     setRaw(next);
@@ -41,6 +43,7 @@ export const NumericField = ({ label, value, onChange, hint, computed, disabled 
   };
 
   const handleBlur = () => {
+    setIsFocused(false);
     if (!error) setRaw(String(value ?? 0));
   };
 
@@ -50,15 +53,18 @@ export const NumericField = ({ label, value, onChange, hint, computed, disabled 
         {computed && <Lock className="h-3 w-3 flex-shrink-0" aria-hidden />}
         <span>{label}</span>
       </Label>
-      <Input
+      <SafeInput
         id={id}
         type="text"
         inputMode="numeric"
         pattern="[0-9]*"
         value={raw}
-        onChange={e => handleChange(e.target.value)}
+        onValueChange={handleChange}
         onBlur={handleBlur}
-        onFocus={e => e.target.select()}
+        onFocus={e => {
+          setIsFocused(true);
+          e.target.select();
+        }}
         readOnly={computed}
         disabled={disabled}
         aria-invalid={!!error}

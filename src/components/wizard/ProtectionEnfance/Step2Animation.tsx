@@ -1,9 +1,10 @@
-import { memo, useState, useEffect } from 'react';
+import { memo, useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
+import { SafeInput } from '@/components/form/SafeInput';
+import { SafeTextarea } from '@/components/form/SafeTextarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Trash2, Palette, Mic, Gift, AlertTriangle, Building2, Globe } from 'lucide-react';
 import { StepComponentProps } from '@/config/wizard.types';
@@ -11,8 +12,6 @@ import { NumericField } from '@/components/form/NumericField';
 
 import { useAfEtablissements } from '@/hooks/common/useAfEtablissements';
 import { useAuth } from '@/hooks/common/useAuth';
-
-// ⚠️ MODIFIE CE CHEMIN SELON L'EMPLACEMENT DE TON CLIENT SUPABASE
 import { supabase } from '@/integrations/supabase/client'; 
 
 import { 
@@ -35,6 +34,7 @@ export const Step2Animation = memo(({ disabled, onActivity, rapportId }: StepCom
 
   const [refDomaines, setRefDomaines] = useState<any[]>([]);
   const [refIncidents, setRefIncidents] = useState<any[]>([]);
+  const centersRef = useRef<{ local_id: string; etablissement_id: string }[]>([]);
 
   useEffect(() => {
     const fetchRefs = async () => {
@@ -44,7 +44,7 @@ export const Step2Animation = memo(({ disabled, onActivity, rapportId }: StepCom
       const { data: incidents } = await supabase.from('ref_types_incident').select('*').order('ordre_affichage');
       if (incidents) setRefIncidents(incidents);
     };
-    fetchRefs();
+    void fetchRefs();
   }, []);
 
   const { items: activites, add: addAct, update: updateAct, remove: removeAct } = usePeActivites(rapportId);
@@ -53,73 +53,74 @@ export const Step2Animation = memo(({ disabled, onActivity, rapportId }: StepCom
   const { items: incidents, add: addIncident, update: updateIncident, remove: removeIncident } = usePeIncidents(rapportId);
 
   useEffect(() => {
-    // 1. Récupérer tous les IDs d'établissements uniques depuis les données existantes
     const allEtabIds = new Set<string>();
-    
+
     activites.forEach(a => { if (a.etablissement_id) allEtabIds.add(a.etablissement_id); });
     conseils.forEach(c => { if (c.etablissement_id) allEtabIds.add(c.etablissement_id); });
     dons.forEach(d => { if (d.etablissement_id) allEtabIds.add(d.etablissement_id); });
-    
-    // 2. Vérifier ceux qui sont déjà dans l'état local 'centers'
-    const currentCenterIds = new Set(centers.map(c => c.etablissement_id).filter(Boolean));
 
-    // 3. Trouver les IDs manquants (qui sont dans la BDD mais pas encore affichés)
+    const currentCenterIds = new Set(centersRef.current.map(c => c.etablissement_id).filter(Boolean));
     const missingIds = Array.from(allEtabIds).filter(id => !currentCenterIds.has(id));
 
-    // 4. Mettre à jour l'état si on a trouvé des centres manquants
     if (missingIds.length > 0) {
       const newCenters = missingIds.map(id => ({
         local_id: crypto.randomUUID(),
         etablissement_id: id
       }));
-      setCenters(prev => [...prev, ...newCenters]);
+      setCenters(prev => {
+        centersRef.current = [...prev, ...newCenters];
+        return centersRef.current;
+      });
     }
-  }, [activites, conseils, dons, centers]); // Se déclenche à la réception des données
+  }, [activites, conseils, dons]);
+
+  useEffect(() => {
+    centersRef.current = centers;
+  }, [centers]);
 
   const globalActivites = activites.filter(a => !a.etablissement_id);
   const getCenterActivites = (etabId: string) => activites.filter(a => a.etablissement_id === etabId);
 
-  const handleAddGlobalActivite = () => {
+  const handleAddGlobalActivite = useCallback(() => {
     addAct({ local_id: crypto.randomUUID(), etablissement_id: null, domaine_id: '', nom_activite: '', nombre_beneficiaires: 0 });
-    if (onActivity) onActivity();
-  };
+    if (onActivity) void onActivity();
+  }, [addAct, onActivity]);
 
-  const handleAddCenterActivite = (etabId: string) => {
+  const handleAddCenterActivite = useCallback((etabId: string) => {
     const compVieId = refDomaines.find(d => d.code === 'COMPETENCES_VIE')?.id || '';
     addAct({ local_id: crypto.randomUUID(), etablissement_id: etabId, domaine_id: compVieId, nom_activite: '', nombre_beneficiaires: 0 });
-    if (onActivity) onActivity();
-  };
+    if (onActivity) void onActivity();
+  }, [addAct, onActivity, refDomaines]);
 
-  const handleAddData = (addFn: Function, etabId: string, initialData = {}) => {
+  const handleAddData = useCallback((addFn: Function, etabId: string, initialData = {}) => {
     addFn({ local_id: crypto.randomUUID(), etablissement_id: etabId, ...initialData });
-    if (onActivity) onActivity();
-  };
+    if (onActivity) void onActivity();
+  }, [onActivity]);
 
-  // دالة جديدة لإضافة تقرير استثنائي (بدون etablissement_id)
-  const handleAddGlobalIncident = () => {
+  const handleAddGlobalIncident = useCallback(() => {
     addIncident({ local_id: crypto.randomUUID(), type_incident_id: '', type_incident_autre: '', sujet_detaille: '', nombre_cas: 0, observations: '' });
-    if (onActivity) onActivity();
-  };
+    if (onActivity) void onActivity();
+  }, [addIncident, onActivity]);
 
-  const handleAddCentre = () => {
+  const handleAddCentre = useCallback(() => {
     setCenters(prev => [...prev, { local_id: crypto.randomUUID(), etablissement_id: '' }]);
-    if (onActivity) onActivity();
-  };
+    if (onActivity) void onActivity();
+  }, [onActivity]);
 
-  const handleRemoveCentre = (local_id: string) => {
+  const handleRemoveCentre = useCallback((local_id: string) => {
     setCenters(prev => prev.filter(c => c.local_id !== local_id));
-    if (onActivity) onActivity();
-  };
+    if (onActivity) void onActivity();
+  }, [onActivity]);
 
-  const handleUpdateEtablissement = (local_id: string, new_etab_id: string) => {
+  const handleUpdateEtablissement = useCallback((local_id: string, new_etab_id: string) => {
     setCenters(prev => prev.map(c => c.local_id === local_id ? { ...c, etablissement_id: new_etab_id } : c));
-    if (onActivity) onActivity();
-  };
+    if (onActivity) void onActivity();
+  }, [onActivity]);
 
-  const getAvailableEtablissements = (current_id: string) => {
+  const getAvailableEtablissements = useCallback((current_id: string) => {
     const selectedIds = centers.map(c => c.etablissement_id).filter(id => id !== '' && id !== current_id);
     return centresProtection.filter(e => !selectedIds.includes(e.id));
-  };
+  }, [centresProtection, centers]);
 
   const domaineAutreId = refDomaines.find(d => d.code === 'AUTRE')?.id;
   const incidentAutreId = refIncidents.find(i => i.code === 'AUTRE')?.id;
@@ -128,7 +129,7 @@ export const Step2Animation = memo(({ disabled, onActivity, rapportId }: StepCom
     <div className="space-y-8">
       
       {/* ========================================================================= */}
-      {/* SECTION GLOBALE 1 : الأنشطة الإقليمية (الجدول 12 و 20) */}
+      {/* SECTION GLOBALE 1 : الأنشطة الإقليمية */}
       {/* ========================================================================= */}
       <Card className="p-5 sm:p-6 bg-card border-border shadow-sm border-t-4 border-t-primary">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-border pb-4 mb-5">
@@ -156,11 +157,11 @@ export const Step2Animation = memo(({ disabled, onActivity, rapportId }: StepCom
             <div key={act.local_id} className="grid grid-cols-1 md:grid-cols-12 gap-3 border border-border p-3 rounded-lg bg-muted/5 items-start">
               <div className="md:col-span-3 space-y-1.5">
                 <Label className="text-xs">{isAr ? 'المجال' : 'Domaine'}</Label>
-                <Select value={act.domaine_id} disabled={disabled} onValueChange={(v) => { updateAct(act.local_id, { domaine_id: v }); if(onActivity) onActivity(); }}>
+                <Select value={act.domaine_id} disabled={disabled} onValueChange={(v) => { updateAct(act.local_id, { domaine_id: v }); if(onActivity) void onActivity(); }}>
                   <SelectTrigger className="h-9 bg-background text-xs"><SelectValue placeholder={isAr ? 'اختر...' : 'Choisir...'} /></SelectTrigger>
                   <SelectContent>
                     {refDomaines
-                      .filter(d => d.code !== 'COMPETENCES_VIE') // إخفاء المهارات الحياتية هنا
+                      .filter(d => d.code !== 'COMPETENCES_VIE')
                       .map(d => (
                         <SelectItem key={d.id} value={d.id}>
                           {isAr ? d.libelle_ar : d.libelle_fr}
@@ -169,22 +170,22 @@ export const Step2Animation = memo(({ disabled, onActivity, rapportId }: StepCom
                   </SelectContent>
                 </Select>
                 {act.domaine_id === domaineAutreId && (
-                  <Input placeholder={isAr ? 'يرجى التحديد...' : 'Préciser...'} value={act.domaine_autre || ''} onChange={(e) => { updateAct(act.local_id, { domaine_autre: e.target.value }); if(onActivity) onActivity(); }} disabled={disabled} className="h-9 mt-2 text-xs bg-background" />
+                  <SafeInput placeholder={isAr ? 'يرجى التحديد...' : 'Préciser...'} value={act.domaine_autre || ''} onValueChange={(val) => { updateAct(act.local_id, { domaine_autre: val }); if(onActivity) void onActivity(); }} disabled={disabled} className="h-9 mt-2 text-xs bg-background" />
                 )}
               </div>
               <div className="md:col-span-3 space-y-1.5">
                 <Label className="text-xs">{isAr ? 'نوع النشاط' : 'Type d\'activité'}</Label>
-                <Input value={act.nom_activite} onChange={(e) => { updateAct(act.local_id, { nom_activite: e.target.value }); if(onActivity) onActivity(); }} disabled={disabled} className="h-9 bg-background text-xs" />
+                <SafeInput value={act.nom_activite} onValueChange={(val) => { updateAct(act.local_id, { nom_activite: val }); if(onActivity) void onActivity(); }} disabled={disabled} className="h-9 bg-background text-xs" />
               </div>
               <div className="md:col-span-3 space-y-1.5">
                 <Label className="text-xs">{isAr ? 'الشركاء' : 'Partenaires'}</Label>
-                <Input value={act.partenaires || ''} onChange={(e) => { updateAct(act.local_id, { partenaires: e.target.value }); if(onActivity) onActivity(); }} disabled={disabled} className="h-9 bg-background text-xs" />
+                <SafeInput value={act.partenaires || ''} onValueChange={(val) => { updateAct(act.local_id, { partenaires: val }); if(onActivity) void onActivity(); }} disabled={disabled} className="h-9 bg-background text-xs" />
               </div>
               <div className="md:col-span-2">
-                <NumericField label={isAr ? 'المستفيدين' : 'Bénéficiaires'} value={act.nombre_beneficiaires} onChange={(v) => { updateAct(act.local_id, { nombre_beneficiaires: v }); if(onActivity) onActivity(); }} disabled={disabled} />
+                <NumericField label={isAr ? 'المستفيدين' : 'Bénéficiaires'} value={act.nombre_beneficiaires} onChange={(v) => { updateAct(act.local_id, { nombre_beneficiaires: v }); if(onActivity) void onActivity(); }} disabled={disabled} />
               </div>
               <div className="md:col-span-1 flex justify-end mt-6">
-                <Button type="button" size="icon" variant="ghost" onClick={() => { removeAct(act.local_id); if(onActivity) onActivity(); }} disabled={disabled} className="h-9 w-9 text-destructive hover:bg-destructive/10">
+                <Button type="button" size="icon" variant="ghost" onClick={() => { removeAct(act.local_id); if(onActivity) void onActivity(); }} disabled={disabled} className="h-9 w-9 text-destructive hover:bg-destructive/10">
                   <Trash2 className="h-4 w-4" />
                 </Button>
               </div>
@@ -195,7 +196,7 @@ export const Step2Animation = memo(({ disabled, onActivity, rapportId }: StepCom
       </Card>
 
       {/* ========================================================================= */}
-      {/* SECTION GLOBALE 2 : التقارير الاستثنائية (الجدول 21) */}
+      {/* SECTION GLOBALE 2 : التقارير الاستثنائية */}
       {/* ========================================================================= */}
       <Card className="p-5 sm:p-6 bg-card border-border shadow-sm border-t-4 border-t-destructive">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-border pb-4 mb-5">
@@ -223,27 +224,27 @@ export const Step2Animation = memo(({ disabled, onActivity, rapportId }: StepCom
             <div key={inc.local_id} className="grid grid-cols-1 md:grid-cols-12 gap-3 border border-destructive/20 p-3 rounded-lg bg-destructive/5 items-start">
               <div className="md:col-span-3 space-y-1.5">
                 <Label className="text-xs">{isAr ? 'نوع الحادث' : 'Type incident'}</Label>
-                <Select value={inc.type_incident_id} disabled={disabled} onValueChange={(v) => { updateIncident(inc.local_id, { type_incident_id: v }); if(onActivity) onActivity(); }}>
+                <Select value={inc.type_incident_id} disabled={disabled} onValueChange={(v) => { updateIncident(inc.local_id, { type_incident_id: v }); if(onActivity) void onActivity(); }}>
                   <SelectTrigger className="h-9 bg-background text-xs"><SelectValue placeholder={isAr ? 'اختر...' : 'Choisir...'} /></SelectTrigger>
                   <SelectContent>
                     {refIncidents.map(r => <SelectItem key={r.id} value={r.id}>{isAr ? r.libelle_ar : r.libelle_fr}</SelectItem>)}
                   </SelectContent>
                 </Select>
                 {inc.type_incident_id === incidentAutreId && (
-                  <Input placeholder={isAr ? 'يرجى التحديد...' : 'Préciser...'} value={inc.type_incident_autre || ''} onChange={(e) => { updateIncident(inc.local_id, { type_incident_autre: e.target.value }); if(onActivity) onActivity(); }} disabled={disabled} className="h-9 mt-2 text-xs bg-background" />
+                  <SafeInput placeholder={isAr ? 'يرجى التحديد...' : 'Préciser...'} value={inc.type_incident_autre || ''} onValueChange={(val) => { updateIncident(inc.local_id, { type_incident_autre: val }); if(onActivity) void onActivity(); }} disabled={disabled} className="h-9 mt-2 text-xs bg-background" />
                 )}
               </div>
               <div className="md:col-span-4 space-y-1.5">
                 <Label className="text-xs">{isAr ? 'موضوع التقرير بالتفصيل' : 'Sujet détaillé'}</Label>
-                <Input value={inc.sujet_detaille} onChange={(e) => { updateIncident(inc.local_id, { sujet_detaille: e.target.value }); if(onActivity) onActivity(); }} disabled={disabled} className="h-9 bg-background text-xs" />
+                <SafeTextarea value={inc.sujet_detaille} onValueChange={(val) => { updateIncident(inc.local_id, { sujet_detaille: val }); if(onActivity) void onActivity(); }} disabled={disabled} placeholder={isAr ? 'الموضوع بالتفصيل...' : 'Sujet détaillé...'} />
               </div>
               <div className="md:col-span-4 space-y-1.5">
                 <Label className="text-xs">{isAr ? 'ملاحظات وتدخلات' : 'Observations'}</Label>
-                <Input value={inc.observations || ''} onChange={(e) => { updateIncident(inc.local_id, { observations: e.target.value }); if(onActivity) onActivity(); }} disabled={disabled} className="h-9 bg-background text-xs" />
+                <SafeTextarea value={inc.observations || ''} onValueChange={(val) => { updateIncident(inc.local_id, { observations: val }); if(onActivity) void onActivity(); }} disabled={disabled} placeholder={isAr ? 'ملاحظات...' : 'Observations...'} />
               </div>
               <div className="md:col-span-1 flex flex-col justify-between h-full">
-                <NumericField label={isAr ? 'العدد' : 'Cas'} value={inc.nombre_cas} onChange={(v) => { updateIncident(inc.local_id, { nombre_cas: v }); if(onActivity) onActivity(); }} disabled={disabled} />
-                <Button type="button" size="icon" variant="ghost" onClick={() => { removeIncident(inc.local_id); if(onActivity) onActivity(); }} disabled={disabled} className="h-9 w-9 text-destructive self-end mt-2">
+                <NumericField label={isAr ? 'العدد' : 'Cas'} value={inc.nombre_cas} onChange={(v) => { updateIncident(inc.local_id, { nombre_cas: v }); if(onActivity) void onActivity(); }} disabled={disabled} />
+                <Button type="button" size="icon" variant="ghost" onClick={() => { removeIncident(inc.local_id); if(onActivity) void onActivity(); }} disabled={disabled} className="h-9 w-9 text-destructive self-end mt-2">
                   <Trash2 className="h-4 w-4" />
                 </Button>
               </div>
@@ -348,17 +349,17 @@ export const Step2Animation = memo(({ disabled, onActivity, rapportId }: StepCom
                             <div key={act.local_id} className="grid grid-cols-1 md:grid-cols-12 gap-3 border border-border p-3 rounded-lg bg-muted/5 items-start">
                               <div className="md:col-span-3 space-y-1.5">
                                 <Label className="text-xs text-muted-foreground">{isAr ? 'المجال' : 'Domaine'}</Label>
-                                <Input value={isAr ? 'المهارات الحياتية' : 'Compétences de vie'} disabled={true} className="h-9 bg-muted text-xs" />
+                                <SafeInput value={isAr ? 'المهارات الحياتية' : 'Compétences de vie'} disabled={true} className="h-9 bg-muted text-xs" />
                               </div>
                               <div className="md:col-span-5 space-y-1.5">
                                 <Label className="text-xs">{isAr ? 'اسم البرنامج' : 'Nom du programme'}</Label>
-                                <Input value={act.nom_activite} onChange={(e) => { updateAct(act.local_id, { nom_activite: e.target.value }); if(onActivity) onActivity(); }} disabled={disabled} className="h-9 bg-background text-xs" />
+                                <SafeInput value={act.nom_activite} onValueChange={(val) => { updateAct(act.local_id, { nom_activite: val }); if(onActivity) void onActivity(); }} disabled={disabled} className="h-9 bg-background text-xs" />
                               </div>
                               <div className="md:col-span-3">
-                                <NumericField label={isAr ? 'المستفيدين' : 'Bénéficiaires'} value={act.nombre_beneficiaires} onChange={(v) => { updateAct(act.local_id, { nombre_beneficiaires: v }); if(onActivity) onActivity(); }} disabled={disabled} />
+                                <NumericField label={isAr ? 'المستفيدين' : 'Bénéficiaires'} value={act.nombre_beneficiaires} onChange={(v) => { updateAct(act.local_id, { nombre_beneficiaires: v }); if(onActivity) void onActivity(); }} disabled={disabled} />
                               </div>
                               <div className="md:col-span-1 flex justify-end mt-6">
-                                <Button type="button" size="icon" variant="ghost" onClick={() => { removeAct(act.local_id); if(onActivity) onActivity(); }} disabled={disabled} className="h-9 w-9 text-destructive hover:bg-destructive/10">
+                                <Button type="button" size="icon" variant="ghost" onClick={() => { removeAct(act.local_id); if(onActivity) void onActivity(); }} disabled={disabled} className="h-9 w-9 text-destructive hover:bg-destructive/10">
                                   <Trash2 className="h-4 w-4" />
                                 </Button>
                               </div>
@@ -385,13 +386,13 @@ export const Step2Animation = memo(({ disabled, onActivity, rapportId }: StepCom
                             <div key={cons.local_id} className="flex flex-col md:flex-row gap-3 border border-border p-3 rounded-lg bg-muted/5 items-center">
                               <div className="flex-1 w-full space-y-1.5">
                                 <Label className="text-xs">{isAr ? 'اسم الدورة' : 'Nom de la session'}</Label>
-                                <Input value={cons.nom_session} onChange={(e) => { updateConseil(cons.local_id, { nom_session: e.target.value }); if(onActivity) onActivity(); }} disabled={disabled} className="h-9 bg-background text-xs" />
+                                <SafeInput value={cons.nom_session} onValueChange={(val) => { updateConseil(cons.local_id, { nom_session: val }); if(onActivity) void onActivity(); }} disabled={disabled} className="h-9 bg-background text-xs" />
                               </div>
                               <div className="flex-1 w-full space-y-1.5">
                                 <Label className="text-xs">{isAr ? 'تاريخ الانعقاد' : 'Date de la session'}</Label>
-                                <Input type="date" value={cons.date_session} onChange={(e) => { updateConseil(cons.local_id, { date_session: e.target.value }); if(onActivity) onActivity(); }} disabled={disabled} className="h-9 bg-background text-xs" />
+                                <SafeInput type="date" value={cons.date_session} onValueChange={(val) => { updateConseil(cons.local_id, { date_session: val }); if(onActivity) void onActivity(); }} disabled={disabled} className="h-9 bg-background text-xs" />
                               </div>
-                              <Button type="button" size="icon" variant="ghost" onClick={() => { removeConseil(cons.local_id); if(onActivity) onActivity(); }} disabled={disabled} className="h-9 w-9 text-destructive mt-6 shrink-0">
+                              <Button type="button" size="icon" variant="ghost" onClick={() => { removeConseil(cons.local_id); if(onActivity) void onActivity(); }} disabled={disabled} className="h-9 w-9 text-destructive mt-6 shrink-0">
                                 <Trash2 className="h-4 w-4" />
                               </Button>
                             </div>
@@ -416,21 +417,21 @@ export const Step2Animation = memo(({ disabled, onActivity, rapportId }: StepCom
                             <div key={don.local_id} className="grid grid-cols-1 md:grid-cols-12 gap-3 border border-border p-3 rounded-lg bg-muted/5 items-start">
                               <div className="md:col-span-3 space-y-1.5">
                                 <Label className="text-xs">{isAr ? 'الجهة المانحة' : 'Donateur'}</Label>
-                                <Input value={don.donateur} onChange={(e) => { updateDon(don.local_id, { donateur: e.target.value }); if(onActivity) onActivity(); }} disabled={disabled} className="h-9 bg-background text-xs" />
+                                <SafeInput value={don.donateur} onValueChange={(val) => { updateDon(don.local_id, { donateur: val }); if(onActivity) void onActivity(); }} disabled={disabled} className="h-9 bg-background text-xs" />
                               </div>
                               <div className="md:col-span-3 space-y-1.5">
                                 <Label className="text-xs">{isAr ? 'نوع الهبة' : 'Nature du don'}</Label>
-                                <Input value={don.nature_don} onChange={(e) => { updateDon(don.local_id, { nature_don: e.target.value }); if(onActivity) onActivity(); }} disabled={disabled} className="h-9 bg-background text-xs" />
+                                <SafeInput value={don.nature_don} onValueChange={(val) => { updateDon(don.local_id, { nature_don: val }); if(onActivity) void onActivity(); }} disabled={disabled} className="h-9 bg-background text-xs" />
                               </div>
                               <div className="md:col-span-3 space-y-1.5">
                                 <Label className="text-xs">{isAr ? 'التاريخ' : 'Date'}</Label>
-                                <Input type="date" value={don.date_reception} onChange={(e) => { updateDon(don.local_id, { date_reception: e.target.value }); if(onActivity) onActivity(); }} disabled={disabled} className="h-9 bg-background text-xs" />
+                                <SafeInput type="date" value={don.date_reception} onValueChange={(val) => { updateDon(don.local_id, { date_reception: val }); if(onActivity) void onActivity(); }} disabled={disabled} className="h-9 bg-background text-xs" />
                               </div>
                               <div className="md:col-span-2">
-                                <NumericField label={isAr ? 'المستفيدين' : 'Bénéficiaires'} value={don.beneficiaires} onChange={(v) => { updateDon(don.local_id, { beneficiaires: v }); if(onActivity) onActivity(); }} disabled={disabled} />
+                                <NumericField label={isAr ? 'المستفيدين' : 'Bénéficiaires'} value={don.beneficiaires} onChange={(v) => { updateDon(don.local_id, { beneficiaires: v }); if(onActivity) void onActivity(); }} disabled={disabled} />
                               </div>
                               <div className="md:col-span-1 flex justify-end mt-6">
-                                <Button type="button" size="icon" variant="ghost" onClick={() => { removeDon(don.local_id); if(onActivity) onActivity(); }} disabled={disabled} className="h-9 w-9 text-destructive hover:bg-destructive/10">
+                                <Button type="button" size="icon" variant="ghost" onClick={() => { removeDon(don.local_id); if(onActivity) void onActivity(); }} disabled={disabled} className="h-9 w-9 text-destructive hover:bg-destructive/10">
                                   <Trash2 className="h-4 w-4" />
                                 </Button>
                               </div>
@@ -438,11 +439,10 @@ export const Step2Animation = memo(({ disabled, onActivity, rapportId }: StepCom
                               {/* Ligne 2 : Observations */}
                               <div className="md:col-span-12 space-y-1.5 pt-2 border-t border-border/50 mt-1">
                                 <Label className="text-xs">{isAr ? 'ملاحظات' : 'Observations'}</Label>
-                                <Input 
+                                <SafeTextarea 
                                   value={don.observations || ''} 
-                                  onChange={(e) => { updateDon(don.local_id, { observations: e.target.value }); if(onActivity) onActivity(); }} 
+                                  onValueChange={(val) => { updateDon(don.local_id, { observations: val }); if(onActivity) void onActivity(); }} 
                                   disabled={disabled} 
-                                  className="h-9 bg-background text-xs" 
                                   placeholder={isAr ? 'أضف ملاحظات (اختياري)...' : 'Ajouter des observations (optionnel)...'}
                                 />
                               </div>

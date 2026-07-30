@@ -3,36 +3,36 @@ import { useTranslation } from 'react-i18next';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
+import { SafeInput } from '@/components/form/SafeInput';
+import { SafeTextarea } from '@/components/form/SafeTextarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Trash2, Briefcase } from 'lucide-react';
 import { StepComponentProps } from '@/config/wizard.types';
 import { NumericField } from '@/components/form/NumericField';
-import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 
 import { useAfEtablissements } from '@/hooks/common/useAfEtablissements';
 import { useAuth } from '@/hooks/common/useAuth';
 import { useInfraPartenariats } from '@/hooks/Infrastructure/useInfraPartenariats';
 
-const TYPES_ETAB = [
-  { id: 'maison_jeunes', ar: 'دار الشباب', fr: 'Maison de Jeunes' },
-  { id: 'club_feminin', ar: 'نادي نسوي', fr: 'Club Féminin' },
-  { id: 'centre_socio_sportif', ar: 'مركز سوسيو-رياضي', fr: 'Centre Socio-Sportif' },
-  { id: 'ofppt', ar: 'مركز التكوين المهني', fr: 'OFPPT' },
-  { id: 'direction_regional', ar: 'مقر المديرية الجهوية', fr: 'Siège Direction' },
+const TYPES_ETAB_KEYS = [
+  'maison_jeunes',
+  'club_feminin',
+  'centre_socio_sportif',
+  'ofppt',
+  'direction_regional',
 ];
 
-const PHASES = [
-  { id: 'etudes', ar: 'الدراسات', fr: 'Études' },
-  { id: 'attente_foncier', ar: 'في انتظار تسوية الوضعية العقارية', fr: 'Attente Foncier' },
-  { id: 'travaux', ar: 'الأشغال', fr: 'Travaux' },
-  { id: 'attente_livraison', ar: 'في انتظار التسليم النهائي', fr: 'Attente Livraison' },
-  { id: 'acheve', ar: 'مكتملة', fr: 'Achevé' },
+const PHASES_KEYS = [
+  'etudes',
+  'attente_foncier',
+  'travaux',
+  'attente_livraison',
+  'acheve',
 ];
 
 export const Step3Partenariats = memo(({ disabled, onActivity, rapportId }: StepComponentProps & { rapportId?: string | null }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isAr = i18n.language === 'ar';
   
   const { utilisateur } = useAuth();
@@ -44,61 +44,67 @@ export const Step3Partenariats = memo(({ disabled, onActivity, rapportId }: Step
   const { conventions, setConventions, loading } = useInfraPartenariats(rapportId || null);
 
   const addConvention = () => {
-    setConventions([...conventions, {
-      local_id: crypto.randomUUID(),
-      sujet_convention: '',
-      projets: []
-    }]);
-    if (onActivity) onActivity();
+    setConventions(prev => [
+      ...prev,
+      {
+        local_id: crypto.randomUUID(),
+        sujet_convention: '',
+        projets: []
+      }
+    ]);
+    if (onActivity) void onActivity();
   };
 
   const removeConvention = (convId: string) => {
-    setConventions(conventions.filter(c => c.local_id !== convId));
-    if (onActivity) onActivity();
+    setConventions(prev => prev.filter(c => c.local_id !== convId));
+    if (onActivity) void onActivity();
   };
 
   const updateConvention = (convId: string, data: any) => {
-    setConventions(conventions.map(c => c.local_id === convId ? { ...c, ...data } : c));
-    if (onActivity) onActivity();
+    setConventions(prev => prev.map(c => c.local_id === convId ? { ...c, ...data } : c));
+    if (onActivity) void onActivity();
   };
 
   const addProjet = (convId: string) => {
-    setConventions(conventions.map(c => {
+    setConventions(prev => prev.map(c => {
       if (c.local_id !== convId) return c;
       return {
         ...c,
-        projets: [...c.projets, {
-          local_id: crypto.randomUUID(),
-          sujet_projet: '',
-          types_etablissements: [],
-          etablissement_id: '',
-          maitre_ouvrage_delegue: '',
-          phase_projet: '',
-          taux_avancement: 0,
-          observations: ''
-        }]
+        projets: [
+          ...c.projets,
+          {
+            local_id: crypto.randomUUID(),
+            sujet_projet: '',
+            types_etablissements: [],
+            etablissement_id: '',
+            maitre_ouvrage_delegue: '',
+            phase_projet: '',
+            taux_avancement: 0,
+            observations: ''
+          }
+        ]
       };
     }));
-    if (onActivity) onActivity();
+    if (onActivity) void onActivity();
   };
 
   const removeProjet = (convId: string, projId: string) => {
-    setConventions(conventions.map(c => {
+    setConventions(prev => prev.map(c => {
       if (c.local_id !== convId) return c;
       return { ...c, projets: c.projets.filter((p: any) => p.local_id !== projId) };
     }));
-    if (onActivity) onActivity();
+    if (onActivity) void onActivity();
   };
 
   const updateProjet = (convId: string, projId: string, data: any) => {
-    setConventions(conventions.map(c => {
+    setConventions(prev => prev.map(c => {
       if (c.local_id !== convId) return c;
       return {
         ...c,
         projets: c.projets.map((p: any) => p.local_id === projId ? { ...p, ...data } : p)
       };
     }));
-    if (onActivity) onActivity();
+    if (onActivity) void onActivity();
   };
 
   const toggleTypeEtablissement = (convId: string, projId: string, currentTypes: string[], typeId: string) => {
@@ -137,7 +143,7 @@ export const Step3Partenariats = memo(({ disabled, onActivity, rapportId }: Step
         </Button>
       </div>
 
-      {/* GESTION DU CHARGEMENT */}
+      {/* CHARGEMENT */}
       {loading ? (
         <div className="text-center py-10 text-sm text-muted-foreground">
           {isAr ? 'جاري التحميل...' : 'Chargement...'}
@@ -151,7 +157,7 @@ export const Step3Partenariats = memo(({ disabled, onActivity, rapportId }: Step
           {conventions.map((conv, cIdx) => (
             <div key={conv.local_id} className="border-2 border-primary/10 rounded-xl bg-muted/10 overflow-hidden">
               
-              {/* EN-TÊTE DE LA CONVENTION */}
+              {/* EN-TÊTE CONVENTION */}
               <div className="bg-primary/5 p-4 border-b border-primary/10 space-y-4">
                 <div className="flex items-center justify-between">
                   <h4 className="text-sm font-bold text-primary">
@@ -171,10 +177,10 @@ export const Step3Partenariats = memo(({ disabled, onActivity, rapportId }: Step
                   <Label className="text-xs font-semibold">
                     {isAr ? 'موضوع الاتفاقية' : 'Sujet de la convention'}
                   </Label>
-                  <Input
+                  <SafeInput
                     placeholder={isAr ? 'مثال: اتفاقية إطار موقعة أمام أنظار صاحب الجلالة...' : 'Ex: Convention cadre signée...'}
                     value={conv.sujet_convention}
-                    onChange={(e) => updateConvention(conv.local_id, { sujet_convention: e.target.value })}
+                    onValueChange={(val) => updateConvention(conv.local_id, { sujet_convention: val })}
                     disabled={disabled}
                     className="h-10 bg-background shadow-sm"
                   />
@@ -222,10 +228,10 @@ export const Step3Partenariats = memo(({ disabled, onActivity, rapportId }: Step
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="space-y-1.5">
                           <Label className="text-xs font-medium">{isAr ? 'موضوع المشروع' : 'Sujet du projet'}</Label>
-                          <Input
+                          <SafeInput
                             placeholder={isAr ? 'بناء دار الشباب...' : 'Construction Maison...'}
                             value={proj.sujet_projet}
-                            onChange={(e) => updateProjet(conv.local_id, proj.local_id, { sujet_projet: e.target.value })}
+                            onValueChange={(val) => updateProjet(conv.local_id, proj.local_id, { sujet_projet: val })}
                             disabled={disabled} className="h-9"
                           />
                         </div>
@@ -233,22 +239,21 @@ export const Step3Partenariats = memo(({ disabled, onActivity, rapportId }: Step
                         <div className="space-y-1.5">
                           <Label className="text-xs font-medium">{isAr ? 'نوع المؤسسة (اختيار متعدد)' : 'Types ciblés (Choix multiple)'}</Label>
                           <div className="flex flex-wrap gap-1.5">
-                            {TYPES_ETAB.map((t) => {
-                              const isSelected = proj.types_etablissements.includes(t.id);
+                            {TYPES_ETAB_KEYS.map((typeKey) => {
+                              const isSelected = proj.types_etablissements.includes(typeKey);
                               
-                              // Condition pour le siège de direction régionale
-                              if (t.id === 'direction_regional' && !hasDirectionRegionale) return null;
+                              if (typeKey === 'direction_regional' && !hasDirectionRegionale) return null;
 
                               return (
                                 <button
-                                  key={t.id} type="button" disabled={disabled}
-                                  onClick={() => toggleTypeEtablissement(conv.local_id, proj.local_id, proj.types_etablissements, t.id)}
+                                  key={typeKey} type="button" disabled={disabled}
+                                  onClick={() => toggleTypeEtablissement(conv.local_id, proj.local_id, proj.types_etablissements, typeKey)}
                                   className={cn(
                                     "px-2 py-1 rounded text-[11px] font-medium transition-colors border",
                                     isSelected ? "bg-primary text-primary-foreground border-primary" : "bg-muted text-muted-foreground hover:bg-muted/80 border-transparent"
                                   )}
                                 >
-                                  {isAr ? t.ar : t.fr}
+                                  {t(`etablissements.types.${typeKey}`, { defaultValue: typeKey })}
                                 </button>
                               );
                             })}
@@ -279,10 +284,10 @@ export const Step3Partenariats = memo(({ disabled, onActivity, rapportId }: Step
 
                         <div className="space-y-1.5">
                           <Label className="text-xs font-medium">{isAr ? 'صاحب المشروع المنتدب' : "Maître d'ouvrage"}</Label>
-                          <Input
+                          <SafeInput
                             placeholder={isAr ? 'شركة العمران...' : 'Al Omrane...'}
                             value={proj.maitre_ouvrage_delegue}
-                            onChange={(e) => updateProjet(conv.local_id, proj.local_id, { maitre_ouvrage_delegue: e.target.value })}
+                            onValueChange={(val) => updateProjet(conv.local_id, proj.local_id, { maitre_ouvrage_delegue: val })}
                             disabled={disabled} className="h-9"
                           />
                         </div>
@@ -299,8 +304,10 @@ export const Step3Partenariats = memo(({ disabled, onActivity, rapportId }: Step
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="none">{isAr ? 'اختر المرحلة' : 'Choisir la phase'}</SelectItem>
-                              {PHASES.map((ph) => (
-                                <SelectItem key={ph.id} value={ph.id}>{isAr ? ph.ar : ph.fr}</SelectItem>
+                              {PHASES_KEYS.map((phaseKey) => (
+                                <SelectItem key={phaseKey} value={phaseKey}>
+                                  {t(`infrastructure.phases.${phaseKey}`, { defaultValue: phaseKey })}
+                                </SelectItem>
                               ))}
                             </SelectContent>
                           </Select>
@@ -317,11 +324,11 @@ export const Step3Partenariats = memo(({ disabled, onActivity, rapportId }: Step
                         />
                         <div className="space-y-1.5">
                           <Label className="text-xs font-medium">{isAr ? 'ملاحظات' : 'Observations'}</Label>
-                          <Textarea
+                          <SafeTextarea
                             placeholder={isAr ? 'أضف ملاحظات...' : 'Observations...'}
-                            value={proj.observations}
-                            onChange={(e) => updateProjet(conv.local_id, proj.local_id, { observations: e.target.value })}
-                            disabled={disabled} className="min-h-[80px] bg-background resize-y"
+                            value={proj.observations || ''}
+                            onValueChange={(val) => updateProjet(conv.local_id, proj.local_id, { observations: val })}
+                            disabled={disabled}
                           />
                         </div>
                       </div>

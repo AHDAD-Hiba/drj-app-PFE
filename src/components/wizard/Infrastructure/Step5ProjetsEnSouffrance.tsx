@@ -3,68 +3,51 @@ import { useTranslation } from 'react-i18next';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
+import { SafeInput } from '@/components/form/SafeInput';
+import { SafeTextarea } from '@/components/form/SafeTextarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Trash2, AlertOctagon } from 'lucide-react';
 import { StepComponentProps } from '@/config/wizard.types';
-import { Textarea } from '@/components/ui/textarea';
 
 import { useAfEtablissements } from '@/hooks/common/useAfEtablissements';
 import { useAuth } from '@/hooks/common/useAuth';
-// 1. IMPORT DU HOOK DE DONNÉES
 import { useInfraProjetsSouffrance } from '@/hooks/Infrastructure/useInfraProjetsSouffrance';
 
-// Fonction locale pour traduire les types dynamiques
-const formatTypeEtablissement = (val: string, isAr: boolean) => {
-  switch (val) {
-    case 'maison_jeunes': return isAr ? 'دار الشباب' : 'Maison de Jeunes';
-    case 'club_feminin': return isAr ? 'نادي نسوي' : 'Club Féminin';
-    case 'centre_socio_sportif': return isAr ? 'مركز سوسيو-رياضي' : 'Centre Socio-Sportif';
-    case 'ofppt': return isAr ? 'مركز التكوين المهني' : 'OFPPT';
-    case 'direction_regional': return isAr ? 'المديرية الجهوية' : 'Direction Régionale';
-    default: return val;
-  }
-};
-
-// 2. AJOUT DE rapportId DANS LES PROPS
 export const Step5ProjetsEnSouffrance = memo(({ disabled, onActivity, rapportId }: StepComponentProps & { rapportId?: string | null }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isAr = i18n.language === 'ar';
   
   const { utilisateur } = useAuth();
   const directionId = utilisateur?.direction_id;
   
   const { items: etablissements, typesDisponibles, loading: loadingEtab } = useAfEtablissements(directionId);
-
-  // 3. REMPLACEMENT DU useState PAR LE HOOK
   const { items: projets, add: addEntry, remove: removeEntry, update: updateEntry, loading } = useInfraProjetsSouffrance(rapportId || null);
 
-  // 4. CONNEXION DES ACTIONS AU HOOK
   const addProjet = () => {
     void addEntry({
       local_id: crypto.randomUUID(),
-      type_filtre: '', // Vide par défaut
+      id: undefined as any,
+      type_filtre: '',
       etablissement_id: '',
       causes_blocage: '',
       solutions_proposees: '',
       observations: ''
     });
-    if (onActivity) onActivity();
+    if (onActivity) void onActivity();
   };
 
   const removeProjet = (id: string) => {
     void removeEntry(id);
-    if (onActivity) onActivity();
+    if (onActivity) void onActivity();
   };
 
   const updateProjet = (id: string, data: any) => {
-    // Si on change le type, on vide l'établissement
     const patch = { ...data };
     if (patch.type_filtre) {
       patch.etablissement_id = '';
     }
     void updateEntry(id, patch);
-    if (onActivity) onActivity();
+    if (onActivity) void onActivity();
   };
 
   return (
@@ -107,7 +90,6 @@ export const Step5ProjetsEnSouffrance = memo(({ disabled, onActivity, rapportId 
         <div className="space-y-4 pt-2">
           {projets.map((proj, pIdx) => {
             
-            // Déduction du type pour l'UI
             const typeFiltreActuel = 
               proj.type_filtre || 
               etablissements.find(e => e.id === proj.etablissement_id)?.type_etablissement || 
@@ -150,10 +132,9 @@ export const Step5ProjetsEnSouffrance = memo(({ disabled, onActivity, rapportId 
                         <SelectValue placeholder={isAr ? 'اختر النوع' : 'Choisir le type'} />
                       </SelectTrigger>
                       <SelectContent>
-                        {/* MAP SUR TYPES DISPONIBLES ET NON TYPES_ETAB */}
                         {typesDisponibles.map((typeVal) => (
                           <SelectItem key={typeVal} value={typeVal}>
-                            {formatTypeEtablissement(typeVal, isAr)}
+                            {t(`etablissements.types.${typeVal}`, { defaultValue: typeVal })}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -197,10 +178,10 @@ export const Step5ProjetsEnSouffrance = memo(({ disabled, onActivity, rapportId 
                     <Label className="text-xs font-medium">
                       {isAr ? 'أسباب تعثر المشروع' : 'Causes de blocage'}
                     </Label>
-                    <Input
+                    <SafeInput
                       placeholder={isAr ? 'اذكر الأسباب...' : 'Causes...'}
                       value={proj.causes_blocage}
-                      onChange={(e) => updateProjet(proj.local_id, { causes_blocage: e.target.value })}
+                      onValueChange={(val) => updateProjet(proj.local_id, { causes_blocage: val })}
                       disabled={disabled} className="h-9 bg-background"
                     />
                   </div>
@@ -209,10 +190,10 @@ export const Step5ProjetsEnSouffrance = memo(({ disabled, onActivity, rapportId 
                     <Label className="text-xs font-medium">
                       {isAr ? 'الحلول المقترحة' : 'Solutions proposées'}
                     </Label>
-                    <Input
+                    <SafeInput
                       placeholder={isAr ? 'الحلول...' : 'Solutions...'}
                       value={proj.solutions_proposees}
-                      onChange={(e) => updateProjet(proj.local_id, { solutions_proposees: e.target.value })}
+                      onValueChange={(val) => updateProjet(proj.local_id, { solutions_proposees: val })}
                       disabled={disabled} className="h-9 bg-background"
                     />
                   </div>
@@ -224,11 +205,11 @@ export const Step5ProjetsEnSouffrance = memo(({ disabled, onActivity, rapportId 
                     <Label className="text-xs font-medium">
                       {isAr ? 'ملاحظات' : 'Observations'}
                     </Label>
-                    <Textarea
+                    <SafeTextarea
                       placeholder={isAr ? 'أضف ملاحظات (اختياري)...' : 'Ajouter des observations...'}
-                      value={proj.observations}
-                      onChange={(e) => updateProjet(proj.local_id, { observations: e.target.value })}
-                      disabled={disabled} className="min-h-[80px] bg-background resize-y"
+                      value={proj.observations || ''}
+                      onValueChange={(val) => updateProjet(proj.local_id, { observations: val })}
+                      disabled={disabled}
                     />
                   </div>
                 </div>

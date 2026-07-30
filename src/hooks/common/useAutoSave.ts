@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 
 export interface UseAutoSaveOptions<T> {
   enabled?: boolean;
@@ -29,10 +29,57 @@ export function useAutoSave<T>(
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const previousValuesRef = useRef<T | null>(null);
   const onSaveRef = useRef(onSave);
+  const latestValuesRef = useRef(values);
+  const isSavingRef = useRef(false);
+  const pendingFlushRef = useRef(false);
 
   useEffect(() => {
     onSaveRef.current = onSave;
   }, [onSave]);
+
+  useEffect(() => {
+    latestValuesRef.current = values;
+  }, [values]);
+
+  const flush = useCallback(async () => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+
+    if (!enabled || !onSaveRef.current) {
+      return false;
+    }
+
+    if (isSavingRef.current) {
+      pendingFlushRef.current = true;
+      return false;
+    }
+
+    const saveFn = onSaveRef.current;
+    isSavingRef.current = true;
+
+    try {
+      const success = await saveFn(latestValuesRef.current);
+      if (success) {
+        previousValuesRef.current = latestValuesRef.current;
+      }
+      return success;
+    } finally {
+      isSavingRef.current = false;
+
+      if (pendingFlushRef.current) {
+        pendingFlushRef.current = false;
+
+        if (
+          previousValuesRef.current === null ||
+          !compare(previousValuesRef.current, latestValuesRef.current)
+        ) {
+          void flush();
+        }
+      }
+    }
+  }, [compare, enabled]);
 
   useEffect(() => {
     if (!enabled || !onSaveRef.current) {
@@ -56,17 +103,8 @@ export function useAutoSave<T>(
       clearTimeout(timeoutRef.current);
     }
 
-    timeoutRef.current = setTimeout(async () => {
-      const saveFn = onSaveRef.current;
-      if (!saveFn) return;
-
-      const success = await saveFn(values);
-
-      if (success) {
-        previousValuesRef.current = values;
-      }
-
-      timeoutRef.current = null;
+    timeoutRef.current = setTimeout(() => {
+      void flush();
     }, debounceMs);
 
     return () => {
@@ -75,5 +113,7 @@ export function useAutoSave<T>(
         timeoutRef.current = null;
       }
     };
-  }, [values, enabled, debounceMs, compare]);
+  }, [values, enabled, debounceMs, compare, flush]);
+
+  return { flush };
 }

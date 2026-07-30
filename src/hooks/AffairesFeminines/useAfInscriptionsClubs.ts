@@ -12,9 +12,9 @@ export interface AfInscriptionClubEntry extends BaseEntry {
 const buildPayload = (entry: AfInscriptionClubEntry, rId: string) => ({
   ...(entry.id ? { id: entry.id } : {}),
   rapport_id: rId,
-  etablissement_id: entry.etablissement_id || null,
-  filiere_id: entry.filiere_id || null,
-  type_formation: entry.type_formation || null,
+  etablissement_id: entry.etablissement_id ?? null,
+  filiere_id: entry.filiere_id ?? null,
+  type_formation: entry.type_formation ?? null,
   inscrites_annee_1: entry.inscrites_annee_1 || 0,
   inscrites_annee_2: entry.inscrites_annee_2 || 0,
 });

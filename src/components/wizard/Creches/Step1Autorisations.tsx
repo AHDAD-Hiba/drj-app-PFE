@@ -1,9 +1,10 @@
-import { memo, useState, useEffect } from 'react';
+import { memo, useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
+import { SafeInput } from '@/components/form/SafeInput';
+import { SafeTextarea } from '@/components/form/SafeTextarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Trash2, FileCheck, Clock, Building } from 'lucide-react';
 import { StepComponentProps } from '@/config/wizard.types';
@@ -51,7 +52,7 @@ export const Step1Autorisations = memo(({ disabled, onActivity, rapportId }: Ste
   const traitementEntry = traitements[0];
 
   // 3. دوال المعالجة (Handlers)
-  const handleAddDemande = () => {
+  const handleAddDemande = useCallback(() => {
     addDemande({
       local_id: crypto.randomUUID(),
       type_demande_id: '', type_demande_autre: '',
@@ -59,9 +60,9 @@ export const Step1Autorisations = memo(({ disabled, onActivity, rapportId }: Ste
       nombre_demandes: 1, observations: ''
     });
     if (onActivity) onActivity();
-  };
+  }, [addDemande, onActivity]);
 
-  const handleTraitementChange = (field: string, value: any) => {
+  const handleTraitementChange = useCallback((field: string, value: any) => {
     if (traitementEntry) {
       updateTraitement(traitementEntry.local_id, { [field]: value });
     } else {
@@ -72,9 +73,9 @@ export const Step1Autorisations = memo(({ disabled, onActivity, rapportId }: Ste
       } as any);
     }
     if (onActivity) onActivity();
-  };
+  }, [addTraitement, onActivity, traitementEntry, updateTraitement]);
 
-  const handleAddCreche = () => {
+  const handleAddCreche = useCallback(() => {
     if (!directionId) return;
     addCreche({
       local_id: crypto.randomUUID(),
@@ -83,7 +84,7 @@ export const Step1Autorisations = memo(({ disabled, onActivity, rapportId }: Ste
       type_autorisation: '', date_autorisation: '', observations: ''
     });
     if (onActivity) onActivity();
-  };
+  }, [addCreche, directionId, onActivity]);
 
   return (
     <div className="space-y-8">
@@ -129,7 +130,7 @@ export const Step1Autorisations = memo(({ disabled, onActivity, rapportId }: Ste
                   </SelectContent>
                 </Select>
                 {dem.type_demande_id === typeAutreId && (
-                  <Input placeholder={isAr ? 'تحديد نوع الطلب...' : 'Préciser...'} value={dem.type_demande_autre || ''} onChange={(e) => { updateDemande(dem.local_id, { type_demande_autre: e.target.value }); if(onActivity) onActivity(); }} disabled={disabled} className="h-9 mt-1.5 text-xs bg-background border-primary/50" />
+                  <SafeInput placeholder={isAr ? 'تحديد نوع الطلب...' : 'Préciser...'} value={dem.type_demande_autre || ''} onValueChange={(value) => { updateDemande(dem.local_id, { type_demande_autre: value }); if(onActivity) onActivity(); }} disabled={disabled} className="h-9 mt-1.5 text-xs bg-background border-primary/50" />
                 )}
               </div>
 
@@ -145,7 +146,7 @@ export const Step1Autorisations = memo(({ disabled, onActivity, rapportId }: Ste
                   </SelectContent>
                 </Select>
                 {dem.statut_demande_id === statutAutreId && (
-                  <Input placeholder={isAr ? 'تحديد الوضعية...' : 'Préciser...'} value={dem.statut_demande_autre || ''} onChange={(e) => { updateDemande(dem.local_id, { statut_demande_autre: e.target.value }); if(onActivity) onActivity(); }} disabled={disabled} className="h-9 mt-1.5 text-xs bg-background border-primary/50" />
+                  <SafeInput placeholder={isAr ? 'تحديد الوضعية...' : 'Préciser...'} value={dem.statut_demande_autre || ''} onValueChange={(value) => { updateDemande(dem.local_id, { statut_demande_autre: value }); if(onActivity) onActivity(); }} disabled={disabled} className="h-9 mt-1.5 text-xs bg-background border-primary/50" />
                 )}
               </div>
 
@@ -157,7 +158,11 @@ export const Step1Autorisations = memo(({ disabled, onActivity, rapportId }: Ste
               {/* Observations */}
               <div className="md:col-span-3 space-y-1.5">
                 <Label className="text-xs">{isAr ? 'ملاحظات' : 'Observations'}</Label>
-                <Input value={dem.observations || ''} onChange={(e) => { updateDemande(dem.local_id, { observations: e.target.value }); if(onActivity) onActivity(); }} disabled={disabled} className="h-9 bg-background text-xs" />
+                <SafeTextarea value={dem.observations || ''} 
+                onValueChange={(value) => { updateDemande(dem.local_id, { observations: value }); 
+                if(onActivity) onActivity(); }} 
+                disabled={disabled} 
+                className="h-9 bg-background text-xs" />
               </div>
 
               {/* Action */}
@@ -215,9 +220,9 @@ export const Step1Autorisations = memo(({ disabled, onActivity, rapportId }: Ste
           </div>
           <div className="md:col-span-5 space-y-1.5">
             <Label className="text-xs">{isAr ? 'توضيحات وملاحظات' : 'Remarques / Explications'}</Label>
-            <Input 
+            <SafeTextarea 
               value={traitementEntry?.observations || ''} 
-              onChange={(e) => handleTraitementChange('observations', e.target.value)} 
+              onValueChange={(value) => handleTraitementChange('observations', value)} 
               disabled={disabled} 
               className="h-9 bg-background text-xs" 
             />
@@ -256,7 +261,7 @@ export const Step1Autorisations = memo(({ disabled, onActivity, rapportId }: Ste
               
               <div className="md:col-span-3 space-y-1.5">
                 <Label className="text-xs">{isAr ? 'اسم دار الحضانة' : 'Nom de la crèche'}</Label>
-                <Input value={cr.nom_creche} onChange={(e) => { updateCreche(cr.local_id, { nom_creche: e.target.value }); if(onActivity) onActivity(); }} disabled={disabled} className="h-9 bg-background text-xs" />
+                <SafeInput value={cr.nom_creche} onValueChange={(value) => { updateCreche(cr.local_id, { nom_creche: value }); if(onActivity) onActivity(); }} disabled={disabled} className="h-9 bg-background text-xs" />
               </div>
 
               <div className="md:col-span-2">
@@ -265,12 +270,12 @@ export const Step1Autorisations = memo(({ disabled, onActivity, rapportId }: Ste
 
               <div className="md:col-span-3 space-y-1.5">
                 <Label className="text-xs">{isAr ? 'نوع/رقم الرخصة' : 'Type / N° d\'autorisation'}</Label>
-                <Input value={cr.type_autorisation || ''} onChange={(e) => { updateCreche(cr.local_id, { type_autorisation: e.target.value }); if(onActivity) onActivity(); }} disabled={disabled} className="h-9 bg-background text-xs" />
+                <SafeInput value={cr.type_autorisation || ''} onValueChange={(value) => { updateCreche(cr.local_id, { type_autorisation: value }); if(onActivity) onActivity(); }} disabled={disabled} className="h-9 bg-background text-xs" />
               </div>
 
               <div className="md:col-span-3 space-y-1.5">
                 <Label className="text-xs">{isAr ? 'تاريخ الرخصة' : 'Date d\'autorisation'}</Label>
-                <Input type="date" value={cr.date_autorisation || ''} onChange={(e) => { updateCreche(cr.local_id, { date_autorisation: e.target.value }); if(onActivity) onActivity(); }} disabled={disabled} className="h-9 bg-background text-xs" />
+                <SafeInput type="date" value={cr.date_autorisation || ''} onValueChange={(value) => { updateCreche(cr.local_id, { date_autorisation: value }); if(onActivity) onActivity(); }} disabled={disabled} className="h-9 bg-background text-xs" />
               </div>
 
               <div className="md:col-span-1 flex justify-end mt-6">
@@ -281,7 +286,7 @@ export const Step1Autorisations = memo(({ disabled, onActivity, rapportId }: Ste
 
               <div className="md:col-span-12 space-y-1.5 pt-2 border-t border-border/50">
                 <Label className="text-xs">{isAr ? 'ملاحظات' : 'Observations'}</Label>
-                <Input value={cr.observations || ''} onChange={(e) => { updateCreche(cr.local_id, { observations: e.target.value }); if(onActivity) onActivity(); }} disabled={disabled} className="h-9 bg-background text-xs" />
+                <SafeTextarea value={cr.observations || ''} onValueChange={(value) => { updateCreche(cr.local_id, { observations: value }); if(onActivity) onActivity(); }} disabled={disabled} className="h-9 bg-background text-xs" />
               </div>
 
             </div>

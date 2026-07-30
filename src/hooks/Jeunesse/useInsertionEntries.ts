@@ -27,9 +27,7 @@ type InternalInsertionEntry = InsertionEntry & {
 };
 
 const normalizeStats = (stats: DbStatsRow[] | DbStatsRow | null | undefined): DbStatsRow | null => {
-  if (!stats) {
-    return null;
-  }
+  if (!stats) return null;
   if (Array.isArray(stats)) {
     return stats[0] ?? null;
   }
@@ -45,7 +43,7 @@ const toInsertionEntry = (
   id: activite.id,
   sujet: activite.sujet ?? '',
   duree_valeur: activite.duree_valeur ?? 0,
-  unite_duree: activite.unite_duree ?? '',
+  unite_duree: (activite.unite_duree as InsertionEntry['unite_duree']) ?? '',
   type_partenaire_id: activite.type_partenaire_id ?? '',
   autre_partenaire: activite.autre_partenaire ?? '',
   stats_id: stats?.id,
@@ -56,52 +54,66 @@ const toInsertionEntry = (
 });
 
 export function useInsertionEntries(rapportId: string | null) {
+  // 🛡️ DÉCLARATION IMPÉRATIVE DES HOOKS AU SOMMET
   const [items, setItems] = useState<InternalInsertionEntry[]>([]);
   const [loading, setLoading] = useState(false);
-  const itemsRef = useRef<InternalInsertionEntry[]>([]);
 
-  useEffect(() => {
-    itemsRef.current = items;
-  }, [items]);
+  const itemsRef = useRef<InternalInsertionEntry[]>([]);
+  const saveTimersRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+  const savingEntriesRef = useRef<Set<string>>(new Set());
+  const pendingSaveRef = useRef<Set<string>>(new Set());
+
+  // Helper pour garder itemsRef.current synchronisé immédiatement
+  const updateItems = useCallback((newItemsOrUpdater: React.SetStateAction<InternalInsertionEntry[]>) => {
+    setItems((prev) => {
+      const next = typeof newItemsOrUpdater === 'function' ? newItemsOrUpdater(prev) : newItemsOrUpdater;
+      itemsRef.current = next;
+      return next;
+    });
+  }, []);
 
   const updateLocal = useCallback(
-  (local_id: string, patch: Partial<InsertionEntry>) => {
-    setItems(prev =>
-      prev.map(item =>
-        item.local_id === local_id
-          ? { ...item, ...patch }
-          : item
-      )
-    );
-  },
-  [],
-);
-
-  const savingEntriesRef = useRef<Set<string>>(new Set());
+    (local_id: string, patch: Partial<InsertionEntry>) => {
+      updateItems((prev) =>
+        prev.map((item) => (item.local_id === local_id ? { ...item, ...patch } : item))
+      );
+    },
+    [updateItems]
+  );
 
   const saveEntry = useCallback(
-  async (local_id: string): Promise<boolean> => {
-    if (savingEntriesRef.current.has(local_id)) {
-      return true;
-    }
+    async (local_id: string): Promise<boolean> => {
+      if (savingEntriesRef.current.has(local_id)) {
+        pendingSaveRef.current.add(local_id);
+        return true;
+      }
 
-    savingEntriesRef.current.add(local_id);
+      savingEntriesRef.current.add(local_id);
+      const existing = itemsRef.current.find((item) => item.local_id === local_id);
 
-const existing = itemsRef.current.find((item) => item.local_id === local_id);
-      if (!existing) {
+      if (!existing || !rapportId) {
+        savingEntriesRef.current.delete(local_id);
         return false;
       }
 
       const updatedEntry = existing;
-      try { 
+      const sujetClean = updatedEntry.sujet?.trim() ?? '';
+
+      // 🛡️ SÉCURITÉ : Ne pas tenter d'upsert si le sujet est vide
+      if (!sujetClean) {
+        savingEntriesRef.current.delete(local_id);
+        return true;
+      }
+
+      try {
         const activitePayload = {
           ...(existing.id ? { id: existing.id } : {}),
           rapport_id: rapportId,
-          sujet: updatedEntry.sujet,
-          duree_valeur: updatedEntry.duree_valeur,
+          sujet: sujetClean,
+          duree_valeur: Number(updatedEntry.duree_valeur) || 0,
           unite_duree: updatedEntry.unite_duree === '' ? null : updatedEntry.unite_duree,
           type_partenaire_id: updatedEntry.type_partenaire_id || null,
-          autre_partenaire:updatedEntry.autre_partenaire || null,
+          autre_partenaire: updatedEntry.autre_partenaire || null,
         };
 
         const { data: activiteData, error: activiteError } = await supabase
@@ -109,15 +121,16 @@ const existing = itemsRef.current.find((item) => item.local_id === local_id);
           .upsert(activitePayload as any)
           .select('id')
           .single();
+
         if (activiteError) throw activiteError;
 
         const statsPayload = {
           ...(existing.stats_id ? { id: existing.stats_id } : {}),
           activite_id: activiteData.id,
-          femmes: updatedEntry.femmes,
-          hommes: updatedEntry.hommes,
-          nbr_rural: updatedEntry.rural,
-          nbr_urbain: updatedEntry.urbain,
+          femmes: Number(updatedEntry.femmes) || 0,
+          hommes: Number(updatedEntry.hommes) || 0,
+          nbr_rural: Number(updatedEntry.rural) || 0,
+          nbr_urbain: Number(updatedEntry.urbain) || 0,
         };
 
         const { data: statsData, error: statsError } = await supabase
@@ -125,26 +138,37 @@ const existing = itemsRef.current.find((item) => item.local_id === local_id);
           .upsert(statsPayload as any, { onConflict: existing.stats_id ? 'id' : 'activite_id' })
           .select('id')
           .single();
+
         if (statsError) throw statsError;
 
-        setItems((prev) => prev.map((item) =>
-          item.local_id === local_id ? { ...item, id: activiteData.id, stats_id: statsData.id } : item
-        ));
+        updateItems((prev) =>
+          prev.map((item) =>
+            item.local_id === local_id
+              ? { ...item, id: activiteData.id, stats_id: statsData.id }
+              : item
+          )
+        );
 
         return true;
       } catch (error) {
-        console.error('[useInsertionEntries] update unexpected error:', error);
+        console.error('[useInsertionEntries] update error:', error);
         return false;
       } finally {
         savingEntriesRef.current.delete(local_id);
+        if (pendingSaveRef.current.has(local_id)) {
+          pendingSaveRef.current.delete(local_id);
+          setTimeout(() => {
+            void saveEntry(local_id);
+          }, 50);
+        }
       }
-  },
-    [rapportId],
+    },
+    [rapportId, updateItems]
   );
-  
+
   const reload = useCallback(async (): Promise<InternalInsertionEntry[]> => {
     if (!rapportId) {
-      setItems([]);
+      updateItems([]);
       return [];
     }
 
@@ -159,7 +183,6 @@ const existing = itemsRef.current.find((item) => item.local_id === local_id);
 
       if (error) {
         console.error('[useInsertionEntries] reload error:', error);
-        setItems([]);
         return [];
       }
 
@@ -167,52 +190,61 @@ const existing = itemsRef.current.find((item) => item.local_id === local_id);
       const localIdById = new Map(
         itemsRef.current
           .filter((item): item is InternalInsertionEntry & { id: string } => Boolean(item.id))
-          .map((item) => [item.id as string, item.local_id] as const),
+          .map((item) => [item.id as string, item.local_id] as const)
       );
 
       const normalized = rows.map((row) =>
         toInsertionEntry(
           row,
           normalizeStats(row.stats_insertion),
-          localIdById.get(row.id) ?? crypto.randomUUID(),
-        ),
+          localIdById.get(row.id) ?? crypto.randomUUID()
+        )
       );
 
-      setItems(normalized);
+      updateItems((prev) => {
+        const normalizedByLocalId = new Map(normalized.map((item) => [item.local_id, item] as const));
+        const merged = normalized.map((serverItem) => {
+          const currentItem = prev.find((item) => item.local_id === serverItem.local_id);
+          const hasPendingLocalChange =
+            Boolean(saveTimersRef.current[serverItem.local_id]) ||
+            savingEntriesRef.current.has(serverItem.local_id) ||
+            pendingSaveRef.current.has(serverItem.local_id);
+
+          return currentItem && hasPendingLocalChange ? currentItem : serverItem;
+        });
+        const unsavedLocalItems = prev.filter((item) => !item.id && !normalizedByLocalId.has(item.local_id));
+        return [...merged, ...unsavedLocalItems];
+      });
       return normalized;
+    } catch (e) {
+      console.error('[useInsertionEntries] unexpected reload error:', e);
+      return [];
     } finally {
       setLoading(false);
     }
-  }, [rapportId]);
+  }, [rapportId, updateItems]);
 
   useEffect(() => {
     let cancelled = false;
 
     if (!rapportId) {
-      setItems([]);
+      updateItems([]);
       setLoading(false);
       return;
     }
 
-    setLoading(true);
     (async () => {
-      try {
-        if (!cancelled) await reload();
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
+      if (!cancelled) await reload();
     })();
 
     return () => {
       cancelled = true;
     };
-  }, [rapportId, reload]);
+  }, [rapportId, reload, updateItems]);
 
   const add = useCallback(
     async (entry: Omit<InsertionEntry, 'local_id'> & { local_id?: string }): Promise<boolean> => {
-      if (!rapportId) {
-        return false;
-      }
+      if (!rapportId) return false;
 
       const local_id = entry.local_id ?? crypto.randomUUID();
       const optimisticEntry: InternalInsertionEntry = {
@@ -229,83 +261,49 @@ const existing = itemsRef.current.find((item) => item.local_id === local_id);
         urbain: entry.urbain ?? 0,
       };
 
-      setItems((prev) => [...prev, optimisticEntry]);
+      updateItems((prev) => [...prev, optimisticEntry]);
       return true;
     },
-    [rapportId],
+    [rapportId, updateItems]
   );
 
-  const saveTimersRef = useRef<
-  Record<string, ReturnType<typeof setTimeout>>
-  >({});
-
   const update = useCallback(
-  async (
-    local_id: string,
-    patch: Partial<InsertionEntry>,
-  ): Promise<boolean> => {
+    async (local_id: string, patch: Partial<InsertionEntry>): Promise<boolean> => {
+      updateLocal(local_id, patch);
 
-    updateLocal(local_id, patch);
+      if (saveTimersRef.current[local_id]) {
+        clearTimeout(saveTimersRef.current[local_id]);
+      }
 
-    if (saveTimersRef.current[local_id]) {
-      clearTimeout(saveTimersRef.current[local_id]);
-    }
+      saveTimersRef.current[local_id] = setTimeout(() => {
+        delete saveTimersRef.current[local_id];
+        void saveEntry(local_id);
+      }, 1200);
 
-    saveTimersRef.current[local_id] = setTimeout(() => {
-      delete saveTimersRef.current[local_id];
-      void saveEntry(local_id);
-    }, 1500);
-
-    return true;
-  },
-  [updateLocal, saveEntry],
-);
+      return true;
+    },
+    [updateLocal, saveEntry]
+  );
 
   const remove = useCallback(
     async (local_id: string): Promise<boolean> => {
       const existing = itemsRef.current.find((item) => item.local_id === local_id);
-      if (!existing) {
-        return false;
-      }
+      if (!existing) return false;
 
-      const previousItems = itemsRef.current;
-      setItems((prev) => prev.filter((item) => item.local_id !== local_id));
+      updateItems((prev) => prev.filter((item) => item.local_id !== local_id));
 
-      if (!existing.id) {
-        return true;
-      }
+      if (!existing.id) return true;
 
       try {
-        const { error: statsDeleteError } = await supabase
-          .from('stats_insertion')
-          .delete()
-          .eq('activite_id', existing.id);
-
-        if (statsDeleteError) {
-          console.error('[useInsertionEntries] remove stats error:', statsDeleteError);
-          setItems(previousItems);
-          return false;
-        }
-
-        const { error: activiteDeleteError } = await supabase
-          .from('activites_insertion')
-          .delete()
-          .eq('id', existing.id);
-
-        if (activiteDeleteError) {
-          console.error('[useInsertionEntries] remove activite error:', activiteDeleteError);
-          setItems(previousItems);
-          return false;
-        }
-
+        await supabase.from('stats_insertion').delete().eq('activite_id', existing.id);
+        await supabase.from('activites_insertion').delete().eq('id', existing.id);
         return true;
       } catch (error) {
-        console.error('[useInsertionEntries] remove unexpected error:', error);
-        setItems(previousItems);
+        console.error('[useInsertionEntries] remove error:', error);
         return false;
       }
     },
-    [],
+    [updateItems]
   );
 
   return {

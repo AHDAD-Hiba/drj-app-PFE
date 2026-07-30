@@ -14,10 +14,15 @@ import { useAfInscriptionsOfppt } from '@/hooks/AffairesFeminines/useAfInscripti
 import { useAfSecteurs } from '@/hooks/AffairesFeminines/useAfSecteurs';
 import { useAfFilieres } from '@/hooks/AffairesFeminines/useAfFilieres';
 import { useAfEtablissements } from '@/hooks/common/useAfEtablissements';
+import { useAuth } from '@/hooks/common/useAuth';
+
 
 export const Step1Formation = memo(({ rapportId, disabled, onActivity }: StepComponentProps) => {
   const { i18n } = useTranslation();
   const isAr = i18n.language === 'ar';
+  const { utilisateur } = useAuth();
+  const directionId = utilisateur?.direction_id;
+
 
   // Chargement des données sauvegardées
   const clubs = useAfInscriptionsClubs(rapportId);
@@ -26,11 +31,15 @@ export const Step1Formation = memo(({ rapportId, disabled, onActivity }: StepCom
   // Chargement des référentiels
   const { items: secteurs } = useAfSecteurs();
   const { items: filieres } = useAfFilieres();
-  const { items: etablissements } = useAfEtablissements();
+  const { items: etablissements } = useAfEtablissements(directionId);
 
   // Filtrage intelligent des établissements selon leur type
   const foyersEtabs = etablissements.filter(e => e.type_etablissement === 'club_feminin');
   const ofpptEtabs = etablissements.filter(e => e.type_etablissement === 'ofppt');
+
+  console.log("Tous les établissements :", etablissements);
+console.log("Clubs filtrés :", foyersEtabs);
+console.log("OFPPT filtrés :", ofpptEtabs);
 
   // ==========================================
   // ACTIONS CLUBS

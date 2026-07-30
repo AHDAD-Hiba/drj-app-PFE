@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
+import { SafeInput } from '@/components/form/SafeInput';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Trash2, Wallet } from 'lucide-react';
 import { StepComponentProps } from '@/config/wizard.types';
@@ -26,17 +26,17 @@ export const Step1Depenses = memo(({ disabled, onActivity, rapportId }: StepComp
       credits_engages: 0,
       credits_payes: 0,
     });
-    if (onActivity) onActivity();
+    if (onActivity) void onActivity();
   };
 
   const handleRemove = (local_id: string) => {
     void removeEntry(local_id);
-    if (onActivity) onActivity();
+    if (onActivity) void onActivity();
   };
 
   const handleUpdate = (local_id: string, patch: Partial<any>) => {
     void updateEntry(local_id, patch);
-    if (onActivity) onActivity();
+    if (onActivity) void onActivity();
   };
 
   return (
@@ -116,10 +116,10 @@ export const Step1Depenses = memo(({ disabled, onActivity, rapportId }: StepComp
 
                   <div className="space-y-1.5 md:col-span-2">
                     <Label className="text-xs font-semibold">{isAr ? 'المشروع الميزانياتي / البيان' : 'Projet budgétaire / Description'}</Label>
-                    <Input 
+                    <SafeInput 
                       placeholder={isAr ? 'مثال: 800، 801، شراء أدوات...' : 'Ex: 800, Achat de matériel...'} 
                       value={item.projet_budgetaire} 
-                      onChange={e => handleUpdate(item.local_id, { projet_budgetaire: e.target.value })} 
+                      onValueChange={(val) => handleUpdate(item.local_id, { projet_budgetaire: val })} 
                       disabled={disabled} 
                       className="h-10 bg-background" 
                     />
@@ -137,25 +137,21 @@ export const Step1Depenses = memo(({ disabled, onActivity, rapportId }: StepComp
                   </div>
 
                   <div className="space-y-1.5">
-                    <div className="relative">
-                      <NumericField 
-                        label={isAr ? 'الاعتمادات الملتزم بها (درهم)' : 'Crédits Engagés (DH)'}
-                        value={item.credits_engages || 0} 
-                        onChange={(val) => handleUpdate(item.local_id, { credits_engages: val })} 
-                        disabled={disabled} 
-                      />
-                    </div>
+                    <NumericField 
+                      label={isAr ? 'الاعتمادات الملتزم بها (درهم)' : 'Crédits Engagés (DH)'}
+                      value={item.credits_engages || 0} 
+                      onChange={(val) => handleUpdate(item.local_id, { credits_engages: val })} 
+                      disabled={disabled} 
+                    />
                   </div>
 
                   <div className="space-y-1.5">
-                    <div className="relative">
-                      <NumericField 
-                        label={isAr ? 'الاعتمادات المؤداة (درهم)' : 'Crédits Payés (DH)'}
-                        value={item.credits_payes || 0} 
-                        onChange={(val) => handleUpdate(item.local_id, { credits_payes: val })} 
-                        disabled={disabled} 
-                      />
-                    </div>
+                    <NumericField 
+                      label={isAr ? 'الاعتمادات المؤداة (درهم)' : 'Crédits Payés (DH)'}
+                      value={item.credits_payes || 0} 
+                      onChange={(val) => handleUpdate(item.local_id, { credits_payes: val })} 
+                      disabled={disabled} 
+                    />
                   </div>
                 </div>
 

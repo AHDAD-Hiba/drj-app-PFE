@@ -3,28 +3,16 @@ import { useTranslation } from 'react-i18next';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
+import { SafeInput } from '@/components/form/SafeInput';
+import { SafeTextarea } from '@/components/form/SafeTextarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Trash2, HardHat } from 'lucide-react';
 import { StepComponentProps } from '@/config/wizard.types';
 import { NumericField } from '@/components/form/NumericField';
-import { Textarea } from '@/components/ui/textarea';
 
 import { useAfEtablissements } from '@/hooks/common/useAfEtablissements';
 import { useAuth } from '@/hooks/common/useAuth';
 import { useInfraBtp } from '@/hooks/Infrastructure/useInfraBtp';
-
-// Fonction locale de formatage
-const formatTypeEtablissement = (val: string, isAr: boolean) => {
-  switch (val) {
-    case 'maison_jeunes': return isAr ? 'دار الشباب' : 'Maison de Jeunes';
-    case 'club_feminin': return isAr ? 'نادي نسوي' : 'Club Féminin';
-    case 'centre_socio_sportif': return isAr ? 'مركز سوسيو-رياضي' : 'Centre Socio-Sportif';
-    case 'ofppt': return isAr ? 'مركز التكوين المهني' : 'OFPPT';
-    case 'direction_regional': return isAr ? 'المديرية الجهوية' : 'Direction Régionale';
-    default: return val;
-  }
-};
 
 const TYPES_PROJET = [
   { id: 'construction', ar: 'مشاريع البناء', fr: 'Construction' },
@@ -32,7 +20,7 @@ const TYPES_PROJET = [
 ];
 
 export const Step4BTP = memo(({ disabled, onActivity, rapportId }: StepComponentProps & { rapportId?: string | null }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isAr = i18n.language === 'ar';
   
   const { utilisateur } = useAuth();
@@ -54,17 +42,17 @@ export const Step4BTP = memo(({ disabled, onActivity, rapportId }: StepComponent
       taux_avancement_travaux: 0,
       observations: ''
     });
-    if (onActivity) onActivity();
+    if (onActivity) void onActivity();
   };
 
   const handleRemoveProjet = (id: string) => {
     void removeEntry(id);
-    if (onActivity) onActivity();
+    if (onActivity) void onActivity();
   };
 
   const handleUpdateProjet = (id: string, data: any) => {
     void updateEntry(id, data);
-    if (onActivity) onActivity();
+    if (onActivity) void onActivity();
   };
 
   return (
@@ -106,7 +94,7 @@ export const Step4BTP = memo(({ disabled, onActivity, rapportId }: StepComponent
         <div className="space-y-4 pt-2">
           {projets.map((proj, pIdx) => {
             
-           const typeFiltreActuel = 
+            const typeFiltreActuel = 
               proj.type_filtre || 
               etablissements.find(e => e.id === proj.etablissement_id)?.type_etablissement || 
               '';
@@ -159,10 +147,10 @@ export const Step4BTP = memo(({ disabled, onActivity, rapportId }: StepComponent
                         <SelectValue placeholder={isAr ? 'اختر النوع' : 'Choisir le type'} />
                       </SelectTrigger>
                       <SelectContent>
-                        {/* 💡 MAP SUR TYPES DISPONIBLES */}
+                        {/* 💡 Traduction i18n dynamique */}
                         {typesDisponibles.map((typeVal) => (
                           <SelectItem key={typeVal} value={typeVal}>
-                            {formatTypeEtablissement(typeVal, isAr)}
+                            {t(`etablissements.types.${typeVal}`, { defaultValue: typeVal })}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -206,7 +194,7 @@ export const Step4BTP = memo(({ disabled, onActivity, rapportId }: StepComponent
                       <span>{isAr ? 'نسبة تقدم الأداء (%)' : 'Taux de paiement (%)'}</span>
                       <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded">{isAr ? 'تلقائي' : 'Auto'}</span>
                     </Label>
-                    <Input value={tauxPaiement} disabled className="h-9 bg-muted/50 font-semibold text-primary" />
+                    <SafeInput value={tauxPaiement} disabled className="h-9 bg-muted/50 font-semibold text-primary" />
                   </div>
                   <div className="space-y-1.5">
                     <NumericField label={isAr ? 'نسبة تقدم الأشغال (%)' : 'Avancement des travaux (%)'} value={proj.taux_avancement_travaux} onChange={(val) => handleUpdateProjet(proj.local_id, { taux_avancement_travaux: val })} disabled={disabled} />
@@ -217,7 +205,12 @@ export const Step4BTP = memo(({ disabled, onActivity, rapportId }: StepComponent
                 <div className="pt-4 border-t border-border/40">
                   <div className="space-y-1.5">
                     <Label className="text-xs font-medium">{isAr ? 'ملاحظات' : 'Observations'}</Label>
-                    <Textarea placeholder={isAr ? 'أضف ملاحظات (اختياري)...' : 'Ajouter des observations...'} value={proj.observations} onChange={(e) => handleUpdateProjet(proj.local_id, { observations: e.target.value })} disabled={disabled} className="min-h-[80px] bg-background resize-y" />
+                    <SafeTextarea 
+                      placeholder={isAr ? 'أضف ملاحظات (اختياري)...' : 'Ajouter des observations...'} 
+                      value={proj.observations || ''} 
+                      onValueChange={(val) => handleUpdateProjet(proj.local_id, { observations: val })} 
+                      disabled={disabled} 
+                    />
                   </div>
                 </div>
 

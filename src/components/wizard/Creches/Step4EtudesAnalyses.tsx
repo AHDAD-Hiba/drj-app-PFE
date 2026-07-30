@@ -3,8 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+import { SafeInput } from '@/components/form/SafeInput';
+import { SafeTextarea } from '@/components/form/SafeTextarea';
 import { Plus, Trash2, FileSearch, PieChart } from 'lucide-react';
 import { StepComponentProps } from '@/config/wizard.types';
 import { NumericField } from '@/components/form/NumericField';
@@ -30,7 +30,7 @@ export const Step4EtudesAnalyses = memo(({ disabled, onActivity, rapportId }: St
       explications: '',
       observations: '',
     });
-    if (onActivity) onActivity();
+    if (onActivity) void onActivity();
   };
 
   const handleAddSondage = () => {
@@ -42,7 +42,7 @@ export const Step4EtudesAnalyses = memo(({ disabled, onActivity, rapportId }: St
       resultats: '',
       observations: '',
     });
-    if (onActivity) onActivity();
+    if (onActivity) void onActivity();
   };
 
   return (
@@ -74,32 +74,78 @@ export const Step4EtudesAnalyses = memo(({ disabled, onActivity, rapportId }: St
                 
                 <div className="md:col-span-8 space-y-1.5">
                   <Label className="text-xs">{isAr ? 'الموضوع' : 'Sujet'}</Label>
-                  <Input value={analyse.sujet} onChange={(e) => { updateAnalyse(analyse.local_id, { sujet: e.target.value }); if(onActivity) onActivity(); }} disabled={disabled} className="h-9 text-xs bg-background" />
+                  <SafeInput
+                    value={analyse.sujet}
+                    onValueChange={(val) => {
+                      updateAnalyse(analyse.local_id, { sujet: val });
+                      if (onActivity) void onActivity();
+                    }}
+                    disabled={disabled}
+                    placeholder={isAr ? 'الموضوع...' : 'Sujet...'}
+                    className="h-9 text-xs bg-background"
+                  />
                 </div>
 
                 <div className="md:col-span-4">
-                  <NumericField label={isAr ? 'عدد المستفيدين' : 'Bénéficiaires'} value={analyse.nombre_beneficiaires} onChange={(v) => { updateAnalyse(analyse.local_id, { nombre_beneficiaires: v }); if(onActivity) onActivity(); }} disabled={disabled} />
+                  <NumericField
+                    label={isAr ? 'عدد المستفيدين' : 'Bénéficiaires'}
+                    value={analyse.nombre_beneficiaires}
+                    onChange={(v) => {
+                      updateAnalyse(analyse.local_id, { nombre_beneficiaires: v });
+                      if (onActivity) void onActivity();
+                    }}
+                    disabled={disabled}
+                  />
                 </div>
 
                 <div className="md:col-span-6 space-y-1.5">
                   <Label className="text-xs">{isAr ? 'توضيحات في الموضوع' : 'Explications'}</Label>
-                  <Textarea value={analyse.explications || ''} onChange={(e) => { updateAnalyse(analyse.local_id, { explications: e.target.value }); if(onActivity) onActivity(); }} disabled={disabled} className="min-h-[70px] text-xs bg-background resize-none" />
+                  <SafeTextarea
+                    value={analyse.explications || ''}
+                    onValueChange={(val) => {
+                      updateAnalyse(analyse.local_id, { explications: val });
+                      if (onActivity) void onActivity();
+                    }}
+                    disabled={disabled}
+                    placeholder={isAr ? 'توضيحات...' : 'Explications...'}
+                  />
                 </div>
 
                 <div className="md:col-span-6 space-y-1.5">
                   <Label className="text-xs">{isAr ? 'ملاحظات' : 'Observations'}</Label>
-                  <Textarea value={analyse.observations || ''} onChange={(e) => { updateAnalyse(analyse.local_id, { observations: e.target.value }); if(onActivity) onActivity(); }} disabled={disabled} className="min-h-[70px] text-xs bg-background resize-none" />
+                  <SafeTextarea
+                    value={analyse.observations || ''}
+                    onValueChange={(val) => {
+                      updateAnalyse(analyse.local_id, { observations: val });
+                      if (onActivity) void onActivity();
+                    }}
+                    disabled={disabled}
+                    placeholder={isAr ? 'ملاحظات...' : 'Observations...'}
+                  />
                 </div>
 
               </div>
               <div className="md:col-span-1 flex justify-end">
-                <Button size="icon" variant="ghost" onClick={() => removeAnalyse(analyse.local_id)} disabled={disabled} className="text-destructive">
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  onClick={() => {
+                    removeAnalyse(analyse.local_id);
+                    if (onActivity) void onActivity();
+                  }}
+                  disabled={disabled}
+                  className="text-destructive"
+                >
                   <Trash2 className="h-4 w-4" />
                 </Button>
               </div>
             </div>
           ))}
-          {analyses.length === 0 && <div className="text-center py-4 text-xs text-muted-foreground border border-dashed rounded-lg">{isAr ? 'لا توجد تحليلات مسجلة' : 'Aucune analyse enregistrée'}</div>}
+          {analyses.length === 0 && (
+            <div className="text-center py-4 text-xs text-muted-foreground border border-dashed rounded-lg">
+              {isAr ? 'لا توجد تحليلات مسجلة' : 'Aucune analyse enregistrée'}
+            </div>
+          )}
         </div>
       </Card>
 
@@ -128,32 +174,78 @@ export const Step4EtudesAnalyses = memo(({ disabled, onActivity, rapportId }: St
                 
                 <div className="md:col-span-8 space-y-1.5">
                   <Label className="text-xs">{isAr ? 'نوع الاستطلاع' : 'Type de sondage'}</Label>
-                  <Input value={sondage.type_sondage} onChange={(e) => { updateSondage(sondage.local_id, { type_sondage: e.target.value }); if(onActivity) onActivity(); }} disabled={disabled} className="h-9 text-xs bg-background" />
+                  <SafeInput
+                    value={sondage.type_sondage}
+                    onValueChange={(val) => {
+                      updateSondage(sondage.local_id, { type_sondage: val });
+                      if (onActivity) void onActivity();
+                    }}
+                    disabled={disabled}
+                    placeholder={isAr ? 'نوع الاستطلاع...' : 'Type de sondage...'}
+                    className="h-9 text-xs bg-background"
+                  />
                 </div>
 
                 <div className="md:col-span-4">
-                  <NumericField label={isAr ? 'عدد المشاركين' : 'Participants'} value={sondage.nombre_participants} onChange={(v) => { updateSondage(sondage.local_id, { nombre_participants: v }); if(onActivity) onActivity(); }} disabled={disabled} />
+                  <NumericField
+                    label={isAr ? 'عدد المشاركين' : 'Participants'}
+                    value={sondage.nombre_participants}
+                    onChange={(v) => {
+                      updateSondage(sondage.local_id, { nombre_participants: v });
+                      if (onActivity) void onActivity();
+                    }}
+                    disabled={disabled}
+                  />
                 </div>
 
                 <div className="md:col-span-6 space-y-1.5">
                   <Label className="text-xs">{isAr ? 'النتائج' : 'Résultats'}</Label>
-                  <Textarea value={sondage.resultats || ''} onChange={(e) => { updateSondage(sondage.local_id, { resultats: e.target.value }); if(onActivity) onActivity(); }} disabled={disabled} className="min-h-[70px] text-xs bg-background resize-none" />
+                  <SafeTextarea
+                    value={sondage.resultats || ''}
+                    onValueChange={(val) => {
+                      updateSondage(sondage.local_id, { resultats: val });
+                      if (onActivity) void onActivity();
+                    }}
+                    disabled={disabled}
+                    placeholder={isAr ? 'النتائج...' : 'Résultats...'}
+                  />
                 </div>
 
                 <div className="md:col-span-6 space-y-1.5">
                   <Label className="text-xs">{isAr ? 'ملاحظات' : 'Observations'}</Label>
-                  <Textarea value={sondage.observations || ''} onChange={(e) => { updateSondage(sondage.local_id, { observations: e.target.value }); if(onActivity) onActivity(); }} disabled={disabled} className="min-h-[70px] text-xs bg-background resize-none" />
+                  <SafeTextarea
+                    value={sondage.observations || ''}
+                    onValueChange={(val) => {
+                      updateSondage(sondage.local_id, { observations: val });
+                      if (onActivity) void onActivity();
+                    }}
+                    disabled={disabled}
+                    placeholder={isAr ? 'ملاحظات...' : 'Observations...'}
+                  />
                 </div>
 
               </div>
               <div className="md:col-span-1 flex justify-end">
-                <Button size="icon" variant="ghost" onClick={() => removeSondage(sondage.local_id)} disabled={disabled} className="text-destructive">
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  onClick={() => {
+                    removeSondage(sondage.local_id);
+                    if (onActivity) void onActivity();
+                  }}
+                  disabled={disabled}
+                  className="text-destructive"
+                >
                   <Trash2 className="h-4 w-4" />
                 </Button>
               </div>
             </div>
           ))}
-          {sondages.length === 0 && <div className="text-center py-4 text-xs text-muted-foreground border border-dashed rounded-lg">{isAr ? 'لا توجد استطلاعات مسجلة' : 'Aucun sondage enregistré'}</div>}
+          {sondages.length === 0 && (
+            <div className="text-center py-4 text-xs text-muted-foreground border border-dashed rounded-lg">
+              {isAr ? 'لا توجد استطلاعات مسجلة' : 'Aucun sondage enregistré'}
+            </div>
+          )}
         </div>
       </Card>
 

@@ -1,24 +1,21 @@
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
-import { format } from "date-fns";
-import { ar, fr } from "date-fns/locale";
-import { cn } from "@/lib/utils";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { SafeInput } from '@/components/form/SafeInput';
+import { format } from 'date-fns';
+import { ar, fr } from 'date-fns/locale';
+import { cn } from '@/lib/utils';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Trash2, ArrowDownToLine, ArrowUpFromLine,CalendarIcon } from 'lucide-react';
+import { Plus, Trash2, ArrowDownToLine, ArrowUpFromLine, CalendarIcon } from 'lucide-react';
 import type { MouvementAssociation } from '@/hooks/Jeunesse/useMouvementsAssociations';
 import { Card } from '@/components/ui/card';
 
 interface MouvementsSectionProps {
   items: MouvementAssociation[];
   onAdd: (entry: MouvementAssociation) => Promise<boolean> | void;
-  onUpdate: (
-    local_id: string,
-    patch: Partial<MouvementAssociation>
-  ) => void;
+  onUpdate: (local_id: string, patch: Partial<MouvementAssociation>) => void;
   onRemove: (local_id: string) => Promise<boolean> | void;
   disabled?: boolean;
 }
@@ -34,7 +31,7 @@ export const MouvementsSection = ({
   const isAr = i18n.language === 'ar';
 
   return (
-<Card className="p-5 sm:p-6 space-y-4 bg-background">  
+    <Card className="p-5 sm:p-6 space-y-4 bg-background">
       <div className="space-y-3 pt-2">
         <div className="flex items-center justify-between gap-3 flex-wrap">
           <div>
@@ -42,7 +39,9 @@ export const MouvementsSection = ({
               {isAr ? 'الجمعيات (واردة / مغادرة)' : 'Associations (entrantes / sortantes)'}
             </h3>
             <p className="text-xs text-muted-foreground">
-              {isAr ? 'سجل الجمعيات الواردة والمغادرة والمستفيدين منها' : 'Enregistrez les mouvements et le nombre de bénéficiaires'}
+              {isAr
+                ? 'سجل الجمعيات الواردة والمغادرة والمستفيدين منها'
+                : 'Enregistrez les mouvements et le nombre de bénéficiaires'}
             </p>
           </div>
           <Button
@@ -54,7 +53,7 @@ export const MouvementsSection = ({
                 nom_association: '',
                 type_mouvement: 'entrante',
                 date_mouvement: new Date().toISOString().split('T')[0],
-                beneficiaires: '', // 💡 Initialisation du nouveau champ
+                beneficiaires: '',
               })
             }
             disabled={disabled}
@@ -64,6 +63,7 @@ export const MouvementsSection = ({
             {isAr ? 'إضافة' : 'Ajouter'}
           </Button>
         </div>
+
         {items.length === 0 ? (
           <div className="text-center py-4 text-xs text-muted-foreground border-2 border-dashed border-border rounded-lg">
             {isAr ? 'لا توجد حركات مسجلة' : 'Aucun mouvement enregistré'}
@@ -92,20 +92,18 @@ export const MouvementsSection = ({
                   </Button>
                 </div>
 
-                {/*  Réajustement des colonnes (4 + 3 + 3 + 2 = 12) pour intégrer les bénéficiaires */}
                 <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
-                  
                   {/* Champ Nom */}
                   <div className="sm:col-span-4 space-y-1.5">
                     <Label className="text-xs">{isAr ? 'الاسم' : 'Nom'}</Label>
-                    <Input
+                    <SafeInput
                       value={m.nom_association}
                       className="h-9"
                       disabled={disabled}
-                      placeholder={isAr ? 'اسم الجمعية...' : 'Nom de l\'association...'}
-                      onChange={(e) =>
+                      placeholder={isAr ? 'اسم الجمعية...' : "Nom de l'association..."}
+                      onValueChange={(val) =>
                         onUpdate(m.local_id, {
-                          nom_association: e.target.value.slice(0, 200),
+                          nom_association: val.slice(0, 200),
                         })
                       }
                     />
@@ -143,14 +141,15 @@ export const MouvementsSection = ({
                     </Select>
                   </div>
 
+                  {/* Champ Bénéficiaires */}
                   <div className="sm:col-span-2 space-y-1.5">
                     <Label className="text-xs">{isAr ? 'المستفيدين' : 'Bénéficiaires'}</Label>
-                    <Input
+                    <SafeInput
                       type="number"
                       min="0"
                       step="1"
-                      value={m.beneficiaires}
-                      className="h-9 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" // Masque les flèches pour un style plus "tech clean"
+                      value={m.beneficiaires ?? ''}
+                      className="h-9 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                       placeholder="0"
                       disabled={disabled}
                       onKeyDown={(e) => {
@@ -158,56 +157,58 @@ export const MouvementsSection = ({
                           e.preventDefault();
                         }
                       }}
-                      onChange={(e) => {
-                        const val = e.target.value.replace(/[^0-9]/g, ''); // Ne garde QUE les chiffres
-                        onUpdate(m.local_id, { 
-                          beneficiaires: val === '' ? '' : Number(val) 
+                      onValueChange={(val) => {
+                        const cleanVal = val.replace(/[^0-9]/g, '');
+                        onUpdate(m.local_id, {
+                          beneficiaires: cleanVal === '' ? '' : Number(cleanVal),
                         });
                       }}
                     />
                   </div>
-                  {/* Champ Date (Custom DatePicker) */}
-                <div className="sm:col-span-3 space-y-1.5">
-                  <Label className="text-xs">{isAr ? 'التاريخ' : 'Date'}</Label>
-                  
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant={"outline"}
-                        className={cn(
-                          "w-full h-9 justify-start text-left font-normal",
-                          !m.date_mouvement && "text-muted-foreground",
-                          isAr && "text-right flex-row-reverse"
-                        )}
-                        disabled={disabled}
-                      >
-                        <CalendarIcon className={cn("h-4 w-4", isAr ? "ml-2" : "mr-2")} />
-                        {m.date_mouvement ? (
-                          format(new Date(m.date_mouvement), "PPP", { locale: isAr ? ar : fr })
-                        ) : (
-                          <span>{isAr ? "اختر التاريخ" : "Sélectionner une date"}</span>
-                        )}
-                      </Button>
-                    </PopoverTrigger>
-                    
-                    <PopoverContent className="w-auto p-0" align={isAr ? "end" : "start"}>
-                      <Calendar
-                        mode="single"
-                        selected={m.date_mouvement ? new Date(m.date_mouvement) : undefined}
-                        onSelect={(date) => {
-                          if (date) {
-                            const dateString = format(date, "yyyy-MM-dd");
-                            onUpdate(m.local_id, { date_mouvement: dateString });
-                          }
-                        }}
-                        initialFocus
-                        locale={isAr ? ar : fr} 
-                        dir={isAr ? "rtl" : "ltr"}
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </div>
 
+                  {/* Champ Date */}
+                  <div className="sm:col-span-3 space-y-1.5">
+                    <Label className="text-xs">{isAr ? 'التاريخ' : 'Date'}</Label>
+
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant={'outline'}
+                          className={cn(
+                            'w-full h-9 justify-start text-left font-normal',
+                            !m.date_mouvement && 'text-muted-foreground',
+                            isAr && 'text-right flex-row-reverse'
+                          )}
+                          disabled={disabled}
+                        >
+                          <CalendarIcon className={cn('h-4 w-4', isAr ? 'ml-2' : 'mr-2')} />
+                          {m.date_mouvement ? (
+                            format(new Date(m.date_mouvement), 'PPP', {
+                              locale: isAr ? ar : fr,
+                            })
+                          ) : (
+                            <span>{isAr ? 'اختر التاريخ' : 'Sélectionner une date'}</span>
+                          )}
+                        </Button>
+                      </PopoverTrigger>
+
+                      <PopoverContent className="w-auto p-0" align={isAr ? 'end' : 'start'}>
+                        <Calendar
+                          mode="single"
+                          selected={m.date_mouvement ? new Date(m.date_mouvement) : undefined}
+                          onSelect={(date) => {
+                            if (date) {
+                              const dateString = format(date, 'yyyy-MM-dd');
+                              onUpdate(m.local_id, { date_mouvement: dateString });
+                            }
+                          }}
+                          initialFocus
+                          locale={isAr ? ar : fr}
+                          dir={isAr ? 'rtl' : 'ltr'}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
                 </div>
               </div>
             ))}

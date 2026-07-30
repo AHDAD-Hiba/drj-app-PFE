@@ -146,6 +146,17 @@
     "directorTitle": "مدير",
     "export": "تحميل إكسيل"
   },
+  "etablissements": {
+    "types": {
+      "maison_jeunes": "دار الشباب",
+      "club_feminin": "نادي نسوي",
+      "centre_socio_sportif": "مركز سوسيو-رياضي",
+      "ofppt": "مركز التكوين المهني",
+      "direction_regional": "المديرية الجهوية",
+      "centre_protection_enfance": "مركز حماية الطفولة",
+      "creche_publique": "روض عمومي"
+    }
+  },
   "loadingIndicators": "جاري تحميل المؤشرات...",
   "prefDomainDashboard": {
     "keyIndicators": "المؤشرات الرئيسية",

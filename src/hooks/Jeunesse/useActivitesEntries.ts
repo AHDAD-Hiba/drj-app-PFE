@@ -1,102 +1,48 @@
-import { useCallback, useEffect, useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { useEntityEntries, BaseEntry } from '@/hooks/common/useEntityEntries';
 
-export type TypeActivite = 'permanente' | 'rayonnante';
-
-export interface Activite {
-  id: string;
-  rapport_id: string;
-  type_activite: TypeActivite;
-
-  activites_culturelles: number | null;
-  activites_educatives: number | null;
-  activites_sportives: number | null;
-  nombre_associations: number | null;
-  nombre_clubs: number | null;
-  nombre_conventions: number | null;
-  renforcement_capacites: number | null;
+export interface ActiviteEntry extends BaseEntry {
+  type_activite: 'permanente' | 'rayonnante';
+  nombre_associations: number;
+  nombre_clubs: number;
+  nombre_conventions: number;
+  activites_educatives: number;
+  activites_culturelles: number;
+  activites_sportives: number;
+  renforcement_capacites: number;
 }
 
-export const useActivitesEntries = (rapportId: string | null) => {
-  const [items, setItems] = useState<Activite[]>([]);
-  const [loading, setLoading] = useState(false);
+const buildPayload = (entry: ActiviteEntry, rId: string) => ({
+  ...(entry.id ? { id: entry.id } : {}),
+  rapport_id: rId,
+  type_activite: entry.type_activite,
+  nombre_associations: Number(entry.nombre_associations) || 0,
+  nombre_clubs: Number(entry.nombre_clubs) || 0,
+  nombre_conventions: Number(entry.nombre_conventions) || 0,
+  activites_educatives: Number(entry.activites_educatives) || 0,
+  activites_culturelles: Number(entry.activites_culturelles) || 0,
+  activites_sportives: Number(entry.activites_sportives) || 0,
+  renforcement_capacites: Number(entry.renforcement_capacites) || 0,
+});
 
-  const reload = useCallback(async () => {
-    if (!rapportId) {
-      setItems([]);
-      return;
-    }
+const mapRowToEntry = (row: any, local_id: string): ActiviteEntry => ({
+  local_id,
+  id: row.id,
+  type_activite: row.type_activite,
+  nombre_associations: Number(row.nombre_associations) || 0,
+  nombre_clubs: Number(row.nombre_clubs) || 0,
+  nombre_conventions: Number(row.nombre_conventions) || 0,
+  activites_educatives: Number(row.activites_educatives) || 0,
+  activites_culturelles: Number(row.activites_culturelles) || 0,
+  activites_sportives: Number(row.activites_sportives) || 0,
+  renforcement_capacites: Number(row.renforcement_capacites) || 0,
+});
 
-    const { data, error } = await supabase
-      .from('activites')
-      .select('*')
-      .eq('rapport_id', rapportId);
-
-    if (error) {
-      console.error(error);
-      return;
-    }
-
-    setItems(data ?? []);
-  }, [rapportId]);
-
-  useEffect(() => {
-    setLoading(true);
-
-    reload().finally(() => {
-      setLoading(false);
-    });
-  }, [reload]);
-
-  const save = useCallback(
-    async (
-      type: TypeActivite,
-      values: Record<string, any>
-    ): Promise<boolean> => {
-      if (!rapportId) return false;
-
-      const { error } = await supabase
-        .from('activites')
-        .upsert(
-          {
-            ...values,
-            rapport_id: rapportId,
-            type_activite: type,
-            updated_at: new Date().toISOString(),
-          },
-          {
-            onConflict: 'rapport_id,type_activite',
-          }
-        );
-
-      if (error) {
-        console.error(error);
-        return false;
-      }
-
-      await reload();
-      return true;
-    },
-    [rapportId, reload]
-  );
-
-  const permanente =
-    items.find((x) => x.type_activite === 'permanente') ?? null;
-
-  const rayonnante =
-    items.find((x) => x.type_activite === 'rayonnante') ?? null;
-
-  return {
-    loading,
-    permanente,
-    rayonnante,
-
-    savePermanente: (values: Record<string, any>) =>
-      save('permanente', values),
-
-    saveRayonnante: (values: Record<string, any>) =>
-      save('rayonnante', values),
-
-    reload,
-  };
-};
+export function useActivitesEntries(rapportId: string | null) {
+  return useEntityEntries<ActiviteEntry>({
+    rapportId,
+    tableName: 'activites',
+    buildPayload,
+    mapRowToEntry,
+    buildConflictTarget: () => 'rapport_id,type_activite',
+  });
+}

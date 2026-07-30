@@ -3,7 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
+import { SafeInput } from '@/components/form/SafeInput';
+import { SafeTextarea } from '@/components/form/SafeTextarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Trash2, Users, BookOpen } from 'lucide-react';
 import { NumericField } from '@/components/form/NumericField';
@@ -13,26 +14,24 @@ import { StepComponentProps } from '@/config/wizard.types';
 import { useAfRessourcesHumaines } from '@/hooks/AffairesFeminines/useAfRessourcesHumaines';
 import { useAfFormationCadres } from '@/hooks/AffairesFeminines/useAfFormationCadres';
 import { useAfEtablissements } from '@/hooks/common/useAfEtablissements';
+import { useAuth } from '@/hooks/common/useAuth';
 
 export const Step5RH = memo(({ rapportId, disabled, onActivity }: StepComponentProps) => {
   const { i18n } = useTranslation();
   const isAr = i18n.language === 'ar';
+  const { utilisateur } = useAuth();
+  const directionId = utilisateur?.direction_id;
 
-  // ==========================================
   // HOOKS DE PERSISTANCE (AUTO-SAVE)
-  // ==========================================
   const rh = useAfRessourcesHumaines(rapportId);
   const formations = useAfFormationCadres(rapportId);
 
-  // Chargement des établissements filtrés (pas de maison de jeunes)
-  const { items: tousLesEtablissements } = useAfEtablissements();
+  // Chargement des établissements filtrés
+  const { items: tousLesEtablissements } = useAfEtablissements(directionId);
   const etablissementsFiltres = tousLesEtablissements.filter(
     e => e.type_etablissement === 'club_feminin' || e.type_etablissement === 'ofppt'
   );
 
-  // ==========================================
-  // ACTIONS RESSOURCES HUMAINES
-  // ==========================================
   const handleAddRh = async () => {
     if (onActivity) await onActivity();
     await rh.add({ 
@@ -46,9 +45,6 @@ export const Step5RH = memo(({ rapportId, disabled, onActivity }: StepComponentP
     });
   };
 
-  // ==========================================
-  // ACTIONS FORMATION DES CADRES
-  // ==========================================
   const handleAddFormation = async () => {
     if (onActivity) await onActivity();
     await formations.add({ 
@@ -95,7 +91,7 @@ export const Step5RH = memo(({ rapportId, disabled, onActivity }: StepComponentP
                 {/* En-tête épuré */}
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-xs font-semibold text-muted-foreground">#{idx + 1}</span>
-                  <Button type="button" size="icon" variant="ghost" onClick={() => { rh.remove(item.local_id); if(onActivity) onActivity(); }} disabled={disabled} className="h-8 w-8 text-destructive hover:bg-destructive/10">
+                  <Button type="button" size="icon" variant="ghost" onClick={() => { rh.remove(item.local_id); if(onActivity) void onActivity(); }} disabled={disabled} className="h-8 w-8 text-destructive hover:bg-destructive/10">
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
@@ -106,7 +102,7 @@ export const Step5RH = memo(({ rapportId, disabled, onActivity }: StepComponentP
                   {/* Établissement */}
                   <div className="space-y-1.5 lg:col-span-2">
                     <Label className="text-xs font-semibold">{isAr ? 'المؤسسة' : 'Établissement'}</Label>
-                    <Select disabled={disabled} value={item.etablissement_id} onValueChange={(v) => { rh.update(item.local_id, { etablissement_id: v }); if(onActivity) onActivity(); }}>
+                    <Select disabled={disabled} value={item.etablissement_id} onValueChange={(v) => { rh.update(item.local_id, { etablissement_id: v }); if(onActivity) void onActivity(); }}>
                       <SelectTrigger className="h-10"><SelectValue placeholder={isAr ? 'اختر المؤسسة' : 'Sélectionner l\'établissement'} /></SelectTrigger>
                       <SelectContent>
                         {etablissementsFiltres.map(etab => (
@@ -119,7 +115,7 @@ export const Step5RH = memo(({ rapportId, disabled, onActivity }: StepComponentP
                   {/* Statut / Type RH */}
                   <div className="space-y-1.5">
                     <Label className="text-xs font-semibold">{isAr ? 'الوضعية' : 'Statut (Type RH)'}</Label>
-                    <Select disabled={disabled} value={item.type_rh} onValueChange={(v) => { rh.update(item.local_id, { type_rh: v }); if(onActivity) onActivity(); }}>
+                    <Select disabled={disabled} value={item.type_rh} onValueChange={(v) => { rh.update(item.local_id, { type_rh: v }); if(onActivity) void onActivity(); }}>
                       <SelectTrigger className="h-10"><SelectValue placeholder={isAr ? 'اختر الوضعية' : 'Sélectionner'} /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="disponible">{isAr ? 'متوفر (الموارد الحالية)' : 'Disponible (Ressource actuelle)'}</SelectItem>
@@ -131,10 +127,13 @@ export const Step5RH = memo(({ rapportId, disabled, onActivity }: StepComponentP
                   {/* Profil / Fonction */}
                   <div className="space-y-1.5">
                     <Label className="text-xs font-semibold">{isAr ? 'الإطار / الوظيفة' : 'Profil / Fonction'}</Label>
-                    <Input 
+                    <SafeInput 
                       placeholder={isAr ? 'مثال: مدربة حلاقة، مديرة...' : 'Ex: Formatrice coiffure, Directrice...'} 
                       value={item.profile} 
-                      onChange={e => { rh.update(item.local_id, { profile: e.target.value }); if(onActivity) onActivity(); }} 
+                      onValueChange={(val) => {
+                        rh.update(item.local_id, { profile: val });
+                        if(onActivity) void onActivity();
+                      }} 
                       disabled={disabled} 
                       className="h-10" 
                     />
@@ -143,19 +142,36 @@ export const Step5RH = memo(({ rapportId, disabled, onActivity }: StepComponentP
                   {/* Mission / Filière */}
                   <div className="space-y-1.5">
                     <Label className="text-xs font-semibold text-muted-foreground">{isAr ? 'المهمة / الشعبة (اختياري)' : 'Mission / Filière (Optionnel)'}</Label>
-                    <Input placeholder={isAr ? 'مثال: تأطير شعبة الفصالة...' : 'Ex: Encadrement couture...'} value={item.mission} onChange={e => { rh.update(item.local_id, { mission: e.target.value }); if(onActivity) onActivity(); }} disabled={disabled} className="h-10" />
+                    <SafeInput 
+                      placeholder={isAr ? 'مثال: تأطير شعبة الفصالة...' : 'Ex: Encadrement couture...'} 
+                      value={item.mission} 
+                      onValueChange={(val) => {
+                        rh.update(item.local_id, { mission: val });
+                        if(onActivity) void onActivity();
+                      }} 
+                      disabled={disabled} 
+                      className="h-10" 
+                    />
                   </div>
 
                   {/* Nombre */}
                   <div className="space-y-1.5">
                     <Label className="text-xs font-semibold">{isAr ? 'العدد' : 'Nombre'}</Label>
-                    <NumericField label="" value={item.nombre} onChange={(v) => { rh.update(item.local_id, { nombre: v }); if(onActivity) onActivity(); }} disabled={disabled} />
+                    <NumericField label="" value={item.nombre} onChange={(v) => { rh.update(item.local_id, { nombre: v }); if(onActivity) void onActivity(); }} disabled={disabled} />
                   </div>
 
                   {/* Observations */}
                   <div className="space-y-1.5 sm:col-span-2 lg:col-span-3">
                     <Label className="text-xs font-semibold">{isAr ? 'ملاحظات' : 'Observations'}</Label>
-                    <Input value={item.observations} onChange={e => { rh.update(item.local_id, { observations: e.target.value }); if(onActivity) onActivity(); }} disabled={disabled} className="h-10" />
+                    <SafeTextarea 
+                      value={item.observations} 
+                      onValueChange={(val) => {
+                        rh.update(item.local_id, { observations: val });
+                        if(onActivity) void onActivity();
+                      }} 
+                      disabled={disabled} 
+                      placeholder={isAr ? 'ملاحظات...' : 'Observations...'} 
+                    />
                   </div>
                 </div>
               </div>
@@ -175,7 +191,7 @@ export const Step5RH = memo(({ rapportId, disabled, onActivity }: StepComponentP
             </div>
             <div>
               <h2 className="text-lg font-bold">{isAr ? 'تكوين الأطر' : 'Formation des Cadres'}</h2>
-              <p className="text-sm text-muted-foreground">{isAr ? 'تتبع الدورات التكوينية وتقوية القدرات' : 'Suivi des sessions de renforcement des capacities'}</p>
+              <p className="text-sm text-muted-foreground">{isAr ? 'تتبع الدورات التكوينية وتقوية القدرات' : 'Suivi des sessions de renforcement des capacités'}</p>
             </div>
           </div>
           <Button type="button" size="sm" onClick={handleAddFormation} disabled={disabled} className="gap-1.5 shadow-sm">
@@ -194,7 +210,7 @@ export const Step5RH = memo(({ rapportId, disabled, onActivity }: StepComponentP
               <div key={item.local_id} className="border border-border rounded-xl p-4 bg-muted/10 space-y-4 transition-colors hover:border-primary/30">
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-xs font-semibold text-muted-foreground">#{idx + 1}</span>
-                  <Button type="button" size="icon" variant="ghost" onClick={() => { formations.remove(item.local_id); if(onActivity) onActivity(); }} disabled={disabled} className="h-8 w-8 text-destructive hover:bg-destructive/10">
+                  <Button type="button" size="icon" variant="ghost" onClick={() => { formations.remove(item.local_id); if(onActivity) void onActivity(); }} disabled={disabled} className="h-8 w-8 text-destructive hover:bg-destructive/10">
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
@@ -202,21 +218,28 @@ export const Step5RH = memo(({ rapportId, disabled, onActivity }: StepComponentP
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pt-1">
                   <div className="space-y-1.5 sm:col-span-2 lg:col-span-1">
                     <Label className="text-xs font-semibold">{isAr ? 'مجال التكوين' : 'Domaine de formation'}</Label>
-                    <Input value={item.domaine_formation} onChange={e => { formations.update(item.local_id, { domaine_formation: e.target.value }); if(onActivity) onActivity(); }} disabled={disabled} className="h-10" />
+                    <SafeInput 
+                      value={item.domaine_formation} 
+                      onValueChange={(val) => {
+                        formations.update(item.local_id, { domaine_formation: val });
+                        if(onActivity) void onActivity();
+                      }} 
+                      disabled={disabled} 
+                      className="h-10" 
+                    />
                   </div>
 
                   <div className="space-y-1.5">
                     <Label className="text-xs font-semibold">{isAr ? 'عدد الأطر' : 'Nombre de cadres'}</Label>
-                    <NumericField label="" value={item.nombre_cadres} onChange={(v) => { formations.update(item.local_id, { nombre_cadres: v }); if(onActivity) onActivity(); }} disabled={disabled} />
+                    <NumericField label="" value={item.nombre_cadres} onChange={(v) => { formations.update(item.local_id, { nombre_cadres: v }); if(onActivity) void onActivity(); }} disabled={disabled} />
                   </div>
 
                   <div className="space-y-1.5">
                     <Label className="text-xs font-semibold">{isAr ? 'مدة التكوين' : 'Durée'}</Label>
                     <div className="flex gap-2">
-                      <NumericField label="" value={item.duree_valeur} onChange={(v) => { formations.update(item.local_id, { duree_valeur: v }); if(onActivity) onActivity(); }} disabled={disabled} />
+                      <NumericField label="" value={item.duree_valeur} onChange={(v) => { formations.update(item.local_id, { duree_valeur: v }); if(onActivity) void onActivity(); }} disabled={disabled} />
                       
-                      {/* 🛠️ FIX ENUM : Valeurs adaptées à unite_duree_enum */}
-                      <Select disabled={disabled} value={item.unite_duree} onValueChange={(v) => { formations.update(item.local_id, { unite_duree: v }); if(onActivity) onActivity(); }}>
+                      <Select disabled={disabled} value={item.unite_duree} onValueChange={(v) => { formations.update(item.local_id, { unite_duree: v }); if(onActivity) void onActivity(); }}>
                         <SelectTrigger className="h-10 w-28 shrink-0"><SelectValue placeholder={isAr ? 'الوحدة' : 'Unité'} /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="heure">{isAr ? 'ساعة' : 'Heure'}</SelectItem>
@@ -230,7 +253,15 @@ export const Step5RH = memo(({ rapportId, disabled, onActivity }: StepComponentP
 
                   <div className="space-y-1.5 sm:col-span-2 lg:col-span-3">
                     <Label className="text-xs font-semibold">{isAr ? 'ملاحظات' : 'Observations'}</Label>
-                    <Input value={item.observations} onChange={e => { formations.update(item.local_id, { observations: e.target.value }); if(onActivity) onActivity(); }} disabled={disabled} className="h-10" />
+                    <SafeTextarea 
+                      value={item.observations} 
+                      onValueChange={(val) => {
+                        formations.update(item.local_id, { observations: val });
+                        if(onActivity) void onActivity();
+                      }} 
+                      disabled={disabled} 
+                      placeholder={isAr ? 'ملاحظات...' : 'Observations...'} 
+                    />
                   </div>
                 </div>
               </div>

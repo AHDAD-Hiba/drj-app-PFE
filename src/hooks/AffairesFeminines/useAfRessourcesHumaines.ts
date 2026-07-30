@@ -9,16 +9,15 @@ export interface AfRessourceHumaineEntry extends BaseEntry {
   observations: string;
 }
 
-
 const buildPayload = (entry: AfRessourceHumaineEntry, rId: string) => ({
   ...(entry.id ? { id: entry.id } : {}),
   rapport_id: rId,
   etablissement_id: entry.etablissement_id || null,
   type_rh: entry.type_rh || null,
-  profile: entry.profile || null,
-  mission: entry.mission || null,
-  nombre: entry.nombre || 0,
-  observations: entry.observations || null,
+  profile: entry.profile?.trim() || null,
+  mission: entry.mission?.trim() || null,
+  nombre: Number(entry.nombre) || 0,
+  observations: entry.observations?.trim() || null,
 });
 
 const mapRowToEntry = (row: any, local_id: string): AfRessourceHumaineEntry => ({
@@ -28,7 +27,7 @@ const mapRowToEntry = (row: any, local_id: string): AfRessourceHumaineEntry => (
   type_rh: row.type_rh ?? '',
   profile: row.profile ?? '',
   mission: row.mission ?? '',
-  nombre: row.nombre ?? 0,
+  nombre: Number(row.nombre) ?? 0,
   observations: row.observations ?? '',
 });
 
@@ -38,5 +37,7 @@ export function useAfRessourcesHumaines(rapportId: string | null) {
     tableName: 'af_ressources_humaines',
     buildPayload,
     mapRowToEntry,
+    // 🛡️ Valide si un profil, un établissement ou un type RH est renseigné
+    validateBeforeSave: (entry) => Boolean(entry.etablissement_id || entry.profile?.trim() || entry.type_rh),
   });
 }

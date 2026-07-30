@@ -9,9 +9,9 @@ export interface AfIntegrationLaureateEntry extends BaseEntry {
 const buildPayload = (entry: AfIntegrationLaureateEntry, rId: string) => ({
   ...(entry.id ? { id: entry.id } : {}),
   rapport_id: rId,
-  type_formation: entry.type_formation || null,
-  nombre_laureates: entry.nombre_laureates || 0,
-  nombre_integrees: entry.nombre_integrees || 0,
+  type_formation: entry.type_formation?.trim() || null,
+  nombre_laureates: Number(entry.nombre_laureates) || 0,
+  nombre_integrees: Number(entry.nombre_integrees) || 0,
 });
 
 const mapRowToEntry = (row: any, local_id: string): AfIntegrationLaureateEntry => ({
@@ -28,5 +28,7 @@ export function useAfIntegrationLaureates(rapportId: string | null) {
     tableName: 'af_integration_laureates',
     buildPayload,
     mapRowToEntry,
+    // 🛡️ Sauvegarde si le type de formation est rempli
+    validateBeforeSave: (entry) => Boolean(entry.type_formation?.trim()),
   });
 }

@@ -107,6 +107,10 @@ const handleCampAdd = async (c: any) => {
         {/* Associations Section */}
         <AssociationsSection
           items={associationValues.items}
+          onAdd={(newItem) => {
+            void associationValues.add(newItem);
+            if (onActivity) void onActivity();
+          }}
           onUpdate={handleAssociationUpdate}
           disabled={disabled}
         />

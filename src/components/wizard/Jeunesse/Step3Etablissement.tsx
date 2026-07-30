@@ -2,7 +2,7 @@ import { memo, useEffect, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { SafeInput } from '@/components/form/SafeInput';
 import { Label } from '@/components/ui/label';
 import {
   Select,
@@ -137,7 +137,7 @@ export const Step3Etablissement = memo(({
       {/* 🔍 BARRE DE RECHERCHE INTEGRÉE */}
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
+        <SafeInput
           type="text"
           placeholder={isAr ? 'ابحث عن اسم المؤسسة لتغيير وضعيتها...' : 'Rechercher un établissement par son nom...'}
           value={searchTerm}
@@ -181,21 +181,19 @@ export const Step3Etablissement = memo(({
                   <Label className="text-xs font-semibold">
                     {isAr ? 'اسم المؤسسة' : "Nom de l'établissement"}
                   </Label>
-                  {/* S'il s'agit d'une nouvelle carte (sans ID), on la laisse éditable. 
-                      Sinon on peut la laisser éditable ou grisée selon la préférence, ici je garde l'Input par défaut */}
-                  <Input
+                  <SafeInput
                     value={it.name}
                     disabled={disabled}
                     className="h-9 bg-background"
                     maxLength={200}
-                    onChange={(e) =>
+                    placeholder={isAr ? 'أدخل اسم المؤسسة...' : 'Nom de l\'établissement...'}
+                    onValueChange={(val) =>
                       handleUpdate(it.local_id, {
-                        name: e.target.value.slice(0, 200),
+                        name: val.slice(0, 200),
                       })
                     }
-                  />                    
+                  />
                 </div>
-
                 <div className={`space-y-1.5 ${it.project_status !== 'ferme' ? 'sm:col-span-2' : ''}`}>
                   <Label className="text-xs font-semibold">
                     {isAr ? 'حالة المؤسسة' : "Statut de l'établissement"}
@@ -263,7 +261,7 @@ export const Step3Etablissement = memo(({
                 {it.other_status === autreId && (
                   <div className="space-y-1.5">
                     <Label className="text-xs font-semibold">{isAr ? 'التوضيح' : 'Précision'}</Label>
-                    <Input
+                    <SafeInput
                       value={it.autre_precision}
                       disabled={disabled}
                       className="h-9 bg-background"

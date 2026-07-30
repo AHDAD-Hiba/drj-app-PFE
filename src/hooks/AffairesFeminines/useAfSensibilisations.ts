@@ -11,18 +11,17 @@ export interface AfSensibilisationEntry extends BaseEntry {
   resultats_evaluation: string;
 }
 
-// Fonctions sorties du hook pour la stabilité
 const buildPayload = (entry: AfSensibilisationEntry, rId: string) => ({
   ...(entry.id ? { id: entry.id } : {}),
   rapport_id: rId,
   type_activite_id: entry.type_activite_id || null,
-  lieu: entry.lieu || null,
-  sujet: entry.sujet || null,
+  lieu: entry.lieu?.trim() || null,
+  sujet: entry.sujet?.trim() || null,
   date_activite: entry.date_activite || null,
-  partenaires: entry.partenaires || null,
-  benef_urbain: entry.benef_urbain || 0,
-  benef_rural: entry.benef_rural || 0,
-  resultats_evaluation: entry.resultats_evaluation || null,
+  partenaires: entry.partenaires?.trim() || null,
+  benef_urbain: Number(entry.benef_urbain) || 0,
+  benef_rural: Number(entry.benef_rural) || 0,
+  resultats_evaluation: entry.resultats_evaluation?.trim() || null,
 });
 
 const mapRowToEntry = (row: any, local_id: string): AfSensibilisationEntry => ({
@@ -44,5 +43,7 @@ export function useAfSensibilisations(rapportId: string | null) {
     tableName: 'af_activites_sensibilisation',
     buildPayload,
     mapRowToEntry,
+    // 🛡️ Valide si un sujet, lieu ou type d'activité est spécifié
+    validateBeforeSave: (entry) => Boolean(entry.sujet?.trim() || entry.lieu?.trim() || entry.type_activite_id),
   });
 }

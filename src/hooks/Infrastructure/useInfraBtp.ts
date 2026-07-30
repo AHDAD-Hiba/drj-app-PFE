@@ -13,8 +13,8 @@ export interface InfraBtpEntry extends BaseEntry {
 const buildPayload = (entry: InfraBtpEntry, rId: string) => ({
   ...(entry.id ? { id: entry.id } : {}),
   rapport_id: rId,
-  type_projet: entry.type_projet || null,
-  etablissement_id: entry.etablissement_id || null, // Clé étrangère
+  type_projet: entry.type_projet ?? null,
+  etablissement_id: entry.etablissement_id ?? null, // Clé étrangère
   cout_projet: Number(entry.cout_projet) || 0,
   montant_paye: Number(entry.montant_paye) || 0,
   taux_avancement_travaux: Number(entry.taux_avancement_travaux) || 0,

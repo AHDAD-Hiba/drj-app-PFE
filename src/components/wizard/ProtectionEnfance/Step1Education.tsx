@@ -1,9 +1,9 @@
-import { memo, useState, useEffect } from 'react';
+import { memo, useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
+import { SafeInput } from '@/components/form/SafeInput';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Trash2, Users, GraduationCap, Hammer, Briefcase, Building2, MapPin } from 'lucide-react';
 import { StepComponentProps } from '@/config/wizard.types';
@@ -64,12 +64,12 @@ export const Step1Education = memo(({ disabled, onActivity, rapportId }: StepCom
   // ==========================================================================
   // HANDLERS UNIFIÉS (Cartes Centres)
   // ==========================================================================
-  const handleAddCentre = () => {
+  const handleAddCentre = useCallback(() => {
     setCenters(prev => [...prev, { local_id: crypto.randomUUID(), etablissement_id: '' }]);
     if (onActivity) onActivity();
-  };
+  }, [onActivity]);
 
-  const handleRemoveCentre = (local_id: string, etablissement_id: string) => {
+  const handleRemoveCentre = useCallback((local_id: string, etablissement_id: string) => {
     setCenters(prev => prev.filter(c => c.local_id !== local_id));
     if (etablissement_id) {
       demHook.items.filter(i => i.etablissement_id === etablissement_id).forEach(i => void demHook.remove(i.local_id));
@@ -78,9 +78,9 @@ export const Step1Education = memo(({ disabled, onActivity, rapportId }: StepCom
       foHook.items.filter(i => i.etablissement_id === etablissement_id).forEach(i => void foHook.remove(i.local_id));
     }
     if (onActivity) onActivity();
-  };
+  }, [demHook, edHook, atHook, foHook, onActivity]);
 
-  const handleUpdateEtablissement = (local_id: string, old_etab_id: string, new_etab_id: string) => {
+  const handleUpdateEtablissement = useCallback((local_id: string, old_etab_id: string, new_etab_id: string) => {
     setCenters(prev => prev.map(c => c.local_id === local_id ? { ...c, etablissement_id: new_etab_id } : c));
     if (old_etab_id) {
       demHook.items.filter(i => i.etablissement_id === old_etab_id).forEach(i => void demHook.update(i.local_id, { etablissement_id: new_etab_id }));
@@ -89,12 +89,12 @@ export const Step1Education = memo(({ disabled, onActivity, rapportId }: StepCom
       foHook.items.filter(i => i.etablissement_id === old_etab_id).forEach(i => void foHook.update(i.local_id, { etablissement_id: new_etab_id }));
     }
     if (onActivity) onActivity();
-  };
+  }, [demHook, edHook, atHook, foHook, onActivity]);
 
-  const getAvailableEtablissements = (current_id: string) => {
+  const getAvailableEtablissements = useCallback((current_id: string) => {
     const selectedIds = centers.map(c => c.etablissement_id).filter(id => id !== '' && id !== current_id);
     return centresProtection.filter(e => !selectedIds.includes(e.id));
-  };
+  }, [centresProtection, centers]);
 
   // ==========================================================================
   // UPSERT HANDLERS (Mise à jour ou création à la volée)
@@ -344,10 +344,10 @@ export const Step1Education = memo(({ disabled, onActivity, rapportId }: StepCom
                             {centerAteliers.map((at) => (
                               <div key={at.local_id} className="flex items-center gap-3 border border-border p-2.5 rounded-lg bg-muted/10">
                                 <div className="flex-1">
-                                  <Input 
+                                  <SafeInput 
                                     placeholder={isAr ? 'اسم الورشة (مثال: الحلاقة)' : 'Nom de l\'atelier'} 
                                     value={at.nom_atelier} 
-                                    onChange={(e) => { void atHook.update(at.local_id, { nom_atelier: e.target.value }); if(onActivity) onActivity(); }} 
+                                    onValueChange={(value) => { void atHook.update(at.local_id, { nom_atelier: value }); if(onActivity) onActivity(); }} 
                                     disabled={disabled} className="h-9 bg-background text-xs" 
                                   />
                                 </div>

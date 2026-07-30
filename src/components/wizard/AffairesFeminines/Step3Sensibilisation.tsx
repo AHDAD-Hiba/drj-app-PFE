@@ -3,7 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
+import { SafeInput } from '@/components/form/SafeInput';
+import { SafeTextarea } from '@/components/form/SafeTextarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Trash2, Megaphone, DoorOpen } from 'lucide-react';
 import { NumericField } from '@/components/form/NumericField';
@@ -14,29 +15,26 @@ import { useAfSensibilisations } from '@/hooks/AffairesFeminines/useAfSensibilis
 import { useAfPortesOuvertes } from '@/hooks/AffairesFeminines/useAfPortesOuvertes';
 import { useAfTypesActivite } from '@/hooks/AffairesFeminines/useAfTypesActivite';
 import { useAfEtablissements } from '@/hooks/common/useAfEtablissements';
+import { useAuth } from '@/hooks/common/useAuth';
 
 export const Step3Sensibilisation = memo(({ rapportId, disabled, onActivity }: StepComponentProps) => {
   const { i18n } = useTranslation();
   const isAr = i18n.language === 'ar';
+  const { utilisateur } = useAuth();
+  const directionId = utilisateur?.direction_id;
 
-  // ==========================================
   // HOOKS DE PERSISTANCE (AUTO-SAVE)
-  // ==========================================
   const sensibilisations = useAfSensibilisations(rapportId);
   const portesOuvertes = useAfPortesOuvertes(rapportId);
 
   // Chargement des référentiels
   const { items: typesActivite } = useAfTypesActivite();
-  const { items: tousLesEtablissements } = useAfEtablissements();
+  const { items: tousLesEtablissements } = useAfEtablissements(directionId);
 
-  // Filtrage intelligent des établissements (exclure maisons de jeunes)
   const etablissementsFiltres = tousLesEtablissements.filter(
     e => e.type_etablissement === 'club_feminin' || e.type_etablissement === 'ofppt'
   );
 
-  // ==========================================
-  // ACTIONS SENSIBILISATION
-  // ==========================================
   const handleAddSensibilisation = async () => {
     if (onActivity) await onActivity();
     await sensibilisations.add({ 
@@ -52,9 +50,6 @@ export const Step3Sensibilisation = memo(({ rapportId, disabled, onActivity }: S
     });
   };
 
-  // ==========================================
-  // ACTIONS PORTES OUVERTES
-  // ==========================================
   const handleAddPortesOuvertes = async () => {
     if (onActivity) await onActivity();
     await portesOuvertes.add({ 
@@ -102,7 +97,7 @@ export const Step3Sensibilisation = memo(({ rapportId, disabled, onActivity }: S
                   <span className="text-xs font-semibold text-muted-foreground">#{idx + 1}</span>
                   <Button
                     type="button" size="icon" variant="ghost"
-                    onClick={() => { sensibilisations.remove(item.local_id); if(onActivity) onActivity(); }} disabled={disabled}
+                    onClick={() => { sensibilisations.remove(item.local_id); if(onActivity) void onActivity(); }} disabled={disabled}
                     className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
                   >
                     <Trash2 className="h-4 w-4" />
@@ -112,7 +107,7 @@ export const Step3Sensibilisation = memo(({ rapportId, disabled, onActivity }: S
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   <div className="space-y-1.5">
                     <Label className="text-xs font-semibold">{isAr ? 'نوع النشاط' : 'Type d\'activité'}</Label>
-                    <Select disabled={disabled} value={item.type_activite_id} onValueChange={(v) => { sensibilisations.update(item.local_id, { type_activite_id: v }); if(onActivity) onActivity(); }}>
+                    <Select disabled={disabled} value={item.type_activite_id} onValueChange={(v) => { sensibilisations.update(item.local_id, { type_activite_id: v }); if(onActivity) void onActivity(); }}>
                       <SelectTrigger className="h-10"><SelectValue placeholder={isAr ? 'اختر النوع' : 'Sélectionner'} /></SelectTrigger>
                       <SelectContent>
                         {typesActivite.map(type => (
@@ -124,37 +119,78 @@ export const Step3Sensibilisation = memo(({ rapportId, disabled, onActivity }: S
 
                   <div className="space-y-1.5">
                     <Label className="text-xs font-semibold">{isAr ? 'الموضوع' : 'Sujet'}</Label>
-                    <Input value={item.sujet} onChange={e => { sensibilisations.update(item.local_id, { sujet: e.target.value }); if(onActivity) onActivity(); }} disabled={disabled} className="h-10" />
+                    <SafeInput 
+                      value={item.sujet} 
+                      onValueChange={(val) => {
+                        sensibilisations.update(item.local_id, { sujet: val });
+                        if(onActivity) void onActivity();
+                      }} 
+                      disabled={disabled} 
+                      className="h-10" 
+                    />
                   </div>
 
                   <div className="space-y-1.5">
                     <Label className="text-xs font-semibold">{isAr ? 'المكان' : 'Lieu'}</Label>
-                    <Input value={item.lieu} onChange={e => { sensibilisations.update(item.local_id, { lieu: e.target.value }); if(onActivity) onActivity(); }} disabled={disabled} className="h-10" />
+                    <SafeInput 
+                      value={item.lieu} 
+                      onValueChange={(val) => {
+                        sensibilisations.update(item.local_id, { lieu: val });
+                        if(onActivity) void onActivity();
+                      }} 
+                      disabled={disabled} 
+                      className="h-10" 
+                    />
                   </div>
 
                   <div className="space-y-1.5">
                     <Label className="text-xs font-semibold">{isAr ? 'التاريخ' : 'Date'}</Label>
-                    <Input type="date" value={item.date_activite} onChange={e => { sensibilisations.update(item.local_id, { date_activite: e.target.value }); if(onActivity) onActivity(); }} disabled={disabled} className="h-10" />
+                    <SafeInput 
+                      type="date" 
+                      value={item.date_activite} 
+                      onValueChange={(val) => {
+                        sensibilisations.update(item.local_id, { date_activite: val });
+                        if(onActivity) void onActivity();
+                      }} 
+                      disabled={disabled} 
+                      className="h-10" 
+                    />
                   </div>
 
                   <div className="space-y-1.5">
                     <Label className="text-xs font-semibold">{isAr ? 'المستفيدين (حضري)' : 'Bénéficiaires (Urbain)'}</Label>
-                    <NumericField label="" value={item.benef_urbain} onChange={(v) => { sensibilisations.update(item.local_id, { benef_urbain: v }); if(onActivity) onActivity(); }} disabled={disabled} />
+                    <NumericField label="" value={item.benef_urbain} onChange={(v) => { sensibilisations.update(item.local_id, { benef_urbain: v }); if(onActivity) void onActivity(); }} disabled={disabled} />
                   </div>
 
                   <div className="space-y-1.5">
                     <Label className="text-xs font-semibold">{isAr ? 'المستفيدين (قروي)' : 'Bénéficiaires (Rural)'}</Label>
-                    <NumericField label="" value={item.benef_rural} onChange={(v) => { sensibilisations.update(item.local_id, { benef_rural: v }); if(onActivity) onActivity(); }} disabled={disabled} />
+                    <NumericField label="" value={item.benef_rural} onChange={(v) => { sensibilisations.update(item.local_id, { benef_rural: v }); if(onActivity) void onActivity(); }} disabled={disabled} />
                   </div>
 
-                  <div className="space-y-1.5 sm:col-span-2 lg:col-span-1">
+                  <div className="space-y-1.5 sm:col-span-2 lg:col-span-3">
                     <Label className="text-xs font-semibold">{isAr ? 'الشركاء' : 'Partenaires'}</Label>
-                    <Input value={item.partenaires} onChange={e => { sensibilisations.update(item.local_id, { partenaires: e.target.value }); if(onActivity) onActivity(); }} disabled={disabled} className="h-10" />
+                    <SafeInput 
+                      value={item.partenaires} 
+                      onValueChange={(val) => {
+                        sensibilisations.update(item.local_id, { partenaires: val });
+                        if(onActivity) void onActivity();
+                      }} 
+                      disabled={disabled} 
+                      className="h-10" 
+                    />
                   </div>
 
-                  <div className="space-y-1.5 sm:col-span-2 lg:col-span-2">
+                  <div className="space-y-1.5 sm:col-span-2 lg:col-span-3">
                     <Label className="text-xs font-semibold">{isAr ? 'النتائج / التقييم' : 'Résultats / Évaluation'}</Label>
-                    <Input value={item.resultats_evaluation} onChange={e => { sensibilisations.update(item.local_id, { resultats_evaluation: e.target.value }); if(onActivity) onActivity(); }} disabled={disabled} className="h-10" />
+                    <SafeTextarea 
+                      value={item.resultats_evaluation} 
+                      onValueChange={(val) => {
+                        sensibilisations.update(item.local_id, { resultats_evaluation: val });
+                        if(onActivity) void onActivity();
+                      }} 
+                      disabled={disabled} 
+                      placeholder={isAr ? 'النتائج والتقييم...' : 'Résultats et évaluation...'} 
+                    />
                   </div>
                 </div>
               </div>
@@ -195,7 +231,7 @@ export const Step3Sensibilisation = memo(({ rapportId, disabled, onActivity }: S
                   <span className="text-xs font-semibold text-muted-foreground">#{idx + 1}</span>
                   <Button 
                     type="button" size="icon" variant="ghost" 
-                    onClick={() => { portesOuvertes.remove(item.local_id); if(onActivity) onActivity(); }} disabled={disabled} 
+                    onClick={() => { portesOuvertes.remove(item.local_id); if(onActivity) void onActivity(); }} disabled={disabled} 
                     className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
                   >
                     <Trash2 className="h-4 w-4" />
@@ -205,7 +241,7 @@ export const Step3Sensibilisation = memo(({ rapportId, disabled, onActivity }: S
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   <div className="space-y-1.5 sm:col-span-2 lg:col-span-3">
                     <Label className="text-xs font-semibold">{isAr ? 'المؤسسة' : 'Nom de l\'établissement'}</Label>
-                    <Select disabled={disabled} value={item.etablissement_id} onValueChange={(v) => { portesOuvertes.update(item.local_id, { etablissement_id: v }); if(onActivity) onActivity(); }}>
+                    <Select disabled={disabled} value={item.etablissement_id} onValueChange={(v) => { portesOuvertes.update(item.local_id, { etablissement_id: v }); if(onActivity) void onActivity(); }}>
                       <SelectTrigger className="h-10">
                          <SelectValue placeholder={isAr ? 'اختر المؤسسة' : 'Sélectionner l\'établissement'} />
                       </SelectTrigger>
@@ -219,7 +255,7 @@ export const Step3Sensibilisation = memo(({ rapportId, disabled, onActivity }: S
 
                   <div className="space-y-1.5">
                     <Label className="text-xs font-semibold">{isAr ? 'نوع النشاط' : 'Type d\'activité'}</Label>
-                    <Select disabled={disabled} value={item.type_activite_id} onValueChange={(v) => { portesOuvertes.update(item.local_id, { type_activite_id: v }); if(onActivity) onActivity(); }}>
+                    <Select disabled={disabled} value={item.type_activite_id} onValueChange={(v) => { portesOuvertes.update(item.local_id, { type_activite_id: v }); if(onActivity) void onActivity(); }}>
                       <SelectTrigger className="h-10"><SelectValue placeholder={isAr ? 'اختر النوع' : 'Sélectionner'} /></SelectTrigger>
                       <SelectContent>
                         {typesActivite.map(type => (
@@ -231,22 +267,46 @@ export const Step3Sensibilisation = memo(({ rapportId, disabled, onActivity }: S
 
                   <div className="space-y-1.5 lg:col-span-2">
                     <Label className="text-xs font-semibold">{isAr ? 'مضمون النشاط' : 'Contenu de l\'activité'}</Label>
-                    <Input value={item.contenu_activite} onChange={e => { portesOuvertes.update(item.local_id, { contenu_activite: e.target.value }); if(onActivity) onActivity(); }} disabled={disabled} className="h-10" />
+                    <SafeInput 
+                      value={item.contenu_activite} 
+                      onValueChange={(val) => {
+                        portesOuvertes.update(item.local_id, { contenu_activite: val });
+                        if(onActivity) void onActivity();
+                      }} 
+                      disabled={disabled} 
+                      className="h-10" 
+                    />
                   </div>
 
                   <div className="space-y-1.5">
                     <Label className="text-xs font-semibold">{isAr ? 'عدد المستفيدين' : 'Nombre de bénéficiaires'}</Label>
-                    <NumericField label="" value={item.nombre_beneficiaires} onChange={(v) => { portesOuvertes.update(item.local_id, { nombre_beneficiaires: v }); if(onActivity) onActivity(); }} disabled={disabled} />
+                    <NumericField label="" value={item.nombre_beneficiaires} onChange={(v) => { portesOuvertes.update(item.local_id, { nombre_beneficiaires: v }); if(onActivity) void onActivity(); }} disabled={disabled} />
                   </div>
 
-                  <div className="space-y-1.5">
+                  <div className="space-y-1.5 lg:col-span-2">
                     <Label className="text-xs font-semibold">{isAr ? 'الشركاء' : 'Partenaires'}</Label>
-                    <Input value={item.partenaires} onChange={e => { portesOuvertes.update(item.local_id, { partenaires: e.target.value }); if(onActivity) onActivity(); }} disabled={disabled} className="h-10" />
+                    <SafeInput 
+                      value={item.partenaires} 
+                      onValueChange={(val) => {
+                        portesOuvertes.update(item.local_id, { partenaires: val });
+                        if(onActivity) void onActivity();
+                      }} 
+                      disabled={disabled} 
+                      className="h-10" 
+                    />
                   </div>
 
-                  <div className="space-y-1.5">
+                  <div className="space-y-1.5 sm:col-span-2 lg:col-span-3">
                     <Label className="text-xs font-semibold">{isAr ? 'التقييم' : 'Évaluation'}</Label>
-                    <Input value={item.evaluation} onChange={e => { portesOuvertes.update(item.local_id, { evaluation: e.target.value }); if(onActivity) onActivity(); }} disabled={disabled} className="h-10" />
+                    <SafeTextarea 
+                      value={item.evaluation} 
+                      onValueChange={(val) => {
+                        portesOuvertes.update(item.local_id, { evaluation: val });
+                        if(onActivity) void onActivity();
+                      }} 
+                      disabled={disabled} 
+                      placeholder={isAr ? 'التقييم...' : 'Évaluation...'} 
+                    />
                   </div>
                 </div>
               </div>

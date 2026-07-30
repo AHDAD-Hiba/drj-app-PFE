@@ -2,7 +2,7 @@ import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { SafeInput } from '@/components/form/SafeInput';
 import { Label } from '@/components/ui/label';
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
@@ -11,7 +11,6 @@ import { Plus, Trash2, Landmark, AlertTriangle } from 'lucide-react';
 import { NumericField } from '@/components/form/NumericField';
 import { useTypesPartenaires } from '@/hooks/Jeunesse/useTypesPartenaires';
 
-// NOUVEAUX IMPORTS POUR L'AUTONOMIE
 import { StepComponentProps } from '@/config/wizard.types';
 import { useInsertionEntries, type InsertionEntry as SocioEcoEntry } from '@/hooks/Jeunesse/useInsertionEntries';
 
@@ -27,7 +26,6 @@ const createEmptySocioEco = (): SocioEcoEntry => ({
   urbain: 0,
 });
 
-// UTILISATION DE L'INTERFACE GÉNÉRIQUE DE NOTRE CONTRAT
 export const Step7SocioEco = memo(({
   rapportId,
   disabled,
@@ -35,12 +33,10 @@ export const Step7SocioEco = memo(({
 }: StepComponentProps) => {
   const { i18n } = useTranslation();
   const isAr = i18n.language === 'ar';
-  
-  // 1. Appel autonome du hook métier pour la gestion des listes d'insertion
+
   const insertionEntries = useInsertionEntries(rapportId);
   const socioeco = insertionEntries.items;
 
-  // 2. Encapsulation des actions métiers avec prise en charge du onActivity
   const handleAddSocio = async (s: SocioEcoEntry) => {
     if (onActivity) await onActivity();
     void insertionEntries.add(s);
@@ -56,9 +52,9 @@ export const Step7SocioEco = memo(({
     if (onActivity) await onActivity();
   };
 
-  const partnerTypes = useTypesPartenaires(); 
+  const partnerTypes = useTypesPartenaires();
   const autreId = partnerTypes.items.find(
-    x => x.nom?.toLowerCase() === 'autre' || x.nom_ar === 'أخرى'
+    (x) => x.nom?.toLowerCase() === 'autre' || x.nom_ar === 'أخرى'
   )?.id;
 
   return (
@@ -98,175 +94,175 @@ export const Step7SocioEco = memo(({
               const isMilieuValid = totalGenre === totalMilieu;
 
               return (
-              <div
-                key={item.local_id}
-                className="border border-border rounded-lg p-4 bg-muted/20 space-y-3"
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-xs font-semibold text-muted-foreground">#{idx + 1}</span>
-                  <Button
-                    type="button"
-                    size="icon"
-                    variant="ghost"
-                    onClick={() => void handleRemoveSocio(item.local_id)}
-                    disabled={disabled}
-                    className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div className="space-y-1.5">
-                    <Label className="text-xs">{isAr ? 'موضوع النشاط' : "Sujet de l'activité"}</Label>
-                    <Input
-                      value={item.sujet ?? ''}
-                      maxLength={200}
-                      placeholder={isAr ? 'مثال: (تكوين، لقاء تحسيسي، ورشات علمية..)' : 'Ex: (formation, rencontre de sensibilisation, ateliers scientifiques...)'}
-                      className="h-9"
+                <div
+                  key={item.local_id}
+                  className="border border-border rounded-lg p-4 bg-muted/20 space-y-3"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs font-semibold text-muted-foreground">#{idx + 1}</span>
+                    <Button
+                      type="button"
+                      size="icon"
+                      variant="ghost"
+                      onClick={() => void handleRemoveSocio(item.local_id)}
                       disabled={disabled}
-                      onChange={(e) => handleUpdateSocio(item.local_id, { sujet: e.target.value.slice(0, 200) })}
-                    />
+                      className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   </div>
 
-                  <div className="space-y-1.5">
-                    <div className="grid grid-cols-2 gap-2">
-                      <NumericField
-                        label={isAr ? 'المدة' : 'Durée'}
-                        value={item.duree_valeur ?? 0}
-                        onChange={(value) =>
-                          handleUpdateSocio(item.local_id, {
-                            duree_valeur: value,
-                          })
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">{isAr ? 'موضوع النشاط' : "Sujet de l'activité"}</Label>
+                      <SafeInput
+                        value={item.sujet}
+                        maxLength={200}
+                        placeholder={
+                          isAr
+                            ? 'مثال: (تكوين، لقاء تحسيسي، ورشات علمية..)'
+                            : 'Ex: (formation, rencontre de sensibilisation, ateliers scientifiques...)'
                         }
+                        className="h-9"
                         disabled={disabled}
+                        onValueChange={(val) =>
+                          handleUpdateSocio(item.local_id, { sujet: val.slice(0, 200) })
+                        }
                       />
+                    </div>
 
-                      <div className="space-y-1.5">
-                        <Label className="text-xs">
-                          {isAr ? 'الوحدة' : 'Unité'}
-                        </Label>
-
-                        <Select
-                          value={item.unite_duree || 'none'}
-                          onValueChange={(value) =>
+                    <div className="space-y-1.5">
+                      <div className="grid grid-cols-2 gap-2">
+                        <NumericField
+                          label={isAr ? 'المدة' : 'Durée'}
+                          value={item.duree_valeur ?? 0}
+                          onChange={(value) =>
                             handleUpdateSocio(item.local_id, {
-                              unite_duree: (value === 'none' ? '' : value) as SocioEcoEntry['unite_duree'],
+                              duree_valeur: value,
                             })
                           }
                           disabled={disabled}
-                        >
-                          <SelectTrigger className="h-9">
-                            <SelectValue placeholder={isAr ? 'اختر' : 'Choisir'} />
-                          </SelectTrigger>
+                        />
 
-                          <SelectContent>
-                            <SelectItem value="none">
-                              {isAr ? 'اختر الوحدة' : 'Choisir unité'}
-                            </SelectItem>
-                            <SelectItem value="heure">
-                              {isAr ? 'ساعة' : 'Heure'}
-                            </SelectItem>
-                            <SelectItem value="jour">
-                              {isAr ? 'يوم' : 'Jour'}
-                            </SelectItem>
-                            <SelectItem value="semaine">
-                              {isAr ? 'أسبوع' : 'Semaine'}
-                            </SelectItem>
-                            <SelectItem value="mois">
-                              {isAr ? 'شهر' : 'Mois'}
-                            </SelectItem>
-                          </SelectContent>
-                        </Select>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">{isAr ? 'الوحدة' : 'Unité'}</Label>
+
+                          <Select
+                            value={item.unite_duree || 'none'}
+                            onValueChange={(value) =>
+                              handleUpdateSocio(item.local_id, {
+                                unite_duree: (value === 'none' ? '' : value) as SocioEcoEntry['unite_duree'],
+                              })
+                            }
+                            disabled={disabled}
+                          >
+                            <SelectTrigger className="h-9">
+                              <SelectValue placeholder={isAr ? 'اختر' : 'Choisir'} />
+                            </SelectTrigger>
+
+                            <SelectContent>
+                              <SelectItem value="none">
+                                {isAr ? 'اختر الوحدة' : 'Choisir unité'}
+                              </SelectItem>
+                              <SelectItem value="heure">{isAr ? 'ساعة' : 'Heure'}</SelectItem>
+                              <SelectItem value="jour">{isAr ? 'يوم' : 'Jour'}</SelectItem>
+                              <SelectItem value="semaine">{isAr ? 'أسبوع' : 'Semaine'}</SelectItem>
+                              <SelectItem value="mois">{isAr ? 'شهر' : 'Mois'}</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
 
-                <div className="space-y-1.5">
-                  <Label className="text-xs">{isAr ? 'نوع الشريك' : 'Type de partenaire'}</Label>
-                  <Select
-                    value={item.type_partenaire_id || 'none'}
-                    onValueChange={(value) =>
-                      handleUpdateSocio(item.local_id, {
-                        type_partenaire_id: value === 'none' ? '' : value,
-                        autre_partenaire: value === autreId ? item.autre_partenaire : '',
-                      })
-                    }
-                    disabled={disabled}
-                  >
-                    <SelectTrigger className="h-9">
-                      <SelectValue placeholder={isAr ? 'اختر' : 'Choisir'} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">{isAr ? 'اختر نوع الشريك' : 'Choisir un partenaire'}</SelectItem>
-                      {(partnerTypes.items ?? []).map((type) => (
-                        <SelectItem key={type.id} value={type.id}>{(isAr ? type.nom_ar : type.nom) ?? type.nom}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  
-                  {item.type_partenaire_id === autreId && (
-                    <div className="mt-3 space-y-1.5">
-                      <Label className="text-xs">
-                        {isAr ? 'تحديد الشريك' : 'Préciser le partenaire'}
-                      </Label>
-                      <Input
-                        value={item.autre_partenaire ?? ''}
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">{isAr ? 'نوع الشريك' : 'Type de partenaire'}</Label>
+                    <Select
+                      value={item.type_partenaire_id || 'none'}
+                      onValueChange={(value) =>
+                        handleUpdateSocio(item.local_id, {
+                          type_partenaire_id: value === 'none' ? '' : value,
+                          autre_partenaire: value === autreId ? item.autre_partenaire : '',
+                        })
+                      }
+                      disabled={disabled}
+                    >
+                      <SelectTrigger className="h-9">
+                        <SelectValue placeholder={isAr ? 'اختر' : 'Choisir'} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">
+                          {isAr ? 'اختر نوع الشريك' : 'Choisir un partenaire'}
+                        </SelectItem>
+                        {(partnerTypes.items ?? []).map((type) => (
+                          <SelectItem key={type.id} value={type.id}>
+                            {(isAr ? type.nom_ar : type.nom) ?? type.nom}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+
+                    {item.type_partenaire_id === autreId && (
+                      <div className="mt-3 space-y-1.5">
+                        <Label className="text-xs">
+                          {isAr ? 'تحديد الشريك' : 'Préciser le partenaire'}
+                        </Label>
+                        <SafeInput
+                          value={item.autre_partenaire ?? ''}
+                          disabled={disabled}
+                          onValueChange={(val) =>
+                            handleUpdateSocio(item.local_id, {
+                              autre_partenaire: val,
+                            })
+                          }
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  <section className="space-y-2">
+                    <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      {isAr ? 'المشاركون' : 'Participants'}
+                    </h4>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                      <NumericField
+                        label={isAr ? 'عدد النساء' : 'Femmes'}
+                        value={item.femmes ?? 0}
+                        onChange={(value) => handleUpdateSocio(item.local_id, { femmes: value })}
                         disabled={disabled}
-                        onChange={(e) =>
-                          handleUpdateSocio(item.local_id, {
-                            autre_partenaire: e.target.value,
-                          })
-                        }
                       />
+                      <NumericField
+                        label={isAr ? 'عدد الرجال' : 'Hommes'}
+                        value={item.hommes ?? 0}
+                        onChange={(value) => handleUpdateSocio(item.local_id, { hommes: value })}
+                        disabled={disabled}
+                      />
+                      <NumericField
+                        label={isAr ? 'عدد (قروي)' : 'Nbr Rural'}
+                        value={item.rural ?? 0}
+                        onChange={(value) => handleUpdateSocio(item.local_id, { rural: value })}
+                        disabled={disabled}
+                      />
+                      <NumericField
+                        label={isAr ? 'عدد (حضري)' : 'Nbr Urbain'}
+                        value={item.urbain ?? 0}
+                        onChange={(value) => handleUpdateSocio(item.local_id, { urbain: value })}
+                        disabled={disabled}
+                      />
+                    </div>
+                  </section>
+
+                  {!isMilieuValid && totalGenre > 0 && (
+                    <div className="flex items-center gap-2 text-destructive text-xs mt-2 bg-destructive/10 p-2 rounded">
+                      <AlertTriangle className="h-4 w-4" />
+                      <span>
+                        {isAr
+                          ? 'تنبيه: يجب أن يكون مجموع (حضري + قروي) مساوياً للمجموع العام (نساء + رجال).'
+                          : 'Attention : Le total (Urbain + Rural) doit être égal au total général (Femmes + Hommes).'}
+                      </span>
                     </div>
                   )}
                 </div>
-
-                <section className="space-y-2">
-                  <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    {isAr ? 'المشاركون' : 'Participants'}
-                  </h4>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                    <NumericField
-                      label={isAr ? 'عدد النساء' : 'Femmes'}
-                      value={item.femmes ?? 0}
-                      onChange={(value) => handleUpdateSocio(item.local_id, { femmes: value })}
-                      disabled={disabled}
-                    />
-                    <NumericField
-                      label={isAr ? 'عدد الرجال' : 'Hommes'}
-                      value={item.hommes ?? 0}
-                      onChange={(value) => handleUpdateSocio(item.local_id, { hommes: value })}
-                      disabled={disabled}
-                    />
-                    <NumericField
-                      label={isAr ? 'عدد (قروي)' : 'Nbr Rural'}
-                      value={item.rural ?? 0}
-                      onChange={(value) => handleUpdateSocio(item.local_id, { rural: value })}
-                      disabled={disabled}
-                    />
-                    <NumericField
-                      label={isAr ? 'عدد (حضري)' : 'Nbr Urbain'}
-                      value={item.urbain ?? 0}
-                      onChange={(value) => handleUpdateSocio(item.local_id, { urbain: value })}
-                      disabled={disabled}
-                    />
-                  </div>
-                </section>
-
-                {!isMilieuValid && totalGenre > 0 && (
-                  <div className="flex items-center gap-2 text-destructive text-xs mt-2 bg-destructive/10 p-2 rounded">
-                    <AlertTriangle className="h-4 w-4" />
-                    <span>
-                      {isAr
-                        ? 'تنبيه: يجب أن يكون مجموع (حضري + قروي) مساوياً للمجموع العام (نساء + رجال).'
-                        : 'Attention : Le total (Urbain + Rural) doit être égal au total général (Femmes + Hommes).'}
-                    </span>
-                  </div>
-                )}
-              </div>
               );
             })}
           </div>

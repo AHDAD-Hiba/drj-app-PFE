@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
+import { SafeInput } from '@/components/form/SafeInput';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Trash2, HeartHandshake } from 'lucide-react';
 import { NumericField } from '@/components/form/NumericField';
@@ -12,25 +12,23 @@ import { StepComponentProps } from '@/config/wizard.types';
 // Import de nos hooks
 import { useAfCentresEcoute } from '@/hooks/AffairesFeminines/useAfCentresEcoute';
 import { useAfEtablissements } from '@/hooks/common/useAfEtablissements';
+import { useAuth } from '@/hooks/common/useAuth';
 
 export const Step4Ecoute = memo(({ rapportId, disabled, onActivity }: StepComponentProps) => {
   const { i18n } = useTranslation();
   const isAr = i18n.language === 'ar';
+  const { utilisateur } = useAuth();
+  const directionId = utilisateur?.direction_id;
 
-  // ==========================================
   // HOOKS DE PERSISTANCE (AUTO-SAVE)
-  // ==========================================
   const seances = useAfCentresEcoute(rapportId);
 
-  // Chargement des établissements filtrés (pas de maison de jeunes)
-  const { items: tousLesEtablissements } = useAfEtablissements();
+  // Chargement des établissements filtrés
+  const { items: tousLesEtablissements } = useAfEtablissements(directionId);
   const etablissementsFiltres = tousLesEtablissements.filter(
     e => e.type_etablissement === 'club_feminin' || e.type_etablissement === 'ofppt'
   );
 
-  // ==========================================
-  // ACTIONS
-  // ==========================================
   const handleAddSeance = async () => {
     if (onActivity) await onActivity();
     await seances.add({ 
@@ -75,7 +73,7 @@ export const Step4Ecoute = memo(({ rapportId, disabled, onActivity }: StepCompon
                   <span className="text-xs font-semibold text-muted-foreground">#{idx + 1}</span>
                   <Button
                     type="button" size="icon" variant="ghost"
-                    onClick={() => { seances.remove(item.local_id); if(onActivity) onActivity(); }} disabled={disabled}
+                    onClick={() => { seances.remove(item.local_id); if(onActivity) void onActivity(); }} disabled={disabled}
                     className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
                   >
                     <Trash2 className="h-4 w-4" />
@@ -85,7 +83,7 @@ export const Step4Ecoute = memo(({ rapportId, disabled, onActivity }: StepCompon
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pt-1">
                   <div className="space-y-1.5 sm:col-span-2 lg:col-span-3">
                     <Label className="text-xs font-semibold">{isAr ? 'مقر نقطة الاستماع (المؤسسة)' : 'Établissement (Point d\'écoute)'}</Label>
-                    <Select disabled={disabled} value={item.etablissement_id} onValueChange={(v) => { seances.update(item.local_id, { etablissement_id: v }); if(onActivity) onActivity(); }}>
+                    <Select disabled={disabled} value={item.etablissement_id} onValueChange={(v) => { seances.update(item.local_id, { etablissement_id: v }); if(onActivity) void onActivity(); }}>
                       <SelectTrigger className="h-10">
                          <SelectValue placeholder={isAr ? 'اختر المؤسسة' : 'Sélectionner l\'établissement'} />
                       </SelectTrigger>
@@ -99,10 +97,13 @@ export const Step4Ecoute = memo(({ rapportId, disabled, onActivity }: StepCompon
 
                   <div className="space-y-1.5 lg:col-span-1">
                     <Label className="text-xs font-semibold">{isAr ? 'نوع الدعم أو الإجراءات المتخذة' : 'Type de soutien / Mesures'}</Label>
-                    <Input 
+                    <SafeInput 
                       placeholder={isAr ? 'مثال: توجيه، دعم نفسي، إنصات...' : 'Ex: Orientation, écoute, soutien psy...'} 
                       value={item.type_soutien} 
-                      onChange={e => { seances.update(item.local_id, { type_soutien: e.target.value }); if(onActivity) onActivity(); }} 
+                      onValueChange={(val) => {
+                        seances.update(item.local_id, { type_soutien: val });
+                        if(onActivity) void onActivity();
+                      }} 
                       disabled={disabled} 
                       className="h-10" 
                     />
@@ -112,8 +113,8 @@ export const Step4Ecoute = memo(({ rapportId, disabled, onActivity }: StepCompon
                     <Label className="text-xs font-semibold">{isAr ? 'عدد الحالات المرصودة' : 'Nombre de cas (Bénéficiaires)'}</Label>
                     <NumericField 
                       label="" 
-                      value={item.nombre_cas} 
-                      onChange={(v) => { seances.update(item.local_id, { nombre_cas: v }); if(onActivity) onActivity(); }} 
+                      value={item.nombre_cas || 0} 
+                      onChange={(v) => { seances.update(item.local_id, { nombre_cas: v }); if(onActivity) void onActivity(); }} 
                       disabled={disabled} 
                     />
                   </div>
@@ -123,7 +124,7 @@ export const Step4Ecoute = memo(({ rapportId, disabled, onActivity }: StepCompon
                     <NumericField 
                       label="" 
                       value={item.nombre_seances} 
-                      onChange={(v) => { seances.update(item.local_id, { nombre_seances: v }); if(onActivity) onActivity(); }} 
+                      onChange={(v) => { seances.update(item.local_id, { nombre_seances: v }); if(onActivity) void onActivity(); }} 
                       disabled={disabled} 
                     />
                   </div>

@@ -20,11 +20,11 @@ const buildPartenariatPayload = (entry: PePartenariatEntry, rId: string) => ({
   etablissement_id: entry.etablissement_id || null,
   type_partenariat: entry.type_partenariat || 'insertion_pro',
   nombre_conventions: Number(entry.nombre_conventions) || 1,
-  sujet: entry.sujet || '',
-  partenaires: entry.partenaires || '',
+  sujet: entry.sujet?.trim() || '',
+  partenaires: entry.partenaires?.trim() || '',
   nombre_projets_executes: Number(entry.nombre_projets_executes) || 0,
-  activites_realisees: entry.activites_realisees || '',
-  observations: entry.observations || '',
+  activites_realisees: entry.activites_realisees?.trim() || '',
+  observations: entry.observations?.trim() || '',
 });
 
 const mapPartenariatRow = (row: any, local_id: string): PePartenariatEntry => ({
@@ -46,6 +46,8 @@ export function usePePartenariats(rapportId: string | null) {
     tableName: 'pe_partenariats',
     buildPayload: buildPartenariatPayload,
     mapRowToEntry: mapPartenariatRow,
+    // 🛡️ Garde-fou : Ne tente la sauvegarde BDD que si le sujet ou les partenaires sont renseignés
+    validateBeforeSave: (entry) => Boolean(entry.sujet?.trim() || entry.partenaires?.trim()),
   });
 }
 
@@ -66,10 +68,10 @@ const buildFormationPayload = (entry: PeFormationEntry, rId: string) => ({
   rapport_id: rId,
   etablissement_id: entry.etablissement_id || null,
   cible: entry.cible,
-  theme_formation: entry.theme_formation || '',
+  theme_formation: entry.theme_formation?.trim() || '',
   nombre_sessions: Number(entry.nombre_sessions) || 1,
   nombre_beneficiaires: Number(entry.nombre_beneficiaires) || 0,
-  partenaires: entry.partenaires || '',
+  partenaires: entry.partenaires?.trim() || '',
 });
 
 const mapFormationRow = (row: any, local_id: string): PeFormationEntry => ({
@@ -89,6 +91,8 @@ export function usePeFormations(rapportId: string | null) {
     tableName: 'pe_formation_personnel',
     buildPayload: buildFormationPayload,
     mapRowToEntry: mapFormationRow,
+    // 🛡️ Garde-fou : Nécessite un thème de formation renseigné ou un nombre de bénéficiaires
+    validateBeforeSave: (entry) => Boolean(entry.theme_formation?.trim() || entry.nombre_beneficiaires > 0),
   });
 }
 
@@ -108,13 +112,13 @@ const buildAmenagementPayload = (entry: PeAmenagementEntry, rId: string) => ({
   etablissement_id: entry.etablissement_id,
   a_ete_rehabilite: Boolean(entry.a_ete_rehabilite),
   a_ete_equipe: Boolean(entry.a_ete_equipe),
-  observations: entry.observations || '',
+  observations: entry.observations?.trim() || '',
 });
 
 const mapAmenagementRow = (row: any, local_id: string): PeAmenagementEntry => ({
   local_id,
   id: row.id,
-  etablissement_id: row.etablissement_id,
+  etablissement_id: row.etablissement_id || '',
   a_ete_rehabilite: Boolean(row.a_ete_rehabilite),
   a_ete_equipe: Boolean(row.a_ete_equipe),
   observations: row.observations || '',
@@ -126,6 +130,8 @@ export function usePeAmenagements(rapportId: string | null) {
     tableName: 'pe_amenagement_equipement',
     buildPayload: buildAmenagementPayload,
     mapRowToEntry: mapAmenagementRow,
+    // 🛡️ Garde-fou : Nécessite que le centre soit associé
+    validateBeforeSave: (entry) => Boolean(entry.etablissement_id),
   });
 }
 
@@ -135,7 +141,7 @@ export function usePeAmenagements(rapportId: string | null) {
 export interface PeVisiteEntry extends BaseEntry {
   etablissement_id: string;
   entite_visiteuse: string;
-  date_visite: string; // YYYY-MM-DD
+  date_visite: string;
   type_visite?: string;
   objectifs?: string;
   nombre_visiteurs: number;
@@ -146,18 +152,18 @@ const buildVisitePayload = (entry: PeVisiteEntry, rId: string) => ({
   ...(entry.id ? { id: entry.id } : {}),
   rapport_id: rId,
   etablissement_id: entry.etablissement_id,
-  entite_visiteuse: entry.entite_visiteuse || '',
-  date_visite: entry.date_visite || new Date().toISOString().split('T')[0],
-  type_visite: entry.type_visite || '',
-  objectifs: entry.objectifs || '',
+  entite_visiteuse: entry.entite_visiteuse?.trim() || '',
+  date_visite: entry.date_visite || null,
+  type_visite: entry.type_visite?.trim() || '',
+  objectifs: entry.objectifs?.trim() || '',
   nombre_visiteurs: Number(entry.nombre_visiteurs) || 1,
-  observations: entry.observations || '',
+  observations: entry.observations?.trim() || '',
 });
 
 const mapVisiteRow = (row: any, local_id: string): PeVisiteEntry => ({
   local_id,
   id: row.id,
-  etablissement_id: row.etablissement_id,
+  etablissement_id: row.etablissement_id || '',
   entite_visiteuse: row.entite_visiteuse || '',
   date_visite: row.date_visite ? row.date_visite.split('T')[0] : '',
   type_visite: row.type_visite || '',
@@ -172,5 +178,7 @@ export function usePeVisites(rapportId: string | null) {
     tableName: 'pe_visites_officielles',
     buildPayload: buildVisitePayload,
     mapRowToEntry: mapVisiteRow,
+    // 🛡️ Garde-fou : S'assure que l'entité visiteuse est renseignée avant de pousser vers Supabase
+    validateBeforeSave: (entry) => Boolean(entry.etablissement_id && entry.entite_visiteuse?.trim()),
   });
 }

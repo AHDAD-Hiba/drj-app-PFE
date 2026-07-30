@@ -3,7 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
+import { SafeInput } from '@/components/form/SafeInput';
+import { SafeTextarea } from '@/components/form/SafeTextarea';
 import { Plus, Trash2, Handshake } from 'lucide-react';
 import { StepComponentProps } from '@/config/wizard.types';
 
@@ -14,14 +15,9 @@ export const Step7Partenariats = memo(({ rapportId, disabled, onActivity }: Step
   const { i18n } = useTranslation();
   const isAr = i18n.language === 'ar';
 
-  // ==========================================
   // HOOKS DE PERSISTANCE (AUTO-SAVE)
-  // ==========================================
   const partenariats = useAfSuiviPartenariats(rapportId);
 
-  // ==========================================
-  // ACTIONS SUIVI PARTENARIATS
-  // ==========================================
   const handleAddPartenariat = async () => {
     if (onActivity) await onActivity();
     await partenariats.add({ 
@@ -70,7 +66,7 @@ export const Step7Partenariats = memo(({ rapportId, disabled, onActivity }: Step
                   <span className="text-xs font-semibold text-muted-foreground">#{idx + 1}</span>
                   <Button 
                     type="button" size="icon" variant="ghost" 
-                    onClick={() => { partenariats.remove(item.local_id); if(onActivity) onActivity(); }} disabled={disabled} 
+                    onClick={() => { partenariats.remove(item.local_id); if(onActivity) void onActivity(); }} disabled={disabled} 
                     className="h-8 w-8 text-destructive hover:bg-destructive/10"
                   >
                     <Trash2 className="h-4 w-4" />
@@ -83,10 +79,13 @@ export const Step7Partenariats = memo(({ rapportId, disabled, onActivity }: Step
                   {/* Partenaires */}
                   <div className="space-y-1.5">
                     <Label className="text-xs font-semibold">{isAr ? 'الشركاء المعنيون' : 'Partenaires concernés'}</Label>
-                    <Input 
+                    <SafeInput 
                       placeholder={isAr ? 'مثال: المنظمة الدولية...' : 'Ex: ONG internationale...'} 
                       value={item.partenaires} 
-                      onChange={e => { partenariats.update(item.local_id, { partenaires: e.target.value }); if(onActivity) onActivity(); }} 
+                      onValueChange={(val) => {
+                        partenariats.update(item.local_id, { partenaires: val });
+                        if(onActivity) void onActivity();
+                      }} 
                       disabled={disabled} 
                       className="h-10 bg-background" 
                     />
@@ -95,10 +94,13 @@ export const Step7Partenariats = memo(({ rapportId, disabled, onActivity }: Step
                   {/* Sujet */}
                   <div className="space-y-1.5">
                     <Label className="text-xs font-semibold">{isAr ? 'موضوع الشراكة' : 'Sujet du partenariat'}</Label>
-                    <Input 
+                    <SafeInput 
                       placeholder={isAr ? 'مثال: مشروع عناية...' : 'Ex: Projet Inaya...'} 
                       value={item.sujet_partenariat} 
-                      onChange={e => { partenariats.update(item.local_id, { sujet_partenariat: e.target.value }); if(onActivity) onActivity(); }} 
+                      onValueChange={(val) => {
+                        partenariats.update(item.local_id, { sujet_partenariat: val });
+                        if(onActivity) void onActivity();
+                      }} 
                       disabled={disabled} 
                       className="h-10 bg-background" 
                     />
@@ -107,36 +109,42 @@ export const Step7Partenariats = memo(({ rapportId, disabled, onActivity }: Step
                   {/* Évaluation */}
                   <div className="space-y-1.5 sm:col-span-2">
                     <Label className="text-xs font-semibold">{isAr ? 'التقييم' : 'Évaluation'}</Label>
-                    <Input 
+                    <SafeTextarea 
                       placeholder={isAr ? 'مثال: جيد، في طور الإنجاز...' : 'Ex: Positif, en cours...'} 
                       value={item.evaluation} 
-                      onChange={e => { partenariats.update(item.local_id, { evaluation: e.target.value }); if(onActivity) onActivity(); }} 
+                      onValueChange={(val) => {
+                        partenariats.update(item.local_id, { evaluation: val });
+                        if(onActivity) void onActivity();
+                      }} 
                       disabled={disabled} 
-                      className="h-10 bg-background" 
                     />
                   </div>
 
                   {/* Obstacles */}
                   <div className="space-y-1.5">
                     <Label className="text-xs font-semibold">{isAr ? 'المعيقات' : 'Obstacles'}</Label>
-                    <Input 
+                    <SafeTextarea 
                       placeholder={isAr ? 'مثال: تأخر في التمويل...' : 'Ex: Retard de financement...'} 
                       value={item.obstacles} 
-                      onChange={e => { partenariats.update(item.local_id, { obstacles: e.target.value }); if(onActivity) onActivity(); }} 
+                      onValueChange={(val) => {
+                        partenariats.update(item.local_id, { obstacles: val });
+                        if(onActivity) void onActivity();
+                      }} 
                       disabled={disabled} 
-                      className="h-10 bg-background" 
                     />
                   </div>
 
                   {/* Solutions */}
                   <div className="space-y-1.5">
                     <Label className="text-xs font-semibold">{isAr ? 'الحلول المقترحة' : 'Solutions proposées'}</Label>
-                    <Input 
+                    <SafeTextarea 
                       placeholder={isAr ? 'مثال: تمديد فترة المشروع...' : 'Ex: Prolongation du délai...'} 
                       value={item.solutions_proposees} 
-                      onChange={e => { partenariats.update(item.local_id, { solutions_proposees: e.target.value }); if(onActivity) onActivity(); }} 
+                      onValueChange={(val) => {
+                        partenariats.update(item.local_id, { solutions_proposees: val });
+                        if(onActivity) void onActivity();
+                      }} 
                       disabled={disabled} 
-                      className="h-10 bg-background" 
                     />
                   </div>
 

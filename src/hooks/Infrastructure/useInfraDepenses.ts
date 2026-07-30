@@ -8,12 +8,11 @@ export interface InfraDepenseEntry extends BaseEntry {
   credits_payes: number;
 }
 
-// Fonctions sorties du hook pour la stabilité
 const buildPayload = (entry: InfraDepenseEntry, rId: string) => ({
   ...(entry.id ? { id: entry.id } : {}),
   rapport_id: rId,
-  type_depense: entry.type_depense,
-  projet_budgetaire: entry.projet_budgetaire || '',
+  type_depense: entry.type_depense || 'fonctionnement',
+  projet_budgetaire: entry.projet_budgetaire?.trim() || '',
   credits_ouverts: Number(entry.credits_ouverts) || 0,
   credits_engages: Number(entry.credits_engages) || 0,
   credits_payes: Number(entry.credits_payes) || 0,
@@ -22,7 +21,7 @@ const buildPayload = (entry: InfraDepenseEntry, rId: string) => ({
 const mapRowToEntry = (row: any, local_id: string): InfraDepenseEntry => ({
   local_id,
   id: row.id,
-  type_depense: row.type_depense,
+  type_depense: row.type_depense || 'fonctionnement',
   projet_budgetaire: row.projet_budgetaire || '',
   credits_ouverts: Number(row.credits_ouverts) || 0,
   credits_engages: Number(row.credits_engages) || 0,
@@ -35,5 +34,7 @@ export function useInfraDepenses(rapportId: string | null) {
     tableName: 'infra_depenses',
     buildPayload,
     mapRowToEntry,
+    // 🛡️ Garde-fou : Ne déclenche l'upsert BDD que si le projet budgétaire est renseigné
+    validateBeforeSave: (entry) => Boolean(entry.projet_budgetaire?.trim()),
   });
 }

@@ -259,10 +259,30 @@ const ensureEnCours = useCallback(async (): Promise<boolean> => {
 
   return persist('EN_COURS');
 }, [persist]);
-  // Clean up debounce on unmount
-  useEffect(() => () => {
-    if (timerRef.current) clearTimeout(timerRef.current);
-  }, []);
+  // Clean up debounce on unmount and flush pending changes before hidden/unload.
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        void saveNow();
+      }
+    };
+
+    const handleBeforeUnload = () => {
+      void saveNow();
+    };
+
+    window.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
+      window.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [saveNow]);
 
   return {
     // State

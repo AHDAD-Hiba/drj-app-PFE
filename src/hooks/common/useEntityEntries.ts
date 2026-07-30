@@ -15,6 +15,7 @@ export interface UseEntityEntriesOptions<TEntry extends BaseEntry> {
   buildPayload: (entry: TEntry, rapportId: string) => any;
   buildConflictTarget?: (entry: TEntry) => string;
   mapRowToEntry: (row: any, localId: string) => TEntry;
+  validateBeforeSave?: (entry: TEntry) => boolean;
   onSaveSuccess?: (entry: TEntry, savedRow: any) => Partial<TEntry>;
   softDelete?: (id: string) => Promise<void>;
 }
@@ -26,38 +27,55 @@ export function useEntityEntries<TEntry extends BaseEntry>({
   buildPayload,
   buildConflictTarget,
   mapRowToEntry,
+  validateBeforeSave,
   onSaveSuccess,
   softDelete,
 }: UseEntityEntriesOptions<TEntry>) {
   const [items, setItems] = useState<TEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const itemsRef = useRef<TEntry[]>([]);
+  const mountedRef = useRef(true);
 
-  useEffect(() => {
-    itemsRef.current = items;
-  }, [items]);
+  const serverIdToLocalIdRef = useRef<Record<string, string>>({});
+
+  // 🛠️ Marge de sécurité : Helper pour synchroniser items et itemsRef en même temps
+  const updateItems = useCallback((newItemsOrUpdater: React.SetStateAction<TEntry[]>) => {
+    setItems((prev) => {
+      const next = typeof newItemsOrUpdater === 'function' ? newItemsOrUpdater(prev) : newItemsOrUpdater;
+      itemsRef.current = next;
+      return next;
+    });
+  }, []);
+
+  useEffect(() => () => {
+    mountedRef.current = false;
+    Object.values(saveTimersRef.current).forEach(clearTimeout);
+    saveTimersRef.current = {};
+  }, []);
 
   const updateLocal = useCallback((local_id: string, patch: Partial<TEntry>) => {
-    setItems(prev =>
+    updateItems(prev =>
       prev.map(item =>
         item.local_id === local_id ? { ...item, ...patch } : item
       )
     );
-  }, []);
+  }, [updateItems]);
 
   const saveTimersRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
   const savingEntriesRef = useRef<Set<string>>(new Set());
+  const pendingSaveRef = useRef<Set<string>>(new Set());
 
   const reload = useCallback(async (): Promise<TEntry[]> => {
     if (!rapportId) {
-      setItems([]);
+      if (mountedRef.current) {
+        updateItems([]);
+      }
       return [];
     }
 
     setLoading(true);
 
     try {
-      // 🛠️ FIX : On force "as any" pour que Supabase accepte n'importe quelle table
       const query = supabase.from(tableName as any).select('*');
       
       const { data, error } = await query
@@ -66,26 +84,65 @@ export function useEntityEntries<TEntry extends BaseEntry>({
 
       if (error) {
         console.error(`[useEntityEntries] reload error for ${tableName}:`, error);
-        setItems([]);
+        if (mountedRef.current) {
+          updateItems([]);
+        }
         return [];
       }
 
-      const normalized = (data ?? []).map((row: any) =>
-        mapRowToEntry(row, crypto.randomUUID())
-      );
+      const normalized = (data ?? []).map((row: any) => {
+        const serverId = row.id;
+        let localId: string;
 
-      setItems(normalized);
+        if (serverId) {
+          if (serverIdToLocalIdRef.current[serverId]) {
+            localId = serverIdToLocalIdRef.current[serverId];
+          } else {
+            localId = crypto.randomUUID();
+            serverIdToLocalIdRef.current[serverId] = localId;
+          }
+        } else {
+          localId = crypto.randomUUID();
+        }
+
+        return mapRowToEntry(row, localId);
+      });
+
+      if (mountedRef.current) {
+        updateItems((prev) => {
+          const normalizedByLocalId = new Map(
+            normalized.map((item) => [item.local_id, item] as const),
+          );
+          const merged = normalized.map((serverItem) => {
+            const currentItem = prev.find((item) => item.local_id === serverItem.local_id);
+            const hasPendingLocalChange =
+              Boolean(saveTimersRef.current[serverItem.local_id]) ||
+              savingEntriesRef.current.has(serverItem.local_id) ||
+              pendingSaveRef.current.has(serverItem.local_id);
+
+            return currentItem && hasPendingLocalChange ? currentItem : serverItem;
+          });
+
+          const unsavedLocalItems = prev.filter(
+            (item) => !item.id && !normalizedByLocalId.has(item.local_id),
+          );
+
+          return [...merged, ...unsavedLocalItems];
+        });
+      }
       return normalized;
     } finally {
-      setLoading(false);
+      if (mountedRef.current) {
+        setLoading(false);
+      }
     }
-  }, [rapportId, tableName, mapRowToEntry]);
+  }, [rapportId, tableName, mapRowToEntry, updateItems]);
 
   useEffect(() => {
     let cancelled = false;
 
     if (!rapportId) {
-      setItems([]);
+      updateItems([]);
       setLoading(false);
       return;
     }
@@ -107,10 +164,13 @@ export function useEntityEntries<TEntry extends BaseEntry>({
     return () => {
       cancelled = true;
     };
-  }, [rapportId, reload]);
+  }, [rapportId, reload, updateItems]);
 
   const saveEntry = useCallback(async (local_id: string): Promise<boolean> => {
-    if (savingEntriesRef.current.has(local_id)) {
+    if (savingEntriesRef.current.has(local_id) || !mountedRef.current) {
+      if (mountedRef.current) {
+        pendingSaveRef.current.add(local_id);
+      }
       return true;
     }
 
@@ -122,9 +182,13 @@ export function useEntityEntries<TEntry extends BaseEntry>({
         return true;
       }
 
+      // 🛡️ Garde-fou de validation locale optionnelle avant appel Supabase
+      if (validateBeforeSave && !validateBeforeSave(existing)) {
+        return true;
+      }
+
       const payload = buildPayload(existing, rapportId);
 
-      // 🛠️ FIX : On force "as any" pour le nom de table et le payload
       const query = supabase.from(tableName as any);
       const { data, error } = await query
         .upsert(payload as any, {
@@ -135,12 +199,22 @@ export function useEntityEntries<TEntry extends BaseEntry>({
 
       if (error) throw error;
 
+      if (!mountedRef.current) {
+        return true;
+      }
+
+      const savedId = (data as any)?.id;
+
+      if (savedId && local_id) {
+        serverIdToLocalIdRef.current[savedId] = local_id;
+      }
+
       const nextEntry: TEntry = {
-        ...existing,
-        ...(onSaveSuccess ? onSaveSuccess(existing, data) : { id: (data as any).id }),
+        ...(itemsRef.current.find(item => item.local_id === local_id) ?? existing),
+        ...(onSaveSuccess ? onSaveSuccess(existing, data) : { id: savedId }),
       } as TEntry;
 
-      setItems(prev =>
+      updateItems(prev =>
         prev.map(item =>
           item.local_id === local_id ? nextEntry : item
         )
@@ -152,15 +226,31 @@ export function useEntityEntries<TEntry extends BaseEntry>({
       return false;
     } finally {
       savingEntriesRef.current.delete(local_id);
+
+      if (pendingSaveRef.current.has(local_id) && mountedRef.current) {
+        pendingSaveRef.current.delete(local_id);
+        setTimeout(() => {
+          void saveEntry(local_id);
+        }, 50);
+      }
     }
-  }, [rapportId, tableName, buildPayload, buildConflictTarget, onSaveSuccess]);
+  }, [rapportId, tableName, buildPayload, buildConflictTarget, onSaveSuccess, validateBeforeSave, updateItems]);
 
   const add = useCallback(async (entry: TEntry): Promise<boolean> => {
     const local_id = entry.local_id || crypto.randomUUID();
     const optimisticEntry = { ...entry, local_id };
-    setItems(prev => [...prev, optimisticEntry]);
+    updateItems(prev => [...prev, optimisticEntry]);
     return true;
-  }, []);
+  }, [updateItems]);
+
+  const saveNow = useCallback(async (local_id: string): Promise<boolean> => {
+    if (saveTimersRef.current[local_id]) {
+      clearTimeout(saveTimersRef.current[local_id]);
+      delete saveTimersRef.current[local_id];
+    }
+
+    return saveEntry(local_id);
+  }, [saveEntry]);
 
   const update = useCallback(async (
     local_id: string,
@@ -175,7 +265,7 @@ export function useEntityEntries<TEntry extends BaseEntry>({
     saveTimersRef.current[local_id] = setTimeout(() => {
       delete saveTimersRef.current[local_id];
       void saveEntry(local_id);
-    }, 1500);
+    }, 1200);
 
     return true;
   }, [updateLocal, saveEntry]);
@@ -185,7 +275,7 @@ export function useEntityEntries<TEntry extends BaseEntry>({
     if (!existing) return false;
 
     const previousItems = itemsRef.current;
-    setItems(prev => prev.filter(item => item.local_id !== local_id));
+    updateItems(prev => prev.filter(item => item.local_id !== local_id));
 
     if (!existing.id) {
       return true;
@@ -195,7 +285,6 @@ export function useEntityEntries<TEntry extends BaseEntry>({
       if (deleteMode === 'soft' && softDelete) {
         await softDelete(existing.id);
       } else {
-        // 🛠️ FIX : Force "as any" ici aussi
         const query = supabase.from(tableName as any);
         await query.delete().eq('id', existing.id);
       }
@@ -203,10 +292,10 @@ export function useEntityEntries<TEntry extends BaseEntry>({
       return true;
     } catch (err) {
       console.error(`[useEntityEntries] remove failed for ${tableName}:`, err);
-      setItems(previousItems);
+      updateItems(previousItems);
       return false;
     }
-  }, [deleteMode, softDelete, tableName]);
+  }, [deleteMode, softDelete, tableName, updateItems]);
 
   return {
     items,
@@ -214,6 +303,7 @@ export function useEntityEntries<TEntry extends BaseEntry>({
     reload,
     add,
     update,
+    saveNow,
     remove,
   };
 }

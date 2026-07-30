@@ -3,8 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+import { SafeInput } from '@/components/form/SafeInput';
+import { SafeTextarea } from '@/components/form/SafeTextarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Trash2, Users, Sparkles, GraduationCap } from 'lucide-react';
 import { StepComponentProps } from '@/config/wizard.types';
@@ -16,7 +16,7 @@ import {
   useCrFormationsCadres,
 } from '@/hooks/Creches/useCrStep3';
 
-export const Step3Beneficiaires = memo(({ disabled, onActivity, rapportId }: StepComponentProps & { rapportId?: string | null }) => {
+export const Step3Beneficiaires = memo(({ disabled, onActivity, rapportId }: StepComponentProps) => {
   const { i18n } = useTranslation();
   const isAr = i18n.language === 'ar';
 
@@ -41,7 +41,7 @@ export const Step3Beneficiaires = memo(({ disabled, onActivity, rapportId }: Ste
         [field]: value,
       } as any);
     }
-    if (onActivity) onActivity();
+    if (onActivity) void onActivity();
   };
 
   const handleAddActivite = () => {
@@ -55,7 +55,7 @@ export const Step3Beneficiaires = memo(({ disabled, onActivity, rapportId }: Ste
       rural: 0,
       observations: '',
     });
-    if (onActivity) onActivity();
+    if (onActivity) void onActivity();
   };
 
   const handleAddFormation = () => {
@@ -68,12 +68,11 @@ export const Step3Beneficiaires = memo(({ disabled, onActivity, rapportId }: Ste
       duree_unite: 'jour',
       observations: '',
     });
-    if (onActivity) onActivity();
+    if (onActivity) void onActivity();
   };
 
   return (
     <div className="space-y-8">
-
       {/* ========================================================================= */}
       {/* CARTE 1 : Statistiques Globales Enfants (Tableau 9) */}
       {/* ========================================================================= */}
@@ -90,20 +89,45 @@ export const Step3Beneficiaires = memo(({ disabled, onActivity, rapportId }: Ste
 
         <div className="grid grid-cols-1 md:grid-cols-12 gap-4 border border-border p-4 rounded-lg bg-muted/5 items-start">
           <div className="md:col-span-3">
-            <NumericField label={isAr ? 'ذكور' : 'Garçons'} value={statsEntry?.garcons || 0} onChange={(v) => handleStatsChange('garcons', v)} disabled={disabled} />
+            <NumericField
+              label={isAr ? 'ذكور' : 'Garçons'}
+              value={statsEntry?.garcons || 0}
+              onChange={(v) => handleStatsChange('garcons', v)}
+              disabled={disabled}
+            />
           </div>
           <div className="md:col-span-3">
-            <NumericField label={isAr ? 'إناث' : 'Filles'} value={statsEntry?.filles || 0} onChange={(v) => handleStatsChange('filles', v)} disabled={disabled} />
+            <NumericField
+              label={isAr ? 'إناث' : 'Filles'}
+              value={statsEntry?.filles || 0}
+              onChange={(v) => handleStatsChange('filles', v)}
+              disabled={disabled}
+            />
           </div>
           <div className="md:col-span-3">
-            <NumericField label={isAr ? 'حضري' : 'Urbain'} value={statsEntry?.urbain || 0} onChange={(v) => handleStatsChange('urbain', v)} disabled={disabled} />
+            <NumericField
+              label={isAr ? 'حضري' : 'Urbain'}
+              value={statsEntry?.urbain || 0}
+              onChange={(v) => handleStatsChange('urbain', v)}
+              disabled={disabled}
+            />
           </div>
           <div className="md:col-span-3">
-            <NumericField label={isAr ? 'قروي' : 'Rural'} value={statsEntry?.rural || 0} onChange={(v) => handleStatsChange('rural', v)} disabled={disabled} />
+            <NumericField
+              label={isAr ? 'قروي' : 'Rural'}
+              value={statsEntry?.rural || 0}
+              onChange={(v) => handleStatsChange('rural', v)}
+              disabled={disabled}
+            />
           </div>
           <div className="md:col-span-12 space-y-1.5">
             <Label className="text-xs">{isAr ? 'ملاحظات' : 'Observations'}</Label>
-            <Textarea value={statsEntry?.observations || ''} onChange={(e) => handleStatsChange('observations', e.target.value)} disabled={disabled} className="min-h-[70px] bg-background text-xs resize-none" />
+            <SafeTextarea
+              value={statsEntry?.observations || ''}
+              onValueChange={(val) => handleStatsChange('observations', val)}
+              disabled={disabled}
+              placeholder={isAr ? 'ملاحظات...' : 'Observations...'}
+            />
           </div>
         </div>
       </Card>
@@ -130,39 +154,100 @@ export const Step3Beneficiaires = memo(({ disabled, onActivity, rapportId }: Ste
           {activites.map((act) => (
             <div key={act.local_id} className="grid grid-cols-1 md:grid-cols-12 gap-4 border border-border p-4 rounded-lg bg-muted/5 items-start">
               <div className="md:col-span-11 grid grid-cols-1 md:grid-cols-12 gap-4">
-                
                 <div className="md:col-span-12 space-y-1.5">
-                  <Label className="text-xs">{isAr ? 'نوعية النشاط (مثل: المسيرة الخضراء، يوم الطفل...)' : 'Type d\'activité'}</Label>
-                  <Input value={act.nom_activite} onChange={(e) => { updateActivite(act.local_id, { nom_activite: e.target.value }); if(onActivity) onActivity(); }} disabled={disabled} className="h-9 text-xs bg-background" />
+                  <Label className="text-xs">{isAr ? 'نوعية النشاط (مثل: المسيرة الخضراء، يوم الطفل...)' : "Type d'activité"}</Label>
+                  <SafeInput
+                    value={act.nom_activite}
+                    onValueChange={(val) => {
+                      updateActivite(act.local_id, { nom_activite: val });
+                      if (onActivity) void onActivity();
+                    }}
+                    disabled={disabled}
+                    placeholder={isAr ? 'اسم أو نوع النشاط...' : "Nom de l'activité..."}
+                    className="h-9 text-xs bg-background"
+                  />
                 </div>
 
                 <div className="md:col-span-3">
-                  <NumericField label={isAr ? 'ذكور' : 'Garçons'} value={act.garcons} onChange={(v) => { updateActivite(act.local_id, { garcons: v }); if(onActivity) onActivity(); }} disabled={disabled} />
+                  <NumericField
+                    label={isAr ? 'ذكور' : 'Garçons'}
+                    value={act.garcons}
+                    onChange={(v) => {
+                      updateActivite(act.local_id, { garcons: v });
+                      if (onActivity) void onActivity();
+                    }}
+                    disabled={disabled}
+                  />
                 </div>
                 <div className="md:col-span-3">
-                  <NumericField label={isAr ? 'إناث' : 'Filles'} value={act.filles} onChange={(v) => { updateActivite(act.local_id, { filles: v }); if(onActivity) onActivity(); }} disabled={disabled} />
+                  <NumericField
+                    label={isAr ? 'إناث' : 'Filles'}
+                    value={act.filles}
+                    onChange={(v) => {
+                      updateActivite(act.local_id, { filles: v });
+                      if (onActivity) void onActivity();
+                    }}
+                    disabled={disabled}
+                  />
                 </div>
                 <div className="md:col-span-3">
-                  <NumericField label={isAr ? 'حضري' : 'Urbain'} value={act.urbain} onChange={(v) => { updateActivite(act.local_id, { urbain: v }); if(onActivity) onActivity(); }} disabled={disabled} />
+                  <NumericField
+                    label={isAr ? 'حضري' : 'Urbain'}
+                    value={act.urbain}
+                    onChange={(v) => {
+                      updateActivite(act.local_id, { urbain: v });
+                      if (onActivity) void onActivity();
+                    }}
+                    disabled={disabled}
+                  />
                 </div>
                 <div className="md:col-span-3">
-                  <NumericField label={isAr ? 'قروي' : 'Rural'} value={act.rural} onChange={(v) => { updateActivite(act.local_id, { rural: v }); if(onActivity) onActivity(); }} disabled={disabled} />
+                  <NumericField
+                    label={isAr ? 'قروي' : 'Rural'}
+                    value={act.rural}
+                    onChange={(v) => {
+                      updateActivite(act.local_id, { rural: v });
+                      if (onActivity) void onActivity();
+                    }}
+                    disabled={disabled}
+                  />
                 </div>
 
                 <div className="md:col-span-12 space-y-1.5">
                   <Label className="text-xs">{isAr ? 'ملاحظات' : 'Observations'}</Label>
-                  <Input value={act.observations || ''} onChange={(e) => { updateActivite(act.local_id, { observations: e.target.value }); if(onActivity) onActivity(); }} disabled={disabled} className="h-9 text-xs bg-background" />
+                  <SafeTextarea
+                    value={act.observations || ''}
+                    onValueChange={(val) => {
+                      updateActivite(act.local_id, { observations: val });
+                      if (onActivity) void onActivity();
+                    }}
+                    disabled={disabled}
+                    placeholder={isAr ? 'ملاحظات...' : 'Observations...'}
+                  />
                 </div>
-
               </div>
+
               <div className="md:col-span-1 flex justify-end">
-                <Button size="icon" variant="ghost" onClick={() => removeActivite(act.local_id)} disabled={disabled} className="text-destructive">
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  onClick={() => {
+                    removeActivite(act.local_id);
+                    if (onActivity) void onActivity();
+                  }}
+                  disabled={disabled}
+                  className="text-destructive"
+                >
                   <Trash2 className="h-4 w-4" />
                 </Button>
               </div>
             </div>
           ))}
-          {activites.length === 0 && <div className="text-center py-4 text-xs text-muted-foreground border border-dashed rounded-lg">{isAr ? 'لا توجد أنشطة إشعاعية مسجلة' : 'Aucune activité'}</div>}
+          {activites.length === 0 && (
+            <div className="text-center py-4 text-xs text-muted-foreground border border-dashed rounded-lg">
+              {isAr ? 'لا توجد أنشطة إشعاعية مسجلة' : 'Aucune activité'}
+            </div>
+          )}
         </div>
       </Card>
 
@@ -188,26 +273,58 @@ export const Step3Beneficiaires = memo(({ disabled, onActivity, rapportId }: Ste
           {formations.map((form) => (
             <div key={form.local_id} className="grid grid-cols-1 md:grid-cols-12 gap-4 border border-border p-4 rounded-lg bg-muted/5 items-start">
               <div className="md:col-span-11 grid grid-cols-1 md:grid-cols-12 gap-4">
-                
                 <div className="md:col-span-5 space-y-1.5">
                   <Label className="text-xs">{isAr ? 'مجال التكوين' : 'Domaine de formation'}</Label>
-                  <Input value={form.domaine_formation} onChange={(e) => { updateFormation(form.local_id, { domaine_formation: e.target.value }); if(onActivity) onActivity(); }} disabled={disabled} className="h-9 text-xs bg-background" />
+                  <SafeInput
+                    value={form.domaine_formation}
+                    onValueChange={(val) => {
+                      updateFormation(form.local_id, { domaine_formation: val });
+                      if (onActivity) void onActivity();
+                    }}
+                    disabled={disabled}
+                    placeholder={isAr ? 'مجال التكوين...' : 'Domaine...'}
+                    className="h-9 text-xs bg-background"
+                  />
                 </div>
 
                 <div className="md:col-span-3">
-                  <NumericField label={isAr ? 'عدد الأطر المستفيدة' : 'Nombre de cadres'} value={form.nombre_cadres} onChange={(v) => { updateFormation(form.local_id, { nombre_cadres: v }); if(onActivity) onActivity(); }} disabled={disabled} />
+                  <NumericField
+                    label={isAr ? 'عدد الأطر المستفيدة' : 'Nombre de cadres'}
+                    value={form.nombre_cadres}
+                    onChange={(v) => {
+                      updateFormation(form.local_id, { nombre_cadres: v });
+                      if (onActivity) void onActivity();
+                    }}
+                    disabled={disabled}
+                  />
                 </div>
 
-                {/* CHAMP DURÉE DÉCOUPÉ (VALEUR + UNITÉ) */}
                 <div className="md:col-span-4 space-y-1.5">
                   <Label className="text-xs">{isAr ? 'مدة التكوين' : 'Durée de la formation'}</Label>
                   <div className="flex gap-2">
                     <div className="w-1/2">
-                      <NumericField label="" value={form.duree_valeur} onChange={(v) => { updateFormation(form.local_id, { duree_valeur: v }); if(onActivity) onActivity(); }} disabled={disabled} />
+                      <NumericField
+                        label=""
+                        value={form.duree_valeur}
+                        onChange={(v) => {
+                          updateFormation(form.local_id, { duree_valeur: v });
+                          if (onActivity) void onActivity();
+                        }}
+                        disabled={disabled}
+                      />
                     </div>
                     <div className="w-1/2">
-                      <Select value={form.duree_unite} disabled={disabled} onValueChange={(v) => { updateFormation(form.local_id, { duree_unite: v }); if(onActivity) onActivity(); }}>
-                        <SelectTrigger className="h-9 text-xs bg-background"><SelectValue /></SelectTrigger>
+                      <Select
+                        value={form.duree_unite}
+                        disabled={disabled}
+                        onValueChange={(v) => {
+                          updateFormation(form.local_id, { duree_unite: v });
+                          if (onActivity) void onActivity();
+                        }}
+                      >
+                        <SelectTrigger className="h-9 text-xs bg-background">
+                          <SelectValue />
+                        </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="heure">{isAr ? 'ساعة' : 'Heure(s)'}</SelectItem>
                           <SelectItem value="jour">{isAr ? 'يوم' : 'Jour(s)'}</SelectItem>
@@ -221,21 +338,41 @@ export const Step3Beneficiaires = memo(({ disabled, onActivity, rapportId }: Ste
 
                 <div className="md:col-span-12 space-y-1.5">
                   <Label className="text-xs">{isAr ? 'ملاحظات' : 'Observations'}</Label>
-                  <Input value={form.observations || ''} onChange={(e) => { updateFormation(form.local_id, { observations: e.target.value }); if(onActivity) onActivity(); }} disabled={disabled} className="h-9 text-xs bg-background" />
+                  <SafeTextarea
+                    value={form.observations || ''}
+                    onValueChange={(val) => {
+                      updateFormation(form.local_id, { observations: val });
+                      if (onActivity) void onActivity();
+                    }}
+                    disabled={disabled}
+                    placeholder={isAr ? 'ملاحظات...' : 'Observations...'}
+                  />
                 </div>
-
               </div>
+
               <div className="md:col-span-1 flex justify-end">
-                <Button size="icon" variant="ghost" onClick={() => removeFormation(form.local_id)} disabled={disabled} className="text-destructive">
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  onClick={() => {
+                    removeFormation(form.local_id);
+                    if (onActivity) void onActivity();
+                  }}
+                  disabled={disabled}
+                  className="text-destructive"
+                >
                   <Trash2 className="h-4 w-4" />
                 </Button>
               </div>
             </div>
           ))}
-          {formations.length === 0 && <div className="text-center py-4 text-xs text-muted-foreground border border-dashed rounded-lg">{isAr ? 'لا توجد برامج تكوين مسجلة' : 'Aucune formation'}</div>}
+          {formations.length === 0 && (
+            <div className="text-center py-4 text-xs text-muted-foreground border border-dashed rounded-lg">
+              {isAr ? 'لا توجد برامج تكوين مسجلة' : 'Aucune formation'}
+            </div>
+          )}
         </div>
       </Card>
-
     </div>
   );
 });
