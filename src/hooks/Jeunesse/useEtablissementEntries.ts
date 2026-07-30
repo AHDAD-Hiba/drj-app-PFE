@@ -127,7 +127,7 @@ export function useEtablissementEntries(
           if (sData) suiviDataId = sData.id;
         }
 
-        // 3. Fermetures
+        // 3. Fermetures (Gestion sécurisée du champ autre_precision)
         const nextClosureStatus = existing.closure_status || existing.other_status;
         const hasExistingFermeture = Boolean(existing.fermeture_id);
         const shouldHaveFermeture = existing.project_status === 'ferme' && Boolean(nextClosureStatus);
@@ -143,7 +143,7 @@ export function useEtablissementEntries(
             rapport_id: rapportId,
             etablissement_id: etablissementId,
             type_fermeture_id: nextClosureStatus,
-            autre_precision: existing.autre_precision || null,
+            autre_precision: existing.autre_precision ? existing.autre_precision.trim() : null,
           };
 
           const { data: fData, error: fError } = await supabase
@@ -155,7 +155,7 @@ export function useEtablissementEntries(
           if (!fError && fData) newFermetureId = fData.id;
         }
 
-        // 🛡️ MISES À JOUR SANS ÉCRASER LES SAISIES EN COURS
+        // 🛡️ MISES À JOUR LOCALES SANS ÉCRASER LES SAISIES
         setItems((prev) =>
           prev.map((item) =>
             item.local_id === local_id
@@ -229,9 +229,14 @@ export function useEtablissementEntries(
         const dernierSuivi = historiqueSuivi.find((s) => s.etablissement_id === etab.id);
         const suiviAffiche = suiviActuel ?? dernierSuivi;
 
-        const fermetureAssociee = historiqueFermetures.find(
-          (f) => f.etablissement_id === etab.id && f.rapport_id === suiviAffiche?.rapport_id
+        // 🛡️ RECHERCHE ROBUSTE : Priorité à la fermeture de ce rapport, sinon la plus récente
+        const fermetureRapport = historiqueFermetures.find(
+          (f) => f.etablissement_id === etab.id && f.rapport_id === rapportId
         );
+        const fermetureDerniere = historiqueFermetures.find(
+          (f) => f.etablissement_id === etab.id
+        );
+        const fermetureAssociee = fermetureRapport ?? fermetureDerniere;
 
         const statutAffiche = suiviActuel?.statut ?? dernierSuivi?.statut ?? 'operationnel';
         const causeAffiche = statutAffiche === 'ferme' ? fermetureAssociee?.type_fermeture_id ?? '' : '';
@@ -262,7 +267,6 @@ export function useEtablissementEntries(
           return currentItem && hasPendingLocalChange ? currentItem : serverItem;
         });
 
-        // Garder aussi les nouveaux items locaux pas encore sauvegardés en BDD
         const unsavedLocalItems = prev.filter((item) => !item.id && !merged.some((m) => m.local_id === item.local_id));
         return [...merged, ...unsavedLocalItems];
       });
@@ -303,7 +307,7 @@ export function useEtablissementEntries(
         suivi_projet_id: undefined,
         fermeture_id: undefined,
         name: entry.name ?? '',
-        autre_precision: '',
+        autre_precision: entry.autre_precision ?? '',
       };
 
       setItems((prev) => [...prev, optimisticEntry]);

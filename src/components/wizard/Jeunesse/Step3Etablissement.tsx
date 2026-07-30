@@ -262,12 +262,13 @@ export const Step3Etablissement = memo(({
                   <div className="space-y-1.5">
                     <Label className="text-xs font-semibold">{isAr ? 'التوضيح' : 'Précision'}</Label>
                     <SafeInput
-                      value={it.autre_precision}
+                      value={it.autre_precision || ''}
                       disabled={disabled}
                       className="h-9 bg-background"
-                      onChange={(e) =>
+                      placeholder={isAr ? 'أدخل التوضيح...' : 'Préciser la cause...'}
+                      onValueChange={(val) =>
                         handleUpdate(it.local_id, {
-                          autre_precision: e.target.value,
+                          autre_precision: val,
                         })
                       }
                     />

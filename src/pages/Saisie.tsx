@@ -133,7 +133,7 @@ console.log("ACTIVE WIZARD directionId =", selection.directionId);
   const handleSubmit = async () => {
     setSubmitting(true);
     try {
-      const { error } = await supabase.from('suivi_remplissage').update({ statut: 'TERMINE' }).eq('rapport_id', currentId);
+      const { error } = await supabase.from('suivi_remplissage').update({ statut: 'TERMINE' }).eq('rapport_id', currentId).eq('domaine_id', domainConfig.id);
       if (error) throw error;
       const ok = await domain.submit();
       setLocalLocked(true);
