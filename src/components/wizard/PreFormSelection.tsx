@@ -458,7 +458,6 @@ useEffect(() => {
               </Button>
               <DownloadReportButton 
                   rapportId={rapportId} 
-                  domaineCode="infrastructure" 
                 />
             </div>
           </div>        

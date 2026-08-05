@@ -49,14 +49,25 @@ export const DownloadReportButton = ({
         throw new Error(errorMsg);
       }
 
-      // 3. Récupération directe sous forme de Blob binaire
+      // 3. Extraction du nom de fichier transmis par l'Edge Function dans les headers
+      const contentDisposition = response.headers.get('Content-Disposition');
+      let fileName = `Rapport_Global.docx`; // Nom de secours si non trouvé
+
+      if (contentDisposition) {
+        const match = contentDisposition.match(/filename="?([^";]+)"?/);
+        if (match && match[1]) {
+          fileName = match[1];
+        }
+      }
+
+      // 4. Récupération directe sous forme de Blob binaire
       const blob = await response.blob();
 
-      // 4. Téléchargement dans le navigateur
+      // 5. Téléchargement dans le navigateur avec le nom dynamique du serveur
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `Rapport_${domaineCode}_${new Date().toISOString().slice(0, 10)}.docx`;
+      a.download = fileName; // 👈 Utilise le nom renvoyé par le serveur Edge Function
       document.body.appendChild(a);
       a.click();
       
