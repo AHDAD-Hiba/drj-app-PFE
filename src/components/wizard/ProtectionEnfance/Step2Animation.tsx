@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { SafeInput } from '@/components/form/SafeInput';
 import { SafeTextarea } from '@/components/form/SafeTextarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Trash2, Palette, Mic, Gift, AlertTriangle, Building2, Globe } from 'lucide-react';
+import { Plus, Trash2, Palette, Mic, Gift, AlertTriangle, Building2, Globe, ShieldCheck } from 'lucide-react';
 import { StepComponentProps } from '@/config/wizard.types';
 import { NumericField } from '@/components/form/NumericField';
 
@@ -78,13 +78,41 @@ export const Step2Animation = memo(({ disabled, onActivity, rapportId }: StepCom
     centersRef.current = centers;
   }, [centers]);
 
-  const globalActivites = activites.filter(a => !a.etablissement_id);
+  // IDs spécifiques des domaines pour filtrer
+  const droitsEnfantDomaineObj = refDomaines.find(d => d.code === 'DROITS_ENFANT');
+  const droitsEnfantDomaineId = droitsEnfantDomaineObj?.id || '';
+
+  // 🔍 FILTRAGE DES ACTIVITÉS GLOBALES
+  // 1. Activités Générales (exclut Droits de l'Enfant)
+  const globalActivitesGenerales = activites.filter(
+    a => !a.etablissement_id && a.domaine_id !== droitsEnfantDomaineId
+  );
+
+  // 2. Activités Droits de l'Enfant
+  const globalActivitesDroitsEnfant = activites.filter(
+    a => !a.etablissement_id && a.domaine_id === droitsEnfantDomaineId
+  );
+
   const getCenterActivites = (etabId: string) => activites.filter(a => a.etablissement_id === etabId);
 
+  // Handler pour ajouter une activité générale
   const handleAddGlobalActivite = useCallback(() => {
     addAct({ local_id: crypto.randomUUID(), etablissement_id: null, domaine_id: '', nom_activite: '', nombre_beneficiaires: 0 });
     if (onActivity) void onActivity();
   }, [addAct, onActivity]);
+
+  // Handler pour ajouter une activité Droits de l'Enfant
+  const handleAddDroitsEnfantActivite = useCallback(() => {
+    addAct({ 
+      local_id: crypto.randomUUID(), 
+      etablissement_id: null, 
+      domaine_id: droitsEnfantDomaineId, // ID pré-sélectionné automatiquement
+      nom_activite: '', 
+      nombre_beneficiaires: 0,
+      partenaires: '' 
+    });
+    if (onActivity) void onActivity();
+  }, [addAct, onActivity, droitsEnfantDomaineId]);
 
   const handleAddCenterActivite = useCallback((etabId: string) => {
     const compVieId = refDomaines.find(d => d.code === 'COMPETENCES_VIE')?.id || '';
@@ -129,70 +157,122 @@ export const Step2Animation = memo(({ disabled, onActivity, rapportId }: StepCom
     <div className="space-y-8">
       
       {/* ========================================================================= */}
-      {/* SECTION GLOBALE 1 : الأنشطة الإقليمية */}
+      {/* SECTION GLOBALE 1 : الأنشطة الإقليمية المجمعة */}
       {/* ========================================================================= */}
-      <Card className="p-5 sm:p-6 bg-card border-border shadow-sm border-t-4 border-t-primary">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-border pb-4 mb-5">
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-              <Globe className="h-5 w-5 text-primary" />
+      <Card className="p-5 sm:p-6 bg-card border-border shadow-sm border-t-4 border-t-primary space-y-8">
+        
+        {/* ------------------------------------------------------------------------- */}
+        {/* SOUS-SECTION 1.1 : البرامج والأنشطة في مختلف المجالات */}
+        {/* ------------------------------------------------------------------------- */}
+        <div className="space-y-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-border pb-4">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                <Globe className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <h2 className="text-lg font-bold">
+                  {isAr ? 'إجمالي البرامج والأنشطة المنجزة في مختلف المجالات' : 'Activités Provinciales Globales'}
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  {isAr ? 'الترفيهية، الثقافية، الرياضية، التربية الصحية والنفسية...' : 'Activités transversales'}
+                </p>
+              </div>
             </div>
-            <div>
-              <h2 className="text-lg font-bold">
-                {isAr ? 'الأنشطة الإقليمية المجمعة' : 'Activités Provinciales Globales'}
-              </h2>
-              <p className="text-sm text-muted-foreground">
-                {isAr ? 'أنشطة تخص المديرية ككل' : 'Activités transversales'}
-              </p>
-            </div>
+            <Button type="button" size="sm" onClick={handleAddGlobalActivite} disabled={disabled || refDomaines.length === 0} className="gap-1.5">
+              <Plus className="h-4 w-4" />
+              {isAr ? 'إضافة نشاط' : 'Ajouter une activité'}
+            </Button>
           </div>
-          <Button type="button" size="sm" onClick={handleAddGlobalActivite} disabled={disabled || refDomaines.length === 0} className="gap-1.5">
-            <Plus className="h-4 w-4" />
-            {isAr ? 'إضافة نشاط إقليمي' : 'Ajouter une activité'}
-          </Button>
+
+          <div className="space-y-3">
+            {globalActivitesGenerales.map((act) => (
+              <div key={act.local_id} className="grid grid-cols-1 md:grid-cols-12 gap-3 border border-border p-3 rounded-lg bg-muted/5 items-start">
+                <div className="md:col-span-3 space-y-1.5">
+                  <Label className="text-xs">{isAr ? 'المجال' : 'Domaine'}</Label>
+                  <Select value={act.domaine_id} disabled={disabled} onValueChange={(v) => { updateAct(act.local_id, { domaine_id: v }); if(onActivity) void onActivity(); }}>
+                    <SelectTrigger className="h-9 bg-background text-xs"><SelectValue placeholder={isAr ? 'اختر...' : 'Choisir...'} /></SelectTrigger>
+                    <SelectContent>
+                      {refDomaines
+                        .filter(d => d.code !== 'COMPETENCES_VIE' && d.code !== 'DROITS_ENFANT')
+                        .map(d => (
+                          <SelectItem key={d.id} value={d.id}>
+                            {isAr ? d.libelle_ar : d.libelle_fr}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                  {act.domaine_id === domaineAutreId && (
+                    <SafeInput placeholder={isAr ? 'يرجى التحديد...' : 'Préciser...'} value={act.domaine_autre || ''} onValueChange={(val) => { updateAct(act.local_id, { domaine_autre: val }); if(onActivity) void onActivity(); }} disabled={disabled} className="h-9 mt-2 text-xs bg-background" />
+                  )}
+                </div>
+                <div className="md:col-span-6 space-y-1.5">
+                  <Label className="text-xs">{isAr ? 'نوع النشاط' : 'Type d\'activité'}</Label>
+                  <SafeInput value={act.nom_activite} onValueChange={(val) => { updateAct(act.local_id, { nom_activite: val }); if(onActivity) void onActivity(); }} disabled={disabled} className="h-9 bg-background text-xs" />
+                </div>
+                <div className="md:col-span-1">
+                  <NumericField label={isAr ? 'المستفيدين' : 'Bénéficiaires'} value={act.nombre_beneficiaires} onChange={(v) => { updateAct(act.local_id, { nombre_beneficiaires: v }); if(onActivity) void onActivity(); }} disabled={disabled} />
+                </div>
+                <div className="md:col-span-1 flex justify-end mt-6">
+                  <Button type="button" size="icon" variant="ghost" onClick={() => { removeAct(act.local_id); if(onActivity) void onActivity(); }} disabled={disabled} className="h-9 w-9 text-destructive hover:bg-destructive/10">
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            ))}
+            {globalActivitesGenerales.length === 0 && <div className="text-center py-4 text-xs text-muted-foreground border border-dashed rounded-lg">{isAr ? 'لا توجد أنشطة إقليمية مسجلة' : 'Aucune activité globale'}</div>}
+          </div>
         </div>
 
-        <div className="space-y-3">
-          {globalActivites.map((act) => (
-            <div key={act.local_id} className="grid grid-cols-1 md:grid-cols-12 gap-3 border border-border p-3 rounded-lg bg-muted/5 items-start">
-              <div className="md:col-span-3 space-y-1.5">
-                <Label className="text-xs">{isAr ? 'المجال' : 'Domaine'}</Label>
-                <Select value={act.domaine_id} disabled={disabled} onValueChange={(v) => { updateAct(act.local_id, { domaine_id: v }); if(onActivity) void onActivity(); }}>
-                  <SelectTrigger className="h-9 bg-background text-xs"><SelectValue placeholder={isAr ? 'اختر...' : 'Choisir...'} /></SelectTrigger>
-                  <SelectContent>
-                    {refDomaines
-                      .filter(d => d.code !== 'COMPETENCES_VIE')
-                      .map(d => (
-                        <SelectItem key={d.id} value={d.id}>
-                          {isAr ? d.libelle_ar : d.libelle_fr}
-                        </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {act.domaine_id === domaineAutreId && (
-                  <SafeInput placeholder={isAr ? 'يرجى التحديد...' : 'Préciser...'} value={act.domaine_autre || ''} onValueChange={(val) => { updateAct(act.local_id, { domaine_autre: val }); if(onActivity) void onActivity(); }} disabled={disabled} className="h-9 mt-2 text-xs bg-background" />
-                )}
+        {/* ------------------------------------------------------------------------- */}
+        {/* SOUS-SECTION 1.2 : أنشطة وبرامج نشر ثقافة حقوق الطفل */}
+        {/* ------------------------------------------------------------------------- */}
+        <div className="space-y-4 pt-4 border-t border-border">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-border pb-4">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-full bg-emerald-500/10 flex items-center justify-center">
+                <ShieldCheck className="h-5 w-5 text-emerald-600" />
               </div>
-              <div className="md:col-span-3 space-y-1.5">
-                <Label className="text-xs">{isAr ? 'نوع النشاط' : 'Type d\'activité'}</Label>
-                <SafeInput value={act.nom_activite} onValueChange={(val) => { updateAct(act.local_id, { nom_activite: val }); if(onActivity) void onActivity(); }} disabled={disabled} className="h-9 bg-background text-xs" />
-              </div>
-              <div className="md:col-span-3 space-y-1.5">
-                <Label className="text-xs">{isAr ? 'الشركاء' : 'Partenaires'}</Label>
-                <SafeInput value={act.partenaires || ''} onValueChange={(val) => { updateAct(act.local_id, { partenaires: val }); if(onActivity) void onActivity(); }} disabled={disabled} className="h-9 bg-background text-xs" />
-              </div>
-              <div className="md:col-span-2">
-                <NumericField label={isAr ? 'المستفيدين' : 'Bénéficiaires'} value={act.nombre_beneficiaires} onChange={(v) => { updateAct(act.local_id, { nombre_beneficiaires: v }); if(onActivity) void onActivity(); }} disabled={disabled} />
-              </div>
-              <div className="md:col-span-1 flex justify-end mt-6">
-                <Button type="button" size="icon" variant="ghost" onClick={() => { removeAct(act.local_id); if(onActivity) void onActivity(); }} disabled={disabled} className="h-9 w-9 text-destructive hover:bg-destructive/10">
-                  <Trash2 className="h-4 w-4" />
-                </Button>
+              <div>
+                <h2 className="text-lg font-bold text-emerald-900 dark:text-emerald-400">
+                  {isAr ? 'أنشطة وبرامج نشر ثقافة حقوق الطفل' : 'Activités de Promotion des Droits de l\'Enfant'}
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  {isAr ? 'عدد الأنشطة والبرامج التي تم تنفيذها لنشر ثقافة حقوق الطفل' : 'Sensibilisation aux droits de l\'enfant'}
+                </p>
               </div>
             </div>
-          ))}
-          {globalActivites.length === 0 && <div className="text-center py-4 text-xs text-muted-foreground border border-dashed rounded-lg">{isAr ? 'لا توجد أنشطة إقليمية مسجلة' : 'Aucune activité globale'}</div>}
+            <Button type="button" size="sm" onClick={handleAddDroitsEnfantActivite} disabled={disabled || !droitsEnfantDomaineId} className="gap-1.5">
+              <Plus className="h-4 w-4" />
+              {isAr ? 'إضافة نشاط حقوق الطفل' : 'Ajouter un activité Droits'}
+            </Button>
+          </div>
+
+          <div className="space-y-3">
+            {globalActivitesDroitsEnfant.map((act) => (
+              <div key={act.local_id} className="grid grid-cols-1 md:grid-cols-12 gap-3 border border-border p-3 rounded-lg bg-muted/5 items-start">
+                <div className="md:col-span-5 space-y-1.5">
+                  <Label className="text-xs">{isAr ? 'نوع النشاط' : 'Type d\'activité'}</Label>
+                  <SafeInput value={act.nom_activite} onValueChange={(val) => { updateAct(act.local_id, { nom_activite: val }); if(onActivity) void onActivity(); }} disabled={disabled} className="h-9 bg-background text-xs" placeholder={isAr ? 'مثال: ورشة تحسيسية حول حقوق الطفل...' : 'Ex: Atelier de sensibilisation...'} />
+                </div>
+                <div className="md:col-span-5 space-y-1.5">
+                  <Label className="text-xs">{isAr ? 'الشركاء' : 'Partenaires'}</Label>
+                  <SafeInput value={act.partenaires || ''} onValueChange={(val) => { updateAct(act.local_id, { partenaires: val }); if(onActivity) void onActivity(); }} disabled={disabled} className="h-9 bg-background text-xs" />
+                </div>
+                <div className="md:col-span-1">
+                  <NumericField label={isAr ? 'المستفيدين' : 'Bénéficiaires'} value={act.nombre_beneficiaires} onChange={(v) => { updateAct(act.local_id, { nombre_beneficiaires: v }); if(onActivity) void onActivity(); }} disabled={disabled} />
+                </div>
+                <div className="md:col-span-1 flex justify-end mt-6">
+                  <Button type="button" size="icon" variant="ghost" onClick={() => { removeAct(act.local_id); if(onActivity) void onActivity(); }} disabled={disabled} className="h-9 w-9 text-destructive hover:bg-destructive/10">
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            ))}
+            {globalActivitesDroitsEnfant.length === 0 && <div className="text-center py-4 text-xs text-muted-foreground border border-dashed border-emerald-500/30 rounded-lg">{isAr ? 'لا توجد أنشطة حقوق الطفل مسجلة' : 'Aucune activité enregistrée'}</div>}
+          </div>
         </div>
+
       </Card>
 
       {/* ========================================================================= */}

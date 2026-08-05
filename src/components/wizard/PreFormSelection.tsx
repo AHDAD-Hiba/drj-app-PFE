@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/select';
 import { Calendar, Layers, ArrowRight, ArrowLeft, FileText, CheckCircle2, Loader2, Send } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import{ DownloadReportButton } from '@/components/DownloadReportButton';
 
 export type Quarter = 't1' | 't2' | 't3' | 't4';
 
@@ -350,7 +351,6 @@ useEffect(() => {
               </Select>
             </div>
           </div>
-
           <div className="flex justify-end pt-2">
             <Button onClick={handleNextToDomains} disabled={!canNextFromStage1 || loading} className="gap-1.5">
               {loading && <Loader2 className="h-4 w-4 animate-spin" />}
@@ -456,6 +456,10 @@ useEffect(() => {
                 {loading && <Loader2 className="h-4 w-4 animate-spin" />}
                 {isAr ? 'افتح الاستمارة' : 'Accéder au formulaire'}
               </Button>
+              <DownloadReportButton 
+                  rapportId={rapportId} 
+                  domaineCode="infrastructure" 
+                />
             </div>
           </div>        
         </Card>

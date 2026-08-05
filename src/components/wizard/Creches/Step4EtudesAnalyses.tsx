@@ -1,26 +1,48 @@
-import { memo } from 'react';
+import { memo, useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { SafeInput } from '@/components/form/SafeInput';
 import { SafeTextarea } from '@/components/form/SafeTextarea';
-import { Plus, Trash2, FileSearch, PieChart } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Plus, Trash2, FileSearch, PieChart, ShieldCheck } from 'lucide-react';
 import { StepComponentProps } from '@/config/wizard.types';
 import { NumericField } from '@/components/form/NumericField';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/common/useAuth';
 
 import {
   useCrAnalysesPonctuelles,
   useCrSondagesEtudes,
 } from '@/hooks/Creches/useCrStep4';
+import { useCrControleCreches } from '@/hooks/Creches/useCrStep2';
 
-export const Step4EtudesAnalyses = memo(({ disabled, onActivity, rapportId }: StepComponentProps & { rapportId?: string | null }) => {
+export const Step4EtudesAnalyses = memo(({ disabled, onActivity, rapportId }: StepComponentProps) => {
   const { i18n } = useTranslation();
   const isAr = i18n.language === 'ar';
+  const { utilisateur } = useAuth();
+  const directionId = utilisateur?.direction_id;
 
+  // 1. جلب قائمة دور الحضانة الخاصة لملء الـ Select في بطاقة المراقبة
+  const [crechesPrivees, setCrechesPrivees] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchCreches = async () => {
+      if (directionId) {
+        const { data } = await supabase.from('dir_creches_privees').select('*').eq('direction_id', directionId);
+        if (data) setCrechesPrivees(data);
+      }
+    };
+    void fetchCreches();
+  }, [directionId]);
+
+  // 2. تهيئة الـ Hooks
   const { items: analyses, add: addAnalyse, update: updateAnalyse, remove: removeAnalyse } = useCrAnalysesPonctuelles(rapportId || null);
   const { items: sondages, add: addSondage, update: updateSondage, remove: removeSondage } = useCrSondagesEtudes(rapportId || null);
+  const { items: controles, add: addControle, update: updateControle, remove: removeControle } = useCrControleCreches(rapportId || null);
 
+  // 3. Handlers
   const handleAddAnalyse = () => {
     if (!rapportId) return;
     addAnalyse({
@@ -40,6 +62,17 @@ export const Step4EtudesAnalyses = memo(({ disabled, onActivity, rapportId }: St
       type_sondage: '',
       nombre_participants: 0,
       resultats: '',
+      observations: '',
+    });
+    if (onActivity) void onActivity();
+  };
+
+  const handleAddControle = () => {
+    if (!rapportId) return;
+    addControle({
+      local_id: crypto.randomUUID(),
+      creche_privee_id: '',
+      resultats_controle: '',
       observations: '',
     });
     if (onActivity) void onActivity();
@@ -244,6 +277,78 @@ export const Step4EtudesAnalyses = memo(({ disabled, onActivity, rapportId }: St
           {sondages.length === 0 && (
             <div className="text-center py-4 text-xs text-muted-foreground border border-dashed rounded-lg">
               {isAr ? 'لا توجد استطلاعات مسجلة' : 'Aucun sondage enregistré'}
+            </div>
+          )}
+        </div>
+      </Card>
+
+      {/* ========================================================================= */}
+      {/* CARTE 3 : Contrôle des Crèches Privées (Tableau المراقبة) */}
+      {/* ========================================================================= */}
+      <Card className="p-5 sm:p-6 bg-card border-border shadow-sm">
+        <div className="flex flex-col sm:flex-row justify-between gap-4 border-b border-border pb-4 mb-5">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-full bg-destructive/10 flex items-center justify-center">
+              <ShieldCheck className="h-5 w-5 text-destructive" />
+            </div>
+            <div>
+              <h2 className="text-lg font-bold">{isAr ? '3. عدد دور الحضانة الخاصة التي تمت مراقبتها' : '3. Contrôle des Crèches Privées'}</h2>
+              <p className="text-sm text-muted-foreground">{isAr ? 'عمليات المراقبة المنجزة من طرف الأطر المحلفة' : 'Inspections réalisées par les cadres assermentés'}</p>
+            </div>
+          </div>
+          <Button type="button" size="sm" onClick={handleAddControle} disabled={disabled || !rapportId} className="gap-1.5">
+            <Plus className="h-4 w-4" /> {isAr ? 'إضافة عملية مراقبة' : 'Ajouter un contrôle'}
+          </Button>
+        </div>
+
+        <div className="space-y-3">
+          {controles.map((controle) => (
+            <div key={controle.local_id} className="grid grid-cols-1 md:grid-cols-12 gap-4 border border-border p-4 rounded-lg bg-muted/5 items-start">
+              <div className="md:col-span-11 grid grid-cols-1 md:grid-cols-12 gap-4">
+                
+                <div className="md:col-span-4 space-y-1.5">
+                  <Label className="text-xs">{isAr ? 'دار الحضانة الخاصة التي تمت مراقبتها' : 'Crèche privée contrôlée'}</Label>
+                  <Select value={controle.creche_privee_id} disabled={disabled} onValueChange={(v) => { updateControle(controle.local_id, { creche_privee_id: v }); if (onActivity) void onActivity(); }}>
+                    <SelectTrigger className="h-9 text-xs bg-background"><SelectValue placeholder={isAr ? 'اختر دار الحضانة...' : 'Choisir la crèche...'} /></SelectTrigger>
+                    <SelectContent>
+                      {crechesPrivees.map(c => (
+                        <SelectItem key={c.id} value={c.id}>{c.nom_creche}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="md:col-span-4 space-y-1.5">
+                  <Label className="text-xs">{isAr ? 'مخرجات المراقبة' : 'Résultats du contrôle'}</Label>
+                  <SafeTextarea
+                    value={controle.resultats_controle || ''}
+                    onValueChange={(val) => { updateControle(controle.local_id, { resultats_controle: val }); if (onActivity) void onActivity(); }}
+                    disabled={disabled}
+                    placeholder={isAr ? 'أهم التوجيهات أو الإنذارات...' : 'Résultats et directives...'}
+                  />
+                </div>
+
+                <div className="md:col-span-4 space-y-1.5">
+                  <Label className="text-xs">{isAr ? 'ملاحظات' : 'Observations'}</Label>
+                  <SafeTextarea
+                    value={controle.observations || ''}
+                    onValueChange={(val) => { updateControle(controle.local_id, { observations: val }); if (onActivity) void onActivity(); }}
+                    disabled={disabled}
+                    placeholder={isAr ? 'ملاحظات إضافية...' : 'Observations...'}
+                  />
+                </div>
+
+              </div>
+              <div className="md:col-span-1 flex justify-end">
+                <Button size="icon" variant="ghost" onClick={() => { removeControle(controle.local_id); if (onActivity) void onActivity(); }} disabled={disabled} className="text-destructive mt-6">
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          ))}
+          {controles.length === 0 && (
+            <div className="text-center py-4 text-xs text-muted-foreground border border-dashed border-destructive/30 rounded-lg">
+              {isAr ? 'لا توجد عمليات مراقبة مسجلة' : 'Aucune inspection enregistrée'}
             </div>
           )}
         </div>

@@ -40,8 +40,9 @@ export function usePeActivites(rapportId: string | null) {
     tableName: 'pe_activites',
     buildPayload: buildActivitePayload,
     mapRowToEntry: mapActiviteRow,
-    // 🛡️ Garde-fou : Ne tente de sauvegarde que si le nom de l'activité ou le domaine est renseigné
-    validateBeforeSave: (entry) => Boolean(entry.nom_activite?.trim() || entry.domaine_id),
+    // 🛡️ Garde-fou renforcé : On exige toujours qu'au moins le nom de l'activité OU (domaine + nom) soit saisi 
+    // pour éviter de sauvegarder des lignes Droits de l'Enfant dont seul le domaine_id est pré-rempli.
+    validateBeforeSave: (entry) => Boolean(entry.nom_activite?.trim()),
   });
 }
 
@@ -76,7 +77,6 @@ export function usePeConseilEnfant(rapportId: string | null) {
     tableName: 'pe_conseil_enfant',
     buildPayload: buildConseilPayload,
     mapRowToEntry: mapConseilRow,
-    // 🛡️ Garde-fou : Nécessite l'ID de l'établissement et un nom de session
     validateBeforeSave: (entry) => Boolean(entry.etablissement_id && entry.nom_session?.trim()),
   });
 }
@@ -121,7 +121,6 @@ export function usePeDons(rapportId: string | null) {
     tableName: 'pe_dons',
     buildPayload: buildDonPayload,
     mapRowToEntry: mapDonRow,
-    // 🛡️ Garde-fou : Nécessite un donateur ou une nature de don
     validateBeforeSave: (entry) => Boolean(entry.etablissement_id && (entry.donateur?.trim() || entry.nature_don?.trim())),
   });
 }
@@ -163,7 +162,6 @@ export function usePeIncidents(rapportId: string | null) {
     tableName: 'pe_rapports_exceptionnels',
     buildPayload: buildIncidentPayload,
     mapRowToEntry: mapIncidentRow,
-    // 🛡️ Garde-fou : Nécessite la sélection du type d'incident ou du sujet
     validateBeforeSave: (entry) => Boolean(entry.type_incident_id || entry.sujet_detaille?.trim()),
   });
 }
