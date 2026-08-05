@@ -289,6 +289,7 @@ export const CampParticipantsSection = ({
                             variant="ghost"
                             size="icon"
                             className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                            disabled={disabled} // ✅ AJOUT ICI : Bloque le clic sur la poubelle en mode lecture
                             onClick={() =>
                               onUpdateCamp(c.local_id, {
                                 encadrements: c.encadrements.filter(
@@ -309,6 +310,7 @@ export const CampParticipantsSection = ({
 
                           <Select
                             value={enc.niveau_formation_id || 'none'}
+                            disabled={disabled} // ✅ AJOUT ICI : Bloque le sélecteur en mode lecture
                             onValueChange={(v) => {
                               onUpdateCamp(c.local_id, {
                                 encadrements: c.encadrements.map((e) =>
@@ -351,6 +353,7 @@ export const CampParticipantsSection = ({
                               ))}
                             </SelectContent>
                           </Select>
+                          
                           {enc.niveau_formation_id === autreNiveauId && (
                             <div className="space-y-1.5 mt-3">
                               <Label className="text-xs">

@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Plus, Trash2, Users, GraduationCap, Hammer, Briefcase, Building2, MapPin } from 'lucide-react';
 import { StepComponentProps } from '@/config/wizard.types';
 import { NumericField } from '@/components/form/NumericField';
+import { supabase } from '@/integrations/supabase/client';
 
 import { useAfEtablissements } from '@/hooks/common/useAfEtablissements';
 import { useAuth } from '@/hooks/common/useAuth';
@@ -27,8 +28,31 @@ export const Step1Education = memo(({ disabled, onActivity, rapportId }: StepCom
   const { utilisateur } = useAuth();
   const directionId = utilisateur?.direction_id;
 
-  // Récupération des établissements
-  const { items: etablissements, loading: loadingEtab } = useAfEtablissements(directionId);
+// 🆕 1. إضافة State لتخزين direction_id الخاص بالتقرير
+  const [reportDirectionId, setReportDirectionId] = useState<string | null>(null);
+
+  // 🆕 2. جلب direction_id الخاص بالتقرير الحالي
+  useEffect(() => {
+    const fetchReportDirection = async () => {
+      if (!rapportId) return;
+      const { data } = await supabase
+        .from('rapports')
+        .select('direction_id')
+        .eq('id', rapportId)
+        .single();
+        
+      if (data?.direction_id) {
+        setReportDirectionId(data.direction_id);
+      }
+    };
+    void fetchReportDirection();
+  }, [rapportId]);
+
+  // 🆕 3. تحديد الـ directionId الفعلي (من التقرير إن وجد، وإلا من المستخدم)
+  const effectiveDirectionId = reportDirectionId || directionId;
+
+  // 🆕 4. تمرير effectiveDirectionId بدلاً من directionId
+  const { items: etablissements, loading: loadingEtab } = useAfEtablissements(effectiveDirectionId);
   const centresProtection = etablissements.filter(e => e.type_etablissement === 'centre_protection_enfance');
 
   // Initialisation des Hooks

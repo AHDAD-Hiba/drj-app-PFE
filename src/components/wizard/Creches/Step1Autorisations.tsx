@@ -25,9 +25,10 @@ export const Step1Autorisations = memo(({ disabled, onActivity, rapportId }: Ste
   const { utilisateur } = useAuth();
   const directionId = utilisateur?.direction_id;
 
-  // 1. جلب الجداول المرجعية
+  // 1. جلب الجداول المرجعية ومعرف مديرية التقرير
   const [refTypesDemande, setRefTypesDemande] = useState<any[]>([]);
   const [refStatutsDemande, setRefStatutsDemande] = useState<any[]>([]);
+  const [reportDirectionId, setReportDirectionId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchRefs = async () => {
@@ -40,14 +41,35 @@ export const Step1Autorisations = memo(({ disabled, onActivity, rapportId }: Ste
     void fetchRefs();
   }, []);
 
+  // 🆕 جلب direction_id الخاص بالتقرير للسماح للفريق الجهوي برؤية البيانات
+  useEffect(() => {
+    const fetchReportDirection = async () => {
+      if (!rapportId) return;
+      const { data } = await supabase
+        .from('rapports')
+        .select('direction_id')
+        .eq('id', rapportId)
+        .single();
+        
+      if (data?.direction_id) {
+        setReportDirectionId(data.direction_id);
+      }
+    };
+    void fetchReportDirection();
+  }, [rapportId]);
+
+  // استخدام معرف التقرير إذا كان موجوداً، وإلا نستخدم معرف المستخدم
+  const effectiveDirectionId = reportDirectionId || directionId;
+
   const typeAutreId = refTypesDemande.find(t => t.code === 'AUTRE')?.id;
   const statutAutreId = refStatutsDemande.find(s => s.code === 'AUTRE')?.id;
 
-  console.log(refTypesDemande,refStatutsDemande);
   // 2. ربط الـ Hooks
   const { items: demandes, add: addDemande, update: updateDemande, remove: removeDemande } = useCrDemandesLicences(rapportId || null);
   const { items: traitements, add: addTraitement, update: updateTraitement } = useCrTraitementLicences(rapportId || null);
-  const { items: creches, add: addCreche, update: updateCreche, remove: removeCreche } = useDirCrechesPrivees(directionId);
+  
+  // 🆕 تمرير effectiveDirectionId بدلاً من directionId
+  const { items: creches, add: addCreche, update: updateCreche, remove: removeCreche } = useDirCrechesPrivees(effectiveDirectionId);
 
   const traitementEntry = traitements[0];
 
@@ -76,15 +98,15 @@ export const Step1Autorisations = memo(({ disabled, onActivity, rapportId }: Ste
   }, [addTraitement, onActivity, traitementEntry, updateTraitement]);
 
   const handleAddCreche = useCallback(() => {
-    if (!directionId) return;
+    if (!effectiveDirectionId) return;
     addCreche({
       local_id: crypto.randomUUID(),
-      direction_id: directionId,
+      direction_id: effectiveDirectionId, // 🆕 استخدام المعرف الصحيح عند الإضافة
       nom_creche: '', capacite: 0,
       type_autorisation: '', date_autorisation: '', observations: ''
     });
     if (onActivity) onActivity();
-  }, [addCreche, directionId, onActivity]);
+  }, [addCreche, effectiveDirectionId, onActivity]);
 
   return (
     <div className="space-y-8">
@@ -249,7 +271,7 @@ export const Step1Autorisations = memo(({ disabled, onActivity, rapportId }: Ste
             </div>
           </div>
 
-          <Button type="button" size="sm" onClick={handleAddCreche} disabled={disabled || !directionId} className="gap-1.5">
+          <Button type="button" size="sm" onClick={handleAddCreche} disabled={disabled || !effectiveDirectionId} className="gap-1.5">
             <Plus className="h-4 w-4" />
             {isAr ? 'إضافة دار حضانة' : 'Ajouter une crèche'}
           </Button>

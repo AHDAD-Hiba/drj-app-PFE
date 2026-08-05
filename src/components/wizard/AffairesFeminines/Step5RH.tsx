@@ -1,4 +1,4 @@
-import { memo } from 'react';
+import { memo, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Plus, Trash2, Users, BookOpen } from 'lucide-react';
 import { NumericField } from '@/components/form/NumericField';
 import { StepComponentProps } from '@/config/wizard.types';
-
+import { supabase } from '@/integrations/supabase/client';
 // Import de nos hooks
 import { useAfRessourcesHumaines } from '@/hooks/AffairesFeminines/useAfRessourcesHumaines';
 import { useAfFormationCadres } from '@/hooks/AffairesFeminines/useAfFormationCadres';
@@ -27,7 +27,27 @@ export const Step5RH = memo(({ rapportId, disabled, onActivity }: StepComponentP
   const formations = useAfFormationCadres(rapportId);
 
   // Chargement des établissements filtrés
-  const { items: tousLesEtablissements } = useAfEtablissements(directionId);
+  const [reportDirectionId, setReportDirectionId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchReportDirection = async () => {
+      if (!rapportId) return;
+      const { data } = await supabase
+        .from('rapports')
+        .select('direction_id')
+        .eq('id', rapportId)
+        .single();
+        
+      if (data?.direction_id) {
+        setReportDirectionId(data.direction_id);
+      }
+    };
+    void fetchReportDirection();
+  }, [rapportId]);
+
+  const effectiveDirectionId = reportDirectionId || directionId;
+
+  const { items: tousLesEtablissements } = useAfEtablissements(effectiveDirectionId);
   const etablissementsFiltres = tousLesEtablissements.filter(
     e => e.type_etablissement === 'club_feminin' || e.type_etablissement === 'ofppt'
   );

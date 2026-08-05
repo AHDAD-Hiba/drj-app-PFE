@@ -7,51 +7,25 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { handleExportToPDF } from '@/lib/generatePdfHelper';
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  AreaChart,
-  Area,
-  CartesianGrid,
-  Legend,
-} from "recharts";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Database } from "@/integrations/supabase/types";
+import { formatBenchmarkData, formatEvolutionData, mapSection6Data } from "@/lib/dashboardHelpers";
+import { BenchmarkTable } from "@/components/dashboard/BenchmarkTable";
+import { DashboardShell } from "@/components/dashboard/DashboardShell";
+import { EvolutionChart } from "@/components/dashboard/EvolutionChart";
+import { KPIGrid } from "@/components/dashboard/KPIGrid";
+import { RepartitionCharts } from "@/components/dashboard/RepartitionCharts";
+import type { EvolutionRow, RepartitionRow } from "@/components/dashboard/types";
 import {
   ArrowLeft, Building2, CheckCircle2, ChevronRight, ChevronDown, ChevronUp,
   Activity, MapPin, CalendarDays, Users2, Tent, GraduationCap, Shield,
   ArrowRightLeft, UserPlus, UserMinus, Clock, Users, Handshake, Trophy,
-  Globe, TrendingUp, TrendingDown, Minus, Landmark, Target, Medal,
-  Sparkles, HardHat, Building, TreePine, FileText,Download
+  Globe, TrendingUp, TrendingDown, Landmark, Target, Medal,
+  Sparkles, HardHat, Building, TreePine, FileText
 } from "lucide-react";
 
 type Direction = Database["public"]["Tables"]["directions"]["Row"];
 type Rapport = Database["public"]["Tables"]["rapports"]["Row"];
-type SuiviRemplissage = Database["public"]["Tables"]["suivi_remplissage"]["Row"];
-type Activite = Database["public"]["Tables"]["activites"]["Row"];
-type Participant = Database["public"]["Tables"]["participants"]["Row"];
-type Formation = Database["public"]["Tables"]["formations"]["Row"];
 type Partenariat = Database["public"]["Tables"]["partenariats"]["Row"];
-type StatistiquesFormation = Database["public"]["Tables"]["statistiques_formation"]["Row"];
-type EvolutionRow = {
-  name: string;
-  Camping: number | null;
-  Festivals: number | null;
-  Formation: number | null;
-  Insertion: number | null;
-};
 
 const STATUS_STYLE: Record<string, string> = {
   TERMINE: "bg-success/15 text-success border-success/30",
@@ -61,98 +35,10 @@ const STATUS_STYLE: Record<string, string> = {
   soumise: "bg-info/15 text-info border-info/30",
 };
 
-const STATUS_LABEL: Record<string, string> = {
-  TERMINE: "Terminé",
-  EN_COURS: "En cours",
-  NON_COMMENCE: "Non commencé",
-  validee: "Validé",
-  soumise: "Soumis",
-};
-
-const formatBenchmarkData = (data: any) => {
-  const d = data || {};
-  return [
-    { kpi: "Total des Activités", monScore: d.pref_total_activites || 0, moyenneReg: d.reg_total_activites || 0, isPercentage: false },
-    { kpi: "Total Bénéficiaires", monScore: d.pref_total_beneficiaires || 0, moyenneReg: d.reg_total_beneficiaires || 0, isPercentage: false },
-    { kpi: "Taux de Couverture", monScore: d.pref_taux_couverture || 0, moyenneReg: d.reg_taux_couverture || 0, isPercentage: true },
-    { kpi: "Taux de Féminisation", monScore: d.pref_taux_feminisation || 0, moyenneReg: d.reg_taux_feminisation || 0, isPercentage: true },
-    { kpi: "Partenariats Actifs", monScore: d.pref_total_partenariats || 0, moyenneReg: d.reg_total_partenariats || 0, isPercentage: false },
-    { kpi: "Établ. Opérationnels", monScore: d.pref_etablissements_actifs || 0, moyenneReg: d.reg_etablissements_actifs || 0, isPercentage: false },
-  ];
-};
-
-const mapSection6Data = (data: any) => {
-  const d = data || {};
-  const staffTotal = d.camp_staff_total || 0;
-  const benefTotal = d.camp_benef_total || 0;
-  const ratioCalcule = staffTotal === 0 || benefTotal === 0 ? "0:0" : `1:${Math.round(benefTotal / staffTotal)}`;
-
-  return {
-    activites: {
-      nombre_associations: d.act_assocs || 0,
-      nombre_clubs: d.act_clubs || 0,
-      nombre_conventions: d.act_conventions || 0,
-      activites_sportives: d.act_sport || 0,
-      activites_culturelles: d.act_cult || 0,
-      activites_educatives: d.act_educ || 0,
-      renforcement_capacites: d.act_renf || 0,
-    },
-    camping: {
-      participants: {
-        total: d.camp_benef_total || 0,
-        enfants_mre: d.camp_mre || 0,
-        besoins_specifiques: d.camp_besoins_spec || 0,
-      },
-      encadrement: {
-        ratio: ratioCalcule,
-        total_staff: d.camp_staff_total || 0,
-        hommes: d.camp_staff_h || 0,
-        femmes: d.camp_staff_f || 0,
-      },
-      formations: { total_sessions: d.form_total_sessions || 0, beneficiaires: d.form_beneficiaires || 0 },
-    },
-    associations: {
-      entrants: d.assoc_entrants || 0,
-      sortants: d.assoc_sortants || 0,
-      ben_entrants: d.ben_entrants || 0,   
-      ben_sortants: d.ben_sortants || 0,
-    },
-    conventions: {
-      total_conventions: d.conv_total_global || 0,
-      total_partenaires: d.conv_types_distincts || 0,
-      repartition: d.repartition_partenaires_json || [],
-    },
-    insertion: {
-      total_activites: d.ins_total_activites || 0,
-      partenaires_actifs: d.ins_partenaires_actifs || 0,
-      volume_horaire: `${d.ins_volume_h || 0} Heures`,
-      genre: { hommes: d.ins_hommes || 0, femmes: d.ins_femmes || 0 },
-      milieu: { urbain: d.ins_urbain || 0, rural: d.ins_rural || 0 },
-    },
-    festivals: {
-      total_evenements: d.fest_total || 0,
-      total_provinces: d.fest_provinces || 0,
-      qualifies: d.fest_qualifies || 0,
-      total_participants: (d.fest_hommes || 0) + (d.fest_femmes || 0),
-      genre: { hommes: d.fest_hommes || 0, femmes: d.fest_femmes || 0 },
-      milieu: { urbain: d.fest_urbain || 0, rural: d.fest_rural || 0 },
-    },
-    etablissements: {
-      total: (d.etab_nouvel || 0) + (d.etab_en_cours || 0) + (d.etab_total_fermes || 0),
-      operationnels: 0, 
-      nouvellement_creees: d.etab_nouvel || 0,
-      en_cours_realisation: d.etab_en_cours || 0,
-      fermees: {
-        total: d.etab_total_fermes || 0,
-        causes: d.causes_fermeture_json || [],
-      },
-    },
-  };
-};
 const DirectionDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [repartition, setRepartition] = useState<any[]>([]);
+  const [repartition, setRepartition] = useState<RepartitionRow[]>([]);
   const [searchParams] = useSearchParams(); // 💡 Lecture dynamique de l'année passée en URL
   const { t, i18n } = useTranslation();
   const lang = i18n.language;
@@ -161,11 +47,6 @@ const DirectionDetail = () => {
   const selectedYear = Number(searchParams.get("year")) || 2026; 
 
   const [direction, setDirection] = useState<Direction | null>(null);
-  const [rapport, setRapport] = useState<Rapport | null>(null);
-  const [activites, setActivites] = useState<Activite[]>([]);
-  const [participants, setParticipants] = useState<Participant[]>([]);
-  const [formations, setFormations] = useState<Formation[]>([]);
-  const [statistiquesFormation, setStatistiquesFormation] = useState<StatistiquesFormation[]>([]);
   const [partenariats, setPartenariats] = useState<Partenariat[]>([]);
   const [evolution, setEvolution] = useState<EvolutionRow[]>([]);
   const [benchmark, setBenchmark] = useState(() => formatBenchmarkData(null));
@@ -202,8 +83,6 @@ const DirectionDetail = () => {
         .order("trimestre", { ascending: false })
         .limit(1)
         .maybeSingle();
-      setRapport(rap);
-
       if (!rap) {
         setBenchmark(formatBenchmarkData(null));
         setDetailed(mapSection6Data(null));
@@ -220,11 +99,11 @@ const DirectionDetail = () => {
         .eq("rapport_id", rap.id)
         .maybeSingle();
       
-      const s1 = (section1Data as any) || {};
+      const s1 = (section1Data ?? {}) as { progression_pourcentage?: number; statut?: string; derniere_mise_a_jour?: string | null };
 
       // 4. Charger l'ensemble des données brutes ET la section 3 (Répartition)
       // 💡 Ajout de section3Data dans le tableau à gauche pour récupérer le résultat
-      const [actsData, partsData, formsData, partsData2, section3Data] = await Promise.all([
+      const [, , , partsData2, section3Data] = await Promise.all([
         supabase.from("activites").select("*").eq("rapport_id", rap.id),
         supabase.from("participants").select("*").eq("rapport_id", rap.id),
         supabase.from("formations").select("*").eq("rapport_id", rap.id),
@@ -232,9 +111,6 @@ const DirectionDetail = () => {
         supabase.from("v_dashboard_pref_section3_annuel").select("*").eq("direction_id", id).eq("annee", selectedYear),
       ]);
       
-      setActivites(actsData.data || []);
-      setParticipants(partsData.data || []);
-      setFormations(formsData.data || []);
       setPartenariats(partsData2.data || []);
 
       // 5. Charger l'ensemble des indicateurs consolidés (Vues analytiques)
@@ -244,7 +120,7 @@ const DirectionDetail = () => {
         supabase.from("v_dashboard_pref_section6_annuel").select("*").eq("direction_id", id).eq("annee", selectedYear).maybeSingle(),
       ]);
         
-      setEvolution(formatEvolutionData(evolutionData.data ?? []));
+      setEvolution(formatEvolutionData((evolutionData.data ?? []) as EvolutionRow[]));
       setBenchmark(formatBenchmarkData(benchmarkData.data));
       setDetailed(mapSection6Data(section6Data.data));
 
@@ -256,18 +132,11 @@ const DirectionDetail = () => {
       });
 
       // 💡 La variable est maintenant correctement définie et utilisable ici
-      setRepartition(section3Data.data || []);
+      setRepartition((section3Data.data ?? []) as RepartitionRow[]);
 
       setLoading(false);
     })();
   }, [id, selectedYear]);
-
-  // ==========================================
-  // EXTRACTION DES COMPTEURS INTERNES COHÉRENTS
-  // ==========================================
-  const totalParticipants = participants.reduce((a, p) => a + (p.femmes ?? 0) + (p.hommes ?? 0), 0);
-  const totalActivites = activites.length;
-  const totalPartenariats = partenariats.reduce((a, p) => a + (p.nombre_conventions ?? 0), 0);
 
   // Mouvements issus directement de la structure consolidée du composant
   const viewEntrants = detailed.associations?.entrants || 0;
@@ -275,34 +144,10 @@ const DirectionDetail = () => {
   const benEntrants = detailed.associations?.ben_entrants || 0;
   const benSortants = detailed.associations?.ben_sortants || 0;
 
-  const formatEvolutionData = (dataArray: any[]) => {
-    const skeleton: EvolutionRow[] = [
-      { name: "T1", Camping: null, Festivals: null, Formation: null, Insertion: null },
-      { name: "T2", Camping: null, Festivals: null, Formation: null, Insertion: null },
-      { name: "T3", Camping: null, Festivals: null, Formation: null, Insertion: null },
-      { name: "T4", Camping: null, Festivals: null, Formation: null, Insertion: null },
-    ];
-    if (!dataArray || dataArray.length === 0) return skeleton;
-    return skeleton.map((quarter) => {
-      const existing = dataArray.find((item) => item.name === quarter.name);
-      return existing ? { ...quarter, ...existing } : quarter;
-    });
-  };
-
   const toggleSection = (section: string) => {
     setOpenSection(openSection === section ? null : section);
   };
 
-  const entrants = detailed.associations?.entrants || 0;
-  const sortants = detailed.associations?.sortants || 0;
-
-  const C = {
-    k1: "hsl(var(--kpi-1))", k2: "hsl(var(--kpi-2))", k3: "hsl(var(--kpi-3))",
-    k4: "hsl(var(--kpi-4))", k5: "hsl(var(--kpi-5))", k6: "hsl(var(--kpi-6))",
-    k7: "hsl(var(--kpi-7))", k8: "hsl(var(--kpi-8))", primary: "hsl(var(--primary))",
-    success: "hsl(var(--success))", warning: "hsl(var(--warning))",
-    destructive: "hsl(var(--destructive))", border: "hsl(var(--border))",
-  };
 
   if (loading) {
     return (
@@ -332,7 +177,7 @@ const DirectionDetail = () => {
   }
   return (
     <AppLayout>
-      <div className="space-y-8 animate-fade-in">
+      <DashboardShell>
         {/* HEADER / SECTION 1 */}
         <Card className="overflow-hidden rounded-xl border-border/60 shadow-none">
           <div className="p-5 sm:p-6 border-b border-border bg-gradient-to-br from-primary/5 via-card to-card">
@@ -386,104 +231,56 @@ const DirectionDetail = () => {
           </div>
         </Card>
         {/* SECTION 2 — Top KPIs */}
-        <section className="space-y-3">
-          <div>
-            <h2 className="text-base sm:text-lg font-bold text-foreground">
-              {t('prefDomainDashboard.keyIndicators')}
-            </h2>
-          </div>
-          <Card className="p-4 sm:p-5 border-border/60 shadow-none">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="relative p-5 rounded-2xl border border-border/60 bg-card hover:shadow-md transition-all min-h-[150px] flex flex-col justify-between overflow-hidden">
-                <span className="absolute inset-y-0 start-0 w-1 bg-[hsl(var(--kpi-2))]" />
-                <div className="h-11 w-11 rounded-xl flex items-center justify-center bg-[hsl(var(--kpi-2-soft))] text-[hsl(var(--kpi-2))]">
-                  <Activity className="h-5 w-5" />
-                </div>
-                <div className="space-y-1">
-                  <div className="text-3xl font-extrabold tracking-tight text-foreground tabular-nums">
-                    {fmt(benchmark[0]?.monScore || 0)}
-                  </div>
-                  <div className="text-sm text-muted-foreground leading-snug">
-                    {t('prefDomainDashboard.kpis.activities')}
-                  </div>
-                </div>
-              </div>
-              <div className="relative p-5 rounded-2xl border border-border/60 bg-card hover:shadow-md transition-all min-h-[150px] flex flex-col justify-between overflow-hidden">
-                <span className="absolute inset-y-0 start-0 w-1 bg-[hsl(var(--kpi-3))]" />
-                <div className="h-11 w-11 rounded-xl flex items-center justify-center bg-[hsl(var(--kpi-3-soft))] text-[hsl(var(--kpi-3))]">
-                  <Users2 className="h-5 w-5" />
-                </div>
-                <div className="space-y-1">
-                  <div className="text-3xl font-extrabold tracking-tight text-foreground tabular-nums">
-                    {fmt(benchmark[1]?.monScore || 0)}
-                  </div>
-                  <div className="text-sm text-muted-foreground leading-snug">
-                    {t('prefDomainDashboard.kpis.beneficiaries')}
-                  </div>
-                </div>
-              </div>
-              <div className="relative p-5 rounded-2xl border border-border/60 bg-card hover:shadow-md transition-all min-h-[150px] flex flex-col justify-between overflow-hidden">
-                <span className="absolute inset-y-0 start-0 w-1 bg-[hsl(var(--kpi-4))]" />
-                <div className="h-11 w-11 rounded-xl flex items-center justify-center bg-[hsl(var(--kpi-4-soft))] text-[hsl(var(--kpi-4))]">
-                  <Handshake className="h-5 w-5" />
-                </div>
-                <div className="space-y-1">
-                  <div className="text-3xl font-extrabold tracking-tight text-foreground tabular-nums">
-                    {fmt(benchmark[4]?.monScore || 0)}
-                  </div>
-                  <div className="text-sm text-muted-foreground leading-snug">
-                    {t('prefDomainDashboard.kpis.partnerships')}
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-              <div className="relative p-5 rounded-2xl border border-border/60 bg-card hover:shadow-md transition-all min-h-[150px] flex flex-col justify-between overflow-hidden">
-                <span className="absolute inset-y-0 start-0 w-1 bg-pink-500" />
-                <div className="h-11 w-11 rounded-xl flex items-center justify-center bg-pink-500/10 text-pink-500">
-                  <Users className="h-5 w-5" />
-                </div>
-                <div className="space-y-1">
-                  <div className="text-3xl font-extrabold tracking-tight text-foreground tabular-nums text-pink-600">
-                    {benchmark[3]?.monScore || 0}%
-                  </div>
-                  <div className="text-sm text-muted-foreground leading-snug">
-                    {t('prefDomainDashboard.kpis.feminization')}
-                  </div>
-                </div>
-              </div>
-              <div className="relative p-5 rounded-2xl border border-border/60 bg-card hover:shadow-md transition-all min-h-[150px] flex flex-col justify-between overflow-hidden">
-                <span className="absolute inset-y-0 start-0 w-1 bg-blue-600" />
-                <div className="h-11 w-11 rounded-xl flex items-center justify-center bg-blue-600/10 text-blue-600">
-                  <Globe className="h-5 w-5" />
-                </div>
-                <div className="space-y-1">
-                  <div className="text-3xl font-extrabold tracking-tight text-foreground tabular-nums text-blue-600">
-                    {benchmark[2]?.monScore || 0}%
-                  </div>
-                  <div className="text-sm text-muted-foreground leading-snug">
-                    {t('prefDomainDashboard.kpis.coverage')}
-                  </div>
-                </div>
-              </div>
-              <div className="relative p-5 rounded-2xl border border-border/60 bg-card hover:shadow-md transition-all min-h-[150px] flex flex-col justify-between overflow-hidden">
-                <span className="absolute inset-y-0 start-0 w-1 bg-warning" />
-                <div className="h-11 w-11 rounded-xl flex items-center justify-center bg-warning/10 text-warning">
-                  <Building2 className="h-5 w-5" />
-                </div>
-                <div className="space-y-1">
-                  <div className="text-3xl font-extrabold tracking-tight text-foreground tabular-nums">
-                    {fmt(benchmark[5]?.monScore || 0)}
-                  </div>
-                  <div className="text-sm text-muted-foreground leading-snug">
-                    {t('prefDomainDashboard.kpis.establishments')}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </Card>
-        </section>
+        <KPIGrid
+          title={t("prefDomainDashboard.keyIndicators")}
+          metrics={[
+            {
+              label: t("prefDomainDashboard.kpis.activities"),
+              value: fmt(benchmark[0]?.monScore || 0),
+              icon: Activity,
+              accentClass: "bg-[hsl(var(--kpi-2))]",
+              iconContainerClass: "bg-[hsl(var(--kpi-2-soft))] text-[hsl(var(--kpi-2))]",
+            },
+            {
+              label: t("prefDomainDashboard.kpis.beneficiaries"),
+              value: fmt(benchmark[1]?.monScore || 0),
+              icon: Users2,
+              accentClass: "bg-[hsl(var(--kpi-3))]",
+              iconContainerClass: "bg-[hsl(var(--kpi-3-soft))] text-[hsl(var(--kpi-3))]",
+            },
+            {
+              label: t("prefDomainDashboard.kpis.partnerships"),
+              value: fmt(benchmark[4]?.monScore || 0),
+              icon: Handshake,
+              accentClass: "bg-[hsl(var(--kpi-4))]",
+              iconContainerClass: "bg-[hsl(var(--kpi-4-soft))] text-[hsl(var(--kpi-4))]",
+            },
+            {
+              label: t("prefDomainDashboard.kpis.feminization"),
+              value: `${benchmark[3]?.monScore || 0}%`,
+              icon: Users,
+              accentClass: "bg-pink-500",
+              iconContainerClass: "bg-pink-500/10 text-pink-500",
+              valueClassName: "text-pink-600",
+            },
+            {
+              label: t("prefDomainDashboard.kpis.coverage"),
+              value: `${benchmark[2]?.monScore || 0}%`,
+              icon: Globe,
+              accentClass: "bg-blue-600",
+              iconContainerClass: "bg-blue-600/10 text-blue-600",
+              valueClassName: "text-blue-600",
+            },
+            {
+              label: t("prefDomainDashboard.kpis.establishments"),
+              value: fmt(benchmark[5]?.monScore || 0),
+              icon: Building2,
+              accentClass: "bg-warning",
+              iconContainerClass: "bg-warning/10 text-warning",
+            },
+          ]}
+          className="border-border/60 shadow-none"
+        />
         {/* SECTION 3 — Répartition des bénéficiaires */}
         <section className="space-y-4">
           <div>
@@ -493,146 +290,33 @@ const DirectionDetail = () => {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
-            {/* GRAPHIQUE 1 : VOLUME GLOBAL */}
-            <Card className="p-5 flex flex-col border-border/60 shadow-none">
-              <div className="mb-4">
-                <h3 className="text-sm font-bold text-foreground">{t("prefDomainDashboard.charts.volumeTitle")}</h3>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  {t("prefDomainDashboard.charts.volumeSubtitle")}
-                </p>
-              </div>
-              <div className="h-[250px] w-full mt-auto">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={repartition} margin={{ top: 10, right: 10, left: 0, bottom: 20 }}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={C.border} />
-                    <XAxis
-                      dataKey="name"
-                      axisLine={{ stroke: "hsl(var(--muted-foreground))" }}
-                      tickLine={{ stroke: "hsl(var(--muted-foreground))" }}
-                      tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
-                      dy={10}
-                      interval={0}
-                      height={36}
-                    />
-                    <YAxis
-                      orientation="left"
-                      width={45}
-                      axisLine={{ stroke: "hsl(var(--muted-foreground))" }}
-                      tickLine={{ stroke: "hsl(var(--muted-foreground))" }}
-                      tick={{ 
-                        fontSize: 11, 
-                        fill: "hsl(var(--muted-foreground))",
-                        dx: lang === "ar" ? -18 : 0
-                      }}
-                      domain={[0, (dataMax: number) => Math.ceil(dataMax / 100) * 100]}
-                    />
-                    <Tooltip
-                      cursor={{ fill: "hsl(var(--muted)/0.4)" }}
-                      contentStyle={{ borderRadius: "8px", border: "1px solid hsl(var(--border))", fontSize: "12px" }}
-                    />
-                    <Bar dataKey="total" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} maxBarSize={50} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </Card>
-
-            {/* GRAPHIQUE 2 : MIXITÉ H/F */}
-            <Card className="p-5 flex flex-col border-border/60 shadow-none">
-              <div className="mb-4">
-                <h3 className="text-sm font-bold text-foreground">
-                  {t("prefDomainDashboard.charts.mixityTitle")}
-                </h3>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  {t("prefDomainDashboard.charts.mixitySubtitle")}
-                </p>
-              </div>
-              <div className="h-[250px] w-full mt-auto">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={repartition} margin={{ top: 10, right: 10, left: 0, bottom: 20 }}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={C.border} />
-                    <XAxis
-                      dataKey="name"
-                      axisLine={{ stroke: "hsl(var(--muted-foreground))" }}
-                      tickLine={{ stroke: "hsl(var(--muted-foreground))" }}
-                      tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
-                      dy={10}
-                      interval={0}
-                      height={36}
-                    />
-                    <YAxis
-                      orientation="left"
-                      width={45}
-                      axisLine={{ stroke: "hsl(var(--muted-foreground))" }}
-                      tickLine={{ stroke: "hsl(var(--muted-foreground))" }}
-                      tick={{ 
-                        fontSize: 11, 
-                        fill: "hsl(var(--muted-foreground))",
-                        dx: lang === "ar" ? -18 : 0
-                      }}
-                      tickFormatter={(val) => `${val}%`}
-                      domain={[0, 100]}
-                    />
-                    <Tooltip
-                      cursor={{ fill: "hsl(var(--muted)/0.4)" }}
-                      contentStyle={{ borderRadius: "8px", border: "1px solid hsl(var(--border))", fontSize: "12px" }}
-                      formatter={(value: number) => [`${value}%`, ""]}
-                    />
-                    <Legend wrapperStyle={{ fontSize: "11px", paddingTop: "10px" }} iconType="circle" />
-                    <Bar dataKey="hommesPct" name={t("prefDomainDashboard.charts.men")} stackId="a" fill="#3b82f6" radius={[0, 0, 4, 4]} maxBarSize={50} />
-                    <Bar dataKey="femmesPct" name={t("prefDomainDashboard.charts.women")} stackId="a" fill="#ec4899" radius={[4, 4, 0, 0]} maxBarSize={50} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </Card>
-
-            {/* GRAPHIQUE 3 : TERRITORIALITÉ */}
-            <Card className="p-5 flex flex-col border-border/60 shadow-none">
-              <div className="mb-4">
-                <h3 className="text-sm font-bold text-foreground">
-                  {t("prefDomainDashboard.charts.coverageTitle")}
-                </h3>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  {t("prefDomainDashboard.charts.coverageSubtitle")}
-                </p>
-              </div>
-              <div className="h-[250px] w-full mt-auto">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={repartition} margin={{ top: 10, right: 10, left: 0, bottom: 20 }}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={C.border} />
-                    <XAxis
-                      dataKey="name"
-                      axisLine={{ stroke: "hsl(var(--muted-foreground))" }}
-                      tickLine={{ stroke: "hsl(var(--muted-foreground))" }}
-                      tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
-                      dy={10}
-                      interval={0}
-                      height={36}
-                    />
-                    <YAxis
-                      orientation="left"
-                      width={45}
-                      axisLine={{ stroke: "hsl(var(--muted-foreground))" }}
-                      tickLine={{ stroke: "hsl(var(--muted-foreground))" }}
-                      tick={{ 
-                        fontSize: 11, 
-                        fill: "hsl(var(--muted-foreground))",
-                        dx: lang === "ar" ? -18 : 0
-                      }}
-                      tickFormatter={(val) => `${val}%`}
-                      domain={[0, 100]}
-                    />
-                    <Tooltip
-                      cursor={{ fill: "hsl(var(--muted)/0.4)" }}
-                      contentStyle={{ borderRadius: "8px", border: "1px solid hsl(var(--border))", fontSize: "12px" }}
-                      formatter={(value: number) => [`${value}%`, ""]}
-                    />
-                    <Legend wrapperStyle={{ fontSize: "11px", paddingTop: "10px" }} iconType="square" />
-                    <Bar dataKey="urbainPct" name={t("prefDomainDashboard.charts.urban")} stackId="a" fill="#f59e0b" radius={[0, 0, 4, 4]} maxBarSize={50} />
-                    <Bar dataKey="ruralPct" name={t("prefDomainDashboard.charts.rural")} stackId="a" fill="#10b981" radius={[4, 4, 0, 0]} maxBarSize={50} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </Card>
+            <RepartitionCharts
+              title={t("prefDomainDashboard.charts.volumeTitle")}
+              subtitle={t("prefDomainDashboard.charts.volumeSubtitle")}
+              data={repartition}
+              chartType="volume"
+              t={(key: string, fallback?: string) => t(key, fallback ?? key)}
+              lang={lang}
+              cardClassName="border-border/60 shadow-none"
+            />
+            <RepartitionCharts
+              title={t("prefDomainDashboard.charts.mixityTitle")}
+              subtitle={t("prefDomainDashboard.charts.mixitySubtitle")}
+              data={repartition}
+              chartType="mixity"
+              t={(key: string, fallback?: string) => t(key, fallback ?? key)}
+              lang={lang}
+              cardClassName="border-border/60 shadow-none"
+            />
+            <RepartitionCharts
+              title={t("prefDomainDashboard.charts.coverageTitle")}
+              subtitle={t("prefDomainDashboard.charts.coverageSubtitle")}
+              data={repartition}
+              chartType="coverage"
+              t={(key: string, fallback?: string) => t(key, fallback ?? key)}
+              lang={lang}
+              cardClassName="border-border/60 shadow-none"
+            />
           </div>
         </section>
         {/* SECTION 4 — Évolution temporelle */}
@@ -643,120 +327,14 @@ const DirectionDetail = () => {
             </h2>
           </div>
 
-          <Card className="p-5 border-border/60 shadow-none">
-            <div className="mb-6">
-              <h3 className="text-sm font-bold text-foreground">
-                {t("prefDomainDashboard.charts.evolutionCardTitle")}
-              </h3>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                {t("prefDomainDashboard.charts.evolutionCardSubtitle")}
-              </p>
-            </div>
-
-            <div className="h-[300px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={evolution} margin={{ top: 10, right: 30, left: 20, bottom: 20 }}>
-                  <defs>
-                    <linearGradient id="colorCamping" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
-                    </linearGradient>
-                    <linearGradient id="colorFestivals" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    vertical={false}
-                    stroke="hsl(var(--border))"
-                  />
-                  
-                  {/* --- X Axis Style --- */}
-                  <XAxis
-                    dataKey="name"
-                    axisLine={{ stroke: "hsl(var(--muted-foreground))" }}
-                    tickLine={{ stroke: "hsl(var(--muted-foreground))" }}
-                    tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
-                    dy={10}
-                    interval={0}
-                    height={40}
-                    tickFormatter={(value) => t(`prefDomainDashboard.quarters.${String(value).toLowerCase()}`, String(value)) as string}
-                  />
-                  
-                  {/* --- Y Axis Style --- */}
-                  <YAxis
-                    orientation="left"
-                    width={45}
-                    axisLine={{ stroke: "hsl(var(--muted-foreground))" }}
-                    tickLine={{ stroke: "hsl(var(--muted-foreground))" }}
-                    tick={{ 
-                      fontSize: 11, 
-                      fill: "hsl(var(--muted-foreground))",
-                      dx: lang === "ar" ? -18 : 0 
-                    }}
-                    domain={[0, (dataMax: number) => Math.ceil(dataMax / 100) * 100]}
-                  />
-                  
-                  <Tooltip
-                    contentStyle={{
-                      borderRadius: "8px",
-                      border: "1px solid hsl(var(--border))",
-                      fontSize: "12px",
-                      backgroundColor: "hsl(var(--background))",
-                      color: "hsl(var(--foreground))"
-                    }}
-                  />
-                  
-                  <Legend
-                    wrapperStyle={{ fontSize: "12px", paddingTop: "20px" }}
-                    iconType="circle"
-                  />
-
-                  {/* 💡 AJOUT de connectNulls={false} pour couper la courbe proprement */}
-                  <Area
-                    type="linear"
-                    dataKey="Camping"
-                    name={t("prefDomainDashboard.programs.camping")}
-                    stroke="#3b82f6"
-                    strokeWidth={2}
-                    fillOpacity={1}
-                    fill="url(#colorCamping)"
-                    connectNulls={false} 
-                  />
-                  <Area
-                    type="linear"
-                    dataKey="Festivals"
-                    name={t("prefDomainDashboard.programs.festivals")}
-                    stroke="#8b5cf6"
-                    strokeWidth={2}
-                    fillOpacity={1}
-                    fill="url(#colorFestivals)"
-                    connectNulls={false}
-                  />
-                  <Area
-                    type="linear"
-                    dataKey="Formation"
-                    name={t("prefDomainDashboard.programs.formation")}
-                    stroke="#ec4899"
-                    strokeWidth={2}
-                    fill="none"
-                    connectNulls={false}
-                  />
-                  <Area
-                    type="linear"
-                    dataKey="Insertion"
-                    name={t("prefDomainDashboard.programs.insertion")}
-                    stroke="#10b981"
-                    strokeWidth={2}
-                    fill="none"
-                    connectNulls={false}
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          </Card>
+          <EvolutionChart
+            title={t("prefDomainDashboard.charts.evolutionCardTitle")}
+            subtitle={t("prefDomainDashboard.charts.evolutionCardSubtitle")}
+            data={evolution}
+            t={(key: string, fallback?: string) => t(key, fallback ?? key)}
+            lang={lang}
+            cardClassName="border-border/60 shadow-none"
+          />
         </section>
         {/* --- SECTION 5 : Benchmark régional --- */}
         <section className="space-y-3">
@@ -765,89 +343,12 @@ const DirectionDetail = () => {
               {t("prefDomainDashboard.benchmark.title", "Benchmark régional")}
             </h2>
           </div>
-          <Card className="bg-card w-full overflow-hidden border-border/60 shadow-none">
-            <div className="overflow-x-auto w-full">
-              <Table>
-                <TableHeader className="bg-muted/50 border-b border-border/60">
-                  <TableRow className="hover:bg-transparent">
-                    <TableHead className={`${lang === "ar" ? "text-right" : "text-left"} font-semibold py-4 text-muted-foreground uppercase text-[11px] tracking-wider`}>
-                      {t("prefDomainDashboard.benchmark.columns.indicator", "Indicateur")}
-                    </TableHead>
-                    <TableHead className={`${lang === "ar" ? "text-left" : "text-right"} font-semibold text-muted-foreground uppercase text-[11px] tracking-wider`}>
-                      {t("prefDomainDashboard.benchmark.columns.prefecture", "Préfecture")}
-                    </TableHead>
-                    <TableHead className={`${lang === "ar" ? "text-left" : "text-right"} font-semibold text-muted-foreground uppercase text-[11px] tracking-wider`}>
-                      {t("prefDomainDashboard.benchmark.columns.regionalAverage", "Moyenne Régionale")}
-                    </TableHead>
-                    <TableHead className={`${lang === "ar" ? "text-left" : "text-right"} font-semibold text-muted-foreground uppercase text-[11px] tracking-wider`}>
-                      {t("prefDomainDashboard.benchmark.columns.variance", "Écart")}
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {benchmark.map((item, idx) => {
-                    const ecart = Number((item.monScore - item.moyenneReg).toFixed(1));
-                    const isPositive = ecart > 0;
-                    const isNegative = ecart < 0;
-                    const formatValue = (val: number) =>
-                      item.isPercentage ? `${val.toFixed(1)}%` : val.toFixed(1);
-
-                    const kpiKeys: Record<string, string> = {
-                      "Total des Activités": "totalActivities",
-                      "Total Bénéficiaires": "totalBeneficiaries",
-                      "Taux de Couverture": "coverageRate",
-                      "Taux de Féminisation": "feminisationRate",
-                      "Partenariats Actifs": "activePartnerships",
-                      "Établ. Opérationnels": "operationalEstab"
-                    };
-                    const kpiTranslationKey = kpiKeys[item.kpi] || item.kpi;
-
-                    return (
-                      <TableRow key={idx} className="hover:bg-muted/20 transition-colors border-border/40">
-                        <TableCell className={`${lang === "ar" ? "text-right" : "text-left"} font-medium text-xs sm:text-sm py-3 sm:py-4`}>
-                          {t(`prefDomainDashboard.benchmark.kpis.${kpiTranslationKey}`, item.kpi)}
-                        </TableCell>
-                        
-                        <TableCell className={`${lang === "ar" ? "text-left" : "text-right"} font-bold tabular-nums text-xs sm:text-sm`}>
-                          <span dir="ltr">{formatValue(item.monScore)}</span>
-                        </TableCell>
-                        
-                        <TableCell className={`${lang === "ar" ? "text-left" : "text-right"} text-muted-foreground tabular-nums text-xs sm:text-sm`}>
-                          <span dir="ltr">{formatValue(item.moyenneReg)}</span>
-                        </TableCell>
-                        
-                        <TableCell className={`${lang === "ar" ? "text-left" : "text-right"} tabular-nums text-xs sm:text-sm`}>
-                          {/* درنا justify-start فالعربية باش يجيو الأيقونات والناقص مقادين مع اليسار */}
-                          <div className={`flex items-center ${lang === "ar" ? "justify-start" : "justify-end"} gap-1`} dir="ltr">
-                            {isPositive && (
-                              <>
-                                <TrendingUp className="w-3.5 h-3.5 text-emerald-500" />
-                                <span className="text-emerald-500 font-bold">
-                                  +{formatValue(ecart)}
-                                </span>
-                              </>
-                            )}
-                            {isNegative && (
-                              <>
-                                <TrendingDown className="w-3.5 h-3.5 text-red-500" />
-                                <span className="text-red-500 font-bold">{formatValue(ecart)}</span>
-                              </>
-                            )}
-                            {ecart === 0 && (
-                              <>
-                                <Minus className="w-3.5 h-3.5 text-muted-foreground" />
-                                <span className="text-muted-foreground font-medium">0</span>
-                              </>
-                            )}
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </div>
-          </Card>
+          <BenchmarkTable
+            rows={benchmark}
+            t={(key: string, fallback?: string) => t(key, fallback ?? key)}
+            lang={lang}
+            className="bg-card w-full overflow-hidden border-border/60 shadow-none"
+          />
         </section>
         {/* SECTION 6 — Lecture détaillée du rapport */}
         <section className="space-y-2">
@@ -1226,7 +727,7 @@ const DirectionDetail = () => {
                               {t("prefDomainDashboard.details.conventions.noData", "Aucune donnée disponible")}
                             </span>
                           ) : (
-                            repArray.map((item: any, index: number) => {
+                            repArray.map((item, index) => {
                               const percentage = Math.round((item.count / totalConv) * 100);
                               return (
                                 <div key={index} className="space-y-1.5">
@@ -1616,7 +1117,7 @@ const DirectionDetail = () => {
                               {t("prefDomainDashboard.details.etablissements.noFermeture", "Aucune fermeture signalée")}
                             </span>
                           ) : (
-                            causesArray.map((item: any, index: number) => {
+                            causesArray.map((item, index) => {
                               const percentage = Math.round((item.count / totFermes) * 100);
                               return (
                                 <div key={index} className="space-y-1.5">
@@ -1644,7 +1145,7 @@ const DirectionDetail = () => {
             </Card>
           </div>
         </section>       
-      </div>
+      </DashboardShell>
     </AppLayout>
   );
 };

@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import {
-  ChevronLeft, ChevronRight, Save, Send, ShieldAlert, Loader2, CheckCircle2, Pencil,
+  ChevronLeft, ChevronRight, Save, Send, ShieldAlert, Loader2, CheckCircle2, Pencil, AlertTriangle,
 } from 'lucide-react';
 import { useToast } from '@/hooks/common/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -16,27 +16,48 @@ import { supabase } from '@/integrations/supabase/client';
 import { useDomainSubmission } from '@/hooks/common/useDomainSubmission';
 import { SaveIndicator } from '@/components/form/SaveIndicator';
 import { Stepper } from '@/components/form/Stepper';
+
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
+
 import { PreFormSelection, type ReportSelection } from '@/components/wizard/PreFormSelection';
 import { DEFAULT_YEAR } from '@/components/YearSwitcher';
 import type { DomainConfig } from '@/config/wizard.types';
-// Import de notre nouveau système de configuration
 import { getDomainConfig } from '@/config/domainRegistry';
-import type { ReportStatus } from '@/hooks/common/useDraftSubmission';
 import { useDomaines } from '@/hooks/common/useDomaines';
+
+type StatutRapport =
+  | 'NON_COMMENCE'
+  | 'EN_COURS'
+  | 'SOUMIS'
+  | 'RETOUR_CORRECTION'
+  | 'VALIDE';
 
 // =========================================================================
 // 1. LE COMPOSANT DU WIZARD ACTIF
 // =========================================================================
-const ActiveWizard = ({ 
-  selection, 
-  currentId, 
-  domainConfig, 
-  onBack, 
-  domainLabel, 
-  periodLabel, 
-  isAr 
-}: { 
-  selection: ReportSelection, currentId: string, domainConfig: DomainConfig, onBack: () => void, domainLabel: string, periodLabel: string, isAr: boolean 
+const ActiveWizard = ({
+  selection,
+  currentId,
+  domainConfig,
+  onBack,
+  domainLabel,
+  periodLabel,
+  isAr,
+  isReview,
+  reportStatus,
+  onReturnCorrection,
+}: {
+  selection: ReportSelection;
+  currentId: string;
+  domainConfig: DomainConfig;
+  onBack: () => void;
+  domainLabel: string;
+  periodLabel: string;
+  isAr: boolean;
+  isReview: boolean;
+  reportStatus: StatutRapport;
+  onReturnCorrection: (correctionText: string) => Promise<boolean>;
 }) => {
   const { t } = useTranslation();
   const { utilisateur: profile } = useAuth();
@@ -46,14 +67,16 @@ const ActiveWizard = ({
   const [submitting, setSubmitting] = useState(false);
   const [localLocked, setLocalLocked] = useState(false);
   
-  // 1. Un compteur pour signaler les changements de données
+  // États pour les modales
+  const [reviewCorrectionOpen, setReviewCorrectionOpen] = useState(false);
+  const [reviewCorrectionText, setReviewCorrectionText] = useState('');
+  const [reviewSubmitting, setReviewSubmitting] = useState(false);
+
+  // 🆕 État pour la modale de confirmation "Terminer le domaine"
+  const [confirmCompleteOpen, setConfirmCompleteOpen] = useState(false);
+  
   const [refreshTrigger, setRefreshTrigger] = useState(0);
-
-  // 2. On transmet ce trigger au système de complétude
   const completeness = domainConfig.useCompleteness(currentId, refreshTrigger);
-
-  console.log("ACTIVE WIZARD selection =", selection);
-console.log("ACTIVE WIZARD directionId =", selection.directionId);
 
   const domain = useDomainSubmission({
     rapportId: currentId,
@@ -62,44 +85,33 @@ console.log("ACTIVE WIZARD directionId =", selection.directionId);
     completeness,
   });
 
-  // On stocke l'ancienne valeur pour ne déclencher la sauvegarde QUE si le % a réellement changé
   const prevCompletenessRef = useRef(completeness);
   const isFirstRender = useRef(true);
   
   useEffect(() => {
-    // 1. On ignore l'initialisation à l'ouverture de la page
     if (isFirstRender.current) {
       isFirstRender.current = false;
       prevCompletenessRef.current = completeness;
       return;
     }
 
-    // 2. Si le score a vraiment changé
     if (prevCompletenessRef.current !== completeness) {
       prevCompletenessRef.current = completeness;
-      
-      // 3. On attend 1.5 seconde que tous les micro-chargements se terminent
       const timeoutId = setTimeout(() => {
         domain.saveNow().catch(err => console.error("Erreur auto-save complétude:", err));
       }, 1500);
-      
-      // 4. NETTOYAGE : Si le score re-change AVANT la fin des 1.5s, on annule le tir précédent
       return () => clearTimeout(timeoutId);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [completeness]);
 
   const isLocked = domain.isReadOnly || localLocked;
-
   const ensureEnCoursTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   
-  //Encapsulation de la fonction mouvante dans une Ref
   const ensureEnCoursRef = useRef(domain.ensureEnCours);
   useEffect(() => {
     ensureEnCoursRef.current = domain.ensureEnCours;
   }, [domain.ensureEnCours]);
 
-  // Identité mémoire 100% stable : Le tableau de dépendances est vide []
   const onActivityGlobal = useCallback(async () => {
     if (ensureEnCoursTimerRef.current) clearTimeout(ensureEnCoursTimerRef.current);
     
@@ -113,20 +125,21 @@ console.log("ACTIVE WIZARD directionId =", selection.directionId);
     }, 1500); 
   }, []);
 
-  const handleSaveDraft = async () => {
-
-    console.log("CLICK SAVE");
+  // 🆕 Ajout du paramètre `silent` pour ne pas afficher le toast lors du clic sur "Suivant"
+  const handleSaveDraft = async (silent = false) => {
     try {
       const ok = await domain.saveNow();
-
-      console.log("RESULT =", ok);
-      toast({
-        title: ok ? t('form.save.draftSavedTitle') : t('form.save.draftErrorTitle'),
-        variant: ok ? 'default' : 'destructive',
-      });
+      if (!silent) {
+        toast({
+          title: ok ? t('form.save.draftSavedTitle') : t('form.save.draftErrorTitle'),
+          variant: ok ? 'default' : 'destructive',
+        });
+      }
     } catch (err) {
       console.error(err);
-      toast({ title: 'Erreur', variant: 'destructive' });
+      if (!silent) {
+        toast({ title: 'Erreur', variant: 'destructive' });
+      }
     }
   };
 
@@ -148,7 +161,7 @@ console.log("ACTIVE WIZARD directionId =", selection.directionId);
   };
 
   const goNext = async () => {
-    await handleSaveDraft();
+    await handleSaveDraft(true); // 🆕 Sauvegarde silencieuse : pas de toast
     setStep(s => Math.min(domainConfig.steps.length, s + 1));
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -156,6 +169,19 @@ console.log("ACTIVE WIZARD directionId =", selection.directionId);
   const goPrev = () => {
     setStep(s => Math.max(1, s - 1));
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleReviewReturnCorrection = async () => {
+    setReviewSubmitting(true);
+    try {
+      const completed = await onReturnCorrection(reviewCorrectionText);
+      if (completed) {
+        setReviewCorrectionOpen(false);
+        setReviewCorrectionText('');
+      }
+    } finally {
+      setReviewSubmitting(false);
+    }
   };
 
   const CurrentStepComponent = domainConfig.steps.find(s => s.id === step)?.component;
@@ -183,7 +209,7 @@ console.log("ACTIVE WIZARD directionId =", selection.directionId);
         </div>
       </div>
 
-      {/* 2. RECAPITULATIF (Année, Trimestre, Domaine) */}
+      {/* 2. RECAPITULATIF */}
       <Card className="p-4 sm:p-5 flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-2">
           <Badge variant="outline" className="gap-1.5">
@@ -205,12 +231,13 @@ console.log("ACTIVE WIZARD directionId =", selection.directionId);
         </Button>
       </Card>
 
-      {/* 3. BARRE DES ETAPES (STEPPER) */}
+      {/* 3. BARRE DES ETAPES */}
       <Card className="p-4 sm:p-5">
-        <Stepper steps={domainConfig.steps} current={step} isAr={isAr} onJump={(id) => !isLocked && setStep(id)} />
+        {/* 🆕 Le onJump n'est plus bloqué par !isLocked */}
+        <Stepper steps={domainConfig.steps} current={step} isAr={isAr} onJump={(id) => setStep(id)} />
       </Card>
 
-      {/* 4. BARRE DE PROGRESSION COLLANTE */}
+      {/* 4. BARRE DE PROGRESSION */}
       <div className="sticky top-16 z-30 -mx-4 px-4 py-2.5 bg-background/95 backdrop-blur border-y border-border">
         <div className="flex items-center justify-between gap-3 mb-1.5">
           <span className="text-xs font-semibold">
@@ -227,7 +254,7 @@ console.log("ACTIVE WIZARD directionId =", selection.directionId);
         <CurrentStepComponent rapportId={currentId} disabled={isLocked} onActivity={onActivityGlobal} />
       )}
 
-      {/* 6. BARRE D'ACTIONS FLOTTANTE (BOTTOM) */}
+      {/* 6. BARRE D'ACTIONS FLOTTANTE */}
       <div className="fixed bottom-0 inset-x-0 z-40 bg-card/95 backdrop-blur border-t border-border">
         <div className="container py-3 flex items-center justify-between gap-2">
           <Button variant="outline" size="sm" onClick={goPrev} disabled={step === 1} className="gap-1.5">
@@ -236,8 +263,15 @@ console.log("ACTIVE WIZARD directionId =", selection.directionId);
           </Button>
 
           <div className="flex items-center gap-2">
-            {!isLocked && (
-              <Button variant="outline" size="sm" onClick={handleSaveDraft} disabled={domain.saveState === 'saving'} className="gap-1.5">
+            {isReview && reportStatus === 'SOUMIS' && (
+              <Button variant="destructive" size="sm" onClick={() => setReviewCorrectionOpen(true)} disabled={reviewSubmitting} className="gap-1.5">
+                <AlertTriangle className="h-4 w-4" />
+                <span className="hidden sm:inline">Retour correction</span>
+              </Button>
+            )}
+
+            {!isReview && !isLocked && (
+              <Button variant="outline" size="sm" onClick={() => handleSaveDraft(false)} disabled={domain.saveState === 'saving'} className="gap-1.5">
                 {domain.saveState === 'saving' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                 <span className="hidden sm:inline">{t('form.actions.saveDraft')}</span>
               </Button>
@@ -249,8 +283,8 @@ console.log("ACTIVE WIZARD directionId =", selection.directionId);
                 {isAr ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
               </Button>
             ) : (
-              !isLocked && (
-                <Button size="sm" onClick={handleSubmit} disabled={domain.saveState === 'saving' || submitting} className="gap-1.5">
+              !isReview && !isLocked && (
+                <Button size="sm" onClick={() => setConfirmCompleteOpen(true)} disabled={domain.saveState === 'saving' || submitting} className="gap-1.5">
                   <Send className="h-4 w-4" />
                   {t('form.actions.completeDomain')}
                 </Button>
@@ -259,29 +293,79 @@ console.log("ACTIVE WIZARD directionId =", selection.directionId);
           </div>
         </div>
       </div>
+
+      {/* 🆕 Modale de confirmation pour Terminer le domaine */}
+      <Dialog open={confirmCompleteOpen} onOpenChange={setConfirmCompleteOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{isAr ? 'تأكيد الإنهاء' : 'Confirmation'}</DialogTitle>
+          </DialogHeader>
+          <div className="py-3">
+            <p className="text-sm text-muted-foreground">
+              {isAr 
+                ? 'هل أنت متأكد أنك تريد إنهاء وإرسال هذا المجال؟ لن تتمكن من التعديل عليه بعد ذلك.'
+                : 'Êtes-vous sûr de vouloir terminer ce domaine ? Vous ne pourrez plus le modifier par la suite.'}
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfirmCompleteOpen(false)} disabled={submitting}>
+              {isAr ? 'إلغاء' : 'Annuler'}
+            </Button>
+            <Button onClick={() => { setConfirmCompleteOpen(false); handleSubmit(); }} disabled={submitting} className="bg-primary">
+              {isAr ? 'تأكيد الإنهاء' : 'Confirmer'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modale de dialogue pour justifier le retour */}
+      <Dialog open={reviewCorrectionOpen} onOpenChange={setReviewCorrectionOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Retour correction</DialogTitle>
+          </DialogHeader>
+          <Textarea
+            value={reviewCorrectionText}
+            onChange={(event) => setReviewCorrectionText(event.target.value)}
+            placeholder="Expliquez ce que le directeur doit corriger..."
+            className="min-h-32"
+          />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setReviewCorrectionOpen(false)} disabled={reviewSubmitting}>
+              Annuler
+            </Button>
+            <Button variant="destructive" onClick={handleReviewReturnCorrection} disabled={reviewSubmitting}>
+              Envoyer
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
+
 // =========================================================================
 // 2. LE COMPOSANT PRINCIPAL
 // =========================================================================
 const Saisie = () => {
-  // 1. TOUS les hooks inconditionnels obligatoirement en haut
   const { t, i18n } = useTranslation();
   const { 
     utilisateur: profile,
     isPrefectoral: isDirector,
     isEquipeRegional,
     loading: authLoading
-} = useAuth();
-  const { domaines } = useDomaines(); // ✅ Placé tout en haut pour fixer l'ordre des hooks
+  } = useAuth();
+  const { domaines } = useDomaines(); 
+  const { toast } = useToast();
   const [searchParams] = useSearchParams();
 
-  const reviewMode = searchParams.get("mode") === "review";
   const rapportIdFromUrl = searchParams.get("rapport");
+  const reviewMode = searchParams.get('mode') === 'review';
   const isAr = i18n.language === 'ar';
 
   const [selectionDone, setSelectionDone] = useState(false);
+  const [reportStatus, setReportStatus] = useState<StatutRapport>('NON_COMMENCE');
+  const [correctionComment, setCorrectionComment] = useState('');
   const [selection, setSelection] = useState<ReportSelection>({
     year: DEFAULT_YEAR,
     quarter: 't1',
@@ -289,93 +373,146 @@ const Saisie = () => {
   });
 
   useEffect(() => {
-  if (!reviewMode || !rapportIdFromUrl) return;
+    if (!rapportIdFromUrl) return;
 
-  const loadReport = async () => {
-    const { data: rapport } = await supabase
-      .from("rapports")
-      .select("id, annee, trimestre, direction_id")
-      .eq("id", rapportIdFromUrl)
-      .single();
+    const loadReport = async () => {
+      const { data: rapport } = await supabase
+        .from("rapports")
+        .select("id, annee, trimestre, direction_id, statut_rapport, commentaire_validation")
+        .eq("id", rapportIdFromUrl)
+        .single();
 
-      console.log("rapport =", rapport);
+      if (!rapport) return;
 
-    if (!rapport) return;
+      setSelection({
+        rapportId: rapport.id,
+        year: rapport.annee,
+        quarter: rapport.trimestre as "t1" | "t2" | "t3" | "t4",
+        directionId: rapport.direction_id,
+        domain: "",
+      });
 
-    console.log("RAPPORT =", rapport);
-    setSelection({
-      rapportId: rapport.id,
-      year: rapport.annee,
-      quarter: rapport.trimestre,
-      directionId: rapport.direction_id,
-      domain: "",
-   });
+      setReportStatus(rapport.statut_rapport as StatutRapport);
+      setCorrectionComment(rapport.commentaire_validation ?? '');
+      setSelectionDone(true);
+    };
 
-   console.log("direction from report =", rapport.direction_id);
-
-    setSelectionDone(true);
-  };
-
-  loadReport();
-}, [reviewMode, rapportIdFromUrl]);
+    loadReport();
+  }, [rapportIdFromUrl]);
 
   const currentId = rapportIdFromUrl ?? selection.rapportId ?? null;
 
-  console.log("selection =", selection);
+  const refreshReportStatus = useCallback(async () => {
+    if (!currentId) return;
+    const { data: rapport, error } = await supabase
+      .from('rapports')
+      .select('statut_rapport, commentaire_validation')
+      .eq('id', currentId)
+      .single();
 
-  // Configuration mémorisée
+    if (!error && rapport) {
+      setReportStatus(rapport.statut_rapport as StatutRapport);
+      setCorrectionComment(rapport.commentaire_validation ?? '');
+    }
+  }, [currentId]);
+
+  const handleValidate = async (reportId: string | null) => {
+    if (!reportId) return false;
+    try {
+      const { error } = await supabase
+        .from('rapports')
+        .update({
+          statut_rapport: 'VALIDE',
+          date_validation: new Date().toISOString(),
+          validateur_id: profile?.id ?? null,
+        })
+        .eq('id', reportId)
+        .select();
+
+      if (error) throw error;
+      toast({ title: 'Validé', description: 'Le rapport a été validé avec succès.' });
+      await refreshReportStatus();
+      return true;
+    } catch (err: any) {
+      toast({ title: 'Erreur', description: err.message, variant: 'destructive' });
+      return false;
+    }
+  };
+
+  const handleReturnCorrection = async (reportId: string | null, correctionText: string) => {
+    if (!reportId) return false;
+    if (!correctionText.trim()) {
+      toast({ title: 'Champ requis', description: 'Écris ce que le directeur doit corriger.', variant: 'destructive' });
+      return false;
+    }
+    try {
+      const { error: reportError } = await supabase
+        .from('rapports')
+        .update({
+          statut_rapport: 'RETOUR_CORRECTION',
+          commentaire_validation: correctionText.trim(),
+        })
+        .eq('id', reportId)
+        .select();
+
+      if (reportError) throw reportError;
+
+      const { error: suiviError } = await supabase
+        .from('suivi_remplissage')
+        .update({ statut: 'EN_COURS' })
+        .eq('rapport_id', reportId)
+        .eq('statut', 'TERMINE');
+
+      if (suiviError) throw suiviError;
+
+      toast({ title: 'Retour correction', description: 'Le rapport a été renvoyé pour correction.' });
+      await refreshReportStatus();
+      return true;
+    } catch (err: any) {
+      toast({ title: 'Erreur', description: err.message, variant: 'destructive' });
+      return false;
+    }
+  };
+
   const domainConfig = useMemo(() => {
-  if (!selectionDone) return null;
-  if (!selection.domain) return null;
+    if (!selectionDone) return null;
+    if (!selection.domain) return null;
+    return getDomainConfig(selection.domain);
+  }, [selection.domain, selectionDone]);
 
-  return getDomainConfig(selection.domain);
-}, [selection.domain, selectionDone]);
-
-  // 2. Les gardes de sécurité (Loading / Rôles)
   if (authLoading) {
     return <AppLayout><div className="h-32 bg-muted/50 rounded-xl animate-pulse" /></AppLayout>;
   }
 
-  console.log({
-  isDirector,
-  isEquipeRegional,
-  profile,
-  directionId: profile?.direction_id,
-});
+  if (!isDirector && !isEquipeRegional) {
+    return (
+      <AppLayout>
+        <Card className="p-8 text-center max-w-md mx-auto">
+          <ShieldAlert className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
+          <h2 className="font-bold text-lg">{t('form.forbidden.title')}</h2>
+          <p className="text-sm text-muted-foreground mt-2">{t('form.forbidden.body')}</p>
+        </Card>
+      </AppLayout>
+    );
+  }
 
-  // أي دور آخر ممنوع
-if (!isDirector && !isEquipeRegional) {
-  return (
-    <AppLayout>
-      <Card className="p-8 text-center max-w-md mx-auto">
-        <ShieldAlert className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
-        <h2 className="font-bold text-lg">{t('form.forbidden.title')}</h2>
-        <p className="text-sm text-muted-foreground mt-2">
-          {t('form.forbidden.body')}
-        </p>
-      </Card>
-    </AppLayout>
-  );
-}
-
-// المدير الإقليمي خاصو direction_id
-if (isDirector && !profile?.direction_id) {
-  return (
-    <AppLayout>
-      <Card className="p-8 text-center max-w-md mx-auto">
-        <ShieldAlert className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
-        <h2 className="font-bold text-lg">{t('form.forbidden.title')}</h2>
-        <p className="text-sm text-muted-foreground mt-2">
-          {t('form.forbidden.body')}
-        </p>
-      </Card>
-    </AppLayout>
-  );
-}
+  if (isDirector && !profile?.direction_id) {
+    return (
+      <AppLayout>
+        <Card className="p-8 text-center max-w-md mx-auto">
+          <ShieldAlert className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
+          <h2 className="font-bold text-lg">{t('form.forbidden.title')}</h2>
+          <p className="text-sm text-muted-foreground mt-2">{t('form.forbidden.body')}</p>
+        </Card>
+      </AppLayout>
+    );
+  }
 
   const activeDomaineRow = domaines.find(d => d.code === selection.domain);
   const domainLabel = activeDomaineRow ? (isAr ? activeDomaineRow.nom_ar : activeDomaineRow.nom_fr) : selection.domain;
   const periodLabel = `${isAr ? 'فصلي' : 'Trimestriel'} · ${selection.quarter?.toUpperCase() ?? ''}`;
+  
+  const isReview = isEquipeRegional && reviewMode;
 
   return (
     <AppLayout>
@@ -389,6 +526,9 @@ if (isDirector && !profile?.direction_id) {
           </div>
           <PreFormSelection
             initial={selection}
+            reportStatus={reportStatus}
+            onValidate={() => handleValidate(currentId)}
+            onReturnCorrection={(correctionText) => handleReturnCorrection(currentId, correctionText)}
             onComplete={(sel) => {
               setSelection(prev => ({
                 ...prev,
@@ -407,6 +547,9 @@ if (isDirector && !profile?.direction_id) {
           domainLabel={domainLabel}
           periodLabel={periodLabel}
           isAr={isAr}
+          isReview={isReview}
+          reportStatus={reportStatus}
+          onReturnCorrection={(correctionText) => handleReturnCorrection(currentId, correctionText)}
         />
       )}
     </AppLayout>

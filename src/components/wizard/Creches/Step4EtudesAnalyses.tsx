@@ -24,18 +24,32 @@ export const Step4EtudesAnalyses = memo(({ disabled, onActivity, rapportId }: St
   const { utilisateur } = useAuth();
   const directionId = utilisateur?.direction_id;
 
-  // 1. جلب قائمة دور الحضانة الخاصة لملء الـ Select في بطاقة المراقبة
+// 1. جلب قائمة دور الحضانة الخاصة لملء الـ Select في بطاقة المراقبة
   const [crechesPrivees, setCrechesPrivees] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchCreches = async () => {
-      if (directionId) {
-        const { data } = await supabase.from('dir_creches_privees').select('*').eq('direction_id', directionId);
+      if (!rapportId) return;
+
+      // الخطوة 1: استخراج direction_id الخاص بالتقرير الحالي
+      const { data: rapport } = await supabase
+        .from('rapports')
+        .select('direction_id')
+        .eq('id', rapportId)
+        .single();
+
+      if (rapport?.direction_id) {
+        // الخطوة 2: جلب دور الحضانة الخاصة التابعة لتلك المديرية
+        const { data } = await supabase
+          .from('dir_creches_privees')
+          .select('*')
+          .eq('direction_id', rapport.direction_id);
+          
         if (data) setCrechesPrivees(data);
       }
-    };
+    };    
     void fetchCreches();
-  }, [directionId]);
+  }, [rapportId]);
 
   // 2. تهيئة الـ Hooks
   const { items: analyses, add: addAnalyse, update: updateAnalyse, remove: removeAnalyse } = useCrAnalysesPonctuelles(rapportId || null);

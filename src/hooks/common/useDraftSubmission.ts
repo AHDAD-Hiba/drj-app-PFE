@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/common/useAuth'; // 🆕 Importation de useAuth pour l'équipe régionale
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -14,7 +15,6 @@ interface UseDraftOpts {
   debounceMs?: number;
 }
 
-
 // ─── Hook ─────────────────────────────────────────────────────────────────────
 
 export const useDraftSubmission = ({
@@ -25,6 +25,8 @@ export const useDraftSubmission = ({
   debounceMs = 2000,
 }: UseDraftOpts) => {
 
+  // 🆕 Récupération du statut de l'utilisateur (Équipe régionale)
+  const { isEquipeRegional } = useAuth();
 
   const [status, setStatus] = useState<ReportStatus>('NON_COMMENCE');
   const [loading, setLoading] = useState(true);
@@ -33,15 +35,14 @@ export const useDraftSubmission = ({
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  
   // Keep a ref to the current status so persist() always reads the latest value
-  // without being re-created on every status change.
   const statusRef = useRef<ReportStatus>(status);
   useEffect(() => { statusRef.current = status; }, [status]);
 
   // ── Load existing suivi_remplissage on mount ──────────────────────────────
 
   useEffect(() => {
-    
     if (!rapportId || !directionId || !domaineId) {
       setLoading(false);
       return;
@@ -55,28 +56,25 @@ export const useDraftSubmission = ({
         .select('statut, updated_at')
         .eq('rapport_id', rapportId)
         .eq('direction_id', directionId)
-        .eq('domaine_id', domaineId,)
+        .eq('domaine_id', domaineId)
         .maybeSingle();
 
       if (cancelled) return;
 
-      console.log('LOAD SUIVI', data);
-      console.log('LOAD ERROR', error);
-      
       if (error) {
         console.error('[useDraftSubmission] load error:', error.message);
       } else if (data) {
-          setStatus(data.statut as ReportStatus);
-          setLastSavedAt(
-    data.updated_at
-      ? new Date(
-          new Date(data.updated_at).toLocaleString('en-US', {
-            timeZone: 'Africa/Casablanca',
-          })
-        )
-        : null
+        setStatus(data.statut as ReportStatus);
+        setLastSavedAt(
+          data.updated_at
+            ? new Date(
+                new Date(data.updated_at).toLocaleString('en-US', {
+                  timeZone: 'Africa/Casablanca',
+                })
+              )
+            : null
         );
-        }
+      }
 
       setLoading(false);
     })();
@@ -86,21 +84,11 @@ export const useDraftSubmission = ({
 
   // ── Core persist (UPSERT) ─────────────────────────────────────────────────
 
-  /**
-   * Writes the current status into suivi_remplissage via UPSERT.
-   * If the report is already TERMINE, calling persist() is a no-op.
-   */
-const persist = useCallback(async (overrideStatus?: ReportStatus): Promise<boolean> => {
-
-    console.log('persist CALLED');
-    console.log("STEP 1");
-    console.log({
-    rapportId,
-    directionId,
-    domaineId,
-    overrideStatus,
-    completeness
-  });
+  const persist = useCallback(async (overrideStatus?: ReportStatus): Promise<boolean> => {
+    // 🛑 SÉCURITÉ : L'équipe régionale ne doit JAMAIS sauvegarder de modifications
+    if (isEquipeRegional) {
+      return false; 
+    }
 
     const effectiveStatus = overrideStatus ?? statusRef.current;
 
@@ -109,26 +97,16 @@ const persist = useCallback(async (overrideStatus?: ReportStatus): Promise<boole
       return true;
     }
 
-    console.log("STEP 2");
-
     if (!rapportId || !directionId || !domaineId) {
       setErrorMsg('Identifiants manquants (rapport, direction ou domaine).');
       setSaveState('error');
       return false;
     }
 
-    console.log("STEP 3", {
-  rapportId,
-  directionId,
-  domaineId,
-});
-
     setSaveState('saving');
     setErrorMsg(null);
 
     try {
-
-      console.log("STEP 4");
       const { data, error } = await supabase
         .from('suivi_remplissage')
         .upsert(
@@ -143,24 +121,16 @@ const persist = useCallback(async (overrideStatus?: ReportStatus): Promise<boole
           { onConflict: 'rapport_id,direction_id,domaine_id' }
         )
         .select();
-        console.log("STEP 5");
 
-      console.log('UPSERT DATA:', data);
-      console.log('UPSERT ERROR:', error);
+      if (error) throw error;
 
-      if (error) {
-        console.log('UPSERT ERROR FULL', error);
-        throw error;
-      }
-
-      // 💡 NOUVEAU : 2. Mise à jour du statut global du rapport
+      // Mise à jour du statut global du rapport
       if (effectiveStatus === 'EN_COURS') {
-        // On lance la requête sans l'attendre (fire-and-forget) pour ne pas ralentir l'UI
         supabase
           .from('rapports')
           .update({ statut_rapport: 'EN_COURS' })
           .eq('id', rapportId)
-          .eq('statut_rapport', 'NON_COMMENCE') // Sécurité : on modifie SEULEMENT si c'est non commencé
+          .eq('statut_rapport', 'NON_COMMENCE') 
           .then(({ error: rapportError }) => {
             if (rapportError) {
               console.error('[useDraftSubmission] Erreur mise à jour du rapport global:', rapportError);
@@ -169,12 +139,12 @@ const persist = useCallback(async (overrideStatus?: ReportStatus): Promise<boole
       }
 
       setLastSavedAt(
-  new Date(
-    new Date().toLocaleString('en-US', {
-      timeZone: 'Africa/Casablanca',
-    })
-  )
-);
+        new Date(
+          new Date().toLocaleString('en-US', {
+            timeZone: 'Africa/Casablanca',
+          })
+        )
+      );
       setSaveState('idle');
       return true;
     } catch (err: any) {
@@ -182,94 +152,58 @@ const persist = useCallback(async (overrideStatus?: ReportStatus): Promise<boole
       setErrorMsg(err.message ?? 'Erreur inconnue lors de la sauvegarde.');
       return false;
     }
-  }, [rapportId, directionId, domaineId, completeness]);
+  }, [rapportId, directionId, domaineId, completeness, isEquipeRegional]);
+
   // ── Public API ────────────────────────────────────────────────────────────
 
-  /**
-   * Call this whenever the user modifies data.
-   * CRITICAL: If transitioning from NON_COMMENCE to EN_COURS, persist IMMEDIATELY
-   * to avoid RLS race conditions (Étape 10 du diagramme).
-   * For subsequent updates, debounce the persist.
-   * No-op if the report is already TERMINE.
-   */
   const update = useCallback(() => {
-    console.log('UPDATE CALLED');
-    if (statusRef.current === 'TERMINE') return;
+    if (statusRef.current === 'TERMINE' || isEquipeRegional) return; // 🛑 Bloqué pour l'équipe régionale
 
-    // Évaluer la transition de statut
     const isInitialTransition = statusRef.current === 'NON_COMMENCE';
-
     setStatus('EN_COURS');
 
     if (timerRef.current) clearTimeout(timerRef.current);
 
-    // IMPORTANT (Étape 10 du diagramme) : si on passe de NON_COMMENCE à EN_COURS,
-    // faire la persistence IMMÉDIATEMENT (sans debounce) pour éviter le RLS bloquant.
-    // Cela garantit que le statut est 'EN_COURS' en base AVANT les UPSERTs métier.
     if (isInitialTransition) {
       persist('EN_COURS').then(ok => {
-        if (!ok) {
-          console.warn('[useDraftSubmission] Impossible de persister le statut EN_COURS immédiatement');
-        }
+        if (!ok) console.warn('[useDraftSubmission] Impossible de persister le statut EN_COURS');
       });
     } else {
-      // Pour les appels suivants, debounce la persistence
       timerRef.current = setTimeout(() => persist('EN_COURS'), debounceMs);
     }
-  }, [persist, debounceMs]);
+  }, [persist, debounceMs, isEquipeRegional]);
 
-  /**
-   * Flush pending debounce and persist immediately.
-   * No-op if the report is TERMINE.
-   */
   const saveNow = useCallback(async (): Promise<boolean> => {
-    if (statusRef.current === 'TERMINE') return true;
+    if (statusRef.current === 'TERMINE' || isEquipeRegional) return true; // 🛑 Bloqué pour l'équipe régionale
     if (timerRef.current) clearTimeout(timerRef.current);
-
-    console.log("saveNow CALLED");
     return persist('EN_COURS');
-  }, [persist]);
+  }, [persist, isEquipeRegional]);
 
-  /**
-   * Finalise the report:
-   * 1. Cancels pending debounce.
-   * 2. Persists with status TERMINE.
-   * 3. Locks future edits.
-   */
   const submit = useCallback(async (): Promise<boolean> => {
+    if (isEquipeRegional) return false; // 🛑 Bloqué pour l'équipe régionale
     if (timerRef.current) clearTimeout(timerRef.current);
 
     const ok = await persist('TERMINE');
     if (ok) setStatus('TERMINE');
     return ok;
-  }, [persist]);
+  }, [persist, isEquipeRegional]);
 
-  /**
-   * Force immediate persistence of EN_COURS status WITHOUT debounce.
-   * Used to avoid RLS race conditions before metadata table UPSERTs.
-   * No-op if already TERMINE or if status is already EN_COURS.
-   */
-const ensureEnCours = useCallback(async (): Promise<boolean> => {
-  if (statusRef.current !== 'NON_COMMENCE') {
-    return true;
-  }
+  const ensureEnCours = useCallback(async (): Promise<boolean> => {
+    if (statusRef.current !== 'NON_COMMENCE' || isEquipeRegional) {
+      return true;
+    }
 
-  setStatus('EN_COURS');
-  statusRef.current = 'EN_COURS';
+    setStatus('EN_COURS');
+    statusRef.current = 'EN_COURS';
+    return persist('EN_COURS');
+  }, [persist, isEquipeRegional]);
 
-  return persist('EN_COURS');
-}, [persist]);
-  // Clean up debounce on unmount and flush pending changes before hidden/unload.
+  // Clean up debounce on unmount
   useEffect(() => {
     const handleVisibilityChange = () => {
-      if (document.visibilityState === 'hidden') {
-        void saveNow();
-      }
+      if (document.visibilityState === 'hidden') void saveNow();
     };
-
-    const handleBeforeUnload = () => {
-      void saveNow();
-    };
+    const handleBeforeUnload = () => { void saveNow(); };
 
     window.addEventListener('visibilitychange', handleVisibilityChange);
     window.addEventListener('beforeunload', handleBeforeUnload);
@@ -291,13 +225,17 @@ const ensureEnCours = useCallback(async (): Promise<boolean> => {
     saveState,
     lastSavedAt,
     errorMsg,
-    isReadOnly: status === 'TERMINE',
+    
+    // 🛡️ CRITIQUE : Force la "Lecture Seule" si l'utilisateur est de l'équipe régionale,
+    // ou si le statut est déjà terminé.
+    isReadOnly: status === 'TERMINE' || isEquipeRegional,
+    
     // Actions
     update,
     saveNow,
-    submit,    ensureEnCours, // NEW: Permettre aux callbacks métier d'attendre la persistence du statut    // Stable alias kept for backward-compat with existing consumers
+    submit,
+    ensureEnCours,
     submissionId: rapportId,
-    /** Réservé à l’UI (progression) ; non calculé par ce hook pour l’instant. */
     completeness: 0,
   };
 };

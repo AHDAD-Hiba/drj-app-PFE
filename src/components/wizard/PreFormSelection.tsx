@@ -12,20 +12,26 @@ import {
 } from '@/components/ui/select';
 import { Calendar, Layers, ArrowRight, ArrowLeft, FileText, CheckCircle2, Loader2, Send } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import{ DownloadReportButton } from '@/components/DownloadReportButton';
+import { DownloadReportButton } from '@/components/DownloadReportButton';
+
+// 🆕 Imports ajoutés pour la modale de confirmation
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 export type Quarter = 't1' | 't2' | 't3' | 't4';
 
 export interface ReportSelection {
   year: number;
   quarter?: Quarter;
-  domain: string; // Devient une chaîne générique
+  domain: string; 
   rapportId?: string;
   directionId?: string;
 }
 
 interface Props {
   initial: ReportSelection;
+  reportStatus?: string;
+  onValidate?: () => Promise<boolean>;
+  onReturnCorrection?: (correctionText: string) => Promise<boolean>;
   onComplete: (sel: ReportSelection) => void;
 }
 
@@ -37,10 +43,15 @@ interface DomaineItem {
   statut: "NON_COMMENCE" | "EN_COURS" | "TERMINE";
 }
 
-// Configuration normalisée des trimestres disponibles
 const QUARTERS: Quarter[] = ['t1', 't2', 't3', 't4'];
 
-export const PreFormSelection = ({ initial, onComplete }: Props) => {
+export const PreFormSelection = ({ 
+  initial, 
+  reportStatus,
+  onValidate,
+  onReturnCorrection,
+  onComplete 
+}: Props) => {
   const { t, i18n } = useTranslation();
   const { utilisateur, isEquipeRegional } = useAuth();
   const { toast } = useToast();
@@ -53,6 +64,7 @@ export const PreFormSelection = ({ initial, onComplete }: Props) => {
   const [rapportId, setRapportId] = useState<string | null>(null);
   const [domaines, setDomaines] = useState<DomaineItem[]>([]);
   const [canSubmitReport, setCanSubmitReport] = useState(false);
+  const [confirmSubmitOpen, setConfirmSubmitOpen] = useState(false);
 
   // ==========================================
   // PRÉ-CHARGEMENT DES DOMAINES AU MONTAGE
@@ -61,7 +73,6 @@ export const PreFormSelection = ({ initial, onComplete }: Props) => {
     const prefetchDomainesBase = async () => {
       const { data, error } = await supabase.from('domaines').select('code');
       if (!error && data && data.length > 0 && !sel.domain) {
-        // Initialise dynamiquement avec le premier domaine trouvé en BDD si aucun n'est défini
         setSel(s => ({ ...s, domain: data[0].code }));
       }
     };
@@ -69,17 +80,14 @@ export const PreFormSelection = ({ initial, onComplete }: Props) => {
   }, []);
 
   // ==========================================
- // MODE REVIEW : ouvrir directement l'étape 2
-// ==========================================
-useEffect(() => {
-  if (!initial.rapportId) return;
-
-  setRapportId(initial.rapportId);
-
-  loadDomaines(initial.rapportId);
-
-  setStage(2);
-}, [initial.rapportId]);
+  // MODE REVIEW : ouvrir directement l'étape 2
+  // ==========================================
+  useEffect(() => {
+    if (!initial.rapportId) return;
+    setRapportId(initial.rapportId);
+    loadDomaines(initial.rapportId);
+    setStage(2);
+  }, [initial.rapportId]);
 
   // ==========================================
   // ETAPE 1 -> ETAPE 2 : Création/Chargement
@@ -98,7 +106,6 @@ useEffect(() => {
 
     setLoading(true);
     try {
-      // 1. Vérification des droits de création
       const { data: canCreate, error: checkError } = await supabase.rpc(
         'can_create_next_report',
         {
@@ -118,10 +125,37 @@ useEffect(() => {
             : 'Tous les domaines du rapport précédent doivent être terminés avant.',
           variant: 'destructive',
         });
+        setLoading(false);
         return;
       }
 
-      // 2. Chercher si le rapport existe déjà
+      const previousQuarter =
+        sel.quarter === "t2" ? "t1" : 
+        sel.quarter === "t3" ? "t2" : 
+        sel.quarter === "t4" ? "t3" : null;
+
+      if (previousQuarter) {
+        const { data: previousReport } = await supabase
+          .from("rapports")
+          .select("statut_rapport")
+          .eq("direction_id", utilisateur.direction_id)
+          .eq("annee", sel.year)
+          .eq("trimestre", previousQuarter)
+          .maybeSingle();
+
+        if (!previousReport || previousReport.statut_rapport !== "VALIDE") {
+          toast({
+            title: isAr ? 'غير مسموح' : 'Action non autorisée',
+            description: isAr
+              ? `يجب المصادقة على تقرير الفصل السابق (${previousQuarter.toUpperCase()}) أولاً.`
+              : `Le rapport du trimestre précédent (${previousQuarter.toUpperCase()}) doit être validé d'abord.`,
+            variant: 'destructive',
+          });
+          setLoading(false);
+          return;
+        }
+      }
+
       const query = supabase
         .from('rapports')
         .select('id')
@@ -134,7 +168,6 @@ useEffect(() => {
 
       let currentRapportId = existingRapport?.id;
 
-      // 3. S'il n'existe pas, on le crée et on initialise les domaines
       if (!currentRapportId) {
         const { data: newRapport, error: insertError } = await supabase
           .from('rapports')
@@ -156,29 +189,34 @@ useEffect(() => {
         } else {
             currentRapportId = newRapport.id;
         }
+      }
 
-        // Initialiser suivi_remplissage
-        const { data: masterDomaines, error: domainesError } = await supabase.from('domaines').select('id');
-        if (domainesError) throw domainesError;
+      setRapportId(currentRapportId);
+
+      const { count } = await supabase
+        .from("suivi_remplissage")
+        .select("*", { count: "exact", head: true })
+        .eq("rapport_id", currentRapportId);
+
+      if ((count ?? 0) === 0) {
+        const { data: masterDomaines, error } = await supabase.from("domaines").select("id");
+        if (error) throw error;
 
         if (masterDomaines && masterDomaines.length > 0) {
-            await supabase.from('suivi_remplissage').insert(
-              masterDomaines.map(d => ({
-                rapport_id: currentRapportId,
-                direction_id: utilisateur.direction_id,
-                domaine_id: d.id,
-                statut: 'NON_COMMENCE',
-                progression_pourcentage: 0
-              }))
-            );
+          await supabase.from("suivi_remplissage").insert(
+            masterDomaines.map((d) => ({
+              rapport_id: currentRapportId,
+              direction_id: utilisateur?.direction_id,
+              domaine_id: d.id,
+              statut: "NON_COMMENCE",
+              progression_pourcentage: 0,
+            }))
+          );
         }
       }
 
-      // 4. Charger les données dynamiques des domaines
-      setRapportId(currentRapportId);
-      await loadDomaines(currentRapportId);
+      await loadDomaines(currentRapportId!);
       
-      // 5. Passer à l'étape 2
       setStage(2);
 
     } catch (error: any) {
@@ -192,8 +230,6 @@ useEffect(() => {
   // CHARGEMENT DYNAMIQUE DES DOMAINES
   // ==========================================
   const loadDomaines = async (rId: string) => {
-
-    console.log("rapportId =", rId);
     const { data, error } = await supabase
       .from("suivi_remplissage")
       .select(`
@@ -202,21 +238,15 @@ useEffect(() => {
       `)
       .eq("rapport_id", rId);
 
-      console.log("suivi_remplissage =", data);
-
     if (error) throw error;
 
-    const formattedDomaines: DomaineItem[] = (data || []).map((row: any) => {
-    console.log("code from supabase =", row.domaine.code);
-
-  return {
-    id: row.domaine.id,
-    code: row.domaine.code.toLowerCase(),
-    nom_fr: row.domaine.nom_fr,
-    nom_ar: row.domaine.nom_ar,
-    statut: row.statut,
-  };
-});
+    const formattedDomaines: DomaineItem[] = (data || []).map((row: any) => ({
+      id: row.domaine.id,
+      code: row.domaine.code.toLowerCase(),
+      nom_fr: row.domaine.nom_fr,
+      nom_ar: row.domaine.nom_ar,
+      statut: row.statut,
+    }));
 
     setDomaines(formattedDomaines);
 
@@ -233,7 +263,10 @@ useEffect(() => {
     try {
         const { error } = await supabase
             .from('rapports')
-            .update({ statut_rapport: 'SOUMIS' })
+            .update({ 
+              statut_rapport: 'SOUMIS',
+              commentaire_validation: null
+            })
             .eq('id', rapportId);
         
         if (error) throw error;
@@ -251,9 +284,6 @@ useEffect(() => {
 
   const handleOpenForm = () => {
     if (!rapportId || !sel.domain) return;
-
-    console.log("sel =", sel);
-    console.log("Before onComplete:", sel);
     onComplete({ ...sel, rapportId });
   };
 
@@ -427,23 +457,24 @@ useEffect(() => {
 
           <div className="flex flex-wrap items-center justify-between pt-4 mt-2 border-t border-border gap-4">
             {!isEquipeRegional ? (
-          <Button
-            variant="outline"
-            onClick={() => setStage(1)}
-            className="gap-1.5 h-10"
-            disabled={loading}
-          >
-            {isAr ? <ArrowRight className="h-4 w-4" /> : <ArrowLeft className="h-4 w-4" />}
-            {isAr ? "السابق" : "Précédent"}
-          </Button>
-        ) : (
-          <div className="h-10 w-24" />
-        )}
+              <Button
+                variant="outline"
+                onClick={() => setStage(1)}
+                className="gap-1.5 h-10"
+                disabled={loading}
+              >
+                {isAr ? <ArrowRight className="h-4 w-4" /> : <ArrowLeft className="h-4 w-4" />}
+                {isAr ? "السابق" : "Précédent"}
+              </Button>
+            ) : (
+              <div className="h-10 w-24" />
+            )}
             
             <div className="flex items-center gap-3">
-              {canSubmitReport && (
+              {/* 🆕 Ouverture de la modale de confirmation au lieu de soumettre directement */}
+              {!isEquipeRegional && canSubmitReport && (
                 <Button 
-                  onClick={handleSubmitReport} 
+                  onClick={() => setConfirmSubmitOpen(true)}
                   disabled={loading}
                   className="bg-emerald-700 hover:bg-emerald-800 text-white gap-1.5 h-10 px-4 rounded-md font-medium shadow-sm transition-colors"
                 >
@@ -456,13 +487,42 @@ useEffect(() => {
                 {loading && <Loader2 className="h-4 w-4 animate-spin" />}
                 {isAr ? 'افتح الاستمارة' : 'Accéder au formulaire'}
               </Button>
+
               <DownloadReportButton 
-                  rapportId={rapportId} 
-                />
+                 rapportId={rapportId} 
+              />
             </div>
           </div>        
         </Card>
       )}
+
+      {/* 🆕 Modale de confirmation de soumission du rapport ajoutée ici */}
+      <Dialog open={confirmSubmitOpen} onOpenChange={setConfirmSubmitOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{isAr ? 'تأكيد الإرسال النهائي' : 'Confirmation de soumission'}</DialogTitle>
+          </DialogHeader>
+          <div className="py-3">
+            <p className="text-sm text-muted-foreground">
+              {isAr 
+                ? 'هل أنت متأكد أنك تريد إرسال التقرير النهائي؟ سيتم إرساله إلى الفريق الجهوي ولن تتمكن من تعديل أي مجال.'
+                : 'Êtes-vous sûr de vouloir soumettre le rapport final ? Il sera envoyé à l\'équipe régionale et ne pourra plus être modifié.'}
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfirmSubmitOpen(false)} disabled={loading}>
+              {isAr ? 'إلغاء' : 'Annuler'}
+            </Button>
+            <Button 
+              onClick={() => { setConfirmSubmitOpen(false); handleSubmitReport(); }} 
+              disabled={loading} 
+              className="bg-emerald-700 hover:bg-emerald-800 text-white"
+            >
+              {isAr ? 'تأكيد الإرسال' : 'Confirmer'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

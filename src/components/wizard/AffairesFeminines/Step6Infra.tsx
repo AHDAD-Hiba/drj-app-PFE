@@ -8,6 +8,7 @@ import { SafeTextarea } from '@/components/form/SafeTextarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Trash2, Building2, Search } from 'lucide-react';
 import { StepComponentProps } from '@/config/wizard.types';
+import { supabase } from '@/integrations/supabase/client';
 
 import { useAfEtablissements } from '@/hooks/common/useAfEtablissements';
 import { useAfMiseAJourReseau, AfMouvementEntry } from '@/hooks/AffairesFeminines/useAfMiseAJourReseau';
@@ -19,7 +20,28 @@ export const Step6Infra = memo(({ rapportId, disabled, onActivity }: StepCompone
   const { utilisateur } = useAuth();
   const directionId = utilisateur?.direction_id;
 
-  const { items: tousLesEtablissements, loading: loadingEtabs } = useAfEtablissements(directionId);
+  const [reportDirectionId, setReportDirectionId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchReportDirection = async () => {
+      if (!rapportId) return;
+      const { data } = await supabase
+        .from('rapports')
+        .select('direction_id')
+        .eq('id', rapportId)
+        .single();
+        
+      if (data?.direction_id) {
+        setReportDirectionId(data.direction_id);
+      }
+    };
+    void fetchReportDirection();
+  }, [rapportId]);
+
+  const effectiveDirectionId = reportDirectionId || directionId;
+  
+  
+  const { items: tousLesEtablissements, loading: loadingEtabs } = useAfEtablissements(effectiveDirectionId);
   const reseau = useAfMiseAJourReseau(rapportId);
 
   const [localMouvements, setLocalMouvements] = useState<AfMouvementEntry[]>([]);

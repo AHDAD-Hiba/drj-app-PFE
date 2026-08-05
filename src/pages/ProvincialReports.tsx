@@ -32,7 +32,9 @@ import {
   Search, FileSpreadsheet, Clock, AlertCircle
 } from 'lucide-react';
 
-import { supabase } from '@/integrations/supabase/client'; 
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/common/useAuth';
+import { useToast } from '@/hooks/common/use-toast';
 
 // Statuts 
 type StatutRapport = 'NON_COMMENCE' | 'EN_COURS' | 'SOUMIS' | 'RETOUR_CORRECTION' | 'VALIDE';
@@ -48,6 +50,12 @@ interface RapportAvecDirection {
     nom_ar: string;
   } | null;
 }
+
+const CAN_REVIEW_STATUSES: StatutRapport[] = [
+  'SOUMIS',
+  'RETOUR_CORRECTION',
+  'VALIDE',
+];
 
 const STATUS_META: Record<StatutRapport, { label: string; icon: any; cls: string }> = {
   NON_COMMENCE: {
@@ -123,6 +131,8 @@ const ProvincialReports = () => {
   const [reports, setReports] = useState<RapportAvecDirection[]>([]);
   const [loading, setLoading] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
+  const { utilisateur: profile } = useAuth();
+  const { toast } = useToast();
 
   useEffect(() => {
     const fetchReports = async () => {
@@ -171,6 +181,37 @@ const ProvincialReports = () => {
     submitted: filteredReports.filter(r => r.statut_rapport === 'SOUMIS').length,
     corrections: filteredReports.filter(r => r.statut_rapport === 'RETOUR_CORRECTION').length,
     validated: filteredReports.filter(r => r.statut_rapport === 'VALIDE').length,
+  };
+
+  const handleValidateReport = async (reportId: string) => {
+    try {
+      const { error } = await supabase
+        .from('rapports')
+        .update({
+          statut_rapport: 'VALIDE',
+          date_validation: new Date().toISOString(),
+          validateur_id: profile?.id ?? null,
+        })
+        .eq('id', reportId)
+        .select();
+
+      if (error) throw error;
+
+      toast({
+        title: 'Validé',
+        description: 'Le rapport a été validé avec succès.',
+      });
+
+      setReports((current) =>
+        current.map((report) =>
+          report.id === reportId
+            ? { ...report, statut_rapport: 'VALIDE' }
+            : report
+        )
+      );
+    } catch (err: any) {
+      toast({ title: 'Erreur', description: err.message, variant: 'destructive' });
+    }
   };
 
   return (
@@ -378,16 +419,31 @@ const ProvincialReports = () => {
                         </Badge>
                         </TableCell>
                         <TableCell className="text-right">
-                        <Button 
-                          size="sm" 
-                          variant="default" 
-                          className="h-8 gap-1.5"
-                          onClick={() => navigate(`/saisie/${report.id}`)}
-                        >
-                          <Eye className="h-3.5 w-3.5" />
-                          Examiner
-                        </Button>
-</TableCell>
+                        <div className="flex justify-end gap-2">
+                          {CAN_REVIEW_STATUSES.includes(report.statut_rapport) && (
+                            <Button
+                              size="sm"
+                              variant="default"
+                              className="h-8 gap-1.5"
+                              onClick={() => navigate(`/saisie?mode=review&rapport=${report.id}`)}
+                            >
+                              <Eye className="h-3.5 w-3.5" />
+                              Examiner
+                            </Button>
+                          )}
+                          {report.statut_rapport === 'SOUMIS' && (
+                            <Button
+                              size="sm"
+                              variant="secondary"
+                              className="h-8 gap-1.5"
+                              onClick={() => handleValidateReport(report.id)}
+                            >
+                              <CheckCircle2 className="h-3.5 w-3.5" />
+                              Valider
+                            </Button>
+                          )}
+                        </div>
+                      </TableCell>
                       </TableRow>
                     );
                   })

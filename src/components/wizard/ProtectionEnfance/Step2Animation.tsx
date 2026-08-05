@@ -24,11 +24,34 @@ import {
 export const Step2Animation = memo(({ disabled, onActivity, rapportId }: StepComponentProps & { rapportId?: string | null }) => {
   const { i18n } = useTranslation();
   const isAr = i18n.language === 'ar';
-
   const { utilisateur } = useAuth();
   const directionId = utilisateur?.direction_id;
 
-  const { items: etablissements, loading: loadingEtab } = useAfEtablissements(directionId);
+  // 🆕 1. إضافة State لتخزين direction_id الخاص بالتقرير
+  const [reportDirectionId, setReportDirectionId] = useState<string | null>(null);
+
+  // 🆕 2. جلب direction_id الخاص بالتقرير الحالي
+  useEffect(() => {
+    const fetchReportDirection = async () => {
+      if (!rapportId) return;
+      const { data } = await supabase
+        .from('rapports')
+        .select('direction_id')
+        .eq('id', rapportId)
+        .single();
+        
+      if (data?.direction_id) {
+        setReportDirectionId(data.direction_id);
+      }
+    };
+    void fetchReportDirection();
+  }, [rapportId]);
+
+  // 🆕 3. تحديد الـ directionId الفعلي (من التقرير إن وجد، وإلا من المستخدم)
+  const effectiveDirectionId = reportDirectionId || directionId;
+
+  // 🆕 4. تمرير effectiveDirectionId بدلاً من directionId
+  const { items: etablissements, loading: loadingEtab } = useAfEtablissements(effectiveDirectionId);  
   const centresProtection = etablissements.filter(e => e.type_etablissement === 'centre_protection_enfance');
   const [centers, setCenters] = useState<{ local_id: string; etablissement_id: string }[]>([]);
 

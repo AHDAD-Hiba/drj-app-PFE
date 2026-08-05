@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/select';
 import { useTypesFermeture } from '@/hooks/Jeunesse/useTypesFermeture';
 import { Plus, Trash2, Building2, Search } from 'lucide-react';
+import {supabase} from '@/integrations/supabase/client';
 
 // NOUVEAUX IMPORTS POUR L'AUTONOMIE
 import { StepComponentProps } from '@/config/wizard.types';
@@ -55,8 +56,29 @@ export const Step3Etablissement = memo(({
   // 1. Récupération des informations d'authentification pour la direction locale
   const { utilisateur: profile } = useAuth();
 
+  const [reportDirectionId, setReportDirectionId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchReportDirection = async () => {
+      if (!rapportId) return;
+      const { data } = await supabase
+        .from('rapports')
+        .select('direction_id')
+        .eq('id', rapportId)
+        .single();
+        
+      if (data?.direction_id) {
+        setReportDirectionId(data.direction_id);
+      }
+    };
+    void fetchReportDirection();
+  }, [rapportId]);
+
+  const effectiveDirectionId = reportDirectionId || profile?.direction_id;
+
   // 2. Le composant instancie son propre hook métier avec ses dépendances
-  const facilities = useEtablissementEntries(rapportId, profile?.direction_id ?? null);
+  const facilities = useEtablissementEntries(rapportId, effectiveDirectionId ?? null);
+
   const items = facilities.items;
 
   // ==========================================

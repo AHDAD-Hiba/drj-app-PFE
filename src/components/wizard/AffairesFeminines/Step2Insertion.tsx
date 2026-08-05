@@ -1,4 +1,4 @@
-import { memo } from 'react';
+import { memo, useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Plus, Trash2, Briefcase, Store } from 'lucide-react';
 import { NumericField } from '@/components/form/NumericField';
 import { StepComponentProps } from '@/config/wizard.types';
+import { supabase } from '@/integrations/supabase/client';
 
 // Import de nos hooks
 import { useAfIntegrationLaureates } from '@/hooks/AffairesFeminines/useAfIntegrationLaureates';
@@ -21,15 +22,39 @@ export const Step2Insertion = memo(({ rapportId, disabled, onActivity }: StepCom
   const { utilisateur } = useAuth();
   const directionId = utilisateur?.direction_id;
 
+  // 🆕 1. إضافة State لتخزين direction_id الخاص بالتقرير
+  const [reportDirectionId, setReportDirectionId] = useState<string | null>(null);
+
+  // 🆕 2. جلب direction_id الخاص بالتقرير الحالي
+  useEffect(() => {
+    const fetchReportDirection = async () => {
+      if (!rapportId) return;
+      const { data } = await supabase
+        .from('rapports')
+        .select('direction_id')
+        .eq('id', rapportId)
+        .single();
+        
+      if (data?.direction_id) {
+        setReportDirectionId(data.direction_id);
+      }
+    };
+    void fetchReportDirection();
+  }, [rapportId]);
+
+  // 🆕 3. تحديد الـ directionId الفعلي (من التقرير إن وجد، وإلا من المستخدم)
+  const effectiveDirectionId = reportDirectionId || directionId;
+
+  // 🆕 4. تمرير effectiveDirectionId بدلاً من directionId
+  const { items: tousLesEtablissements } = useAfEtablissements(effectiveDirectionId);
+  const etablissementsFiltres = tousLesEtablissements.filter(
+    e => e.type_etablissement === 'club_feminin' || e.type_etablissement === 'ofppt'
+  );
+
   // HOOKS DE PERSISTANCE (AUTO-SAVE)
   const laureates = useAfIntegrationLaureates(rapportId);
   const agrs = useAfAgrs(rapportId);
 
-  // Chargement de la liste des établissements
-  const { items: tousLesEtablissements } = useAfEtablissements(directionId);
-  const etablissementsFiltres = tousLesEtablissements.filter(
-    e => e.type_etablissement === 'club_feminin' || e.type_etablissement === 'ofppt'
-  );
 
   const handleAddLaureate = async () => {
     if (onActivity) await onActivity();
