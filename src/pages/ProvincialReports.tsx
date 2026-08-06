@@ -5,7 +5,7 @@ import { AppLayout } from '@/components/AppLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input'; //Search
+import { Input } from '@/components/ui/input';
 import { handleExportExcel } from '@/lib/export';
 import {
   Select,
@@ -27,10 +27,22 @@ import {
   CheckCircle2,
   AlertTriangle,
   Send,
-  Download,
   Eye,
-  Search, FileSpreadsheet, Clock, AlertCircle
+  Search,
+  FileSpreadsheet,
+  Clock,
+  AlertCircle,
+  Loader2,
 } from 'lucide-react';
+
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/common/useAuth';
@@ -57,29 +69,35 @@ const CAN_REVIEW_STATUSES: StatutRapport[] = [
   'VALIDE',
 ];
 
-const STATUS_META: Record<StatutRapport, { label: string; icon: any; cls: string }> = {
+// 🎯 Traduction intégrée des statuts
+const STATUS_META: Record<StatutRapport, { labelFr: string; labelAr: string; icon: any; cls: string }> = {
   NON_COMMENCE: {
-    label: 'Non commencé',
+    labelFr: 'Non commencé',
+    labelAr: 'لم يبدأ',
     icon: AlertCircle, 
     cls: 'bg-destructive/10 ring-1 ring-destructive/20 text-destructive border-0',
   },
   EN_COURS: {
-    label: 'En cours',
+    labelFr: 'En cours',
+    labelAr: 'قيد الإنجاز',
     icon: Clock, 
     cls: 'bg-warning/10 ring-1 ring-warning/20 text-warning border-0',
   },
   SOUMIS: {
-    label: 'Soumis',
+    labelFr: 'Soumis',
+    labelAr: 'مُرسل',
     icon: Send,
     cls: 'bg-success/10 ring-1 ring-success/20 text-success border-0', 
   },
   RETOUR_CORRECTION: {
-    label: 'Correction demandée',
+    labelFr: 'Correction demandée',
+    labelAr: 'مطلوب تصحيح',
     icon: AlertTriangle,
     cls: 'bg-orange-500/10 ring-1 ring-orange-500/20 text-orange-600 border-0', 
   },
   VALIDE: {
-    label: 'Validé',
+    labelFr: 'Validé',
+    labelAr: 'مصادق عليه',
     icon: CheckCircle2,
     cls: 'bg-emerald-500/10 ring-1 ring-emerald-500/20 text-emerald-600 border-0',
   },
@@ -121,12 +139,13 @@ const StatCard = ({ icon: Icon, label, value, subtitle, tone }: StatCardProps) =
 );
 
 const ProvincialReports = () => {
-  const { t } = useTranslation();
+  const { i18n } = useTranslation();
+  const isAr = i18n.language === 'ar'; // 🎯 Variable déterminant la langue active
   const navigate = useNavigate();
   const currentYear = new Date().getFullYear();
   const [year, setYear] = useState<number>(currentYear);
   const [quarter, setQuarter] = useState<number>(1);
-  const [searchQuery, setSearchQuery] = useState(''); // 🔎 
+  const [searchQuery, setSearchQuery] = useState('');
   
   const [reports, setReports] = useState<RapportAvecDirection[]>([]);
   const [loading, setLoading] = useState(false);
@@ -134,11 +153,13 @@ const ProvincialReports = () => {
   const { utilisateur: profile } = useAuth();
   const { toast } = useToast();
 
+  const [selectedReportId, setSelectedReportId] = useState<string | null>(null);
+  const [isValidating, setIsValidating] = useState(false);
+
   useEffect(() => {
     const fetchReports = async () => {
       setLoading(true);
       
-      // (Jointure)
       const { data, error } = await supabase
         .from('rapports')
         .select(`
@@ -169,7 +190,7 @@ const ProvincialReports = () => {
   const filteredReports = reports.filter((r) => {
     const matchesSearch = 
       r.directions?.nom_fr.toLowerCase().includes(searchQuery.toLowerCase()) || 
-      r.directions?.nom_ar.includes(searchQuery);
+      (r.directions?.nom_ar && r.directions.nom_ar.includes(searchQuery));
       
     const matchesStatus = statusFilter === 'ALL' || r.statut_rapport === statusFilter;
     
@@ -183,7 +204,10 @@ const ProvincialReports = () => {
     validated: filteredReports.filter(r => r.statut_rapport === 'VALIDE').length,
   };
 
-  const handleValidateReport = async (reportId: string) => {
+  const handleValidateReport = async () => {
+    if (!selectedReportId) return;
+    setIsValidating(true);
+
     try {
       const { error } = await supabase
         .from('rapports')
@@ -191,26 +215,31 @@ const ProvincialReports = () => {
           statut_rapport: 'VALIDE',
           date_validation: new Date().toISOString(),
           validateur_id: profile?.id ?? null,
+          commentaire_correction: null
         })
-        .eq('id', reportId)
+        .eq('id', selectedReportId)
         .select();
 
       if (error) throw error;
 
       toast({
-        title: 'Validé',
-        description: 'Le rapport a été validé avec succès.',
+        title: isAr ? 'تمت المصادقة' : 'Validé',
+        description: isAr ? 'تمت المصادقة على التقرير بنجاح.' : 'Le rapport a été validé avec succès.',
       });
 
       setReports((current) =>
         current.map((report) =>
-          report.id === reportId
+          report.id === selectedReportId
             ? { ...report, statut_rapport: 'VALIDE' }
             : report
         )
       );
+
+      setSelectedReportId(null);
     } catch (err: any) {
-      toast({ title: 'Erreur', description: err.message, variant: 'destructive' });
+      toast({ title: isAr ? 'خطأ' : 'Erreur', description: err.message, variant: 'destructive' });
+    } finally {
+      setIsValidating(false);
     }
   };
 
@@ -223,13 +252,13 @@ const ProvincialReports = () => {
           <div className="relative z-10 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
             <div>
               <div className="text-xs sm:text-sm font-semibold tracking-wider opacity-80 uppercase mb-1">
-                Équipe Régionale
+                {isAr ? 'الفريق الجهوي' : 'Équipe Régionale'}
               </div>
               <h1 className="text-2xl sm:text-3xl font-extrabold">
-                {t("equipeRegional.title", "Gestion des rapports provinciaux")}
+                {isAr ? 'إدارة التقارير الإقليمية' : 'Gestion des rapports provinciaux'}
               </h1>
               <p className="text-sm sm:text-base opacity-90 mt-1">
-                {t("equipeRegional.subtitle", "Suivi, vérification et validation des rapports provinciaux.")}
+                {isAr ? 'تتبع، مراجعة والمصادقة على التقارير الإقليمية' : 'Suivi, vérification et validation des rapports provinciaux.'}
               </p>
             </div>
             
@@ -241,7 +270,7 @@ const ProvincialReports = () => {
               className="gap-1.5 bg-white/15 hover:bg-white/25 text-white border-0 backdrop-blur-sm font-bold transition-smooth"
             >
               <FileSpreadsheet className="h-4 w-4" />
-              {t("button.exportExcel", "Exporter Excel")}
+              {isAr ? 'تصدير إلى Excel' : 'Exporter Excel'}
             </Button>
             </div>
           </div>
@@ -260,12 +289,12 @@ const ProvincialReports = () => {
                 
                 <div className="space-y-1.5 w-full sm:w-[140px]">
                   <label className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-                    Année
+                    {isAr ? 'السنة' : 'Année'}
                   </label>
                   <input
                     id="year-selector"
-                    title="Sélectionner l'année"
-                    placeholder="Année"
+                    title={isAr ? 'اختر السنة' : "Sélectionner l'année"}
+                    placeholder={isAr ? 'السنة' : "Année"}
                     type="number"
                     value={year}
                     onChange={(e) => setYear(Number(e.target.value) || new Date().getFullYear())}
@@ -278,7 +307,7 @@ const ProvincialReports = () => {
                 {/* Trimestre  */}
                 <div className="space-y-1.5 w-full sm:w-[140px]">
                   <label className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-                    Trimestre
+                    {isAr ? 'الفصل' : 'Trimestre'}
                   </label>
                   <Select value={String(quarter)} onValueChange={(v) => setQuarter(Number(v))}>
                     <SelectTrigger className="h-9 bg-card">
@@ -286,7 +315,9 @@ const ProvincialReports = () => {
                     </SelectTrigger>
                     <SelectContent>
                       {QUARTERS.map((q) => (
-                        <SelectItem key={q} value={String(q)}>T{q}</SelectItem>
+                        <SelectItem key={q} value={String(q)}>
+                          {isAr ? `الفصل ${q}` : `T${q}`}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -297,7 +328,7 @@ const ProvincialReports = () => {
               <div className="w-full sm:w-[300px] relative">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Rechercher une direction..."
+                  placeholder={isAr ? 'البحث عن مديرية...' : 'Rechercher une direction...'}
                   className="pl-9 h-9"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
@@ -312,30 +343,30 @@ const ProvincialReports = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard
             icon={FileText}
-            label="Total des rapports"
+            label={isAr ? 'مجموع التقارير' : 'Total des rapports'}
             value={stats.total}
-            subtitle="Rapports de la période"
+            subtitle={isAr ? 'تقارير الفترة' : 'Rapports de la période'}
             tone={4}
           />
           <StatCard
             icon={Send}
-            label="Rapports soumis"
+            label={isAr ? 'التقارير المُرسلة' : 'Rapports soumis'}
             value={stats.submitted}
-            subtitle="Transmis par les directions"
+            subtitle={isAr ? 'المُرسلة من طرف المديريات' : 'Transmis par les directions'}
             tone={2}
           />
           <StatCard
             icon={AlertTriangle}
-            label="Retours de correction"
+            label={isAr ? 'التقارير المُعادة للتصحيح' : 'Retours de correction'}
             value={stats.corrections}
-            subtitle="En attente de révision"
+            subtitle={isAr ? 'في انتظار المراجعة' : 'En attente de révision'}
             tone={3}
           />
           <StatCard
             icon={CheckCircle2}
-            label="Rapports validés"
+            label={isAr ? 'التقارير المصادق عليها' : 'Rapports validés'}
             value={stats.validated}
-            subtitle="Approuvés par l'équipe régionale"
+            subtitle={isAr ? 'المعتمدة من الفريق الجهوي' : "Approuvés par l'équipe régionale"}
             tone={1}
           />
         </div>
@@ -345,20 +376,20 @@ const ProvincialReports = () => {
           
           <CardHeader className="px-5 py-4 border-b border-border/60 flex flex-row items-center justify-between">
             <CardTitle className="text-base font-semibold">
-              Liste des rapports
+              {isAr ? 'لائحة التقارير' : 'Liste des rapports'}
             </CardTitle>
             <div className="w-[180px]">
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger className="h-8 text-xs bg-card">
-                  <SelectValue placeholder="Filtrer par statut" />
+                  <SelectValue placeholder={isAr ? 'تصفية حسب الحالة' : 'Filtrer par statut'} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="ALL">Tous les statuts</SelectItem>
-                  <SelectItem value="NON_COMMENCE">Non commencé</SelectItem>
-                  <SelectItem value="EN_COURS">Brouillon (En cours)</SelectItem>
-                  <SelectItem value="SOUMIS">Soumis</SelectItem>
-                  <SelectItem value="RETOUR_CORRECTION">Correction demandée</SelectItem>
-                  <SelectItem value="VALIDE">Validé</SelectItem>
+                  <SelectItem value="ALL">{isAr ? 'جميع الحالات' : 'Tous les statuts'}</SelectItem>
+                  {Object.entries(STATUS_META).map(([key, meta]) => (
+                    <SelectItem key={key} value={key}>
+                      {isAr ? meta.labelAr : meta.labelFr}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -368,25 +399,25 @@ const ProvincialReports = () => {
             <Table>
               <TableHeader>
                 <TableRow className="hover:bg-transparent">
-                  <TableHead className="text-xs font-medium uppercase tracking-wider">Direction</TableHead>
-                  <TableHead className="text-xs font-medium uppercase tracking-wider">Année</TableHead>
-                  <TableHead className="text-xs font-medium uppercase tracking-wider">Trimestre</TableHead>
-                  <TableHead className="text-xs font-medium uppercase tracking-wider">Date de soumission</TableHead>
-                  <TableHead className="text-xs font-medium uppercase tracking-wider">Statut</TableHead>
-                  <TableHead className="text-xs font-medium uppercase tracking-wider text-right">Actions</TableHead>
+                  <TableHead className="text-xs font-medium uppercase tracking-wider">{isAr ? 'المديرية' : 'Direction'}</TableHead>
+                  <TableHead className="text-xs font-medium uppercase tracking-wider">{isAr ? 'السنة' : 'Année'}</TableHead>
+                  <TableHead className="text-xs font-medium uppercase tracking-wider">{isAr ? 'الفصل' : 'Trimestre'}</TableHead>
+                  <TableHead className="text-xs font-medium uppercase tracking-wider">{isAr ? 'تاريخ الإرسال' : 'Date de soumission'}</TableHead>
+                  <TableHead className="text-xs font-medium uppercase tracking-wider">{isAr ? 'الحالة' : 'Statut'}</TableHead>
+                  <TableHead className={`text-xs font-medium uppercase tracking-wider ${isAr ? 'text-left' : 'text-right'}`}>{isAr ? 'إجراءات' : 'Actions'}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {loading ? (
                   <TableRow>
                     <TableCell colSpan={6} className="text-center py-10 text-muted-foreground">
-                      Chargement des données...
+                      {isAr ? 'جاري تحميل البيانات...' : 'Chargement des données...'}
                     </TableCell>
                   </TableRow>
                 ) : filteredReports.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={6} className="text-center text-sm text-muted-foreground py-10">
-                      Aucun rapport trouvé pour ces critères.
+                      {isAr ? 'لم يتم العثور على أي تقرير بهذه المعايير.' : 'Aucun rapport trouvé pour ces critères.'}
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -397,29 +428,32 @@ const ProvincialReports = () => {
                     return (
                       <TableRow key={report.id} className="transition-colors hover:bg-muted/40">
                         <TableCell className="font-medium text-foreground">
-                          {report.directions?.nom_fr || 'Direction inconnue'}
+                          {isAr 
+                            ? (report.directions?.nom_ar || 'مديرية غير معروفة')
+                            : (report.directions?.nom_fr || 'Direction inconnue')
+                          }
                         </TableCell>
                         <TableCell className="tabular-nums text-muted-foreground">
                           {report.annee}
                         </TableCell>
                         <TableCell className="tabular-nums text-muted-foreground">
-                          {report.trimestre}
+                          {isAr ? `الفصل ${report.trimestre.replace('t', '')}` : report.trimestre.toUpperCase()}
                         </TableCell>
                         <TableCell className="text-muted-foreground">
                           {report.date_soumission
-                            ? new Date(report.date_soumission).toLocaleDateString('fr-FR')
+                            ? new Date(report.date_soumission).toLocaleDateString(isAr ? 'ar-MA' : 'fr-FR')
                             : '—'}
                         </TableCell>
                         <TableCell>
                         <Badge variant="outline" className={`gap-1.5 px-2.5 py-1 shadow-none ${meta?.cls}`}>
                           <StatusIcon className="h-3.5 w-3.5" />
                           <span className="font-semibold text-xs tracking-wide">
-                            {meta?.label || report.statut_rapport}
+                            {isAr ? meta?.labelAr : meta?.labelFr}
                           </span>
                         </Badge>
                         </TableCell>
-                        <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
+                        <TableCell className={isAr ? 'text-left' : 'text-right'}>
+                        <div className={`flex gap-2 ${isAr ? 'justify-start' : 'justify-end'}`}>
                           {CAN_REVIEW_STATUSES.includes(report.statut_rapport) && (
                             <Button
                               size="sm"
@@ -428,7 +462,7 @@ const ProvincialReports = () => {
                               onClick={() => navigate(`/saisie?mode=review&rapport=${report.id}`)}
                             >
                               <Eye className="h-3.5 w-3.5" />
-                              Examiner
+                              {isAr ? 'معاينة' : 'Examiner'}
                             </Button>
                           )}
                           {report.statut_rapport === 'SOUMIS' && (
@@ -436,10 +470,10 @@ const ProvincialReports = () => {
                               size="sm"
                               variant="secondary"
                               className="h-8 gap-1.5"
-                              onClick={() => handleValidateReport(report.id)}
+                              onClick={() => setSelectedReportId(report.id)}
                             >
                               <CheckCircle2 className="h-3.5 w-3.5" />
-                              Valider
+                              {isAr ? 'مصادقة' : 'Valider'}
                             </Button>
                           )}
                         </div>
@@ -453,6 +487,38 @@ const ProvincialReports = () => {
           </div>
         </Card>
       </div>
+
+      {/* Modal de confirmation pour la validation du rapport */}
+      <Dialog open={!!selectedReportId} onOpenChange={(open) => !open && setSelectedReportId(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{isAr ? 'تأكيد المصادقة' : 'Confirmation de validation'}</DialogTitle>
+            <DialogDescription>
+              {isAr
+                ? 'هل أنت متأكد من رغبتك في المصادقة على هذا التقرير؟ سيتم اعتماده بشكل نهائي.'
+                : 'Êtes-vous sûr de vouloir valider ce rapport ? Cette action confirmera l\'approbation définitive du rapport.'}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              variant="outline"
+              onClick={() => setSelectedReportId(null)}
+              disabled={isValidating}
+            >
+              {isAr ? 'إلغاء' : 'Annuler'}
+            </Button>
+            <Button
+              onClick={handleValidateReport}
+              disabled={isValidating}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5"
+            >
+              {isValidating && <Loader2 className="h-4 w-4 animate-spin" />}
+              {isAr ? 'تأكيد المصادقة' : 'Confirmer la validation'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
     </AppLayout>
   );
 };

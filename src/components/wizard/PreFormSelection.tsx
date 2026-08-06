@@ -14,7 +14,6 @@ import { Calendar, Layers, ArrowRight, ArrowLeft, FileText, CheckCircle2, Loader
 import { cn } from '@/lib/utils';
 import { DownloadReportButton } from '@/components/DownloadReportButton';
 
-// 🆕 Imports ajoutés pour la modale de confirmation
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 export type Quarter = 't1' | 't2' | 't3' | 't4';
@@ -30,6 +29,7 @@ export interface ReportSelection {
 interface Props {
   initial: ReportSelection;
   reportStatus?: string;
+  onStatusChange?: (newStatus: string) => void;
   onValidate?: () => Promise<boolean>;
   onReturnCorrection?: (correctionText: string) => Promise<boolean>;
   onComplete: (sel: ReportSelection) => void;
@@ -48,6 +48,7 @@ const QUARTERS: Quarter[] = ['t1', 't2', 't3', 't4'];
 export const PreFormSelection = ({ 
   initial, 
   reportStatus,
+  onStatusChange,
   onValidate,
   onReturnCorrection,
   onComplete 
@@ -66,9 +67,15 @@ export const PreFormSelection = ({
   const [canSubmitReport, setCanSubmitReport] = useState(false);
   const [confirmSubmitOpen, setConfirmSubmitOpen] = useState(false);
 
-  // ==========================================
-  // PRÉ-CHARGEMENT DES DOMAINES AU MONTAGE
-  // ==========================================
+  // 🎯 1. Ajout d'un statut interne pour suivre l'état du rapport en direct
+  const [internalStatus, setInternalStatus] = useState<string>(reportStatus || 'NON_COMMENCE');
+
+  useEffect(() => {
+    if (reportStatus) {
+      setInternalStatus(reportStatus);
+    }
+  }, [reportStatus]);
+
   useEffect(() => {
     const prefetchDomainesBase = async () => {
       const { data, error } = await supabase.from('domaines').select('code');
@@ -79,9 +86,6 @@ export const PreFormSelection = ({
     prefetchDomainesBase();
   }, []);
 
-  // ==========================================
-  // MODE REVIEW : ouvrir directement l'étape 2
-  // ==========================================
   useEffect(() => {
     if (!initial.rapportId) return;
     setRapportId(initial.rapportId);
@@ -89,9 +93,6 @@ export const PreFormSelection = ({
     setStage(2);
   }, [initial.rapportId]);
 
-  // ==========================================
-  // ETAPE 1 -> ETAPE 2 : Création/Chargement
-  // ==========================================
   const handleNextToDomains = async () => {
     if (!utilisateur?.direction_id) {
       toast({ 
@@ -156,9 +157,10 @@ export const PreFormSelection = ({
         }
       }
 
+      // 🎯 2. Modification ici : On sélectionne AUSSI statut_rapport
       const query = supabase
         .from('rapports')
-        .select('id')
+        .select('id, statut_rapport')
         .eq('annee', sel.year)
         .eq('trimestre', sel.quarter)
         .eq('direction_id', utilisateur.direction_id);
@@ -168,6 +170,12 @@ export const PreFormSelection = ({
 
       let currentRapportId = existingRapport?.id;
 
+      // 🎯 3. Mise à jour de l'état local si le rapport existe
+      if (existingRapport) {
+        setInternalStatus(existingRapport.statut_rapport);
+        if (onStatusChange) onStatusChange(existingRapport.statut_rapport);
+      }
+
       if (!currentRapportId) {
         const { data: newRapport, error: insertError } = await supabase
           .from('rapports')
@@ -176,18 +184,24 @@ export const PreFormSelection = ({
             trimestre: sel.quarter,
             direction_id: utilisateur.direction_id
           })
-          .select('id')
+          .select('id, statut_rapport')
           .single();
 
         if (insertError) {
             if (insertError.code === '23505') {
                 const { data: recoveredRapport } = await query.maybeSingle();
-                if (recoveredRapport) currentRapportId = recoveredRapport.id;
+                if (recoveredRapport) {
+                  currentRapportId = recoveredRapport.id;
+                  setInternalStatus(recoveredRapport.statut_rapport);
+                  if (onStatusChange) onStatusChange(recoveredRapport.statut_rapport);
+                }
             } else {
                 throw insertError;
             }
         } else {
             currentRapportId = newRapport.id;
+            setInternalStatus(newRapport.statut_rapport);
+            if (onStatusChange) onStatusChange(newRapport.statut_rapport);
         }
       }
 
@@ -226,9 +240,6 @@ export const PreFormSelection = ({
     }
   };
 
-  // ==========================================
-  // CHARGEMENT DYNAMIQUE DES DOMAINES
-  // ==========================================
   const loadDomaines = async (rId: string) => {
     const { data, error } = await supabase
       .from("suivi_remplissage")
@@ -254,9 +265,6 @@ export const PreFormSelection = ({
     setCanSubmitReport(allTermine);
   };
 
-  // ==========================================
-  // SOUMISSION DU RAPPORT
-  // ==========================================
   const handleSubmitReport = async () => {
     if (!rapportId) return;
     setLoading(true);
@@ -265,7 +273,8 @@ export const PreFormSelection = ({
             .from('rapports')
             .update({ 
               statut_rapport: 'SOUMIS',
-              commentaire_validation: null
+              date_soumission: new Date().toISOString(),
+              commentaire_correction: null // Assurez-vous d'avoir renommé la colonne en BDD
             })
             .eq('id', rapportId);
         
@@ -275,6 +284,11 @@ export const PreFormSelection = ({
             title: isAr ? "تم بنجاح" : "Succès", 
             description: isAr ? "تم إرسال التقرير بنجاح" : "Le rapport a été soumis avec succès." 
         });
+
+        // 🎯 4. Mise à jour instantanée du statut interne
+        setInternalStatus('SOUMIS');
+        if (onStatusChange) onStatusChange('SOUMIS');
+
     } catch (error: any) {
         toast({ title: "Erreur", description: error.message, variant: "destructive" });
     } finally {
@@ -295,9 +309,15 @@ export const PreFormSelection = ({
     { id: 3, label: isAr ? 'الاستمارة' : 'Formulaire', icon: FileText },
   ];
 
+  // 🎯 5. Condition basée sur le statut INTERNE, garantissant que c'est bien la valeur en base de données
+  const shouldShowSubmitButton = 
+    !isEquipeRegional && 
+    canSubmitReport && 
+    internalStatus !== 'SOUMIS' && 
+    internalStatus !== 'VALIDE';
+
   return (
     <div className="space-y-5">
-      {/* Stages indicator */}
       <Card className="p-4 sm:p-5">
         <ol className="flex items-center justify-between gap-2">
           {stages.map((s, idx) => {
@@ -334,7 +354,6 @@ export const PreFormSelection = ({
         </ol>
       </Card>
 
-      {/* STAGE 1: Report */}
       {stage === 1 && (
         <Card className="p-5 sm:p-7 space-y-5">
           <div>
@@ -391,7 +410,6 @@ export const PreFormSelection = ({
         </Card>
       )}
 
-      {/* STAGE 2: Domain */}
       {stage === 2 && (
         <Card className="p-5 sm:p-7 space-y-5">
           <div className="flex items-center justify-between">
@@ -471,8 +489,8 @@ export const PreFormSelection = ({
             )}
             
             <div className="flex items-center gap-3">
-              {/* 🆕 Ouverture de la modale de confirmation au lieu de soumettre directement */}
-              {!isEquipeRegional && canSubmitReport && (
+              {/* Le bouton dépendra désormais de la BDD et non d'une variable par défaut */}
+              {shouldShowSubmitButton && (
                 <Button 
                   onClick={() => setConfirmSubmitOpen(true)}
                   disabled={loading}
@@ -488,15 +506,16 @@ export const PreFormSelection = ({
                 {isAr ? 'افتح الاستمارة' : 'Accéder au formulaire'}
               </Button>
 
-              <DownloadReportButton 
-                 rapportId={rapportId} 
-              />
+              {isEquipeRegional && (
+                <DownloadReportButton 
+                  rapportId={rapportId} 
+                />
+              )}
             </div>
           </div>        
         </Card>
       )}
 
-      {/* 🆕 Modale de confirmation de soumission du rapport ajoutée ici */}
       <Dialog open={confirmSubmitOpen} onOpenChange={setConfirmSubmitOpen}>
         <DialogContent>
           <DialogHeader>

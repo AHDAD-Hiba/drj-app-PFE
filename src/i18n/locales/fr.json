@@ -37,9 +37,9 @@
       "confirm": "Soumettre définitivement"
     },
     "submit": {
-      "successTitle": "Rapport soumis",
-      "successBody": "Votre rapport {{year}} a bien été transmis à l'équipe régionale.",
-      "errorTitle": "Échec de la soumission"
+    "successTitle": "Domaine terminé",
+    "successBody": "Le domaine a été marqué comme terminé avec succès.",
+    "errorTitle": "Échec de la finalisation"
     },
     "forbidden": {
       "title": "Accès réservé",

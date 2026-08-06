@@ -264,7 +264,7 @@ const PrefDomainDashboard = () => {
       // 1. Chercher si au moins un rapport existe pour cette année et cette direction
       const { data: rapport } = await supabase
         .from("rapports")
-        .select("id, statut_rapport, commentaire_validation")
+        .select("id, statut_rapport, commentaire_correction")
         .eq("direction_id", profile.direction_id)
         .eq("annee", year)
         .limit(1)
@@ -349,7 +349,7 @@ const PrefDomainDashboard = () => {
           workflowStatus: resSec1.data?.statut || "NON_COMMENCE",
           progressPct: resSec1.data?.progression_pourcentage || 0,
           lastUpdated: resSec1.data?.derniere_mise_a_jour,
-          correctionComment: rapport.commentaire_validation ?? null,
+          correctionComment: rapport.commentaire_correction ?? null,
           reportStatus: rapport.statut_rapport,
         },
         kpis: {

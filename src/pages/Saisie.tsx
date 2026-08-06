@@ -378,7 +378,7 @@ const Saisie = () => {
     const loadReport = async () => {
       const { data: rapport } = await supabase
         .from("rapports")
-        .select("id, annee, trimestre, direction_id, statut_rapport, commentaire_validation")
+        .select("id, annee, trimestre, direction_id, statut_rapport, commentaire_correction")
         .eq("id", rapportIdFromUrl)
         .single();
 
@@ -393,7 +393,7 @@ const Saisie = () => {
       });
 
       setReportStatus(rapport.statut_rapport as StatutRapport);
-      setCorrectionComment(rapport.commentaire_validation ?? '');
+      setCorrectionComment(rapport.commentaire_correction ?? '');
       setSelectionDone(true);
     };
 
@@ -406,13 +406,13 @@ const Saisie = () => {
     if (!currentId) return;
     const { data: rapport, error } = await supabase
       .from('rapports')
-      .select('statut_rapport, commentaire_validation')
+      .select('statut_rapport, commentaire_correction')
       .eq('id', currentId)
       .single();
 
     if (!error && rapport) {
       setReportStatus(rapport.statut_rapport as StatutRapport);
-      setCorrectionComment(rapport.commentaire_validation ?? '');
+      setCorrectionComment(rapport.commentaire_correction ?? '');
     }
   }, [currentId]);
 
@@ -450,7 +450,7 @@ const Saisie = () => {
         .from('rapports')
         .update({
           statut_rapport: 'RETOUR_CORRECTION',
-          commentaire_validation: correctionText.trim(),
+          commentaire_correction: correctionText.trim(),
         })
         .eq('id', reportId)
         .select();

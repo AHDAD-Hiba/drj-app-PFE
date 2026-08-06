@@ -37,9 +37,9 @@
       "confirm": "إرسال نهائي"
     },
     "submit": {
-      "successTitle": "تم إرسال التقرير",
-      "successBody": "تم إرسال تقريركم لسنة {{year}} بنجاح إلى الفريق الجهوي.",
-      "errorTitle": "فشل الإرسال"
+    "successTitle": "تم إتمام المجال",
+    "successBody": "تم تحديد هذا المجال كـ مكتمل بنجاح.",
+    "errorTitle": "فشل في إتمام المجال"
     },
     "forbidden": {
       "title": "وصول محجوز",
