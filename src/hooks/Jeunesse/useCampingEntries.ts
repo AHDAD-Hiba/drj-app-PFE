@@ -321,5 +321,48 @@ export function useCampingEntries(rapportId: string | null) {
     [rapportId, updateItems]
   );
 
-  return { items, loading, reload, add, update, remove };
-}
+  const removeEncadrement = useCallback(
+  async (campLocalId: string, encLocalId: string): Promise<boolean> => {
+    const camp = itemsRef.current.find((item) => item.local_id === campLocalId);
+    if (!camp) return false;
+
+    const encTarget = camp.encadrements.find((e) => e.local_id === encLocalId);
+
+    // 1. Mise à jour synchrone de l'état local
+    updateItems((prev) =>
+      prev.map((item) =>
+        item.local_id === campLocalId
+          ? {
+              ...item,
+              encadrements: item.encadrements.filter((e) => e.local_id !== encLocalId),
+            }
+          : item
+      )
+    );
+
+    // 2. Si l'élément avait déjà un ID en BDD, on le supprime en Supabase
+    if (encTarget?.id) {
+      try {
+        const { error } = await supabase
+          .from('encadrements')
+          .delete()
+          .eq('id', encTarget.id);
+
+        if (error) {
+          console.error('[useCampingEntries] error deleting encadrement:', error);
+          return false;
+        }
+      } catch (error) {
+        console.error('[useCampingEntries] removeEncadrement exception:', error);
+        return false;
+      }
+    }
+
+    return true;
+  },
+  [updateItems]
+);
+
+// Pensez à l'inclure dans le return du Hook :
+return { items, loading, reload, add, update, remove, removeEncadrement };
+};

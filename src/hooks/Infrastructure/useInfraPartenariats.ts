@@ -32,7 +32,7 @@ export function useInfraPartenariats(rapportId: string | null) {
         if (!conv) {
           conv = {
             local_id: crypto.randomUUID(),
-            sujet_convention: row.sujet_convention,
+            sujet_convention: row.sujet_convention || '',
             projets: []
           };
           acc.push(conv);
@@ -66,23 +66,23 @@ export function useInfraPartenariats(rapportId: string | null) {
     void fetchItems();
   }, [fetchItems]);
 
-  // 2. SAUVEGARDE SÉCURISÉE
+  // 2. SAUVEGARDE SÉCURISÉE SANS PERTE DE DONNÉES
   const saveItems = useCallback(async (dataToSave: any[]) => {
     if (!rapportId) return;
 
     try {
       const flatData: any[] = [];
-      
+      const currentDbIds: string[] = [];
+
       dataToSave.forEach(conv => {
-        if (!conv.sujet_convention?.trim()) return;
+        // 🎯 Ne pas bloquer la sauvegarde si le sujet est temporairement vide
+        const sujetConv = conv.sujet_convention?.trim() || 'Sans titre';
 
         (conv.projets || []).forEach((proj: any) => {
-          if (!proj.sujet_projet?.trim()) return;
-
           const row: any = {
             rapport_id: rapportId,
-            sujet_convention: conv.sujet_convention.trim(),
-            sujet_projet: proj.sujet_projet.trim(),
+            sujet_convention: sujetConv,
+            sujet_projet: proj.sujet_projet?.trim() || 'Nouveau projet',
             types_etablissements: proj.types_etablissements || [],
             etablissement_id: proj.etablissement_id && proj.etablissement_id !== 'none' ? proj.etablissement_id : null,
             maitre_ouvrage_delegue: proj.maitre_ouvrage_delegue?.trim() || '',
@@ -93,18 +93,55 @@ export function useInfraPartenariats(rapportId: string | null) {
 
           if (proj.db_id) {
             row.id = proj.db_id;
+            currentDbIds.push(proj.db_id);
           }
 
           flatData.push(row);
         });
       });
 
-      // Remplacement propre : suppression puis insertion si valide
-      await supabase.from('infra_projets_partenariat').delete().eq('rapport_id', rapportId);
+      // 🎯 1. Supprimer uniquement les projets qui ont été retirés de l'UI (qui avaient un ID mais ne sont plus dans flatData)
+      const { data: existingInDb } = await supabase
+        .from('infra_projets_partenariat')
+        .select('id')
+        .eq('rapport_id', rapportId);
 
+      if (existingInDb && existingInDb.length > 0) {
+        const idsToDelete = existingInDb
+          .map(item => item.id)
+          .filter(id => !currentDbIds.includes(id));
+
+        if (idsToDelete.length > 0) {
+          await supabase
+            .from('infra_projets_partenariat')
+            .delete()
+            .in('id', idsToDelete);
+        }
+      }
+
+      // 🎯 2. Utiliser UPSERT pour enregistrer/mettre à jour les projets sans tout supprimer
       if (flatData.length > 0) {
-        const { error } = await supabase.from('infra_projets_partenariat').insert(flatData);
+        const { data: savedData, error } = await supabase
+          .from('infra_projets_partenariat')
+          .upsert(flatData, { onConflict: 'id' })
+          .select('id, sujet_convention, sujet_projet');
+
         if (error) throw error;
+
+        // 🎯 3. Mettre à jour les `db_id` localement pour les nouveaux projets créés
+        if (savedData && savedData.length > 0) {
+          setConventions(prev =>
+            prev.map(c => ({
+              ...c,
+              projets: c.projets.map(p => {
+                const matched = savedData.find(
+                  s => s.sujet_convention === c.sujet_convention && s.sujet_projet === p.sujet_projet
+                );
+                return matched ? { ...p, db_id: matched.id, local_id: matched.id } : p;
+              })
+            }))
+          );
+        }
       }
     } catch (err) {
       console.error('Erreur save partenariats:', err);

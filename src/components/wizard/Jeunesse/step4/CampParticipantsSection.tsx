@@ -17,6 +17,7 @@ interface CampParticipantsSectionProps {
   onAddCamp: (c: CampEntry) => void | Promise<void>;
   onUpdateCamp: (local_id: string, patch: Partial<CampEntry>) => void;
   onRemoveCamp: (local_id: string) => void | Promise<void>;
+  onRemoveEncadrement: (campLocalId: string, encadrementLocalId: string) => void | Promise<void>;
   disabled?: boolean;
 }
 
@@ -25,6 +26,7 @@ export const CampParticipantsSection = ({
   onAddCamp,
   onUpdateCamp,
   onRemoveCamp,
+  onRemoveEncadrement,
   disabled,
 }: CampParticipantsSectionProps) => {
   const { i18n } = useTranslation();
@@ -289,14 +291,8 @@ export const CampParticipantsSection = ({
                             variant="ghost"
                             size="icon"
                             className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-                            disabled={disabled} // ✅ AJOUT ICI : Bloque le clic sur la poubelle en mode lecture
-                            onClick={() =>
-                              onUpdateCamp(c.local_id, {
-                                encadrements: c.encadrements.filter(
-                                  (e) => e.local_id !== enc.local_id
-                                ),
-                              })
-                            }
+                            disabled={disabled}
+                            onClick={() => void onRemoveEncadrement(c.local_id, enc.local_id)}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>

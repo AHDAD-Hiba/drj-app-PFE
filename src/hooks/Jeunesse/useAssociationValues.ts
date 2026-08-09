@@ -6,7 +6,6 @@ export interface AssociationValue extends BaseEntry {
 }
 
 const buildPayload = (entry: AssociationValue, rapportId: string) => ({
-  ...(entry.id ? { id: entry.id } : {}),
   rapport_id: rapportId,
   categorie_association_id: entry.categorie_association_id,
   nombre_associations: Number(entry.nombre_associations) || 0,
@@ -25,9 +24,7 @@ export function useAssociationValues(rapportId: string | null) {
     tableName: 'valeurs_associations',
     buildPayload,
     mapRowToEntry,
-    buildConflictTarget: (entry) =>
-      entry.id ? 'id' : 'rapport_id,categorie_association_id',
-    // 🛡️ S'assure que la catégorie est définie avant la sauvegarde
+    buildConflictTarget: () => 'rapport_id,categorie_association_id',
     validateBeforeSave: (entry) => Boolean(entry.categorie_association_id),
   });
 }
