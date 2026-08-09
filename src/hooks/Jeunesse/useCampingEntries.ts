@@ -321,32 +321,33 @@ export function useCampingEntries(rapportId: string | null) {
     [rapportId, updateItems]
   );
 
-  const removeEncadrement = useCallback(
+const removeEncadrement = useCallback(
   async (campLocalId: string, encLocalId: string): Promise<boolean> => {
-    const camp = itemsRef.current.find((item) => item.local_id === campLocalId);
-    if (!camp) return false;
+    let encTargetId: string | undefined;
 
-    const encTarget = camp.encadrements.find((e) => e.local_id === encLocalId);
-
-    // 1. Mise à jour synchrone de l'état local
+    // 1. Mise à jour synchrone de l'état local ET récupération de l'ID BDD exact
     updateItems((prev) =>
-      prev.map((item) =>
-        item.local_id === campLocalId
-          ? {
-              ...item,
-              encadrements: item.encadrements.filter((e) => e.local_id !== encLocalId),
-            }
-          : item
-      )
+      prev.map((item) => {
+        if (item.local_id === campLocalId) {
+          const target = item.encadrements.find((e) => e.local_id === encLocalId);
+          encTargetId = target?.id; // 🎯 On capture l'ID BDD réel depuis le state frais !
+
+          return {
+            ...item,
+            encadrements: item.encadrements.filter((e) => e.local_id !== encLocalId),
+          };
+        }
+        return item;
+      })
     );
 
-    // 2. Si l'élément avait déjà un ID en BDD, on le supprime en Supabase
-    if (encTarget?.id) {
+    // 2. Si l'élément avait un ID en BDD, on le supprime immédiatement dans Supabase
+    if (encTargetId) {
       try {
         const { error } = await supabase
           .from('encadrements')
           .delete()
-          .eq('id', encTarget.id);
+          .eq('id', encTargetId);
 
         if (error) {
           console.error('[useCampingEntries] error deleting encadrement:', error);
@@ -362,7 +363,6 @@ export function useCampingEntries(rapportId: string | null) {
   },
   [updateItems]
 );
-
 // Pensez à l'inclure dans le return du Hook :
 return { items, loading, reload, add, update, remove, removeEncadrement };
 };

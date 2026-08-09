@@ -47,10 +47,10 @@ const handleCampAdd = async (c: any) => {
     await camps.remove(local_id); // On attend la fin, mais on ne retourne pas le boolean
   };
 
-  const handleAssociationUpdate = async (local_id: string, patch: any) => {
-    void associationValues.update(local_id, patch);
+  const handleRemoveEncadrement = async (campLocalId: string, encadrementLocalId: string) => {
     if (onActivity) await onActivity();
-  };
+    await camps.removeEncadrement(campLocalId, encadrementLocalId); // On attend la fin, mais on ne retourne pas le boolean
+  }
 
   const handleMouvementAdd = async (m: any) => {
     if (onActivity) await onActivity();
@@ -101,17 +101,17 @@ const handleCampAdd = async (c: any) => {
           onAddCamp={handleCampAdd}
           onUpdateCamp={handleCampUpdate}
           onRemoveCamp={handleCampRemove}
+          onRemoveEncadrement={handleRemoveEncadrement}
           disabled={disabled}
         />
 
         {/* Associations Section */}
         <AssociationsSection
           items={associationValues.items}
-          onAdd={(newItem) => {
-            void associationValues.add(newItem);
+          onChangeValue={(categorieId, count) => {
+            void associationValues.setValue(categorieId, count);
             if (onActivity) void onActivity();
           }}
-          onUpdate={handleAssociationUpdate}
           disabled={disabled}
         />
 
