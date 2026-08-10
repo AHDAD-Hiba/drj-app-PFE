@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
 export interface AfSecteur {
@@ -8,26 +8,26 @@ export interface AfSecteur {
 }
 
 export function useAfSecteurs() {
-  const [items, setItems] = useState<AfSecteur[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: items = [], isLoading, error, refetch } = useQuery({
+    queryKey: ['ref_af_secteurs'],
+    queryFn: async () => {
+      const { data, error: err } = await supabase
+        .from('af_secteurs')
+        .select('*')
+        .order('nom_ar');
 
-  useEffect(() => {
-    let cancelled = false;
-    const fetchSecteurs = async () => {
-      try {
-        const { data, error } = await supabase.from('af_secteurs').select('*').order('nom_ar');
-        if (error) throw error;
-        if (!cancelled) setItems(data || []);
-      } catch (err) {
-        console.error('Erreur fetch secteurs:', err);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    };
+      if (err) throw err;
+      return (data as AfSecteur[]) || [];
+    },
+    staleTime: Infinity,
+    gcTime: 1000 * 60 * 60 * 24,
+    refetchOnWindowFocus: false,
+  });
 
-    fetchSecteurs();
-    return () => { cancelled = true; };
-  }, []);
-
-  return { items, loading };
+  return {
+    items,
+    loading: isLoading,
+    error: error ? (error as Error).message : null,
+    reload: refetch,
+  };
 }

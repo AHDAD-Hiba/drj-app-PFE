@@ -1,6 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import type { Database } from '@/integrations/supabase/types';
 
 export interface TypePartenaire {
   id: string;
@@ -9,40 +8,26 @@ export interface TypePartenaire {
 }
 
 export function useTypesPartenaires() {
-  const [items, setItems] = useState<TypePartenaire[]>([]);
-  const [loading, setLoading] = useState(false);
-
-  const reload = useCallback(async () => {
-    setLoading(true);
-
-    try {
-      const { data, error } = await supabase
+  const { data: items = [], isLoading, error, refetch } = useQuery({
+    queryKey: ['ref_types_partenaires'],
+    queryFn: async () => {
+      const { data, error: err } = await supabase
         .from('types_partenaires')
         .select('id, nom, nom_ar')
         .order('nom', { ascending: true });
 
-      if (error) {
-        console.error('[useTypesPartenaires] load error:', error);
-        setItems([]);
-        return;
-      }
-
-      setItems((data ?? []) as TypePartenaire[]);
-    } catch (err) {
-      console.error('[useTypesPartenaires] unexpected error:', err);
-      setItems([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    void reload();
-  }, [reload]);
+      if (err) throw err;
+      return (data as TypePartenaire[]) || [];
+    },
+    staleTime: Infinity,
+    gcTime: 1000 * 60 * 60 * 24,
+    refetchOnWindowFocus: false,
+  });
 
   return {
     items,
-    loading,
-    reload,
+    loading: isLoading,
+    error: error ? (error as Error).message : null,
+    reload: refetch,
   };
 }

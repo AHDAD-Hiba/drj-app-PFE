@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
 export interface AfTypeActivite {
@@ -8,26 +8,26 @@ export interface AfTypeActivite {
 }
 
 export function useAfTypesActivite() {
-  const [items, setItems] = useState<AfTypeActivite[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: items = [], isLoading, error, refetch } = useQuery({
+    queryKey: ['ref_af_types_activite'],
+    queryFn: async () => {
+      const { data, error: err } = await supabase
+        .from('af_types_activite')
+        .select('*')
+        .order('nom_ar');
 
-  useEffect(() => {
-    let cancelled = false;
-    const fetchTypes = async () => {
-      try {
-        const { data, error } = await supabase.from('af_types_activite').select('*').order('nom_ar');
-        if (error) throw error;
-        if (!cancelled) setItems(data || []);
-      } catch (err) {
-        console.error('Erreur fetch types activite:', err);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    };
+      if (err) throw err;
+      return (data as AfTypeActivite[]) || [];
+    },
+    staleTime: Infinity,
+    gcTime: 1000 * 60 * 60 * 24,
+    refetchOnWindowFocus: false,
+  });
 
-    fetchTypes();
-    return () => { cancelled = true; };
-  }, []);
-
-  return { items, loading };
+  return {
+    items,
+    loading: isLoading,
+    error: error ? (error as Error).message : null,
+    reload: refetch,
+  };
 }

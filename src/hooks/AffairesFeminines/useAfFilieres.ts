@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
 export interface AfFiliere {
@@ -9,26 +9,26 @@ export interface AfFiliere {
 }
 
 export function useAfFilieres() {
-  const [items, setItems] = useState<AfFiliere[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: items = [], isLoading, error, refetch } = useQuery({
+    queryKey: ['ref_af_filieres'],
+    queryFn: async () => {
+      const { data, error: err } = await supabase
+        .from('af_filieres')
+        .select('*')
+        .order('nom_ar');
 
-  useEffect(() => {
-    let cancelled = false;
-    const fetchFilieres = async () => {
-      try {
-        const { data, error } = await supabase.from('af_filieres').select('*').order('nom_ar');
-        if (error) throw error;
-        if (!cancelled) setItems(data || []);
-      } catch (err) {
-        console.error('Erreur fetch filieres:', err);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    };
+      if (err) throw err;
+      return (data as AfFiliere[]) || [];
+    },
+    staleTime: Infinity,
+    gcTime: 1000 * 60 * 60 * 24,
+    refetchOnWindowFocus: false,
+  });
 
-    fetchFilieres();
-    return () => { cancelled = true; };
-  }, []);
-
-  return { items, loading };
+  return {
+    items,
+    loading: isLoading,
+    error: error ? (error as Error).message : null,
+    reload: refetch,
+  };
 }

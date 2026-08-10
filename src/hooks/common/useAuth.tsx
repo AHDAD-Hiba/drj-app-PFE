@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { Session, User } from '@supabase/supabase-js';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
 export type AppRole = 'directeur_regional' | 'directeur_prefectoral' | 'equipe_regional';
@@ -22,74 +23,102 @@ interface AuthContextValue {
   signOut: () => Promise<void>;
   isRegional: boolean;
   isPrefectoral: boolean;
-  isEquipeRegional: boolean; 
+  isEquipeRegional: boolean;
   roleRedirectPath: string;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [session, setSession]       = useState<Session | null>(null);
-  const [user, setUser]             = useState<User | null>(null);
-  const [utilisateur, setUtilisateur] = useState<Utilisateur | null>(null);
-  const [loading, setLoading]       = useState(true);
+  const queryClient = useQueryClient();
+  const [session, setSession] = useState<Session | null>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [authInitializing, setAuthInitializing] = useState(true);
 
-  const fetchUtilisateur = async (userId: string) => {
-    const { data, error } = await (supabase as any)
-      .from('utilisateurs')
-      .select('*')
-      .eq('auth_user_id', userId)
-      .maybeSingle();
-
-    setUtilisateur((data as Utilisateur) ?? null);
-  };
-
+  // 1. Écoute dynamique de la session Supabase
   useEffect(() => {
     const { data: sub } = supabase.auth.onAuthStateChange((_event, newSession) => {
       setSession(newSession);
       setUser(newSession?.user ?? null);
-      if (newSession?.user) {
-        setTimeout(() => fetchUtilisateur(newSession.user.id), 0);
-      } else {
-        setUtilisateur(null);
-      }
+      setAuthInitializing(false);
     });
 
     supabase.auth.getSession().then(({ data: { session: s } }) => {
       setSession(s);
       setUser(s?.user ?? null);
-      if (s?.user) {
-        fetchUtilisateur(s.user.id).finally(() => setLoading(false));
-      } else {
-        setLoading(false);
-      }
+      setAuthInitializing(false);
     });
 
     return () => sub.subscription.unsubscribe();
   }, []);
 
+  // 2. Récupération & Caching du profil Utilisateur avec React Query
+  const {
+    data: utilisateur = null,
+    isLoading: isProfileLoading,
+  } = useQuery({
+    queryKey: ['utilisateur_profil', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+
+      const { data, error } = await (supabase as any)
+        .from('utilisateurs')
+        .select('*')
+        .eq('auth_user_id', user.id)
+        .maybeSingle();
+
+      if (error) {
+        console.error('[useAuth] Erreur chargement profil utilisateur:', error);
+        throw error;
+      }
+
+      return (data as Utilisateur) ?? null;
+    },
+    enabled: Boolean(user?.id), // Ne s'exécute que si un utilisateur Supabase Auth est connecté
+    staleTime: Infinity, // Garde le profil en mémoire indéfiniment pendant toute la session
+    gcTime: 1000 * 60 * 60 * 24, // 24 heures de rétention dans le cache
+    refetchOnWindowFocus: false,
+  });
+
+  // 3. Déconnexion avec vidage du cache
   const signOut = async () => {
     await supabase.auth.signOut();
-    setUtilisateur(null);
+    setUser(null);
+    setSession(null);
+    queryClient.removeQueries({ queryKey: ['utilisateur_profil'] });
   };
 
-  const role             = utilisateur?.role ?? null;
-  const isRegional       = role === 'directeur_regional';
-  const isPrefectoral    = role === 'directeur_prefectoral';
-  const isEquipeRegional = role === 'equipe_regional'; 
+  const loading = authInitializing || (Boolean(user) && isProfileLoading);
+
+  const role = utilisateur?.role ?? null;
+  const isRegional = role === 'directeur_regional';
+  const isPrefectoral = role === 'directeur_prefectoral';
+  const isEquipeRegional = role === 'equipe_regional';
 
   const roleRedirectPath =
-    role === 'equipe_regional'       ? '/regional-dashboard' :
-    role === 'directeur_regional'    ? '/domain-dashboard' :
-    role === 'directeur_prefectoral' ? '/saisie' : '/auth';
+    role === 'equipe_regional'
+      ? '/regional-dashboard'
+      : role === 'directeur_regional'
+      ? '/domain-dashboard'
+      : role === 'directeur_prefectoral'
+      ? '/saisie'
+      : '/auth';
 
   return (
-    <AuthContext.Provider value={{
-      user, session, utilisateur, role,
-      loading, signOut,
-      isRegional, isPrefectoral, isEquipeRegional, 
-      roleRedirectPath,
-    }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        session,
+        utilisateur,
+        role,
+        loading,
+        signOut,
+        isRegional,
+        isPrefectoral,
+        isEquipeRegional,
+        roleRedirectPath,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
 export interface CategorieAssociation {
@@ -8,34 +8,25 @@ export interface CategorieAssociation {
 }
 
 export function useCategoriesAssociations() {
-  const [items, setItems] = useState<CategorieAssociation[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const reload = async () => {
-    setLoading(true);
-    setError(null);
-    try {
+  const { data: items = [], isLoading, error, refetch } = useQuery({
+    queryKey: ['ref_categories_associations'],
+    queryFn: async () => {
       const { data, error: err } = await supabase
         .from('categories_associations')
         .select('id, nom, nom_ar');
-      
-      if (err) {
-        setError(err.message);
-        return;
-      }
-      
-      setItems((data as CategorieAssociation[]) || []);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
-    } finally {
-      setLoading(false);
-    }
+
+      if (err) throw err;
+      return (data as CategorieAssociation[]) || [];
+    },
+    staleTime: Infinity,
+    gcTime: 1000 * 60 * 60 * 24,
+    refetchOnWindowFocus: false,
+  });
+
+  return {
+    items,
+    loading: isLoading,
+    error: error ? (error as Error).message : null,
+    reload: refetch,
   };
-
-  useEffect(() => {
-    reload();
-  }, []);
-
-  return { items, loading, error, reload };
 }
