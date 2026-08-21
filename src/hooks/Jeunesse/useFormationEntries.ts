@@ -5,6 +5,7 @@ export interface FormationEntry {
   local_id: string;
   id?: string;
   centre: string;
+  type_filtre?: string;
   numero_session: number;
   beneficiaries_girls: number;
   beneficiaries_boys: number;

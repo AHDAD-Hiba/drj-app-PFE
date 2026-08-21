@@ -2,8 +2,8 @@ import { createContext, useContext, useEffect, useState, ReactNode } from 'react
 import { Session, User } from '@supabase/supabase-js';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-
-export type AppRole = 'directeur_regional' | 'directeur_prefectoral' | 'equipe_regional';
+import { toast } from 'sonner';
+export type AppRole = 'directeur_regional' | 'directeur_prefectoral' | 'equipe_regional' | 'admin';
 
 interface Utilisateur {
   id: string;
@@ -21,6 +21,7 @@ interface AuthContextValue {
   role: AppRole | null;
   loading: boolean;
   signOut: () => Promise<void>;
+  isAdmin: boolean;
   isRegional: boolean;
   isPrefectoral: boolean;
   isEquipeRegional: boolean;
@@ -67,6 +68,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         .eq('auth_user_id', user.id)
         .maybeSingle();
 
+      if (data && data.est_actif === false) {
+        toast.error("Votre compte a été désactivé par l'administrateur.");
+        await supabase.auth.signOut();
+        throw new Error("Compte désactivé");
+      }
       if (error) {
         console.error('[useAuth] Erreur chargement profil utilisateur:', error);
         throw error;
@@ -94,10 +100,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const isRegional = role === 'directeur_regional';
   const isPrefectoral = role === 'directeur_prefectoral';
   const isEquipeRegional = role === 'equipe_regional';
+  const isAdmin = role === 'admin';
 
   const roleRedirectPath =
     role === 'equipe_regional'
       ? '/regional-dashboard'
+      : role === 'admin'
+      ? '/admin/users'
       : role === 'directeur_regional'
       ? '/domain-dashboard'
       : role === 'directeur_prefectoral'
@@ -113,6 +122,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         role,
         loading,
         signOut,
+        isAdmin,
         isRegional,
         isPrefectoral,
         isEquipeRegional,

@@ -220,7 +220,7 @@ export function useCampingEntries(rapportId: string | null) {
           const { data: encData, error: encError } = await supabase
             .from('encadrements')
             .upsert(encPayload, {
-              onConflict: enc.id ? 'id' : 'rapport_id,programme_id,niveau_formation_id',
+              onConflict: enc.id ? 'id' : 'undefined',
             })
             .select('id')
             .single();

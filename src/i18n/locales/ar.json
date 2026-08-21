@@ -83,7 +83,7 @@
     "themeDark": "داكن",
     "themeLight": "فاتح",
     "casaWilaya": "ولاية الدار البيضاء",
-    "casaHint": "تم تجميع المديريات الإقليمية السبع. كبّر (المستوى ≥ {{zoom}}) لرؤية مواقعها الفعلية.",
+    "casaHint": "تم تجميع المديريات الإقليمية. كبّر (المستوى ≥ {{zoom}}) لرؤية مواقعها الفعلية.",
     "score": "المعدل",
     "viewFile": "عرض البطاقة",
     "legend": {
@@ -144,7 +144,11 @@
     "directions": "المديريات",
     "domaines": "المجالات",
     "directorTitle": "مدير",
-    "export": "تحميل إكسيل"
+    "export": "تحميل إكسيل",
+    "users":"المستخدمين",
+    "etablissements":"المؤسسات",
+    "audit":"سجل العمليات"
+
   },
   "etablissements": {
     "types": {
@@ -275,7 +279,8 @@
           "Secteur privé": "قطاع خاص",
           "Société civile": "مجتمع مدني",
           "Associations": "جمعيات",
-          "Secteur public": "قطاع عام"
+          "Secteur public": "قطاع عام",
+          "Autre": "اخرى"
         }
       },
         "insertion": {
@@ -324,7 +329,8 @@
           "En attente d'inauguration": "في انتظار التدشين",
           "Mise à niveau": "التأهيل",
           "Équipement": "التجهيز",
-          "Conflit juridique": "نزاع قانوني"
+          "Conflit juridique": "نزاع قانوني",
+          "Autre": "اخرى"
         }
       }
     }

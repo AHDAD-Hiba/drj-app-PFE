@@ -43,7 +43,6 @@ export function useCrStatsInfrastructures(rapportId: string | null) {
 export interface CrMouvementFermetureEntry extends BaseEntry {
   type_mouvement: string;
   nombre_creches: number;
-  secteur: string;
   raisons: string;
   observations?: string;
 }
@@ -53,7 +52,6 @@ const buildMouvementPayload = (entry: CrMouvementFermetureEntry, rId: string) =>
   rapport_id: rId,
   type_mouvement: entry.type_mouvement || 'fermeture',
   nombre_creches: Number(entry.nombre_creches) || 1,
-  secteur: entry.secteur || 'prive',
   raisons: entry.raisons?.trim() || '',
   observations: entry.observations?.trim() || '',
 });
@@ -63,7 +61,6 @@ const mapMouvementRow = (row: any, local_id: string): CrMouvementFermetureEntry 
   id: row.id,
   type_mouvement: row.type_mouvement || 'fermeture',
   nombre_creches: Number(row.nombre_creches) || 1,
-  secteur: row.secteur || 'prive',
   raisons: row.raisons || '',
   observations: row.observations || '',
 });
@@ -75,7 +72,7 @@ export function useCrMouvementsFermetures(rapportId: string | null) {
     buildPayload: buildMouvementPayload,
     mapRowToEntry: mapMouvementRow,
     // 🛡️ Garde-fou : N'enregistre que si le type de mouvement et le secteur sont définis
-    validateBeforeSave: (entry) => Boolean(entry.type_mouvement && entry.secteur),
+    validateBeforeSave: (entry) => Boolean(entry.type_mouvement),
   });
 }
 

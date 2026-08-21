@@ -110,10 +110,7 @@ export const CampParticipantsSection = ({
                       onValueChange={(v) =>
                         onUpdateCamp(c.local_id, {
                           programme_id: v === 'none' ? '' : v,
-                          autre_programme:
-                            v === autreProgrammeId
-                              ? c.autre_programme
-                              : '',
+                          autre_programme: v === autreProgrammeId ? c.autre_programme : '',
                         })
                       }
                       disabled={disabled}
@@ -147,12 +144,13 @@ export const CampParticipantsSection = ({
 
                         <SafeInput
                           value={c.autre_programme ?? ''}
-                          onChange={(e) =>
+                          onValueChange={(val) =>
                             onUpdateCamp(c.local_id, {
-                              autre_programme: e.target.value,
+                              autre_programme: val,
                             })
                           }
                           disabled={disabled}
+                          placeholder={isAr ? 'أدخل نوع المخيم...' : 'Précisez le type de camp...'}
                         />
                       </div>
                     )}
@@ -264,6 +262,7 @@ export const CampParticipantsSection = ({
                               {
                                 local_id: crypto.randomUUID(),
                                 niveau_formation_id: '',
+                                autre_niveau_formation: '',
                                 nombre_femmes: 0,
                                 nombre_hommes: 0,
                               },
@@ -306,7 +305,7 @@ export const CampParticipantsSection = ({
 
                           <Select
                             value={enc.niveau_formation_id || 'none'}
-                            disabled={disabled} // ✅ AJOUT ICI : Bloque le sélecteur en mode lecture
+                            disabled={disabled}
                             onValueChange={(v) => {
                               onUpdateCamp(c.local_id, {
                                 encadrements: c.encadrements.map((e) =>
@@ -360,21 +359,20 @@ export const CampParticipantsSection = ({
 
                               <SafeInput
                                 value={enc.autre_niveau_formation ?? ''}
-                                onChange={(e) =>
+                                onValueChange={(val) =>
                                   onUpdateCamp(c.local_id, {
-                                    encadrements:
-                                      c.encadrements.map((x) =>
-                                        x.local_id === enc.local_id
-                                          ? {
-                                              ...x,
-                                              autre_niveau_formation:
-                                                e.target.value,
-                                            }
-                                          : x
-                                      ),
+                                    encadrements: c.encadrements.map((x) =>
+                                      x.local_id === enc.local_id
+                                        ? {
+                                            ...x,
+                                            autre_niveau_formation: val,
+                                          }
+                                        : x
+                                    ),
                                   })
                                 }
                                 disabled={disabled}
+                                placeholder={isAr ? 'أدخل مستوى التكوين...' : 'Précisez le niveau...'}
                               />
                             </div>
                           )}

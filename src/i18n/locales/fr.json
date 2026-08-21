@@ -83,7 +83,7 @@
     "themeDark": "Sombre",
     "themeLight": "Clair",
     "casaWilaya": "Wilaya de Casablanca",
-    "casaHint": "Les 7 préfectures d'arrondissements sont regroupées. Zoomez (≥ niveau {{zoom}}) pour voir leurs positions réelles.",
+    "casaHint": "Les 13 préfectures d'arrondissements sont regroupées. Zoomez (≥ niveau {{zoom}}) pour voir leurs positions réelles.",
     "score": "Score",
     "viewFile": "Voir la fiche",
     "legend": {
@@ -144,7 +144,10 @@
     "directions": "Directions",
     "domaines": "Domaines",
     "directorTitle": "Directeur",
-    "export": "Export Excel"
+    "export": "Export Excel",
+    "users":"Utilisateurs",
+    "etablissements":"Établissements",
+    "audit":"Journal d'audit"
   },
   "etablissements": {
     "types": {
@@ -275,7 +278,8 @@
           "Secteur privé": "Secteur privé",
           "Société civile": "Société civile",
           "Associations": "Associations",
-          "Secteur public": "Secteur public"
+          "Secteur public": "Secteur public",
+          "Autre": "Autre"
         }
       },
         "insertion": {
@@ -324,7 +328,8 @@
           "En attente d'inauguration": "En attente d'inauguration",
           "Mise à niveau": "Mise à niveau",
           "Équipement": "Équipement",
-          "Conflit juridique": "Conflit juridique"
+          "Conflit juridique": "Conflit juridique",
+          "Autre": "Autre"
         }
       }
     }  

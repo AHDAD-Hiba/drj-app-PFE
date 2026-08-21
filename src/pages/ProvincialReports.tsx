@@ -6,7 +6,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { handleExportExcel } from '@/lib/export';
 import {
   Select,
   SelectContent,
@@ -47,6 +46,8 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/common/useAuth';
 import { useToast } from '@/hooks/common/use-toast';
+import { DownloadReportButton } from '@/components/DownloadReportButton';
+
 
 // Statuts 
 type StatutRapport = 'NON_COMMENCE' | 'EN_COURS' | 'SOUMIS' | 'RETOUR_CORRECTION' | 'VALIDE';
@@ -262,16 +263,25 @@ const ProvincialReports = () => {
               </p>
             </div>
             
+            {/* BOUTONS D'EXPORTATION DANS LE HERO */}
             <div className="flex flex-wrap items-center gap-2 flex-shrink-0">
-            <Button
-              size="sm"
-              variant="secondary"
-              onClick={() => handleExportExcel(`t${quarter}`)}
-              className="gap-1.5 bg-white/15 hover:bg-white/25 text-white border-0 backdrop-blur-sm font-bold transition-smooth"
-            >
-              <FileSpreadsheet className="h-4 w-4" />
-              {isAr ? 'تصدير إلى Excel' : 'Exporter Excel'}
-            </Button>
+              
+              {/* 1. Bouton Rapport Trimestriel (Word) */}
+              <DownloadReportButton 
+                rapportId={reports[0]?.id} // Transmet un rapportID de référence de la période
+                mode="trimestriel"
+                size="sm"
+                className="bg-white/15 hover:bg-white/25 text-white border-0 backdrop-blur-sm font-bold transition-smooth"
+              />
+
+              {/* 2. Bouton Rapport Annuel (Word) */}
+              <DownloadReportButton 
+                annee={year}
+                mode="annuel"
+                size="sm"
+                className="bg-white text-primary hover:bg-white/90 border-0 font-bold transition-smooth shadow-sm"
+              />
+
             </div>
           </div>
 

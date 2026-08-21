@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/hooks/common/useAuth'; // 🆕 Importation de useAuth pour l'équipe régionale
+import { useAuth } from '@/hooks/common/useAuth';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -25,7 +25,6 @@ export const useDraftSubmission = ({
   debounceMs = 2000,
 }: UseDraftOpts) => {
 
-  // 🆕 Récupération du statut de l'utilisateur (Équipe régionale)
   const { isEquipeRegional } = useAuth();
 
   const [status, setStatus] = useState<ReportStatus>('NON_COMMENCE');
@@ -35,10 +34,12 @@ export const useDraftSubmission = ({
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  
-  // Keep a ref to the current status so persist() always reads the latest value
   const statusRef = useRef<ReportStatus>(status);
+  
   useEffect(() => { statusRef.current = status; }, [status]);
+
+  // 🆕 Clé unique pour identifier ce brouillon dans le LocalStorage
+  const localStorageKey = `draft-progress-${rapportId}-${directionId}-${domaineId}`;
 
   // ── Load existing suivi_remplissage on mount ──────────────────────────────
 
@@ -63,6 +64,17 @@ export const useDraftSubmission = ({
 
       if (error) {
         console.error('[useDraftSubmission] load error:', error.message);
+        
+        // 🆕 Fallback Hors-ligne : Si la requête Supabase échoue, lire le statut local
+        const localDraft = localStorage.getItem(localStorageKey);
+        if (localDraft) {
+          try {
+            const parsed = JSON.parse(localDraft);
+            if (parsed.status) setStatus(parsed.status);
+          } catch (e) {
+            console.error("Erreur lecture brouillon local", e);
+          }
+        }
       } else if (data) {
         setStatus(data.statut as ReportStatus);
         setLastSavedAt(
@@ -80,19 +92,17 @@ export const useDraftSubmission = ({
     })();
 
     return () => { cancelled = true; };
-  }, [rapportId, directionId, domaineId]);
+  }, [rapportId, directionId, domaineId, localStorageKey]);
 
-  // ── Core persist (UPSERT) ─────────────────────────────────────────────────
+  // ── Core persist (UPSERT + LocalStorage Fallback) ──────────────────────────
 
   const persist = useCallback(async (overrideStatus?: ReportStatus): Promise<boolean> => {
-    // 🛑 SÉCURITÉ : L'équipe régionale ne doit JAMAIS sauvegarder de modifications
     if (isEquipeRegional) {
       return false; 
     }
 
     const effectiveStatus = overrideStatus ?? statusRef.current;
 
-    // Guard: never overwrite a TERMINE record except when explicitly submitting.
     if (statusRef.current === 'TERMINE' && overrideStatus !== 'TERMINE') {
       return true;
     }
@@ -106,8 +116,23 @@ export const useDraftSubmission = ({
     setSaveState('saving');
     setErrorMsg(null);
 
+    // 🆕 SAUVEGARDE DE SECOURS LOCALE INSTANTANÉE
+    const localPayload = {
+      status: effectiveStatus,
+      completeness: Math.round(completeness),
+      timestamp: new Date().toISOString()
+    };
+    localStorage.setItem(localStorageKey, JSON.stringify(localPayload));
+
+    // 🆕 Vérification du réseau avant la tentative Supabase
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      setSaveState('error');
+      setErrorMsg('Mode Hors-Ligne : Brouillon conservé sur l\'appareil.');
+      return false;
+    }
+
     try {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('suivi_remplissage')
         .upsert(
           {
@@ -124,7 +149,6 @@ export const useDraftSubmission = ({
 
       if (error) throw error;
 
-      // Mise à jour du statut global du rapport
       if (effectiveStatus === 'EN_COURS') {
         supabase
           .from('rapports')
@@ -138,6 +162,11 @@ export const useDraftSubmission = ({
           });
       }
 
+      // 🆕 SUCCÈS RÉSEAU : On peut supprimer la copie locale temporaire
+      if (effectiveStatus === 'TERMINE') {
+        localStorage.removeItem(localStorageKey);
+      }
+
       setLastSavedAt(
         new Date(
           new Date().toLocaleString('en-US', {
@@ -149,15 +178,15 @@ export const useDraftSubmission = ({
       return true;
     } catch (err: any) {
       setSaveState('error');
-      setErrorMsg(err.message ?? 'Erreur inconnue lors de la sauvegarde.');
+      setErrorMsg(err.message ?? 'Erreur lors de la sauvegarde. Brouillon local conservé.');
       return false;
     }
-  }, [rapportId, directionId, domaineId, completeness, isEquipeRegional]);
+  }, [rapportId, directionId, domaineId, completeness, isEquipeRegional, localStorageKey]);
 
   // ── Public API ────────────────────────────────────────────────────────────
 
   const update = useCallback(() => {
-    if (statusRef.current === 'TERMINE' || isEquipeRegional) return; // 🛑 Bloqué pour l'équipe régionale
+    if (statusRef.current === 'TERMINE' || isEquipeRegional) return;
 
     const isInitialTransition = statusRef.current === 'NON_COMMENCE';
     setStatus('EN_COURS');
@@ -174,13 +203,13 @@ export const useDraftSubmission = ({
   }, [persist, debounceMs, isEquipeRegional]);
 
   const saveNow = useCallback(async (): Promise<boolean> => {
-    if (statusRef.current === 'TERMINE' || isEquipeRegional) return true; // 🛑 Bloqué pour l'équipe régionale
+    if (statusRef.current === 'TERMINE' || isEquipeRegional) return true;
     if (timerRef.current) clearTimeout(timerRef.current);
     return persist('EN_COURS');
   }, [persist, isEquipeRegional]);
 
   const submit = useCallback(async (): Promise<boolean> => {
-    if (isEquipeRegional) return false; // 🛑 Bloqué pour l'équipe régionale
+    if (isEquipeRegional) return false;
     if (timerRef.current) clearTimeout(timerRef.current);
 
     const ok = await persist('TERMINE');
@@ -198,7 +227,6 @@ export const useDraftSubmission = ({
     return persist('EN_COURS');
   }, [persist, isEquipeRegional]);
 
-  // Clean up debounce on unmount
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'hidden') void saveNow();
@@ -219,18 +247,12 @@ export const useDraftSubmission = ({
   }, [saveNow]);
 
   return {
-    // State
     status,
     loading,
     saveState,
     lastSavedAt,
     errorMsg,
-    
-    // 🛡️ CRITIQUE : Force la "Lecture Seule" si l'utilisateur est de l'équipe régionale,
-    // ou si le statut est déjà terminé.
     isReadOnly: status === 'TERMINE' || isEquipeRegional,
-    
-    // Actions
     update,
     saveNow,
     submit,

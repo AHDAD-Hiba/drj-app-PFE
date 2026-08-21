@@ -1,9 +1,22 @@
-import { useEffect, useMemo, useState, useCallback } from "react";
+import { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { AppLayout } from "@/components/AppLayout";
 import { PrefDomainDashboardSection6 } from "@/components/dashboard/PrefDomainDashboardSection6";
 import { PrefDomainDashboardSection2 } from "@/components/dashboard/PrefDomainDashboardSection2";
+import { buildJeunesseKpiItems } from "@/components/dashboard/section2/JeunesseKpiConfig";
+import { buildJeunesseSection6Blocks } from "@/components/dashboard/section6/JeunesseSection6Blocks";
+import { PrefDomainDashboardSection1, PrefDomainDashboardSection1Alerts } from "@/components/dashboard/PrefDomainDashboardSection1";
+import { PrefDomainDashboardSection5 } from "@/components/dashboard/PrefDomainDashboardSection5";
+import { PrefDomainDashboardSection3Infrastructure } from "@/components/dashboard/PrefDomainDashboardSection3Infrastructure";
+import { PrefDomainDashboardSection4Infrastructure } from "@/components/dashboard/PrefDomainDashboardSection4Infrastructure";
+import { buildInfrastructureKpiItems } from "@/components/dashboard/section2/InfrastructureKpiConfig";
+import { buildInfrastructureSection6Blocks } from "@/components/dashboard/section6/InfrastructureSection6Blocks";
+import { PrefDomainDashboardSection3AffairesFeminines } from "@/components/dashboard/PrefDomainDashboardSection3AffairesFeminines";
+import { PrefDomainDashboardSection4AffairesFeminines } from "@/components/dashboard/PrefDomainDashboardSection4AffairesFeminines";
+import { buildAffairesFemininesKpiItems } from "@/components/dashboard/section2/AffairesFemininesKpiConfig";
+import { buildAffairesFemininesSection6Blocks } from "@/components/dashboard/section6/AffairesFemininesSection6Blocks";
+import { buildProtectionEnfanceSection6Blocks } from "@/components/dashboard/section6/ProtectionEnfanceSection6Blocks";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -49,7 +62,6 @@ import {
   CheckCircle2,
   Clock,
   AlertCircle,
-  CalendarDays,
   Target,
   TrendingUp,
   TrendingDown,
@@ -71,6 +83,22 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/hooks/common/useAuth";
 import { type Domain } from "@/lib/domainData";
+import { loadDashboard } from "@/services/PrefDomainDashboardDataService";
+import { loadInfrastructureDashboard } from "@/services/PrefDomainDashboardInfrastructureDataService";
+import { loadAffairesFemininesDashboard } from "@/services/PrefDomainDashboardAffairesFemininesDataService";
+import { loadProtectionEnfanceDashboard } from "@/services/PrefDomainDashboardProtectionEnfanceDataService";
+import { loadEnfanceCrechesDashboard } from "@/services/PrefDomainDashboardEnfanceCrechesDataService";
+import { buildProtectionEnfanceKpiItems } from "@/components/dashboard/section2/ProtectionEnfanceKpiConfig";
+import { buildEnfanceCrechesKpiItems } from "@/components/dashboard/section2/EnfanceCrechesKpiConfig";
+import { PrefDomainDashboardSection3ProtectionEnfance } from "@/components/dashboard/PrefDomainDashboardSection3ProtectionEnfance";
+import { PrefDomainDashboardSection4ProtectionEnfance } from "@/components/dashboard/PrefDomainDashboardSection4ProtectionEnfance";
+import { PrefDomainDashboardSection3EnfanceCreches } from "@/components/dashboard/PrefDomainDashboardSection3EnfanceCreches";
+import { PrefDomainDashboardSection4EnfanceCreches } from "@/components/dashboard/PrefDomainDashboardSection4EnfanceCreches";
+import { buildEnfanceCrechesSection6Blocks } from "@/components/dashboard/section6/EnfanceCrechesSection6Blocks";
+
+// ⚠️ Codes des domaines spécialisés déjà implémentés dans le dashboard.
+const PROTECTION_ENFANCE_DOMAIN_CODE = "PE";
+const ENFANCE_CRECHES_DOMAIN_CODE = "CRECHES";
 const fmt = (n: number, lang: string) =>
   new Intl.NumberFormat(lang === "ar" ? "ar-MA" : "fr-FR").format(Math.round(n));
 
@@ -82,143 +110,6 @@ const WORKFLOW_STATUS: Record<WorkflowStatus, { label: string; badge: string; ic
   TERMINE: { label: "TERMINÉ", badge: "bg-success/15 text-success", icon: CheckCircle2 },
 };
 
-// --- FONCTIONS DE FORMATAGE POUR SUPABASE ---
-
-const formatEvolutionData = (dataArray: any[]) => {
-  const squeletteAnnee = [
-    { name: "T1", Camping: null, Festivals: null, Formation: null, Insertion: null },
-    { name: "T2", Camping: null, Festivals: null, Formation: null, Insertion: null },
-    { name: "T3", Camping: null, Festivals: null, Formation: null, Insertion: null },
-    { name: "T4", Camping: null, Festivals: null, Formation: null, Insertion: null },
-  ];
-
-  if (!dataArray || dataArray.length === 0) return squeletteAnnee;
-
-  return squeletteAnnee.map((trimestre) => {
-    const donneesExistantes = dataArray.find((d) => d.name === trimestre.name);
-    return donneesExistantes ? { ...trimestre, ...donneesExistantes } : trimestre;
-  });
-};
-
-  const formatBenchmarkData = (data: any) => {
-  const d = data || {}; // Si data est null, on utilise un objet vide
-  return [
-    {
-      kpi: "Total des Activités",
-      monScore: d.pref_total_activites || 0,
-      moyenneReg: d.reg_total_activites || 0,
-      isPercentage: false,
-    },
-    {
-      kpi: "Total Bénéficiaires",
-      monScore: d.pref_total_beneficiaires || 0,
-      moyenneReg: d.reg_total_beneficiaires || 0,
-      isPercentage: false,
-    },
-    {
-      kpi: "Taux de Couverture",
-      monScore: d.pref_taux_couverture || 0,
-      moyenneReg: d.pref_taux_couverture || 0,
-      isPercentage: true,
-    },
-    {
-      kpi: "Taux de Féminisation",
-      monScore: d.pref_taux_feminisation || 0,
-      moyenneReg: d.reg_taux_feminisation || 0,
-      isPercentage: true,
-    },
-    {
-      kpi: "Partenariats Actifs",
-      monScore: d.pref_total_partenariats || 0,
-      moyenneReg: d.reg_total_partenariats || 0,
-      isPercentage: false,
-    },
-    {
-      kpi: "Établ. Opérationnels",
-      monScore: d.pref_etablissements_actifs || 0,
-      moyenneReg: d.reg_etablissements_actifs || 0,
-      isPercentage: false,
-    },
-  ];
-};
-
-const mapSection6Data = (data: any) => {
-  const d = data || {}; 
-
-  // --- CORRECTION DU RATIO D'ENCADREMENT ---
-  const staffTotal = d.camp_staff_total || 0;
-  const benefCamping = d.camp_benef_total || 0; // 👈 On utilise les bénéficiaires du CAMPING !
-
-  const ratioCalcule =
-    staffTotal === 0 || benefCamping === 0 ? "0:0" : `1:${Math.round(benefCamping / staffTotal)}`;
-
-  return {
-    activites: {
-      nombre_associations: d.act_assocs || 0,
-      nombre_clubs: d.act_clubs || 0,
-      nombre_conventions: d.act_conventions || 0,
-      activites_sportives: d.act_sport || 0,
-      activites_culturelles: d.act_cult || 0,
-      activites_educatives: d.act_educ || 0,
-      renforcement_capacites: d.act_renf || 0,
-    },
-    // 💡 AJOUT : CONNEXION DES MOUVEMENTS ASSOCIATIFS
-    associations: {
-      entrants: d.assoc_entrants || 0,
-      sortants: d.assoc_sortants || 0,
-      benef_entrants: d.benef_entrants || 0,
-      benef_sortants: d.benef_sortants || 0,
-    },
-    camping: {
-      participants: {
-        total: d.camp_benef_total || 0,
-        enfants_mre: d.camp_mre || 0,
-        besoins_specifiques: d.camp_besoins_spec || 0,
-      },
-      encadrement: {
-        ratio: ratioCalcule, // 👈 Le ratio calculé correctement
-        total_staff: d.camp_staff_total || 0,
-        hommes: d.camp_staff_h || 0,
-        femmes: d.camp_staff_f || 0,
-      },
-      // 💡 AJOUT : CONNEXION DES FORMATIONS
-      formations: { 
-        total_sessions: d.form_total_sessions || 0, 
-        beneficiaires: d.form_beneficiaires || 0 
-      },
-    },
-    conventions: {
-      total_conventions: d.conv_total_global || 0,
-      total_partenaires: d.conv_types_distincts || 0,
-      repartition: d.repartition_partenaires_json || [],
-    },
-    insertion: {
-      total_activites: d.ins_total_activites || 0,
-      partenaires_actifs: d.ins_partenaires_actifs || 0,
-      volume_horaire: `${d.ins_volume_h || 0} Heures`,
-      genre: { hommes: d.ins_hommes || 0, femmes: d.ins_femmes || 0 },
-      milieu: { urbain: d.ins_urbain || 0, rural: d.ins_rural || 0 },
-    },
-    festivals: {
-      total_evenements: d.fest_total || 0,
-      total_provinces: d.fest_provinces || 0,
-      qualifies: d.fest_qualifies || 0,
-      total_participants: (d.fest_hommes || 0) + (d.fest_femmes || 0),
-      genre: { hommes: d.fest_hommes || 0, femmes: d.fest_femmes || 0 },
-      milieu: { urbain: d.fest_urbain || 0, rural: d.fest_rural || 0 },
-    },
-    etablissements: {
-      total: 0,
-      operationnels: 0,
-      nouvellement_creees: d.etab_nouvel || 0,
-      en_cours_realisation: d.etab_en_cours || 0,
-      fermees: {
-        total: d.etab_total_fermes || 0,
-        causes: d.causes_fermeture_json || [],
-      },
-    },
-  };
-};
 const PrefDomainDashboard = () => {
   const { t, i18n } = useTranslation();
   const lang = i18n.language;
@@ -241,6 +132,13 @@ const PrefDomainDashboard = () => {
     [dbDomains, domain]
   );
 
+  // Ref pour tracker le domaine courant et prévenir les race conditions
+  // Si la réponse arrive après un changement de domaine, on l'ignore
+  const domainRef = useRef(domain);
+  useEffect(() => {
+    domainRef.current = domain;
+  }, [domain]);
+
   useEffect(() => {
     const fetchDomains = async () => {
       const { data, error } = await supabase
@@ -257,120 +155,65 @@ const PrefDomainDashboard = () => {
   }, []);
 
   const loadDashboardData = useCallback(async () => {
-    if (!profile?.direction_id) return;
+    console.log("🔴 ENTER loadDashboardData");
+    if (!profile?.direction_id){
+      console.log("❌ NO direction_id");
+      return;
+    }
+    // Snapshot du domaine au lancement de CETTE requête
+    const requestDomain = domain;
+    console.log("🔴 requestDomain =", JSON.stringify(requestDomain));
+  console.log("🔴 current domain =", JSON.stringify(domainRef.current));
 
     setIsLoading(true);
     try {
-      // 1. Chercher si au moins un rapport existe pour cette année et cette direction
-      const { data: rapport } = await supabase
-        .from("rapports")
-        .select("id, statut_rapport, commentaire_correction")
-        .eq("direction_id", profile.direction_id)
-        .eq("annee", year)
-        .limit(1)
-        .maybeSingle();
+      console.log("🔴 BEFORE SWITCH");
+      // Sélection du service de chargement selon le domaine sélectionné.
+      // Le switch centralise ce choix et facilite l'ajout de futurs domaines.
+      let data;
+switch (requestDomain) {
+        case "INFRA":
+          console.log("🏗️ ENTERED INFRA CASE");
+          data = await loadInfrastructureDashboard(profile.direction_id, year, selectedDomainId);
+          break;
+case "FEMME":
+          console.log("👩 ENTERED FEMME CASE");
+          data = await loadAffairesFemininesDashboard(profile.direction_id, year, selectedDomainId, lang);
+          break;
+        case PROTECTION_ENFANCE_DOMAIN_CODE:
+          console.log("🧒 ENTERED PROTECTION ENFANCE CASE");
+          data = await loadProtectionEnfanceDashboard(profile.direction_id, year, selectedDomainId, lang);
+          break;
+        case ENFANCE_CRECHES_DOMAIN_CODE:
+          console.log("🏡 ENTERED ENFANCE CRECHES CASE");
+          data = await loadEnfanceCrechesDashboard(profile.direction_id, year, selectedDomainId, lang);
+          break;
+        case "JEUNESSE":
+        default:
+           console.log("👥 ENTERED JEUNESSE CASE");
+          data = await loadDashboard(profile.direction_id, year, selectedDomainId);
+          break;
+      }
 
-      // 2. Si AUCUN rapport n'est trouvé, on génère un tableau de bord vide (rempli de zéros)
-      if (!rapport) {
-        setDashboardData({
-          status: {
-            workflowStatus: "NON_COMMENCE",
-            progressPct: 0,
-            lastUpdated: null,
-            correctionComment: null,
-          },
-          kpis: {
-            totalBeneficiaries: 0,
-            totalActivities: 0,
-            feminizationRate: 0,
-            coverageRate: 0,
-            activeEstablishments: 0,
-            activePartnerships: 0,
-          },
-          repartition: [],
-          evolution: formatEvolutionData([]),
-          benchmark: formatBenchmarkData(null),
-          detailed: mapSection6Data(null),
-        });
+      // Garde anti-race condition : on ignore toute réponse arrivée après un changement de domaine
+      if (requestDomain !== domainRef.current) {
+        console.warn(`⚠️ Réponse obsolète ignorée : domaine demandé=${requestDomain}, domaine courant=${domainRef.current}`);
         return;
       }
 
-      // 3. Si des rapports existent pour l'année, on charge les vues YTD (Year-To-Date)
-      const [resSec1, resSec2, resSec3, resSec4, resSec5, resSec6] = await Promise.all([
-        // Section 1 : S'il y a plusieurs rapports, on récupère le plus récent
-        supabase
-          .from("v_dashboard_pref_section1")
-          .select("*")
-          .eq("direction_id", profile.direction_id)
-          .eq("annee", year)
-          .eq("domaine_id", selectedDomainId)
-          .order("trimestre", { ascending: false })
-          .limit(1)
-          .maybeSingle(),
-
-        // Remplacement par les vues '_annuel' :
-        supabase
-          .from("v_dashboard_pref_section2_annuel")
-          .select("*")
-          .eq("direction_id", profile.direction_id)
-          .eq("annee", year)
-          .maybeSingle(),
-
-        supabase
-          .from("v_dashboard_pref_section3_annuel")
-          .select("*")
-          .eq("direction_id", profile.direction_id)
-          .eq("annee", year),
-
-        supabase
-          .from("v_dashboard_pref_section4")
-          .select("*")
-          .eq("direction_id", profile.direction_id)
-          .eq("annee", year),
-
-        supabase
-          .from("v_dashboard_pref_section5_annuel")
-          .select("*")
-          .eq("direction_id", profile.direction_id)
-          .eq("annee", year)
-          .maybeSingle(),
-
-        supabase
-          .from("v_dashboard_pref_section6_annuel")
-          .select("*")
-          .eq("direction_id", profile.direction_id)
-          .eq("annee", year)
-          .maybeSingle(),
-      ]);
-
-      // 4. On met à jour le state avec les vraies données
-      setDashboardData({
-        status: {
-          workflowStatus: resSec1.data?.statut || "NON_COMMENCE",
-          progressPct: resSec1.data?.progression_pourcentage || 0,
-          lastUpdated: resSec1.data?.derniere_mise_a_jour,
-          correctionComment: rapport.commentaire_correction ?? null,
-          reportStatus: rapport.statut_rapport,
-        },
-        kpis: {
-          totalBeneficiaries: resSec2.data?.total_beneficiaires || 0,
-          totalActivities: resSec2.data?.total_activites || 0,
-          feminizationRate: resSec2.data?.taux_feminisation || 0,
-          coverageRate: resSec2.data?.taux_couverture || 0,
-          activeEstablishments: resSec2.data?.etablissements_actifs || 0,
-          activePartnerships: resSec2.data?.total_partenariats || 0,
-        },
-        repartition: resSec3.data || [],
-        evolution: formatEvolutionData(resSec4.data),
-        benchmark: formatBenchmarkData(resSec5.data),
-        detailed: mapSection6Data(resSec6.data),
-      });
+      console.log("setDashboardData <-", domain, data.kpis);
+      console.log("SERVICE CHOISI =", domain);
+      setDashboardData(data);
+      console.log("dashboard envoyé");
     } catch (error) {
       console.error("Erreur lors du chargement du dashboard:", error);
     } finally {
-      setIsLoading(false);
+      // On ne désactive le loader que si c'est toujours la bonne requête
+      if (requestDomain === domainRef.current) {
+        setIsLoading(false);
+      }
     }
-  }, [profile?.direction_id, year, selectedDomainId]);
+  }, [profile?.direction_id, year, selectedDomainId, domain]);
 
   // 5. Appeler le chargement au démarrage (ou quand l'année change)
   useEffect(() => {
@@ -381,87 +224,236 @@ const PrefDomainDashboard = () => {
   useEffect(() => {
     if (!profile?.direction_id) return;
 
-    // On crée un canal pour écouter les modifications de base de données en direct
-    const channel = supabase
-      .channel("dashboard-realtime-changes")
-      .on("postgres_changes", { event: "*", schema: "public", table: "activites" }, () => {
-        console.log("Mise à jour détectée : activites");
-        loadDashboardData();
-      })
-      .on("postgres_changes", { event: "*", schema: "public", table: "participants" }, () => {
-        console.log("Mise à jour détectée : participants");
-        loadDashboardData();
-      })
-      .on("postgres_changes", { event: "*", schema: "public", table: "suivi_remplissage" }, () => {
-        loadDashboardData();
-      })
-      // --- AJOUT : STRUCTURE DU RAPPORT ---
-      .on("postgres_changes", { event: "*", schema: "public", table: "rapports" }, () => {
-        loadDashboardData();
-      })
+    // On crée un canal pour écouter les modifications de base de données en direct.
+    // Les tables écoutées dépendent du domaine sélectionné : le switch centralise
+    // ce choix et facilite l'ajout de futurs domaines.
+    const channel = supabase.channel("dashboard-realtime-changes");
 
-      // --- AJOUT : FORMATIONS & ENCADREMENT ---
-      .on("postgres_changes", { event: "*", schema: "public", table: "encadrements" }, () => {
-        loadDashboardData();
-      })
-      .on("postgres_changes", { event: "*", schema: "public", table: "formations" }, () => {
-        loadDashboardData();
-      })
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "statistiques_formation" },
-        () => {
-          loadDashboardData();
-        },
-      )
+    switch (domain) {
+      case "INFRA":
+        channel
+          .on("postgres_changes", { event: "*", schema: "public", table: "infra_depenses" }, () => {
+            loadDashboardData();
+          })
+          .on(
+            "postgres_changes",
+            { event: "*", schema: "public", table: "infra_eau_electricite" },
+            () => {
+              loadDashboardData();
+            },
+          )
+          .on("postgres_changes", { event: "*", schema: "public", table: "infra_projets_btp" }, () => {
+            loadDashboardData();
+          })
+          .on(
+            "postgres_changes",
+            { event: "*", schema: "public", table: "infra_projets_partenariat" },
+            () => {
+              loadDashboardData();
+            },
+          )
+          .on(
+            "postgres_changes",
+            { event: "*", schema: "public", table: "infra_projets_en_souffrance" },
+            () => {
+loadDashboardData();
+            },
+          );
+        break;
 
-      // --- AJOUT : PARTENARIATS ---
-      .on("postgres_changes", { event: "*", schema: "public", table: "partenariats" }, () => {
-        loadDashboardData();
-      })
+      case "FEMME":
+        // --- Dashboard Affaires Féminines : 11 tables af_* + rapports (statut/progression) ---
+        channel
+          .on("postgres_changes", { event: "*", schema: "public", table: "af_inscriptions_clubs" }, () => {
+            loadDashboardData();
+          })
+          .on("postgres_changes", { event: "*", schema: "public", table: "af_inscriptions_ofppt" }, () => {
+            loadDashboardData();
+          })
+          .on(
+            "postgres_changes",
+            { event: "*", schema: "public", table: "af_activites_sensibilisation" },
+            () => {
+              loadDashboardData();
+            },
+          )
+          .on("postgres_changes", { event: "*", schema: "public", table: "af_portes_ouvertes" }, () => {
+            loadDashboardData();
+          })
+          .on("postgres_changes", { event: "*", schema: "public", table: "af_formation_cadres" }, () => {
+            loadDashboardData();
+          })
+          .on("postgres_changes", { event: "*", schema: "public", table: "af_mise_a_jour_reseau" }, () => {
+            loadDashboardData();
+          })
+          .on(
+            "postgres_changes",
+            { event: "*", schema: "public", table: "af_ressources_humaines" },
+            () => {
+              loadDashboardData();
+            },
+          )
+          .on(
+            "postgres_changes",
+            { event: "*", schema: "public", table: "af_integration_laureates" },
+            () => {
+              loadDashboardData();
+            },
+          )
+          .on(
+            "postgres_changes",
+            { event: "*", schema: "public", table: "af_activites_generatrices_revenus" },
+            () => {
+              loadDashboardData();
+            },
+          )
+          .on("postgres_changes", { event: "*", schema: "public", table: "af_centres_ecoute" }, () => {
+            loadDashboardData();
+          })
+          .on("postgres_changes", { event: "*", schema: "public", table: "af_suivi_partenariats" }, () => {
+            loadDashboardData();
+          })
+          .on("postgres_changes", { event: "*", schema: "public", table: "rapports" }, () => {
+            loadDashboardData();
+          });
+        break;
 
-      // --- AJOUT : INSERTION SOCIO-ÉCONOMIQUE ---
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "activites_insertion" },
-        () => {
-          loadDashboardData();
-        },
-      )
-      .on("postgres_changes", { event: "*", schema: "public", table: "stats_insertion" }, () => {
-        loadDashboardData();
-      })
+      case PROTECTION_ENFANCE_DOMAIN_CODE:
+        // --- Dashboard Protection de l'Enfance : tables pe_* utilisées par les Sections 1 à 4 ---
+        channel
+          .on(
+            "postgres_changes",
+            { event: "*", schema: "public", table: "pe_statistiques_demographiques" },
+            () => {
+              loadDashboardData();
+            },
+          )
+          .on("postgres_changes", { event: "*", schema: "public", table: "pe_education" }, () => {
+            loadDashboardData();
+          })
+          .on(
+            "postgres_changes",
+            { event: "*", schema: "public", table: "pe_liberte_surveillee" },
+            () => {
+              loadDashboardData();
+            },
+          )
+          .on(
+            "postgres_changes",
+            { event: "*", schema: "public", table: "pe_rapports_exceptionnels" },
+            () => {
+              loadDashboardData();
+            },
+          )
+          .on("postgres_changes", { event: "*", schema: "public", table: "pe_activites" }, () => {
+            loadDashboardData();
+          })
+          .on("postgres_changes", { event: "*", schema: "public", table: "rapports" }, () => {
+            loadDashboardData();
+          });
+        break;
 
-      // --- AJOUT : FESTIVALS DE JEUNESSE ---
-      .on("postgres_changes", { event: "*", schema: "public", table: "festivals" }, () => {
-        loadDashboardData();
-      })
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "statistiques_festivals" },
-        () => {
-          loadDashboardData();
-        },
-      )
+      case ENFANCE_CRECHES_DOMAIN_CODE:
+        channel
+          .on("postgres_changes", { event: "*", schema: "public", table: "cr_statistiques_enfants" }, () => {
+            loadDashboardData();
+          })
+          .on("postgres_changes", { event: "*", schema: "public", table: "cr_demandes_licences" }, () => {
+            loadDashboardData();
+          })
+          .on("postgres_changes", { event: "*", schema: "public", table: "cr_mouvements_fermetures" }, () => {
+            loadDashboardData();
+          })
+          .on("postgres_changes", { event: "*", schema: "public", table: "rapports" }, () => {
+            loadDashboardData();
+          });
+        break;
 
-      // --- AJOUT : ÉTABLISSEMENTS & INFRASTRUCTURES ---
-      .on("postgres_changes", { event: "*", schema: "public", table: "etablissements" }, () => {
-        loadDashboardData();
-      })
-      .on("postgres_changes", { event: "*", schema: "public", table: "fermetures" }, () => {
-        loadDashboardData();
-      })
-      .on("postgres_changes", { event: "*", schema: "public", table: "suivi_projets" }, () => {
-        loadDashboardData();
-      })
-      // Tu peux chainer d'autres tables ici (festivals, etc.) selon tes besoins
-      .subscribe();
+      case "JEUNESSE":
+      default:
+        // --- Dashboard Jeunesse : liste des tables STRICTEMENT inchangée ---
+        channel
+          .on("postgres_changes", { event: "*", schema: "public", table: "activites" }, () => {
+            console.log("Mise à jour détectée : activites");
+            loadDashboardData();
+          })
+          .on("postgres_changes", { event: "*", schema: "public", table: "participants" }, () => {
+            console.log("Mise à jour détectée : participants");
+            loadDashboardData();
+          })
+          .on("postgres_changes", { event: "*", schema: "public", table: "suivi_remplissage" }, () => {
+            loadDashboardData();
+          })
+          // --- AJOUT : STRUCTURE DU RAPPORT ---
+          .on("postgres_changes", { event: "*", schema: "public", table: "rapports" }, () => {
+            loadDashboardData();
+          })
+
+          // --- AJOUT : FORMATIONS & ENCADREMENT ---
+          .on("postgres_changes", { event: "*", schema: "public", table: "encadrements" }, () => {
+            loadDashboardData();
+          })
+          .on("postgres_changes", { event: "*", schema: "public", table: "formations" }, () => {
+            loadDashboardData();
+          })
+          .on(
+            "postgres_changes",
+            { event: "*", schema: "public", table: "statistiques_formation" },
+            () => {
+              loadDashboardData();
+            },
+          )
+
+          // --- AJOUT : PARTENARIATS ---
+          .on("postgres_changes", { event: "*", schema: "public", table: "partenariats" }, () => {
+            loadDashboardData();
+          })
+
+          // --- AJOUT : INSERTION SOCIO-ÉCONOMIQUE ---
+          .on(
+            "postgres_changes",
+            { event: "*", schema: "public", table: "activites_insertion" },
+            () => {
+              loadDashboardData();
+            },
+          )
+          .on("postgres_changes", { event: "*", schema: "public", table: "stats_insertion" }, () => {
+            loadDashboardData();
+          })
+
+          // --- AJOUT : FESTIVALS DE JEUNESSE ---
+          .on("postgres_changes", { event: "*", schema: "public", table: "festivals" }, () => {
+            loadDashboardData();
+          })
+          .on(
+            "postgres_changes",
+            { event: "*", schema: "public", table: "statistiques_festivals" },
+            () => {
+              loadDashboardData();
+            },
+          )
+
+          // --- AJOUT : ÉTABLISSEMENTS & INFRASTRUCTURES ---
+          .on("postgres_changes", { event: "*", schema: "public", table: "etablissements" }, () => {
+            loadDashboardData();
+          })
+          .on("postgres_changes", { event: "*", schema: "public", table: "fermetures" }, () => {
+            loadDashboardData();
+          })
+          .on("postgres_changes", { event: "*", schema: "public", table: "suivi_projets" }, () => {
+            loadDashboardData();
+          });
+        // Tu peux chainer d'autres tables ici (festivals, etc.) selon tes besoins
+        break;
+    }
+
+    channel.subscribe();
 
     // Nettoyage à la fermeture de la page
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [profile?.direction_id, loadDashboardData]);
+  }, [profile?.direction_id, loadDashboardData, domain]);
 
   const activeDomainLabel = useMemo(() => {
     const option = dbDomains.find((opt) => opt.code === domain);
@@ -487,7 +479,6 @@ const PrefDomainDashboard = () => {
   ...rawStatus,
   label: t(`prefDomainDashboard.status.${(statusKey || "NON_COMMENCE").toLowerCase()}`, rawStatus.label)
 };
-  const StatusIcon = statusMeta.icon;
 
   const progressPct = dashboardData.status.progressPct || 0;
 
@@ -498,162 +489,141 @@ const PrefDomainDashboard = () => {
   const toggleSection = (section: string) => {
     setOpenSection(openSection === section ? null : section);
   };
-  return (
-    <AppLayout>
-      {dashboardData.status.reportStatus === "RETOUR_CORRECTION" && (
-        <Card className="mb-5 border-orange-500 bg-orange-50">
-          <CardContent className="p-4">
-            <h3 className="font-bold text-orange-700">
-              ⚠ Retour de correction
-            </h3>
 
-            <p className="mt-2 text-sm">
-              L'équipe régionale demande des modifications.
-            </p>
+  // Changement de domaine : on doit forcer isLoading=true DANS LE MÊME
+  // batch synchrone que setDomain. Sinon, React commit un premier rendu
+  // avec domain déjà à jour (ex: "INFRA") mais isLoading et dashboardData
+  // encore ceux de l'ancien domaine (ex: "JEUNESSE"), le temps que l'effet
+  // qui déclenche loadDashboardData() s'exécute après ce rendu. Pendant
+  // cette fenêtre, buildSection2Items() route bien vers
+  // buildInfrastructureKpiItems(), mais avec dashboardData.kpis qui a
+  // encore la forme Jeunesse -> kpis.budgetExecutionRate est undefined ->
+  // crash sur .toFixed(). En mettant à jour isLoading et domain dans le
+  // même gestionnaire d'événement, React (batching automatique) les
+  // applique dans le même rendu, donc le garde `if (isLoading) return ...`
+  // intercepte systématiquement cette fenêtre avant que buildSection2Items
+  // ne soit jamais appelé avec des données d'un autre domaine.
+  const handleDomainChange = (value: string) => {
+    setIsLoading(true);
+    setDomain(value as Domain);
+  };
 
-            {dashboardData.status.correctionComment && (
-              <div className="mt-3 rounded border bg-white p-3">
-                {dashboardData.status.correctionComment}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
+  // Sélection des KPIs de Section2 selon le domaine (switch pour préparer
+  // facilement l'ajout de futurs domaines).
+  const buildSection2Items = () => {
+    switch (domain) {
+      case "INFRA":
+        console.log("🔎 INFRA BUILD INPUT =", {
+          domain,
+          dashboardData,
+          kpis: dashboardData?.kpis,
+          budgetExecutionRate: dashboardData?.kpis?.budgetExecutionRate,
+          budgetEngagementRate: dashboardData?.kpis?.budgetEngagementRate,
+        });
+return buildInfrastructureKpiItems(dashboardData.kpis, t, lang);
+      case "FEMME":
+        return buildAffairesFemininesKpiItems(dashboardData.kpis, t, lang);
+      case PROTECTION_ENFANCE_DOMAIN_CODE:
+        return buildProtectionEnfanceKpiItems(dashboardData.kpis, t);
+      case ENFANCE_CRECHES_DOMAIN_CODE:
+        return buildEnfanceCrechesKpiItems(dashboardData.kpis, t);
+      case "JEUNESSE":
+      default:
+        return buildJeunesseKpiItems(dashboardData.kpis, t);
+    }
+  };
 
-      {dashboardData.status.reportStatus === "VALIDE" && (
-        <Card className="mb-5 border-green-500 bg-green-50">
-          <CardContent className="p-4">
-            <h3 className="font-bold text-green-700 flex items-center gap-2">
-              <CheckCircle2 className="h-5 w-5" /> Rapport validé
-            </h3>
+  // Sélection des blocs de Section6 selon le domaine.
+  const buildSection6Blocks = () => {
+    switch (domain) {
+case "INFRA":
+        return buildInfrastructureSection6Blocks(dashboardData.detailed, lang, t);
+      case "FEMME":
+        return buildAffairesFemininesSection6Blocks(dashboardData.detailed, lang, t);
+      case PROTECTION_ENFANCE_DOMAIN_CODE:
+        return buildProtectionEnfanceSection6Blocks(dashboardData.detailed, lang, t);
+      case ENFANCE_CRECHES_DOMAIN_CODE:
+        return buildEnfanceCrechesSection6Blocks(dashboardData.detailed, lang, t);
+      case "JEUNESSE":
+      default:
+        return buildJeunesseSection6Blocks(dashboardData, lang, t);
+    }
+  };
 
-            <p className="mt-2 text-sm">
-              Votre rapport a été validé par l'équipe régionale.
-            </p>
-          </CardContent>
-        </Card>
-      )}
+  // Sélection des graphiques de Section3 + Section4 selon le domaine.
+  // Le rendu Jeunesse ci-dessous est repris à l'identique (inchangé),
+  // simplement encapsulé dans le cas "JEUNESSE" du switch.
+  const renderDomainCharts = () => {
+    switch (domain) {
+      case "INFRA":
+        return (
+          <>
+            <PrefDomainDashboardSection3Infrastructure
+              budget={dashboardData.section3.budget}
+              etatProjets={dashboardData.section3.etatProjets}
+              natureProjets={dashboardData.section3.natureProjets}
+              lang={lang}
+              t={t}
+            />
+            <PrefDomainDashboardSection4Infrastructure
+              budget={dashboardData.evolution.budget}
+              arrieres={dashboardData.evolution.arrieres}
+              projets={dashboardData.evolution.projets}
+              lang={lang}
+              t={t}
+            />
+          </>
+);
 
-      <div className="space-y-6 animate-fade-in pb-12">
-        {/* --- HERO HEADER --- */}
-        <div className="gradient-hero rounded-3xl p-6 sm:p-8">
-          <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
-            <div className="space-y-3">
-              <div>
-                <h1 className="text-2xl sm:text-3xl font-extrabold text-white leading-tight">
-                  {t("domain.title", "Tableau de bord préfectoral")}
-                </h1>
-                <p className="text-sm text-white/80 mt-1">{year}</p>
-              </div>
-            </div>
-          </div>
-        </div>
+      case "FEMME":
+        return (
+          <>
+<PrefDomainDashboardSection3AffairesFeminines
+              formationParSecteur={dashboardData.section3.formationParSecteur}
+              urbainRural={dashboardData.section3.urbainRural}
+              lang={lang}
+              t={t}
+            />
+            <PrefDomainDashboardSection4AffairesFeminines
+              integration={dashboardData.evolution.integration}
+              activiteSociale={dashboardData.evolution.activiteSociale}
+              lang={lang}
+              t={t}
+            />
+          </>
+        );
 
-        {/* --- FILTRES --- */}
-        <Card className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1 flex items-center gap-1">
-                <Calendar className="h-3 w-3" /> {t("common.year", "Année")}
-              </label>
-              <Input
-                type="number"
-                value={year}
-                onChange={(e) => setYear(Number(e.target.value) || new Date().getFullYear())}
-                className="h-9 bg-card"
-                min={2020}
-                max={2099}
-              />
-            </div>
-            <div>
-              <label className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1 flex items-center gap-1">
-                <Layers className="h-3 w-3" /> {t("common.domain", "Domaine")}
-              </label>
-              <Select value={domain} onValueChange={(v) => setDomain(v as Domain)}>
-                <SelectTrigger className="h-9 bg-card">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {dbDomains.map((dom) => (
-                    <SelectItem key={dom.code} value={dom.code}>
-                      {lang === "ar" ? dom.nom_ar : dom.nom_fr}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </Card>
+      case PROTECTION_ENFANCE_DOMAIN_CODE:
+        return (
+          <>
+            <PrefDomainDashboardSection3ProtectionEnfance
+              priseEnCharge={dashboardData.section3.priseEnCharge}
+              incidentsParType={dashboardData.section3.incidentsParType}
+              beneficiairesParDomaine={dashboardData.section3.beneficiairesParDomaine}
+              lang={lang}
+              t={t}
+            />
+            <PrefDomainDashboardSection4ProtectionEnfance
+              genre={dashboardData.evolution.genre}
+              incidents={dashboardData.evolution.incidents}
+              lang={lang}
+              t={t}
+            />
+          </>
+        );
 
-        {/* --- SECTION 1 : Suivi du rapport --- */}
-<section className="space-y-3">
-  <div className="flex items-baseline justify-between">
-    <h2 className="text-base sm:text-lg font-bold text-foreground">
-      {t("prefDomainDashboard.workflow.title", "Suivi du rapport")}
-    </h2>
-  </div>
-  <Card className="p-5 sm:p-6">
-    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 md:gap-6 items-center">
-      
-      {/* Statut */}
-      <div className={`rounded-xl p-4 ${statusMeta.badge} bg-opacity-30 ring-1 ring-current/20`}>
-        <div className="flex items-center gap-2">
-          <StatusIcon className="h-4 w-4" />
-          <span className="text-[11px] font-semibold uppercase tracking-wider">
-            {t("prefDomainDashboard.workflow.status", "Statut")}
-          </span>
-        </div>
-        <div className="text-lg font-extrabold mt-1">{statusMeta.label}</div>
-      </div>
-      
-      {/* Domaine Filtré */}
-      <div>
-        <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-          {t("prefDomainDashboard.workflow.filteredDomain", "Domaine Filtré")}
-        </div>
-        <div className="text-lg font-bold text-foreground mt-1">{activeDomainLabel}</div>
-      </div>
-      
-      {/* Dernière mise à jour */}
-      <div>
-        <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-          {t("prefDomainDashboard.workflow.lastUpdate", "Dernière mise à jour")}
-        </div>
-        <div className="text-lg font-bold text-foreground mt-1 flex items-center gap-1.5">
-          <CalendarDays className="h-4 w-4 text-muted-foreground" />
-          {dashboardData.status.lastUpdated
-            ? new Date(dashboardData.status.lastUpdated).toLocaleDateString(
-                i18n.language === 'ar' ? 'ar-MA' : 'fr-FR'
-              )
-            : "-"}
-        </div>
-      </div>
-      
-      {/* Progression */}
-      <div>
-        <div className="flex items-baseline justify-between mb-1.5">
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-            {t("prefDomainDashboard.workflow.progress", "Progression")}
-          </span>
-          <span className="text-sm font-bold tabular-nums text-foreground">
-            {progressPct}%
-          </span>
-        </div>
-        <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
-          <div
-            className="h-full bg-primary transition-all duration-500"
-            style={{ width: `${progressPct}%` }}
-          />
-        </div>
-      </div>
+      case ENFANCE_CRECHES_DOMAIN_CODE:
+        return (
+          <>
+            <PrefDomainDashboardSection3EnfanceCreches data={dashboardData.section3} lang={lang} t={t} />
+            <PrefDomainDashboardSection4EnfanceCreches data={dashboardData.evolution} lang={lang} t={t} />
+          </>
+        );
 
-    </div>
-  </Card>
-</section>
-
-        {/* --- Section 2: Top KPIs --- */}
-<PrefDomainDashboardSection2 kpis={dashboardData.kpis} lang={lang} t={t} fmt={fmt} />
-
+      case "JEUNESSE":
+      default:
+        return (
+          <>
         {/* --- SECTION 3 : Répartition des bénéficiaires --- */}
 <section className="space-y-4">
   <div>
@@ -978,98 +948,88 @@ const PrefDomainDashboard = () => {
   </Card>
 </section>
 
-        {/* --- Section 5 : Benchmark régional --- */}
-<section className="space-y-3">
-  <div>
-    <h2 className="text-base sm:text-lg font-bold text-foreground">
-      {t("prefDomainDashboard.benchmark.title", "Benchmark régional")}
-    </h2>
-  </div>
-  <Card className="bg-card w-full overflow-x-auto">
-    <Table>
-      <TableHeader className="bg-muted/50">
-        <TableRow>
-        <TableHead className={`${lang === "ar" ? "text-right" : "text-left"} font-semibold py-4`}>
-        {t("prefDomainDashboard.benchmark.columns.indicator", "Indicateur")}
-       </TableHead>
-       <TableHead className={`${lang === "ar" ? "text-left" : "text-right"} font-semibold`}>
-        {t("prefDomainDashboard.benchmark.columns.prefecture", "Préfecture")}
-        </TableHead>
-        <TableHead className={`${lang === "ar" ? "text-left" : "text-right"} font-semibold`}>
-        {t("prefDomainDashboard.benchmark.columns.regionalAverage", "Moyenne Régionale") as string}
-        </TableHead>
-        <TableHead className={`${lang === "ar" ? "text-left" : "text-right"} font-semibold`}>
-        {t("prefDomainDashboard.benchmark.columns.variance", "Écart") as string}
-        </TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {dashboardData.benchmark.map((item, idx) => {
-          const ecart = Number((item.monScore - item.moyenneReg).toFixed(1));
-          const isPositive = ecart > 0;
-          const isNegative = ecart < 0;
-          const formatValue = (val: number) =>
-            item.isPercentage ? `${val.toFixed(1)}%` : val.toFixed(1);
+          </>
+        );
+    }
+  };
 
-          const kpiKeys: Record<string, string> = {
-            "Total des Activités": "totalActivities",
-            "Total Bénéficiaires": "totalBeneficiaries",
-            "Taux de Couverture": "coverageRate",
-            "Taux de Féminisation": "feminisationRate",
-            "Partenariats Actifs": "activePartnerships",
-            "Établ. Opérationnels": "operationalEstab"
-          };
-          const kpiTranslationKey = kpiKeys[item.kpi] || item.kpi;
+  return (
+    <AppLayout>
+      <PrefDomainDashboardSection1Alerts
+        reportStatus={dashboardData.status.reportStatus}
+        correctionComment={dashboardData.status.correctionComment}
+      />
 
-          return (
-            <TableRow key={idx} className="hover:bg-muted/20 transition-colors">
-              <TableCell className={`${lang === "ar" ? "text-right" : "text-left"} font-medium text-xs sm:text-sm py-3 sm:py-4`}>
-              {t(`prefDomainDashboard.benchmark.kpis.${kpiTranslationKey}`, item.kpi) as string}
-              </TableCell>
-              
-              <TableCell className={`${lang === "ar" ? "text-left" : "text-right"} font-bold tabular-nums text-xs sm:text-sm`}>
-              <span dir="ltr">{formatValue(item.monScore)}</span>
-             </TableCell>
-              
-             <TableCell className={`${lang === "ar" ? "text-left" : "text-right"} text-muted-foreground tabular-nums text-xs sm:text-sm`}>
-            <span dir="ltr">{formatValue(item.moyenneReg)}</span>
-            </TableCell>
-              
-            <TableCell className={`${lang === "ar" ? "text-left" : "text-right"} tabular-nums text-xs sm:text-sm`}>
-            {/* درنا justify-start فالعربية باش يجيو الأيقونات والناقص مقادين مع اليسار */}
-            <div className={`flex items-center ${lang === "ar" ? "justify-start" : "justify-end"} gap-1`} dir="ltr">
-              {isPositive && (
-                <>
-                  <TrendingUp className="w-3.5 h-3.5 text-emerald-500" />
-                  <span className="text-emerald-500 font-bold">
-                    +{formatValue(ecart)}
-                  </span>
-                </>
-              )}
-              {isNegative && (
-                <>
-                  <TrendingDown className="w-3.5 h-3.5 text-red-500" />
-                  <span className="text-red-500 font-bold">{formatValue(ecart)}</span>
-                </>
-              )}
-              {ecart === 0 && (
-                <>
-                  <Minus className="w-3.5 h-3.5 text-muted-foreground" />
-                  <span className="text-muted-foreground font-medium">0</span>
-                </>
-              )}
+      <div className="space-y-6 animate-fade-in pb-12">
+        {/* --- HERO HEADER --- */}
+        <div className="gradient-hero rounded-3xl p-6 sm:p-8">
+          <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+            <div className="space-y-3">
+              <div>
+                <h1 className="text-2xl sm:text-3xl font-extrabold text-white leading-tight">
+                  {t("domain.title", "Tableau de bord préfectoral")}
+                </h1>
+                <p className="text-sm text-white/80 mt-1">{year}</p>
+              </div>
             </div>
-          </TableCell>
-            </TableRow>
-          );
-        })}
-      </TableBody>
-    </Table>
-  </Card>
-</section>
+          </div>
+        </div>
+
+        {/* --- FILTRES --- */}
+        <Card className="p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1 flex items-center gap-1">
+                <Calendar className="h-3 w-3" /> {t("common.year", "Année")}
+              </label>
+              <Input
+                type="number"
+                value={year}
+                onChange={(e) => setYear(Number(e.target.value) || new Date().getFullYear())}
+                className="h-9 bg-card"
+                min={2020}
+                max={2099}
+              />
+            </div>
+            <div>
+              <label className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1 flex items-center gap-1">
+                <Layers className="h-3 w-3" /> {t("common.domain", "Domaine")}
+              </label>
+              <Select value={domain} onValueChange={handleDomainChange}>
+                <SelectTrigger className="h-9 bg-card">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {dbDomains.map((dom) => (
+                    <SelectItem key={dom.code} value={dom.code}>
+                      {lang === "ar" ? dom.nom_ar : dom.nom_fr}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </Card>
+
+        {/* --- SECTION 1 : Suivi du rapport --- */}
+<PrefDomainDashboardSection1
+  statusMeta={statusMeta}
+  progressPct={progressPct}
+  activeDomainLabel={activeDomainLabel}
+  lastUpdated={dashboardData.status.lastUpdated}
+  lang={lang}
+  t={t}
+/>
+
+        {/* --- Section 2: Top KPIs --- */}
+<PrefDomainDashboardSection2 items={buildSection2Items()} lang={lang} t={t} />
+
+        {renderDomainCharts()}
+        {/* --- Section 5 : Benchmark régional --- */}
+<PrefDomainDashboardSection5 benchmark={dashboardData.benchmark} lang={lang} t={t} />
 
         {/* --- SECTION 6 : Détails du rapport (Accordion) --- */}
-                <PrefDomainDashboardSection6 dashboardData={dashboardData} lang={lang} t={t} openSection={openSection} toggleSection={toggleSection} />
+                <PrefDomainDashboardSection6 blocks={buildSection6Blocks()} t={t} openSection={openSection} toggleSection={toggleSection} />
       </div>
     </AppLayout>
   );

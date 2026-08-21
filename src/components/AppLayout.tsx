@@ -14,6 +14,9 @@ import {
   Map,
   FilePlus2,
   Layers,
+  ShieldCheck,
+  Building,
+  History,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -26,27 +29,20 @@ import {
 
 export const AppLayout = ({ children }: { children: ReactNode }) => {
   const { t } = useTranslation();
-  const { utilisateur, signOut, role, isRegional, isPrefectoral, isEquipeRegional } = useAuth();
+  const { utilisateur, signOut, role, isRegional, isPrefectoral, isEquipeRegional, isAdmin } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
   const navItems = [
-    { path: "/saisie", label: t("nav.entry"), icon: FilePlus2, show: isPrefectoral },
-    {
-      path: "/domain-dashboard",
-      label: t("nav.domaines", "Domaines"),
-      icon: Layers,
-      show: !isEquipeRegional,
-    },
-    { path: "/carte", label: t("nav.map"), icon: Map, show: !isEquipeRegional },
-    { path: "/directions", label: t("nav.directions"), icon: Building2, show: isRegional },
-    {
-      path: "/regional-dashboard",
-      label: t("nav.reports", "Rapports"),
-      icon: LayoutDashboard,
-      show: isEquipeRegional,
-    },
-  ];
+  { path: "/admin/users", label: t("nav.users"), icon: ShieldCheck, show: isAdmin },
+  { path: "/admin/etablissements", label: t("nav.etablissements"), icon: Building, show: isAdmin },
+  { path: "/admin/audit", label: t("nav.audit"), icon: History, show: isAdmin },
+  { path: "/saisie", label: t("nav.entry"), icon: FilePlus2, show: isPrefectoral },
+  { path: "/domain-dashboard", label: t("nav.domaines"), icon: Layers, show: !isEquipeRegional && !isAdmin },
+  { path: "/carte", label: t("nav.map"), icon: Map, show: !isEquipeRegional && !isAdmin },
+  { path: "/directions", label: t("nav.directions"), icon: Building2, show: isRegional },
+  { path: "/regional-dashboard", label: t("nav.reports", "Rapports"), icon: LayoutDashboard, show: isEquipeRegional },
+];
 
   const formatDirectorName = (rawName: string) => {
     if (!rawName) return "";
@@ -77,7 +73,7 @@ export const AppLayout = ({ children }: { children: ReactNode }) => {
       {/* Header */}
       <header className="sticky top-0 z-40 bg-card/95 backdrop-blur border-b border-border">
         <div className="container flex items-center justify-between h-16 gap-4">
-          <button onClick={() => navigate("/dashboard")} className="flex-shrink-0">
+          <button onClick={() => navigate("/")} className="flex-shrink-0">
             <Brand compact />
           </button>
 

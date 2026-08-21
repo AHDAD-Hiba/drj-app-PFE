@@ -1,31 +1,47 @@
 import type { TFunction } from "i18next";
 import { Card } from "@/components/ui/card";
-import { Activity, Handshake, Target, Trophy, Users } from "lucide-react";
-import { Gauge } from "lucide-react";
 import { KpiCard } from "./KpiCard";
-
-export interface PrefDomainDashboardSection2Kpis {
-  totalActivities: number;
-  totalBeneficiaries: number;
-  coverageRate: number;
-  feminizationRate: number;
-  activePartnerships: number;
-  activeEstablishments: number;
-}
+import type { KpiItem } from "./section2/types";
 
 interface PrefDomainDashboardSection2Props {
-  kpis: PrefDomainDashboardSection2Kpis;
+  /** Liste des KPIs à afficher, déjà construite par le domaine (icônes, couleurs, labels). */
+  items: KpiItem[];
   lang: string;
   t: TFunction;
-  fmt: (n: number, lang: string) => string;
 }
 
+const KPIS_PER_ROW = 3;
+
+const chunkItems = (items: KpiItem[], size: number): KpiItem[][] => {
+  const rows: KpiItem[][] = [];
+  for (let i = 0; i < items.length; i += size) {
+    rows.push(items.slice(i, i + size));
+  }
+  return rows;
+};
+
+const formatKpiValue = (item: KpiItem, lang: string): string => {
+  if (item.format === "text") {
+    return String(item.value);
+  }
+  // format "number" (par défaut) : formatage générique selon la langue
+  const numericValue = typeof item.value === "number" ? item.value : Number(item.value) || 0;
+  return new Intl.NumberFormat(lang === "ar" ? "ar-MA" : "fr-FR").format(Math.round(numericValue));
+};
+
+/**
+ * Section2 générique : affiche une grille de cartes KPI.
+ * Ce composant ne connaît aucun domaine (Jeunesse, Infrastructure, ...).
+ * Il ne décide jamais quelle icône ou quelle couleur utiliser : tout provient
+ * des items fournis par la config du domaine (ex: JeunesseKpiConfig).
+ */
 export const PrefDomainDashboardSection2 = ({
-  kpis,
+  items,
   lang,
   t,
-  fmt,
 }: PrefDomainDashboardSection2Props) => {
+  const rows = chunkItems(items, KPIS_PER_ROW);
+
   return (
     <section className="space-y-3">
       <div>
@@ -34,63 +50,23 @@ export const PrefDomainDashboardSection2 = ({
         </h2>
       </div>
       <Card className="p-4 sm:p-5">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* 1. Total des Activités */}
-          <KpiCard
-            icon={<Activity className="h-5 w-5" />}
-            value={fmt(kpis.totalActivities, lang)}
-            label={t("prefDomainDashboard.kpis.activities", "Total des Activités")}
-            accentBarClassName="bg-[hsl(var(--kpi-2))]"
-            iconWrapperClassName="bg-[hsl(var(--kpi-2-soft))] text-[hsl(var(--kpi-2))]"
-          />
-
-          {/* 2. Total Bénéficiaires */}
-          <KpiCard
-            icon={<Users className="h-5 w-5" />}
-            value={fmt(kpis.totalBeneficiaries, lang)}
-            label={t("prefDomainDashboard.kpis.beneficiaries", "Total Bénéficiaires")}
-            accentBarClassName="bg-[hsl(var(--kpi-3))]"
-            iconWrapperClassName="bg-[hsl(var(--kpi-3-soft))] text-[hsl(var(--kpi-3))]"
-          />
-
-          {/* 3. Taux de Couverture */}
-          <KpiCard
-            icon={<Target className="h-5 w-5" />}
-            value={`${kpis.coverageRate?.toFixed(1) || 12.5}%`}
-            label={t("prefDomainDashboard.kpis.coverage", "Taux de Couverture")}
-            accentBarClassName="bg-[hsl(var(--kpi-6))]"
-            iconWrapperClassName="bg-[hsl(var(--kpi-6-soft))] text-[hsl(var(--kpi-6))]"
-          />
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-          {/* 4. Taux de Féminisation */}
-          <KpiCard
-            icon={<Trophy className="h-5 w-5" />}
-            value={`${kpis.feminizationRate.toFixed(1)}%`}
-            label={t("prefDomainDashboard.kpis.feminization", "Taux de Féminisation")}
-            accentBarClassName="bg-[hsl(var(--kpi-1))]"
-            iconWrapperClassName="bg-[hsl(var(--kpi-1-soft))] text-[hsl(var(--kpi-1))]"
-          />
-
-          {/* 5. Total Partenariats */}
-          <KpiCard
-            icon={<Handshake className="h-5 w-5" />}
-            value={fmt(kpis.activePartnerships, lang)}
-            label={t("prefDomainDashboard.kpis.partnerships", "Total Partenariats")}
-            accentBarClassName="bg-[hsl(var(--kpi-4))]"
-            iconWrapperClassName="bg-[hsl(var(--kpi-4-soft))] text-[hsl(var(--kpi-4))]"
-          />
-
-          {/* 6. Établissements Actifs */}
-          <KpiCard
-            icon={<Gauge className="h-5 w-5" />}
-            value={fmt(kpis.activeEstablishments, lang)}
-            label={t("prefDomainDashboard.kpis.establishments", "Établissements Actifs")}
-            accentBarClassName="bg-[hsl(var(--kpi-5))]"
-            iconWrapperClassName="bg-[hsl(var(--kpi-5-soft))] text-[hsl(var(--kpi-5))]"
-          />
-        </div>
+        {rows.map((row, rowIndex) => (
+          <div
+            key={rowIndex}
+            className={`grid grid-cols-1 md:grid-cols-3 gap-4 ${rowIndex > 0 ? "mt-4" : ""}`}
+          >
+            {row.map((item) => (
+              <KpiCard
+                key={item.id}
+                icon={item.icon}
+                value={formatKpiValue(item, lang)}
+                label={item.label}
+                accentBarClassName={item.color.accentBarClassName}
+                iconWrapperClassName={item.color.iconWrapperClassName}
+              />
+            ))}
+          </div>
+        ))}
       </Card>
     </section>
   );

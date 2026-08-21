@@ -12,8 +12,6 @@ import {
 } from '@/components/ui/select';
 import { Calendar, Layers, ArrowRight, ArrowLeft, FileText, CheckCircle2, Loader2, Send } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { DownloadReportButton } from '@/components/DownloadReportButton';
-
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 export type Quarter = 't1' | 't2' | 't3' | 't4';
@@ -505,12 +503,6 @@ export const PreFormSelection = ({
                 {loading && <Loader2 className="h-4 w-4 animate-spin" />}
                 {isAr ? 'افتح الاستمارة' : 'Accéder au formulaire'}
               </Button>
-
-              {isEquipeRegional && (
-                <DownloadReportButton 
-                  rapportId={rapportId} 
-                />
-              )}
             </div>
           </div>        
         </Card>

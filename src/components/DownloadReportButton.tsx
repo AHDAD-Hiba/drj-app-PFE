@@ -1,23 +1,38 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
-import { Download, Loader2 } from 'lucide-react';
+import { Download, Loader2, Calendar } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 interface DownloadReportButtonProps {
-  rapportId: string | null;
+  rapportId?: string | null;
+  annee?: string | number | null;
+  mode?: 'trimestriel' | 'annuel';
   domaineCode?: string;
   disabled?: boolean;
+  variant?: 'default' | 'outline' | 'secondary' | 'ghost';
+  size?: 'default' | 'sm' | 'lg' | 'icon';
+  className?: string;
 }
 
 export const DownloadReportButton = ({ 
   rapportId, 
+  annee,
+  mode = 'trimestriel',
   domaineCode = 'infrastructure', 
-  disabled 
+  disabled,
+  variant = 'outline',
+  size = 'default',
+  className = '',
 }: DownloadReportButtonProps) => {
   const [loading, setLoading] = useState(false);
+  const { i18n } = useTranslation();
+  const isAr = i18n.language === 'ar';
 
   const handleDownload = async () => {
-    if (!rapportId) return;
+    // En mode trimestriel il faut rapportId, en mode annuel il faut au moins rapportId OU annee
+    if (mode === 'trimestriel' && !rapportId) return;
+    if (mode === 'annuel' && !rapportId && !annee) return;
 
     setLoading(true);
     try {
@@ -27,7 +42,7 @@ export const DownloadReportButton = ({
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
       const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-      // 2. Appel direct via fetch pour récupérer un Blob binaire pur
+      // 2. Appel direct via fetch vers l'Edge Function
       const response = await fetch(`${supabaseUrl}/functions/v1/generate-report`, {
         method: 'POST',
         headers: {
@@ -35,7 +50,13 @@ export const DownloadReportButton = ({
           'apikey': anonKey,
           'Authorization': `Bearer ${session?.access_token || anonKey}`,
         },
-        body: JSON.stringify({ rapportId, domaineCode }),
+        // 🆕 Transmission explicite du MODE (trimestriel/annuel), de l'année et du rapportId
+        body: JSON.stringify({ 
+          rapportId, 
+          annee: String(annee || ''),
+          mode,
+          domaineCode 
+        }),
       });
 
       if (!response.ok) {
@@ -51,7 +72,9 @@ export const DownloadReportButton = ({
 
       // 3. Extraction du nom de fichier transmis par l'Edge Function dans les headers
       const contentDisposition = response.headers.get('Content-Disposition');
-      let fileName = `Rapport_Global.docx`; // Nom de secours si non trouvé
+      let fileName = mode === 'annuel' 
+        ? `Rapport_Annuel_${annee || 'Consolide'}.docx` 
+        : `Rapport_Global.docx`;
 
       if (contentDisposition) {
         const match = contentDisposition.match(/filename="?([^";]+)"?/);
@@ -60,14 +83,12 @@ export const DownloadReportButton = ({
         }
       }
 
-      // 4. Récupération directe sous forme de Blob binaire
+      // 4. Conversion et Téléchargement du Blob binaire
       const blob = await response.blob();
-
-      // 5. Téléchargement dans le navigateur avec le nom dynamique du serveur
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = fileName; // 👈 Utilise le nom renvoyé par le serveur Edge Function
+      a.download = fileName;
       document.body.appendChild(a);
       a.click();
       
@@ -76,27 +97,43 @@ export const DownloadReportButton = ({
       document.body.removeChild(a);
 
     } catch (err: any) {
-      console.error("Erreur complète :", err);
-      alert(`Détail Erreur : ${err.message || 'Impossible de télécharger le rapport'}`);
+      console.error("Erreur téléchargement rapport :", err);
+      alert(isAr 
+        ? `خطأ: ${err.message || 'تعذر تحميل التقرير'}` 
+        : `Détail Erreur : ${err.message || 'Impossible de télécharger le rapport'}`);
     } finally {
       setLoading(false);
     }
+  };
+
+  // Libellé du bouton selon le mode et la langue
+  const getButtonText = () => {
+    if (loading) {
+      return isAr ? 'جاري التوليد...' : 'Génération...';
+    }
+    if (mode === 'annuel') {
+      return isAr ? 'تحميل التقرير السنوي (.docx)' : 'Rapport Annuel (.docx)';
+    }
+    return isAr ? 'تحميل التقرير (.docx)' : 'Télécharger (.docx)';
   };
 
   return (
     <Button 
       type="button"
       onClick={handleDownload} 
-      disabled={disabled || loading || !rapportId}
-      variant="outline"
-      className="gap-2 shadow-sm"
+      disabled={disabled || loading || (mode === 'trimestriel' ? !rapportId : (!rapportId && !annee))}
+      variant={variant}
+      size={size}
+      className={`gap-2 shadow-sm ${className}`}
     >
       {loading ? (
         <Loader2 className="h-4 w-4 animate-spin" />
+      ) : mode === 'annuel' ? (
+        <Calendar className="h-4 w-4 text-primary" />
       ) : (
         <Download className="h-4 w-4" />
       )}
-      {loading ? 'Génération...' : 'Télécharger (.docx)'}
+      {getButtonText()}
     </Button>
   );
 };

@@ -85,7 +85,6 @@ export const Step2Infrastructures = memo(({ disabled, onActivity, rapportId }: S
       local_id: crypto.randomUUID(),
       type_mouvement: 'fermeture',
       nombre_creches: 1,
-      secteur: 'prive',
       raisons: '',
       observations: '',
     });
@@ -221,26 +220,6 @@ export const Step2Infrastructures = memo(({ disabled, onActivity, rapportId }: S
                     <SelectContent>
                       <SelectItem value="fermeture">{isAr ? 'إغلاق' : 'Fermeture'}</SelectItem>
                       <SelectItem value="reouverture">{isAr ? 'إعادة فتح' : 'Réouverture'}</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="md:col-span-4 space-y-1.5">
-                  <Label className="text-xs">{isAr ? 'القطاع' : 'Secteur'}</Label>
-                  <Select
-                    value={mvt.secteur}
-                    disabled={disabled}
-                    onValueChange={(v) => {
-                      updateMouvement(mvt.local_id, { secteur: v });
-                      if (onActivity) void onActivity();
-                    }}
-                  >
-                    <SelectTrigger className="h-9 text-xs bg-background">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="prive">{isAr ? 'خاص' : 'Privé'}</SelectItem>
-                      <SelectItem value="public">{isAr ? 'عمومي / تابعة للقطاع' : 'Public'}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
