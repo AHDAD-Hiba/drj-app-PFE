@@ -1,0 +1,911 @@
+{
+  "form": {
+    "eyebrow": "حملة {{year}}",
+    "title": "تعبئة",
+    "completeness": "نسبة الإكمال",
+    "score": "النتيجة",
+    "fieldsFilled": "حقل مُعبَّأ",
+    "steps": {
+      "Activités permanentes": "الأنشطة الدائمة"
+    },
+    "permanent": {
+      "nombreAssociations": "عدد الجمعيات",
+      "nombreClubs": "عدد الأندية",
+      "nombreConventions": "عدد الاتفاقيات",
+      "activitesEducatives": "الأنشطة التربوية",
+      "activitesCulturelles": "الأنشطة الثقافية والفنية",
+      "activitesSportives": "الأنشطة الترفيهية والبدنية",
+      "renforcementCapacites": "بناء القدرات"
+    },
+    "save": {
+      "saving": "جاري الحفظ…",
+      "savedJustNow": "تم الحفظ",
+      "savedAt": "تم الحفظ في {{time}}",
+      "notYetSaved": "لم يُحفظ بعد",
+      "error": "فشل الحفظ",
+      "draftSavedTitle": "تم حفظ المسودة",
+      "draftErrorTitle": "فشل الحفظ"
+    },
+    "actions": {
+      "saveDraft": "حفظ المسودة",
+      "completeDomain": "وضع علامة على المجال كمكتمل"
+    },
+    "confirm": {
+      "title": "تأكيد الإرسال",
+      "body": "أنت على وشك إرسال تقرير {{year}} (نسبة الإكمال: {{completeness}}٪). بعد الإرسال، لن تكون البيانات قابلة للتعديل دون تدخل الفريق الجهوي. هل تؤكد؟",
+      "cancel": "إلغاء",
+      "confirm": "إرسال نهائي"
+    },
+    "submit": {
+    "successTitle": "تم إتمام المجال",
+    "successBody": "تم تحديد هذا المجال كـ مكتمل بنجاح.",
+    "errorTitle": "فشل في إتمام المجال"
+    },
+    "forbidden": {
+      "title": "وصول محجوز",
+      "body": "يمكن للمديرين الإقليميين فقط تعبئة التقرير السنوي. إذا كان هذا خطأ، تواصل مع المدير الجهوي."
+    },
+    "error": {
+      "invalid": "قيمة غير صحيحة",
+      "negative": "يجب أن تكون القيمة ≥ 0",
+      "tooLarge": "قيمة كبيرة جداً"
+    }
+  },
+    "PreFormSelection": {
+      "quarters": {
+      "t1": "الربع 1",
+      "t2": "الربع 2",
+      "t3": "الربع 3",
+      "t4": "الربع 4"
+    }
+  },
+    "directionsTab": {
+      "title": "المديريات",
+      "searchPlaceholder": "بحث عن مديرية...",
+      "countSuffix": "المديريات - السنة",
+      "scoreGlobal": "المعدل العام",
+      "trimestre": "الربع",
+      "statuses": {
+        "non_commence": "لم تبدأ بعد",
+        "en_cours": "في طور الإنجاز",
+        "termine": "مكتملة"
+      }
+    },
+   "map": {
+    "eyebrow": "الخريطة الجهوية",
+    "title": "جهة الدار البيضاء سطات",
+    "subtitle": "عرض خرائطي للمديريات الإقليمية الـ13",
+    "prefectures": "المديريات الإقليمية",
+    "avgScore": "متوسط النتيجة الجهوية",
+    "topPerformer": "أعلى أداء",
+    "choropleth": "الأداء حسب الإقليم",
+    "choroplethHint": "تدرج لوني من الأحمر (ضعيف) إلى الأخضر الداكن (مرتفع) حسب النتيجة الإجمالية.",
+    "themeDark": "داكن",
+    "themeLight": "فاتح",
+    "casaWilaya": "ولاية الدار البيضاء",
+    "casaHint": "تم تجميع المديريات الإقليمية السبع. كبّر (المستوى ≥ {{zoom}}) لرؤية مواقعها الفعلية.",
+    "score": "المعدل",
+    "viewFile": "عرض البطاقة",
+    "legend": {
+      "excellence": "ممتاز",
+      "bon": "جيد",
+      "moyen": "متوسط",
+      "improve": "بحاجة لتحسين"
+    },
+    "noData": "لا توجد معطيات"
+  },
+   "directionDetails": {
+    "region": "الدار البيضاء - سطات",
+    "notStarted": "لم تبدأ بعد",
+    "notFound": "المديرية غير موجودة",
+    "progression": "التقدم",
+    "lastUpdate": "آخر تحديث",
+    "inputProgress": "تقدم إدخال البيانات",
+    "prefectoralOnlyOwn": "لا يمكنكم الاطلاع إلا على مديريتكم الخاصة."
+  },
+  "status": {
+    "NON_COMMENCE": "لم تبدأ بعد",
+    "EN_COURS": "في طور الإنجاز",
+    "TERMINE": "مكتمل"
+  },
+   "footer": {
+    "ministryShort": "وزارة الشباب والثقافة والتواصل",
+    "tagline": "المنصة الرسمية للقيادة الجهوية لأنشطة الشباب لولاية الدار البيضاء - سطات.",
+    "contact": "معلومات الاتصال",
+    "directionName": "المديرية الجهوية للشباب الدار البيضاء - سطات",
+    "address": "شارع محمد الخامس، الدار البيضاء · المغرب",
+    "navigation": "تصفح",
+    "officialApp": "تطبيق رسمي",
+    "kingdom": "المملكة المغربية",
+    "version": "إصدار"
+  },
+  "prefectures": {
+    "settat": "سطات",
+    "mohammedia": "المحمدية",
+    "mediouna": "مديونة",
+    "berrechid": "برشيد",
+    "benslimane": "بنسليمان",
+    "sidi bennour": "سيدي بنور",
+    "sidi bernoussi": "سيدي البرنوصي",
+    "anfa": "أنفا",
+    "el jadida": "الجديدة",
+    "ben m'sick - moulay rachid": "ابن مسيك مولاي رشيد",
+    "fida - mers sultan": "الفداء مرس السلطان",
+    "aïn sebaâ - hay mohammadi": "عين السبع الحي المحمدي",
+    "aïn chock - hay hassani": "عين الشق الحي الحسني",
+    "regional": "جهوي"
+  },
+   "roles": {
+    "directeur_regional": "المدير الجهوي",
+    "directeur_prefectoral": "المدير الإقليمي",
+    "admin": "مدير النظام",
+    "equipe_regional": "الفريق الجهوي"
+  },
+  "nav": {
+    "entry": "إدخال البيانات",
+    "map": "الخريطة",
+    "directions": "المديريات",
+    "domaines": "المجالات",
+    "directorTitle": "مدير",
+    "export": "تحميل إكسيل",
+    "users": "المستخدمون",
+    "etablissements": "المؤسسات",
+    "audit": "التدقيق",
+    "reports": "التقارير"
+  },
+  "etablissements": {
+    "types": {
+      "maison_jeunes": "دار الشباب",
+      "club_feminin": "نادي نسوي",
+      "centre_socio_sportif": "مركز سوسيو-رياضي",
+      "ofppt": "مركز التكوين المهني",
+      "direction_regional": "المديرية الجهوية",
+      "centre_protection_enfance": "مركز حماية الطفولة",
+      "creche_publique": "روض عمومي"
+    }
+  },
+  "loadingIndicators": "جاري تحميل المؤشرات...",
+  "prefDomainDashboard": {
+    "keyIndicators": "المؤشرات الرئيسية",
+    "workflow": {
+      "title": "تتبع التقرير",
+      "status": "الحالة",
+      "filteredDomain": "المجال المحدد",
+      "lastUpdate": "آخر تحديث",
+      "progress": "نسبة التقدم"
+    },
+      "status": {
+      "en_cours": "في طور الإنجاز",
+      "termine": "مكتمل",
+      "non_commence": "لم يبدأ بعد"
+    },
+      "kpis": {
+      "title": "أهم المؤشرات الرئيسية",
+      "activities": "إجمالي الأنشطة",
+      "beneficiaries": "إجمالي المستفيدين",
+      "coverage": "نسبة التغطية",
+      "feminization": "نسبة التأنيث",
+      "partnerships": "إجمالي الشراكات",
+      "establishments": "المؤسسات النشطة"
+    },
+      "charts": {
+      "axeTitle": "توزيع المستفيدين حسب المحور",
+      "volumeTitle": "الحجم الإجمالي حسب البرنامج",
+      "volumeSubtitle": "العدد المطلق للمستفيدين",
+      "mixityTitle": "نسبة الذكور / الإناث حسب البرنامج (%)",
+      "mixitySubtitle": "مقارنة معدل التأنيث",
+      "men": "ذكور",
+      "women": "إناث",
+      "coverageTitle": "التغطية الترابية (حضري / قروي)",
+      "coverageSubtitle": "تحليل يشمل البيانات التقديرية",
+      "urban": "حضري",
+      "rural": "قروي",
+      "evolutionTitle": "التطور الفصلي للمستفيدين",
+      "evolutionCardTitle": "مسار الأداء حسب البرنامج",
+      "evolutionCardSubtitle": "تطور عدد المستفيدين (من الربع الأول إلى الرابع) للمحاور المؤهلة"
+    },
+      "programs": {
+      "camping": "التخييم",
+      "formation": "التكوين",
+      "festivals": "المهرجانات",
+      "insertion": "الإدماج"
+    },
+      "quarters": {
+      "t1": "الربع 1",
+      "t2": "الربع 2",
+      "t3": "الربع 3",
+      "t4": "الربع 4"
+    },
+      "benchmark": {
+      "title": "المقارنة المرجعية الجهوية",
+      "columns": {
+        "indicator": "المؤشر",
+        "prefecture": "العمالة / الإقليم",
+        "regionalAverage": "المعدل الجهوي",
+        "variance": "الفارق"
+      },
+      "kpis": {
+        "totalActivities": "إجمالي الأنشطة",
+        "totalBeneficiaries": "إجمالي المستفيدين",
+        "coverageRate": "نسبة التغطية",
+        "feminisationRate": "نسبة التأنيث",
+        "activePartnerships": "الشراكات النشطة",
+        "operationalEstab": "المؤسسات التشغيلية",
+        "budgetExecutionRate": "نسبة تنفيذ الميزانية",
+        "budgetPaid": "الميزانية المؤداة (درهم)",
+        "projetsBtp": "عدد مشاريع البناء والأشغال",
+        "projetsPartenariat": "عدد مشاريع الشراكة",
+        "projetsBloques": "عدد المشاريع المتعثرة",
+        "arrieres": "مبلغ المتأخرات",
+        "totalInscriptionsFormation": "إجمالي التسجيلات في التكوين",
+        "tauxIntegrationLaureates": "نسبة إدماج الخريجات",
+        "totalBeneficiairesSensibilisationPortesOuvertes": "المستفيدات من التحسيس والأبواب المفتوحة",
+        "totalBeneficiairesAgr": "المستفيدات من الأنشطة المدرة للدخل",
+        "totalPartenariatsSuivis": "الشراكات المتابَعة",
+        "totalSeancesCentresEcoute": "جلسات مراكز الاستماع",
+        "beneficiairesPriseEnCharge": "المستفيدون المتكفَّل بهم",
+        "tauxPreparationIntegration": "نسبة التهيئة للإدماج",
+        "beneficiairesEducationFormation": "المستفيدون من التربية والتكوين",
+        "integrationsLiberteSurveillee": "الإدماج في الحرية المراقبة",
+        "incidentsExceptionnelsSignales": "الحوادث الاستثنائية المبلغ عنها",
+        "mineursMigrantsNonAccompagnes": "القاصرون المهاجرون غير المرفوقين",
+        "enfantsPrisesEnCharge": "الأطفال المتكفّل بهم",
+        "demandesLicencesTraitees": "طلبات التراخيص المعالجة",
+        "delaiMoyenTraitement": "متوسط مدة المعالجة (أيام)",
+        "cadresAssermentes": "الأطر المحلَّفة",
+        "crechesLabelliseesQualite": "دور الحضانة الحاصلة على علامة الجودة",
+        "fermeturesCrechesSignalees": "الإغلاقات المبلغ عنها"
+      },
+      "unavailable": "غير متوفر",
+      "unavailableShort": "—"
+    },
+    "section1Alerts": {
+      "correctionTitle": "⚠ ملاحظات للتصحيح",
+      "correctionBody": "يطلب الفريق الجهوي إدخال تعديلات.",
+      "validatedTitle": "تم التحقق من صحة التقرير",
+      "validatedBody": "تم التحقق من صحة تقريركم من طرف الفريق الجهوي."
+    },
+    "details": {
+      "title": "قراءة مفصلة للتقرير",
+      "activities": {
+        "title": "الأنشطة (الدائمة والإشعاعية)",
+        "ecosystem": "المنظومة والـبنيات",
+        "associations": "جمعيات",
+        "activeClubs": "أندية نشطة",
+        "conventions": "اتفاقيات",
+        "animationVolume": "حجم التنشيط",
+        "totalActions": "المجموع: {{count}} نشاط",
+        "sportsActivities": "أنشطة رياضية",
+        "educActivities": "أنشطة تربوية",
+        "cultActivities": "أنشطة ثقافية",
+        "capacityBuilding": "تقوية القدرات"
+      },
+       "camping": {
+        "title": "البرنامج الوطني للتخييم والتكوين",
+        "participants": "المستفيدون والمشاركون",
+        "totalBeneficiaries": "إجمالي المستفيدين",
+        "summerCamps": "المخيمات الصيفية",
+        "mreChildren": "أطفال الجالية",
+        "specialNeeds": "ذوي الاحتياجات الخاصة",
+        "staffingDevice": "هيئة التأطير",
+        "staffingRatio": "نسبة التأطير",
+        "ratioDesc": "(1 مؤطر لكل {{count}} مستفيد)",
+        "noData": "(لا توجد بيانات مسجلة)",
+        "mobilizedStaff": "الأطر المعبأة",
+        "menCount": "{{count}} ذكور",
+        "womenCount": "{{count}} إناث",
+        "trainings": "التكوينات (التأطير)",
+        "organizedSessions": "الدورات المنظمة",
+        "trainedCadres": "الأطر المكونة",
+        "movements": "حركية الجمعيات",
+        "assocEntrants": "الجمعيات الوافدة",
+        "benEntrants": "المستفيدون الوافدون",
+        "assocSortants": "الجمعيات المغادرة",
+        "benSortants": "المستفيدون المغادرون"
+      },
+        "conventions": {
+        "title": "الاتفاقيات والشراكات",
+        "summary": "حصيلة الاتفاقيات",
+        "totalConventions": "إجمالي الاتفاقيات",
+        "partnerTypes": "أنواع الشركاء المنخرطين",
+        "distributionByType": "التوزيع حسب النوع",
+        "noData": "لا توجد بيانات متاحة",
+        "types": {
+          "Secteur privé": "قطاع خاص",
+          "Société civile": "مجتمع مدني",
+          "Associations": "جمعيات",
+          "Secteur public": "قطاع عام"
+        }
+      },
+        "insertion": {
+        "title": "الإدماج السوسيو-اقتصادي",
+        "summary": "حصيلة الأنشطة",
+        "activitiesDone": "الأنشطة المنجزة",
+        "activePartners": "الشركاء النشطون",
+        "globalVolume": "الحجم الإجمالي",
+        "hours": "ساعات",
+        "beneficiaries": "المستفيدون",
+        "total": "المجموع",
+        "genderDistribution": "التوزيع حسب الجنس",
+        "men": "ذكور",
+        "women": "إناث",
+        "spatialDistribution": "التوزيع المجالي",
+        "urban": "حضري",
+        "rural": "قروي"
+      },
+       "festivals": {
+        "title": "مهرجانات الشباب",
+        "summary": "الأنشطة والإقصائيات",
+        "organized": "المهرجانات المنظمة",
+        "provinces": "الأقاليم (التغطية)",
+        "qualified": "المؤهلون (النهائيات)",
+        "demographics": "الخصائص الديمغرافية للمشاركين",
+        "total": "المجموع",
+        "genderDistribution": "التوزيع حسب الجنس",
+        "men": "ذكور",
+        "women": "إناث",
+        "spatialDistribution": "التوزيع المجالي",
+        "urban": "حضري",
+        "rural": "قروي"
+      },
+        "etablissements": {
+        "title": "المؤسسات والبنيات التحتية",
+        "parcStatus": "وضعية الحظيرة الحالية",
+        "total": "المجموع",
+        "operational": "العملية / النشطة",
+        "newCreation": "إحداث جديد",
+        "underRealization": "فطور الإنجاز",
+        "fermeturesAnalysis": "تحليل الإغلاقات",
+        "totalFermees": "إجمالي المغلقة",
+        "noFermeture": "لم يتم تسجيل أي إغلاق",
+        "causes": {
+          "Encadrement": "التأطير",
+          "En attente d'inauguration": "في انتظار التدشين",
+          "Mise à niveau": "التأهيل",
+          "Équipement": "التجهيز",
+          "Conflit juridique": "نزاع قانوني"
+        }
+      }
+    },
+    "infrastructure": {
+      "categories": { "fonctionnement": "التسيير", "investissement": "الاستثمار", "construction": "البناء", "amenagement": "التهيئة", "etudes": "الدراسات", "travaux": "الأشغال", "livraison": "التسليم", "acheve": "مكتمل" },
+      "phases": { "etudes": "الدراسات", "attente_foncier": "في انتظار الوعاء العقاري", "travaux": "الأشغال", "attente_livraison": "في انتظار التسليم", "acheve": "مكتمل", "non_defini": "غير محدد" },
+      "causes": { "non_precise": "السبب غير محدد" },
+      "kpis": { "executionRate": "نسبة تنفيذ الميزانية", "engagementRate": "نسبة الالتزام بالميزانية", "projetsBtp": "عدد مشاريع البناء والأشغال", "projetsPartenariat": "عدد مشاريع الشراكة", "projetsEnSouffrance": "عدد المشاريع المتعثرة", "arrieres": "المتأخرات" },
+      "section3": { "title": "نظرة عامة على الميزانية والمشاريع", "budgetTitle": "ميزانية التسيير مقابل الاستثمار", "budgetSubtitle": "المؤدى مقابل المتبقي للأداء (درهم)", "paid": "المؤدى", "remaining": "المتبقي للأداء", "projectStateTitle": "حالة المشاريع", "projectStateSubtitle": "الدراسات، الأشغال، التسليم، المكتمل", "projectNatureTitle": "طبيعة المشاريع", "projectNatureSubtitle": "البناء مقابل التهيئة" },
+      "section4": { "title": "التطور الفصلي", "budgetTitle": "التطور الميزانياتي", "budgetSubtitle": "الاعتمادات المفتوحة مقابل المؤداة (درهم)", "ouverts": "المفتوحة", "payes": "المؤداة", "arrearsTitle": "تطور المتأخرات", "arrearsSubtitle": "الماء مقابل الكهرباء (درهم)", "water": "الماء", "electricity": "الكهرباء", "projectsTitle": "تطور عدد المشاريع", "projectsSubtitle": "البناء والأشغال مقابل الشراكة", "btp": "البناء والأشغال", "partenariat": "الشراكة" },
+      "section6": { "depenses": { "title": "النفقات", "ouverts": "المفتوحة", "engages": "الملتزم بها", "payes": "المؤداة" }, "eauElectricite": { "title": "الماء والكهرباء", "consumption": "الاستهلاك", "water": "الماء", "electricity": "الكهرباء", "arrears": "المتأخرات", "totalArrears": "إجمالي المتأخرات" }, "partenariat": { "title": "الشراكة", "summary": "الحصيلة", "total": "إجمالي المشاريع", "avgProgress": "متوسط التقدم", "byPhase": "التوزيع حسب المرحلة", "noData": "لا توجد معطيات متاحة" }, "btp": { "title": "البناء والأشغال", "breakdown": "التوزيع", "cost": "التكلفة", "financials": "التتبع المالي", "paidAmount": "المبلغ المؤدى", "paymentRate": "نسبة الأداء", "progress": "نسبة التقدم" }, "enSouffrance": { "title": "المشاريع المتعثرة", "total": "المجموع", "noData": "لا توجد معطيات متاحة" } }
+    },
+    "affairesFeminines": {
+      "urbain": "حضري", "rural": "قروي", "laureates": "الخريجات", "integrees": "المُدمجات", "beneficiairesAgr": "المستفيدات من الأنشطة المدرة للدخل", "seances": "الجلسات", "seancesCentresEcoute": "جلسات مراكز الاستماع", "partenariatsSuivis": "الشراكات المتابَعة",
+      "section3": { "title": "التكوين والمجال", "formationSecteurTitle": "التكوين المهني حسب القطاع", "formationSecteurSubtitle": "تسجيلات مكتب التكوين حسب قطاع التكوين", "inscriptions": "التسجيلات", "urbainRuralTitle": "توزيع المستفيدات حضريا وقرويا", "urbainRuralSubtitle": "مستفيدات أنشطة التحسيس", "total": "المجموع", "urbainRuralPct": "النسبة" },
+      "section4": { "title": "التطور الفصلي", "integrationTitle": "تطور الإدماج", "integrationSubtitle": "الخريجات والمدمجات حسب الفصل", "activiteSocialeTitle": "تطور النشاط الاجتماعي", "activiteSocialeSubtitle": "المستفيدات من الأنشطة المدرة للدخل، جلسات الاستماع والشراكات", "leftAxis": "المستفيدات / الجلسات" },
+      "kpis": { "totalInscriptionsFormation": "التسجيلات في التكوين", "tauxIntegrationLaureates": "نسبة إدماج الخريجات", "totalBeneficiairesSensibilisationPortesOuvertes": "المستفيدات من التحسيس والأبواب المفتوحة", "totalBeneficiairesAgr": "المستفيدات من الأنشطة المدرة للدخل", "totalPartenariatsSuivis": "الشراكات المتابَعة", "totalSeancesCentresEcoute": "جلسات الاستماع" },
+      "section6": { "formation": { "title": "التكوين", "clubs": "الأندية", "ofppt": "مكتب التكوين", "parFiliere": "حسب الشعبة", "parSecteur": "حسب القطاع", "parNiveau": "مستوى التكوين" }, "insertionAgr": { "title": "الإدماج والأنشطة المدرة للدخل", "taux": "نسبة الإدماج", "benefAgr": "المستفيدات من الأنشطة المدرة للدخل", "partenaires": "الشركاء" }, "sensibilisation": { "title": "التحسيس", "activites": "الأنشطة", "portesOuvertesBenef": "مستفيدات الأبواب المفتوحة", "portesOuvertes": "الأبواب المفتوحة", "totalBenef": "إجمالي المستفيدات" }, "ecoute": { "title": "الاستماع", "cas": "الحالات المعالجة", "parType": "نوع الدعم" }, "rh": { "title": "الموارد البشرية", "disponibles": "المتاحون", "besoins": "الاحتياجات" }, "reseau": { "title": "الشبكة والشراكات", "partenariatsSuivis": "الشراكات المتابَعة", "sujets": "مواضيع الشراكات", "mouvements": "حركية الشبكة", "types": { "nouvel": "جديد", "creation_en_cours": "إحداث قيد الإنجاز", "fermeture_temporaire": "إغلاق مؤقت", "reouverture": "إعادة فتح" } } },
+      "secteurs": {"Cuisine": "الطبخ"}
+    },
+    "protectionEnfance": {
+      "garcons": "الذكور", "filles": "الإناث", "categories": { "education": "التربية", "formation": "التكوين" }, "cibles": {},
+      "kpis": { "priseEnCharge": "المستفيدون المتكفَّل بهم", "tauxPreparationIntegration": "نسبة التهيئة للإدماج", "educationFormation": "المستفيدون من التربية والتكوين", "integrationsLiberteSurveillee": "الإدماج في الحرية المراقبة", "incidentsSignales": "الحوادث الاستثنائية", "migrantsNonAccompagnes": "القاصرون المهاجرون غير المرفوقين" },
+      "section3": { "title": "التكوين والحوادث", "priseEnChargeTitle": "التكفل", "priseEnChargeSubtitle": "توزيع المستفيدين", "incidentsTitle": "الحوادث حسب النوع", "incidentsSubtitle": "عدد الحالات المبلغ عنها" },
+      "priseEnChargeTypes": {
+      "centre_sauvegarde": "مركز حماية",
+      "liberte_surveillee": "حرية محروسة"
+    },
+    "activitesTitles": {
+    "title": "المستفيدون حسب مجال النشاط",
+    "subtitle": "حجم المستفيدين حسب مجال النشاط"
+  },
+      "section4": { "title": "التطور الفصلي", "genreTitle": "تطور المستفيدين", "genreSubtitle": "الذكور مقابل الإناث (من الربع 1 إلى 4)", "garcons": "الذكور", "filles": "الإناث", "incidentsTitle": "تطور الحوادث المبلغ عنها", "incidentsSubtitle": "إجمالي الحالات المبلغ عنها (من الربع 1 إلى 4)", "incidents": "الحوادث" },
+      "section6": { "priseEnCharge": { "title": "التكفل", "total": "المجموع", "migrants": "المهاجرون", "changementMesure": "تغييرات التدبير" }, "educationFormation": { "title": "التربية والتكوين", "education": "التربية", "educationFormal": "نظامية", "educationNonFormal": "غير نظامية", "educationSoutien": "دعم", "formation": "التكوين", "intra": "داخل المؤسسة", "extra": "خارج المؤسسة", "initiation": "استئناس" }, "totalEducation": "إجمالي التربية", "totalFormation": "إجمالي التكوين", "ateliersActivites": { "title": "الورشات والأنشطة", "ateliers": "الورشات المحدثة", "parDomaine": "المستفيدون حسب مجال النشاط" }, "liberteSurveillee": { "title": "الحرية المراقبة", "scolaire": "الدراسة", "formationPro": "التكوين المهني", "stage": "التدريب", "associations": "الجمعيات", "total": "إجمالي حالات الإدماج" }, "conseilEnfant": { "title": "مجلس الطفل", "sessions": "الجلسات المنظمة" }, "partenariats": { "title": "الشراكات", "conventions": "الاتفاقيات", "projets": "المشاريع المنجزة", "partenaires": "الشركاء", "sujets": "المواضيع" }, "formationPersonnel": { "title": "تكوين الموظفين", "sessions": "الجلسات", "beneficiaires": "المستفيدون", "parCible": "حسب الفئة المستهدفة" }, "visitesDons": { "title": "الزيارات والتبرعات", "visites": "الزيارات الرسمية", "noVisites": "لم تسجل أي زيارة", "totalVisiteurs": "إجمالي الزوار", "dons": "التبرعات", "noDons": "لم تسجل أي تبرعات", "totalDons": "إجمالي التبرعات" }, "amenagementEquipement": { "title": "التهيئة والتجهيز", "total": "المجموع", "equipes": "المجهزة", "rehabilites": "المؤهلة" }, "incidentsRapports": { "title": "الحوادث والتقارير", "parType": "حسب النوع", "rapportsJudiciaires": "التقارير القضائية", "totalIncidents": "إجمالي الحوادث" } }
+    },
+    "enfanceCreches": {
+      "kpis": { "enfantsPrisesEnCharge": "الأطفال المتكفّل بهم", "demandesLicencesTraitees": "طلبات التراخيص المعالجة", "delaiMoyenTraitement": "متوسط مدة المعالجة (أيام)", "cadresAssermentes": "الأطر المحلَّفة", "crechesLabelliseesQualite": "دور الحضانة الحاصلة على علامة الجودة", "fermeturesCreches": "الإغلاقات المبلغ عنها" },
+      "section3": { "title": "الطلبات والحالات والأطفال", "demandesTypeTitle": "طلبات التراخيص حسب النوع", "demandesTypeSubtitle": "الحجم حسب نوع الطلب", "demandesStatutTitle": "طلبات التراخيص حسب الحالة", "demandesStatutSubtitle": "التوزيع حسب الحالة", "enfantsZoneTitle": "الأطفال المتكفّل بهم: ذكور/إناث × حضري/قروي", "enfantsZoneSubtitle": "التوزيع حسب المنطقة الجغرافية" },
+      "section4": { "title": "التطور الفصلي", "enfantsTitle": "تطور الأطفال المتكفّل بهم", "enfantsSubtitle": "الذكور مقابل الإناث حسب الفصل", "garcons": "الذكور", "filles": "الإناث", "mouvementsTitle": "تطور الحركية", "mouvementsSubtitle": "الإغلاقات مقابل إعادة الفتح حسب الفصل", "fermetures": "الإغلاقات", "reouvertures": "إعادة الفتح" },
+      "section6": { "licencesDemandes": { "title": "التراخيص والطلبات", "demandesTraitees": "الطلبات المعالجة", "delaiMoyen": "متوسط المدة (أيام)", "parType": "حسب النوع", "parStatut": "حسب الحالة" }, "enfants": { "title": "الأطفال المتكفّل بهم", "total": "المجموع", "urbain": "حضري", "rural": "قروي", "activites": "الأنشطة" }, "infrastructureQualite": { "title": "البنية والجودة", "crechesCreees": "المحدثة", "crechesEquipees": "المجهزة", "crechesQualifiees": "المؤهلة", "labelsObtenus": "علامات الجودة المحصل عليها", "controles": "المراقبة" }, "mouvements": { "title": "الحركية والإغلاقات", "fermetures": "الإغلاقات", "reouvertures": "إعادة الفتح", "details": "التفاصيل" }, "cadresFormations": { "title": "الأطر والتكوينات", "totalCadres": "الأطر المحلَّفة", "formations": "التكوينات", "statuts": "الحالات" }, "partenariatsEtudes": { "title": "الشراكات والدراسات", "conventions": "الاتفاقيات", "analyses": "التحليلات", "sondages": "الاستطلاعات" } }
+    }
+  },
+  "RegDomainDashboard": {
+    "title": "لوحة القيادة - المديرية الجهوية للشباب",
+    "tracking": "تتبع الإنجاز",
+    "submittedCount": "أكملت {{n}} من أصل {{total}} مديرية التعبئة",
+    "status": {
+      "termine": "مكتمل",
+      "en_cours": "في طور الإنجاز",
+      "non_commence": "لم يبدأ بعد"
+    },
+    "kpis": {
+      "title": "مؤشرات القيادة الاستراتيجية",
+      "totalBeneficiaires": "إجمالي المستفيدين",
+      "totalActivities": "إجمالي الأنشطة",
+      "activeEstablishments": "المؤسسات النشطة",
+      "totalPartnerships": "الشراكات المبرمة",
+      "feminisation": "نسبة التأنيث",
+      "couverture": "نسبة التغطية"
+    },
+    "section3": {
+      "title": "البنية والإدماج الاجتماعي",
+      "subtitle": "التحليل الديموغرافي والمجالي",
+      "domainChartTitle": "التوزيع حسب المجال",
+      "domains": {
+        "educatif": "تربوي",
+        "culturel": "ثقافي",
+        "sportif": "رياضي",
+        "capacite": "القدرات"
+      },
+      "genderChartTitle": "الإدماج حسب النوع",
+      "gender": {
+        "femmes": "إناث",
+        "hommes": "ذكور"
+      },
+      "territoryChartTitle": "البنية المجالية",
+      "territory": {
+        "rural": "قروي",
+        "urbain": "حضري"
+      }
+    },
+    "section4": {
+      "title": "الدينامية الجهوية",
+      "subtitle": "تطور الأنشطة والشراكات خلال السنة",
+      "activitiesTitle": "التطور الفصلي للأنشطة",
+      "activitiesSubtitle": "الحجم الإجمالي للأنشطة المنجزة",
+      "establishmentsTitle": "تطور وضعية المؤسسات",
+      "establishmentsSubtitle": "التتبع الفصلي للبنية التحتية",
+      "status": {
+        "fonctionnels": "شغالة",
+        "travaux": "في طور التهيئة",
+        "fermes": "مغلقة"
+      }
+    },
+    "quarters": {
+      "t1": "الربع 1",
+      "t2": "الربع 2",
+      "t3": "الربع 3",
+      "t4": "الربع 4"
+    },
+    "section5": {
+      "title": "أداء المديريات",
+      "subtitle": "التصنيف والمقارنة الجهوية",
+      "topActivities": "أعلى 3 مديريات من حيث الأنشطة",
+      "topBeneficiaries": "أعلى 3 مديريات من حيث المستفيدين",
+      "tableTitle": "الجدول المقارن للمديريات",
+      "tableSubtitle": "التصنيف المفصل وحالة التقدم",
+      "columns": {
+        "rank": "الرتبة",
+        "direction": "المديرية",
+        "score": "النتيجة الإجمالية",
+        "status": "الحالة",
+        "metricPrimary": "الأنشطة",
+        "metricSecondary": "المستفيدون"
+      },
+      "status": {
+        "NON_COMMENCE": "لم تبدأ بعد",
+        "TERMINE": "مكتمل",
+        "EN_COURS": "في طور الإنجاز"
+      }
+    },
+    "loadingPrefecture": "جاري تحميل التحليل المفصل للعمالة...",
+    "buttons": {
+    "excel": "بيانات Excel",
+    "pdf": "تقرير PDF"
+  }
+  },
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  "app": {
+    "name": "المديرية الجهوية للشباب الدار البيضاء سطات",
+    "fullName": "المديرية الجهوية للشباب",
+    "subtitle": "منظومة القيادة الجهوية",
+    "ministry": "وزارة الشباب والثقافة والتواصل"
+  },
+  "auth": {
+    "loginTitle": "تسجيل الدخول",
+    "loginSubtitle": "ادخل إلى فضاء القيادة الجهوية",
+    "email": "البريد الإلكتروني",
+    "password": "كلمة المرور",
+    "fullName": "الاسم الكامل",
+    "signIn": "دخول",
+    "signUp": "إنشاء حساب",
+    "switchToSignUp": "ليس لديك حساب؟",
+    "switchToSignIn": "لديك حساب؟",
+    "logout": "تسجيل الخروج",
+    "useThisAccount": "استعمال هذا الحساب",
+    "loading": "جاري الاتصال…",
+    "errorInvalid": "بيانات غير صحيحة",
+    "errorGeneric": "حدث خطأ",
+    "forgotPassword": "هل نسيت كلمة المرور؟",
+    "forgot": {
+      "title": "نسيت كلمة المرور",
+      "subtitle": "أدخل بريدك الإلكتروني لتلقي رابط إعادة التعيين.",
+      "send": "إرسال رابط إعادة التعيين",
+      "sent": "تم إرسال رابط إعادة التعيين إلى بريدك الإلكتروني.",
+      "sentToast": "تم إرسال البريد",
+      "backToLogin": "العودة إلى تسجيل الدخول"
+    }
+  },
+  
+  
+  
+ 
+  
+  "detail": {
+    "back": "رجوع",
+    "globalScore": "النتيجة الإجمالية",
+    "completenessRate": "نسبة إكمال البيانات",
+    "lastUpdate": "تحديث",
+    "permanent": "الأنشطة الدائمة",
+    "outreach": "الأنشطة الإشعاعية",
+    "camping": "برنامج التخييم",
+    "festivals": "مهرجانات الشباب",
+    "integration": "الإدماج السوسيو-اقتصادي",
+    "institutions": "وضعية المؤسسات",
+    "totalBeneficiaries": "إجمالي المستفيدين",
+    "associations": "الجمعيات",
+    "conventions": "الاتفاقيات",
+    "clubs": "النوادي",
+    "educative": "تربوية",
+    "cultural": "ثقافية",
+    "sportive": "رياضية وترفيهية",
+    "capacity": "تعزيز القدرات",
+    "participants": "المشاركون",
+    "female": "الإناث",
+    "male": "الذكور",
+    "rural": "قروي",
+    "urban": "حضري",
+    "facilitators": "مؤطرون",
+    "trainings": "تكوينات",
+    "qualified": "متأهلون",
+    "beneficiaries": "المستفيدون",
+    "partners": "الشركاء",
+    "updated": "محدّثة",
+    "inProgress": "قيد الإنجاز",
+    "dispute": "في نزاع",
+    "rehabNeeds": "تحتاج إعادة تأهيل",
+    "strengths": "نقاط القوة",
+    "weaknesses": "محاور التحسين",
+    "scoreFormula": "صيغة النتيجة: 40٪ حجم الأنشطة · 25٪ المستفيدون · 15٪ الشراكات · 10٪ التكوين · 10٪ الإكمال"
+  },
+  "common": {
+    "loading": "جاري التحميل…",
+    "search": "بحث",
+    "year": "السنة",
+    "accessDenied": "تم رفض الوصول",
+    "all": "الكل",
+    "language": "اللغة",
+    "show": "إظهار",
+    "hide": "إخفاء",
+    "next": "التالي",
+    "previous": "السابق",
+    "domain": "المجال",
+    "step": "الخطوة {{n}} / {{total}}",
+    "duplicateYear": "نسخ من السنة الماضية",
+    "duplicateYearConfirm": "نسخ كل بيانات {{from}} إلى {{to}} ؟ ستُستبدل القيم الحالية لـ {{to}}.",
+    "duplicated": "تم نسخ البيانات من {{from}} إلى {{to}}",
+    "gender": {
+      "garcons": "الذكور",
+      "filles": "الإناث"
+    }
+  },
+  "regDomainDashboard": {
+    "generic": {
+      "formationRepartitionTitle": "التكوين والتوزيع",
+      "kpiRegionalSubtitle": "مؤشرات جهوية، مجمعة على مستوى كل المديريات"
+    },
+    "infra": {
+      "sectionFinance": {
+        "title": "التدبير المالي",
+        "subtitle": "الاعتمادات ومستويات التنفيذ الميزانياتي"
+      },
+      "kpis": {
+        "creditsOuverts": "الاعتمادات المفتوحة",
+        "creditsEngages": "الاعتمادات الملتزم بها",
+        "creditsPayes": "الاعتمادات المؤداة",
+        "tauxEngagement": "نسبة الالتزام",
+        "tauxPaiement": "نسبة الأداء"
+      },
+      "charts": {
+        "fonctInvestTitle": "التسيير والاستثمار",
+        "btpTitle": "البناء / التهيئة",
+        "phaseTitle": "الشراكات حسب المرحلة",
+        "typeEtabTitle": "الشراكات حسب نوع المؤسسة",
+        "evolCreditsTitle": "تطور الاعتمادات",
+        "evolCreditsSubtitle": "الاعتمادات الملتزم بها والمؤداة حسب الفصل",
+        "evolProjetsTitle": "تطور المشاريع",
+        "evolProjetsSubtitle": "عدد مشاريع البناء والشراكات حسب الفصل",
+        "projetsBtpLegend": "مشاريع البناء والأشغال",
+        "projetsPartenariatLegend": "مشاريع الشراكة"
+      },
+      "postes": {
+        "fonctionnement": "التسيير",
+        "investissement": "الاستثمار"
+      },
+      "phases": {
+        "attente_foncier": "انتظار التمليك",
+        "etudes": "دراسات",
+        "acheve": "منجز"
+      },
+      "etablissementTypes": {
+        "maison_jeunes": "دار الشباب",
+        "club_feminin": "نادي نسوي",
+        "centre_socio_sportif": "مركز سوسيو-رياضي"
+      },
+      "section2": {
+        "title": "بنية وتوزيع المشاريع",
+        "subtitle": "توزيع مشاريع البناء والشراكات"
+      },
+      "btp": {
+        "construction": "البناء",
+        "amenagement": "التهيئة"
+      },
+      "section3": {
+        "subtitle": "التطور الفصلي للاعتمادات والمشاريع"
+      },
+      "blocked": {
+        "title": "المشاريع المتعثرة",
+        "columns": {
+          "etablissement": "المؤسسة",
+          "cause": "السبب",
+          "solution": "الحل",
+          "observation": "ملاحظة"
+        },
+        "empty": "لم يُصرَّح بأي مشروع متعثر."
+      },
+      "metrics": {
+        "budgetExecutionRate": "نسبة تنفيذ الميزانية",
+        "projectsCount": "عدد المشاريع"
+      }
+    },
+    "femme": {
+      "section": {
+        "title": "مؤشرات الشؤون النسائية"
+      },
+      "kpis": {
+        "inscriptionsFormation": "التسجيلات في التكوين",
+        "tauxIntegrationLaureates": "نسبة إدماج الخريجات",
+        "beneficiairesSensibilisation": "المستفيدات من التحسيس والأبواب المفتوحة",
+        "beneficiairesAgr": "المستفيدات من الأنشطة المدرة للدخل",
+        "partenariatsSuivis": "الشراكات المتابَعة",
+        "seancesEcoute": "جلسات الاستماع"
+      },
+      "section3": {
+        "subtitle": "التوزيع الجهوي للتكوين حسب القطاع"
+      },
+      "charts": {
+        "formationSecteurTitle": "التكوين المهني حسب القطاع",
+        "formationSecteurSubtitle": "تسجيلات OFPPT مجمعة حسب القطاع",
+        "evolIntegrationTitle": "تطور إدماج الخريجات",
+        "evolIntegrationSubtitle": "الخريجات والمدمجات حسب الفصل",
+        "evolActiviteSocialeTitle": "تطور النشاط الاجتماعي",
+        "evolActiviteSocialeSubtitle": "المستفيدات من الأنشطة المدرة للدخل، جلسات الاستماع والشراكات"
+      },
+      "legend": {
+        "laureates": "الخريجات",
+        "integrees": "المدمجات"
+      },
+      "section4": {
+        "subtitle": "التطور الفصلي لإدماج الخريجات والنشاط الاجتماعي"
+      }
+    },
+    "pe": {
+      "section": {
+        "title": "مؤشرات حماية الطفولة"
+      },
+      "kpis": {
+        "beneficiairesPriseEnCharge": "المستفيدون المتكفَّل بهم",
+        "tauxPreparationIntegration": "نسبة التهيئة للإدماج",
+        "beneficiairesEducationFormation": "المستفيدون من التربية والتكوين",
+        "integrationsLiberteSurveillee": "الإدماج في الحرية المراقبة",
+        "incidentsSignales": "الحوادث الاستثنائية",
+        "migrantsNonAccompagnes": "القاصرون المهاجرون غير المرفوقين"
+      },
+      "section3": {
+        "subtitle": "التوزيع الجهوي للتربية/التكوين والحوادث الاستثنائية"
+      },
+      "charts": {
+        "eduFormTitle": "التربية مقابل التكوين",
+        "eduFormSubtitle": "المستفيدون الجهويون، مجمّعون على مستوى كل المديريات",
+        "incidentsTypeTitle": "الحوادث الاستثنائية حسب النوع",
+        "incidentsTypeSubtitle": "عدد الحالات المبلغ عنها، مجمّع على مستوى كل المديريات",
+        "evolGenreTitle": "تطور الذكور والإناث",
+        "evolGenreSubtitle": "المستفيدون المتكفَل بهم حسب الربع",
+        "evolIncidentsTitle": "تطور الحوادث الاستثنائية",
+        "evolIncidentsSubtitle": "عدد الحالات المبلغ عنها حسب الربع"
+      },
+      "categories": {
+        "education": "التربية",
+        "formation": "التكوين"
+      },
+      "section4": {
+        "subtitle": "التطور الفصلي للمستفيدين والحوادث الاستثنائية"
+      }
+    },
+    "creches": {
+      "section": {
+        "title": "مؤشرات دور الحضانة"
+      },
+      "kpis": {
+        "enfantsPrisEnCharge": "الأطفال المتكفَّل بهم",
+        "demandesLicencesTraitees": "طلبات التراخيص المعالجة",
+        "delaiMoyenTraitement": "متوسط مدة المعالجة (أيام)",
+        "cadresAssermentes": "الأطر المحلَّفة",
+        "crechesLabellisees": "دور الحضانة الحاصلة على علامة الجودة",
+        "fermeturesSignalees": "الإغلاقات"
+      },
+      "section3": {
+        "title": "التوزيع الجهوي",
+        "subtitle": "طلبات التراخيص وحركية دور الحضانة"
+      },
+      "charts": {
+        "demandesStatutTitle": "طلبات التراخيص حسب الحالة",
+        "volumeRegionalSubtitle": "الحجم الجهوي، مجمّع على كل المديريات",
+        "mouvementsSecteurTitle": "حركية دور الحضانة حسب القطاع",
+        "mouvementsSecteurSubtitle": "الإغلاقات وإعادة الفتح، خاص مقابل عام",
+        "evolEnfantsTitle": "تطور الأطفال المتكفّل بهم",
+        "evolEnfantsSubtitle": "الأولاد مقابل البنات حسب الربع",
+        "evolMouvementsTitle": "تطور الحركيات",
+        "evolMouvementsSubtitle": "الإغلاقات مقابل إعادة الفتح حسب الربع"
+      },
+      "legend": {
+        "reouvertures": "إعادة الفتح"
+      },
+      "section4": {
+        "subtitle": "التطور الفصلي للأطفال المتكفَل بهم وحركية دور الحضانة"
+      }
+    }
+  },
+  "domain": {
+    "title": "لوحة القيادة حسب المجال",
+    "subtitle": "نظرة شاملة · تتبع · مقارنة بين المديريات",
+    "tracking": "تتبع الإرسالات",
+    "submittedCount": "{{n}} / {{total}} مديرية أرسلت",
+    "options": {
+      "jeunesse": "الشباب",
+      "femme": "المرأة / الفتاة",
+      "enfance": "الطفولة",
+      "creche": "الحضانة",
+      "sport": "الرياضة"
+    },
+    "status": {
+      "completed": "مكتملة",
+      "in_progress": "قيد الإنجاز",
+      "not_started": "لم تبدأ"
+    },
+    "kpi": {
+      "coverage": "نسبة التغطية",
+      "coverageHint": "المستفيدون / السكان",
+      "coverageShort": "التغطية",
+      "activities": "إجمالي الأنشطة",
+      "activitiesShort": "الأنشطة",
+      "participants": "إجمالي المشاركين",
+      "participantsShort": "المشاركون",
+      "partnerships": "إجمالي الشراكات",
+      "score": "النتيجة الإجمالية للمجال",
+      "scoreHint": "متوسط /100"
+    },
+    "charts": {
+      "activitiesByDir": "الأنشطة حسب المديرية",
+      "activitiesByDirHint": "حجم الأنشطة المُعلَن من كل مديرية",
+      "byType": "التوزيع حسب النوع",
+      "byTypeHint": "أنواع أنشطة المجال",
+      "evolution": "تطور المشاركين",
+      "evolutionHint": "الحجم الفصلي التراكمي",
+      "gender": "التوزيع إناث / ذكور",
+      "vsAvg": "المديرية مقابل المتوسط الجهوي"
+    },
+    "compare": {
+      "title": "مقارنة المديريات",
+      "results": "{{n}} نتيجة",
+      "searchPlaceholder": "البحث عن مديرية…",
+      "statusPlaceholder": "الحالة",
+      "allStatuses": "كل الحالات",
+      "noMatch": "لا توجد مديرية مطابقة للمرشحات."
+    },
+    "detail": {
+      "noReportTitle": "لم يُرسَل أي تقرير بعد",
+      "noReportBody": "لم يُرسَل أي تقرير لهذه المديرية خلال الفترة المختارة.",
+      "avg": "متوسط"
+    }
+  },
+  "regionDashboard": {
+    "title": "لوحة القيادة - المديرية الجهوية للشباب",
+    "subtitle": "نظرة شاملة على جهة الدار البيضاء سطات",
+    "completionTracking": "التتبع العام للملء",
+    "kpi": {
+      "coverageRate": "نسبة التغطية العامة",
+      "totalActivities": "إجمالي الأنشطة",
+      "totalParticipants": "إجمالي المشاركين",
+      "totalPartnerships": "إجمالي الشراكات",
+      "globalScore": "النتيجة العامة المتوسطة",
+      "partnerships": "الشراكات"
+    },
+    "charts": {
+      "activitiesPerDirection": "الأنشطة حسب المديرية",
+      "genderDistribution": "التوزيع حسب الجنس",
+      "evolution": "التطور الزمني",
+      "participantsOverTime": "المشاركون على 3 سنوات",
+      "activityTypes": "أنواع الأنشطة"
+    },
+    "comparisonTable": "مقارنة المديريات",
+    "tabs": {
+      "overview": "نظرة شاملة",
+      "detail": "التفاصيل"
+    },
+    "table": {
+      "activities": "الأنشطة",
+      "participants": "المشاركون",
+      "coverageRate": "نسبة التغطية"
+    },
+    "smartInsights": "الرؤى الذكية",
+    "insights": {
+      "goodPerformance": "أداء جهوي جيد",
+      "aboveAverage": "النتيجة المتوسطة فوق 70",
+      "average": "أداء متوسط مرضي",
+      "needsImprovement": "يحتاج تحسين",
+      "topDirections": "أفضل المديريات",
+      "needsAttention": "المديريات التي تحتاج مراقبة"
+    },
+    "comparisonWithAverage": "المقارنة مع المتوسط الجهوي",
+    "average": "متوسط"
+  },
+  "import": {
+    "eyebrow": "أداة إدارية",
+    "title": "استيراد البيانات عبر ملف إكسل",
+    "subtitle": "حمّل النموذج، املأه، ثم ارفعه لتحديث بيانات المديريات الإقليمية بنقرة واحدة.",
+    "step1": "تحميل نموذج إكسل",
+    "step1Hint": "يحتوي النموذج على جميع الأعمدة المطلوبة، قاموس الحقول، وقائمة رموز المديريات الإقليمية الـ13.",
+    "downloadTemplate": "تحميل النموذج الفارغ (.xlsx)",
+    "step2": "رفع الملف المعبّأ",
+    "dropZone": "انقر لاختيار ملف .xlsx",
+    "maxSize": "20 م.ب كحد أقصى",
+    "parsing": "جاري تحليل الملف…",
+    "step3": "التحقق وتأكيد الاستيراد",
+    "valid": "أسطر صالحة",
+    "invalid": "أسطر بأخطاء",
+    "fixErrorsHint": "لن يتم استيراد الأسطر التي بها أخطاء. صحّح الملف ثم ارفعه من جديد.",
+    "colStatus": "الحالة",
+    "colDp": "المديرية الإقليمية",
+    "colDetail": "التفاصيل",
+    "confirmImport": "استيراد {{count}} سطر(أسطر)",
+    "successTitle": "تم الاستيراد بنجاح",
+    "successBody": "تم تسجيل {{count}} إرسال(إرسالات).",
+    "forbiddenTitle": "وصول مقيد",
+    "forbiddenBody": "يمكن للمدير الجهوي والمديرين الإقليميين فقط استيراد البيانات.",
+    "errEmpty": "الملف لا يحتوي على أسطر قابلة للمعالجة.",
+    "errParse": "تعذّرت قراءة الملف",
+    "errImport": "فشل الاستيراد",
+    "errCodeMissing": "رمز المديرية مفقود",
+    "errCodeUnknown": "الرمز « {{code}} » غير معروف",
+    "errNotYourDp": "لا يمكنك استيراد بيانات إلا لمديريتك",
+    "errYear": "السنة غير صحيحة",
+    "errStatus": "الحالة غير صحيحة (brouillon | soumise | validee)"
+  }
+}
