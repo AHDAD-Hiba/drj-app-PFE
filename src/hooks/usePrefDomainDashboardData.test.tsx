@@ -76,8 +76,7 @@ beforeEach(() => {
 describe("usePrefDomainDashboardData — domain switch safety", () => {
   it("never exposes a payload whose domain differs from the currently selected domain", async () => {
     const { result, rerender } = renderHook(
-      ({ domain }: { domain: string }) =>
-        usePrefDomainDashboardData("direction-1", 2026, domain),
+      ({ domain }: { domain: string }) => usePrefDomainDashboardData("direction-1", 2026, domain),
       { initialProps: { domain: "JEUNESSE" } },
     );
 
@@ -91,7 +90,9 @@ describe("usePrefDomainDashboardData — domain switch safety", () => {
     // `__marker` is a test-only fixture field, not part of the real
     // DashboardData contract — cast is needed here now that `dashboardData`
     // is properly typed as `PrefDomainDashboardData | null`.
-    expect((result.current.dashboardData as { __marker?: string } | null)?.__marker).toBe("JEUNESSE");
+    expect((result.current.dashboardData as { __marker?: string } | null)?.__marker).toBe(
+      "JEUNESSE",
+    );
 
     // Switch the filter to Infrastructure. The Infrastructure fetch is
     // deliberately left pending here to reproduce the exact window in which
@@ -100,7 +101,9 @@ describe("usePrefDomainDashboardData — domain switch safety", () => {
 
     // Keep the previous Jeunesse payload visible, but never pair it with
     // the newly selected domain — Content must use `contentDomain`.
-    expect((result.current.dashboardData as { __marker?: string } | null)?.__marker).toBe("JEUNESSE");
+    expect((result.current.dashboardData as { __marker?: string } | null)?.__marker).toBe(
+      "JEUNESSE",
+    );
     expect(result.current.contentDomain).toBe("JEUNESSE");
     expect(result.current.isDomainSynced).toBe(false);
     expect(result.current.isLoading).toBe(true);
@@ -130,6 +133,8 @@ describe("usePrefDomainDashboardData — domain switch safety", () => {
     });
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
-    expect((result.current.dashboardData as { __marker?: string } | null)?.__marker).toBe("JEUNESSE");
+    expect((result.current.dashboardData as { __marker?: string } | null)?.__marker).toBe(
+      "JEUNESSE",
+    );
   });
 });

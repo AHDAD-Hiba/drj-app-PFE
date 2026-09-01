@@ -1,12 +1,6 @@
 import { regionalDashboardServices } from "./regionalDashboardServices";
 
-export const REGIONAL_SCORE_DOMAINS = [
-  "JEUNESSE",
-  "INFRA",
-  "FEMME",
-  "PE",
-  "CRECHES",
-] as const;
+export const REGIONAL_SCORE_DOMAINS = ["JEUNESSE", "INFRA", "FEMME", "PE", "CRECHES"] as const;
 
 export type RegionalScoreDomain = (typeof REGIONAL_SCORE_DOMAINS)[number];
 

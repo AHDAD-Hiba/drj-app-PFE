@@ -1,8 +1,4 @@
-import {
-  computeCompleteness,
-  countCompleted,
-  hasText,
-} from '@/lib/formSchema';
+import { computeCompleteness, countCompleted, hasText } from "@/lib/formSchema";
 
 export interface CrCompletenessData {
   demandes: any[];
@@ -21,15 +17,23 @@ export interface CrCompletenessData {
 }
 
 // Helper local pour accepter le "0" comme valeur valide
-const hasValue = (val: any): boolean => 
-  val !== undefined && val !== null && val !== '';
+const hasValue = (val: any): boolean => val !== undefined && val !== null && val !== "";
 
 export function computeCrCompleteness(data: CrCompletenessData): number {
-  const { 
-    demandes = [], traitement = [],
-    statsInfra = [], mouvements = [], partenariats = [], controle = [], cadres = [], label = [],
-    statsEnfants = [], activites = [], formations = [],
-    analyses = [], sondages = []
+  const {
+    demandes = [],
+    traitement = [],
+    statsInfra = [],
+    mouvements = [],
+    partenariats = [],
+    controle = [],
+    cadres = [],
+    label = [],
+    statsEnfants = [],
+    activites = [],
+    formations = [],
+    analyses = [],
+    sondages = [],
   } = data;
 
   const stepCompletions = [
@@ -45,7 +49,12 @@ export function computeCrCompleteness(data: CrCompletenessData): number {
 
     // --- ÉTAPE 2 : Infrastructures & Contrôle (البنية التحتية والمراقبة) ---
     countCompleted([
-      statsInfra.length > 0 || mouvements.length > 0 || partenariats.length > 0 || controle.length > 0 || cadres.length > 0 || label.length > 0,
+      statsInfra.length > 0 ||
+        mouvements.length > 0 ||
+        partenariats.length > 0 ||
+        controle.length > 0 ||
+        cadres.length > 0 ||
+        label.length > 0,
       statsInfra.some((s) => hasValue(s.nombre_creches_creees)),
       statsInfra.some((s) => hasValue(s.nombre_creches_qualifiees)),
       statsInfra.some((s) => hasValue(s.nombre_creches_equipees)),

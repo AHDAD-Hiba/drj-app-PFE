@@ -1,8 +1,12 @@
-import { useTranslation } from 'react-i18next';
-import { Calendar } from 'lucide-react';
+import { useTranslation } from "react-i18next";
+import { Calendar } from "lucide-react";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from '@/components/ui/select';
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 /** Dynamically computed campaign years: current year and the two previous years. */
 const CURRENT_YEAR = new Date().getFullYear();
@@ -29,7 +33,7 @@ export const YearSwitcher = ({ value, onChange, className }: Props) => {
         <SelectContent>
           {AVAILABLE_YEARS.map((y) => (
             <SelectItem key={y} value={String(y)}>
-              {t('common.year')} {y}
+              {t("common.year")} {y}
             </SelectItem>
           ))}
         </SelectContent>

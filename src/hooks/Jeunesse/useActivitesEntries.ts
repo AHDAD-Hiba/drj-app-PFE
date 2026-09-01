@@ -1,7 +1,7 @@
-import { useEntityEntries, BaseEntry } from '@/hooks/common/useEntityEntries';
+import { useEntityEntries, BaseEntry } from "@/hooks/common/useEntityEntries";
 
 export interface ActiviteEntry extends BaseEntry {
-  type_activite: 'permanente' | 'rayonnante';
+  type_activite: "permanente" | "rayonnante";
   nombre_associations: number;
   nombre_clubs: number;
   nombre_conventions: number;
@@ -37,13 +37,13 @@ const mapRowToEntry = (row: any, local_id: string): ActiviteEntry => ({
   renforcement_capacites: Number(row.renforcement_capacites) || 0,
 });
 
-export function useActivitesEntries(rapportId: string | null , options?: { enabled?: boolean }) {
+export function useActivitesEntries(rapportId: string | null, options?: { enabled?: boolean }) {
   return useEntityEntries<ActiviteEntry>({
     rapportId,
-    tableName: 'activites',
+    tableName: "activites",
     buildPayload,
     mapRowToEntry,
-    buildConflictTarget: () => 'rapport_id,type_activite',
+    buildConflictTarget: () => "rapport_id,type_activite",
     enabled: options?.enabled ?? true,
   });
 }

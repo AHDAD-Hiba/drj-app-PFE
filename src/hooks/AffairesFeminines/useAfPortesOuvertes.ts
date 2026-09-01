@@ -1,4 +1,4 @@
-import { useEntityEntries, BaseEntry } from '../common/useEntityEntries';
+import { useEntityEntries, BaseEntry } from "../common/useEntityEntries";
 
 export interface AfPortesOuvertesEntry extends BaseEntry {
   etablissement_id: string;
@@ -23,22 +23,23 @@ const buildPayload = (entry: AfPortesOuvertesEntry, rId: string) => ({
 const mapRowToEntry = (row: any, local_id: string): AfPortesOuvertesEntry => ({
   local_id,
   id: row.id,
-  etablissement_id: row.etablissement_id ?? '',
-  type_activite_id: row.type_activite_id ?? '',
-  contenu_activite: row.contenu_activite ?? '',
+  etablissement_id: row.etablissement_id ?? "",
+  type_activite_id: row.type_activite_id ?? "",
+  contenu_activite: row.contenu_activite ?? "",
   nombre_beneficiaires: row.nombre_beneficiaires ?? 0,
-  partenaires: row.partenaires ?? '',
-  evaluation: row.evaluation ?? '',
+  partenaires: row.partenaires ?? "",
+  evaluation: row.evaluation ?? "",
 });
 
 export function useAfPortesOuvertes(rapportId: string | null, options?: { enabled?: boolean }) {
   return useEntityEntries<AfPortesOuvertesEntry>({
     rapportId,
-    tableName: 'af_portes_ouvertes',
+    tableName: "af_portes_ouvertes",
     buildPayload,
     mapRowToEntry,
     enabled: options?.enabled ?? true,
     // 🛡️ Valide si un établissement ou du contenu est spécifié
-    validateBeforeSave: (entry) => Boolean(entry.etablissement_id || entry.contenu_activite?.trim()),
+    validateBeforeSave: (entry) =>
+      Boolean(entry.etablissement_id || entry.contenu_activite?.trim()),
   });
 }

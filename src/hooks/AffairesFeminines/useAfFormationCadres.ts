@@ -1,4 +1,4 @@
-import { useEntityEntries, BaseEntry } from '../common/useEntityEntries';
+import { useEntityEntries, BaseEntry } from "../common/useEntityEntries";
 
 export interface AfFormationCadreEntry extends BaseEntry {
   nombre_cadres: number;
@@ -22,20 +22,21 @@ const mapRowToEntry = (row: any, local_id: string): AfFormationCadreEntry => ({
   local_id,
   id: row.id,
   nombre_cadres: Number(row.nombre_cadres) ?? 0,
-  domaine_formation: row.domaine_formation ?? '',
+  domaine_formation: row.domaine_formation ?? "",
   duree_valeur: Number(row.duree_valeur) ?? 0,
-  unite_duree: row.unite_duree ?? '',
-  observations: row.observations ?? '',
+  unite_duree: row.unite_duree ?? "",
+  observations: row.observations ?? "",
 });
 
 export function useAfFormationCadres(rapportId: string | null, options?: { enabled?: boolean }) {
   return useEntityEntries<AfFormationCadreEntry>({
     rapportId,
-    tableName: 'af_formation_cadres',
+    tableName: "af_formation_cadres",
     buildPayload,
     mapRowToEntry,
     enabled: options?.enabled ?? true,
     // 🛡️ Valide si un domaine de formation ou un nombre de cadres est saisi
-    validateBeforeSave: (entry) => Boolean(entry.domaine_formation?.trim() || entry.nombre_cadres > 0),
+    validateBeforeSave: (entry) =>
+      Boolean(entry.domaine_formation?.trim() || entry.nombre_cadres > 0),
   });
 }

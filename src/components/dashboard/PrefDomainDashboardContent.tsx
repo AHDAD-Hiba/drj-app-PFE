@@ -129,8 +129,16 @@ export function PrefDomainDashboardContent({
       const data = dashboardData as JeunesseDashboardData;
       return (
         <>
-          <PrefDomainDashboardSection3Jeunesse data={data.section3.repartitionProgrammes} lang={lang} t={t} />
-          <PrefDomainDashboardSection4Jeunesse data={data.evolution.trimestriel} lang={lang} t={t} />
+          <PrefDomainDashboardSection3Jeunesse
+            data={data.section3.repartitionProgrammes}
+            lang={lang}
+            t={t}
+          />
+          <PrefDomainDashboardSection4Jeunesse
+            data={data.evolution.trimestriel}
+            lang={lang}
+            t={t}
+          />
         </>
       );
     }
@@ -219,7 +227,10 @@ export function PrefDomainDashboardContent({
             <section className="space-y-4">
               <div>
                 <h2 className="text-lg font-bold text-foreground">
-                  {t("prefDomainDashboard.charts.axeTitle", "Répartition des bénéficiaires par axe")}
+                  {t(
+                    "prefDomainDashboard.charts.axeTitle",
+                    "Répartition des bénéficiaires par axe",
+                  )}
                 </h2>
               </div>
 
@@ -231,16 +242,28 @@ export function PrefDomainDashboardContent({
                       {t("prefDomainDashboard.charts.volumeTitle", "Volume Global par Programme")}
                     </h3>
                     <p className="text-xs text-muted-foreground mt-0.5">
-                      {t("prefDomainDashboard.charts.volumeSubtitle", "Nombre absolu de bénéficiaires impactés")}
+                      {t(
+                        "prefDomainDashboard.charts.volumeSubtitle",
+                        "Nombre absolu de bénéficiaires impactés",
+                      )}
                     </p>
                   </div>
                   <div className="h-[250px] w-full mt-auto">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart
                         data={data.section3.repartitionProgrammes}
-                        margin={{ top: 10, right: lang === "ar" ? 45 : 10, left: lang === "ar" ? 10 : 30, bottom: 20 }}
+                        margin={{
+                          top: 10,
+                          right: lang === "ar" ? 45 : 10,
+                          left: lang === "ar" ? 10 : 30,
+                          bottom: 20,
+                        }}
                       >
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+                        <CartesianGrid
+                          strokeDasharray="3 3"
+                          vertical={false}
+                          stroke="hsl(var(--border))"
+                        />
                         <XAxis
                           dataKey="name"
                           axisLine={{ stroke: "hsl(var(--muted-foreground))" }}
@@ -249,7 +272,12 @@ export function PrefDomainDashboardContent({
                           dy={10}
                           interval={0}
                           height={36}
-                          tickFormatter={(value) => t(`prefDomainDashboard.programs.${String(value).toLowerCase()}`, String(value)) as string}
+                          tickFormatter={(value) =>
+                            t(
+                              `prefDomainDashboard.programs.${String(value).toLowerCase()}`,
+                              String(value),
+                            ) as string
+                          }
                         />
                         <YAxis
                           orientation="left"
@@ -286,19 +314,34 @@ export function PrefDomainDashboardContent({
                 <Card className="p-5 flex flex-col">
                   <div className="mb-4">
                     <h3 className="text-sm font-bold text-foreground">
-                      {t("prefDomainDashboard.charts.mixityTitle", "Mixité H / F par Programme (%)")}
+                      {t(
+                        "prefDomainDashboard.charts.mixityTitle",
+                        "Mixité H / F par Programme (%)",
+                      )}
                     </h3>
                     <p className="text-xs text-muted-foreground mt-0.5">
-                      {t("prefDomainDashboard.charts.mixitySubtitle", "Taux de féminisation comparatif")}
+                      {t(
+                        "prefDomainDashboard.charts.mixitySubtitle",
+                        "Taux de féminisation comparatif",
+                      )}
                     </p>
                   </div>
                   <div className="h-[250px] w-full mt-auto">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart
                         data={data.section3.repartitionProgrammes}
-                        margin={{ top: 10, right: lang === "ar" ? 45 : 10, left: lang === "ar" ? 10 : 30, bottom: 20 }}
+                        margin={{
+                          top: 10,
+                          right: lang === "ar" ? 45 : 10,
+                          left: lang === "ar" ? 10 : 30,
+                          bottom: 20,
+                        }}
                       >
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+                        <CartesianGrid
+                          strokeDasharray="3 3"
+                          vertical={false}
+                          stroke="hsl(var(--border))"
+                        />
                         <XAxis
                           dataKey="name"
                           axisLine={{ stroke: "hsl(var(--muted-foreground))" }}
@@ -307,7 +350,12 @@ export function PrefDomainDashboardContent({
                           dy={10}
                           interval={0}
                           height={36}
-                          tickFormatter={(value) => t(`prefDomainDashboard.programs.${String(value).toLowerCase()}`, String(value)) as string}
+                          tickFormatter={(value) =>
+                            t(
+                              `prefDomainDashboard.programs.${String(value).toLowerCase()}`,
+                              String(value),
+                            ) as string
+                          }
                         />
                         <YAxis
                           orientation="left"
@@ -331,7 +379,10 @@ export function PrefDomainDashboardContent({
                           }}
                           formatter={(value: number) => [`${value}%`, ""]}
                         />
-                        <Legend wrapperStyle={{ fontSize: "11px", paddingTop: "10px" }} iconType="circle" />
+                        <Legend
+                          wrapperStyle={{ fontSize: "11px", paddingTop: "10px" }}
+                          iconType="circle"
+                        />
                         <Bar
                           dataKey="hommesPct"
                           name={t("prefDomainDashboard.charts.men", "Hommes")}
@@ -357,10 +408,16 @@ export function PrefDomainDashboardContent({
                 <Card className="p-5 flex flex-col">
                   <div className="mb-4">
                     <h3 className="text-sm font-bold text-foreground">
-                      {t("prefDomainDashboard.charts.coverageTitle", "Couverture Territorial (Urbain / Rural)")}
+                      {t(
+                        "prefDomainDashboard.charts.coverageTitle",
+                        "Couverture Territorial (Urbain / Rural)",
+                      )}
                     </h3>
                     <p className="text-xs text-muted-foreground mt-0.5">
-                      {t("prefDomainDashboard.charts.coverageSubtitle", "Analyse incluant les données estimées")}
+                      {t(
+                        "prefDomainDashboard.charts.coverageSubtitle",
+                        "Analyse incluant les données estimées",
+                      )}
                     </p>
                   </div>
                   <div className="h-[250px] w-full mt-auto">
@@ -369,7 +426,11 @@ export function PrefDomainDashboardContent({
                         data={data.section3.repartitionProgrammes}
                         margin={{ top: 10, right: 10, left: 45, bottom: 20 }}
                       >
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+                        <CartesianGrid
+                          strokeDasharray="3 3"
+                          vertical={false}
+                          stroke="hsl(var(--border))"
+                        />
                         <XAxis
                           dataKey="name"
                           axisLine={{ stroke: "hsl(var(--muted-foreground))" }}
@@ -378,7 +439,12 @@ export function PrefDomainDashboardContent({
                           dy={10}
                           interval={0}
                           height={36}
-                          tickFormatter={(value) => t(`prefDomainDashboard.programs.${String(value).toLowerCase()}`, String(value)) as string}
+                          tickFormatter={(value) =>
+                            t(
+                              `prefDomainDashboard.programs.${String(value).toLowerCase()}`,
+                              String(value),
+                            ) as string
+                          }
                         />
                         <YAxis
                           orientation="left"
@@ -402,7 +468,10 @@ export function PrefDomainDashboardContent({
                           }}
                           formatter={(value: number) => [`${value}%`, ""]}
                         />
-                        <Legend wrapperStyle={{ fontSize: "11px", paddingTop: "10px" }} iconType="square" />
+                        <Legend
+                          wrapperStyle={{ fontSize: "11px", paddingTop: "10px" }}
+                          iconType="square"
+                        />
                         <Bar
                           dataKey="urbainPct"
                           name={t("prefDomainDashboard.charts.urban", "Urbain")}
@@ -430,17 +499,26 @@ export function PrefDomainDashboardContent({
             <section className="space-y-4">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-bold text-foreground">
-                  {t("prefDomainDashboard.charts.evolutionTitle", "Évolution trimestrielle des bénéficiaires")}
+                  {t(
+                    "prefDomainDashboard.charts.evolutionTitle",
+                    "Évolution trimestrielle des bénéficiaires",
+                  )}
                 </h2>
               </div>
 
               <Card className="p-5">
                 <div className="mb-6">
                   <h3 className="text-sm font-bold text-foreground">
-                    {t("prefDomainDashboard.charts.evolutionCardTitle", "Trajectoire des performances par programme")}
+                    {t(
+                      "prefDomainDashboard.charts.evolutionCardTitle",
+                      "Trajectoire des performances par programme",
+                    )}
                   </h3>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    {t("prefDomainDashboard.charts.evolutionCardSubtitle", "Évolution du nombre de bénéficiaires (T1 à T4) pour les axes éligibles")}
+                    {t(
+                      "prefDomainDashboard.charts.evolutionCardSubtitle",
+                      "Évolution du nombre de bénéficiaires (T1 à T4) pour les axes éligibles",
+                    )}
                   </p>
                 </div>
 
@@ -473,7 +551,12 @@ export function PrefDomainDashboardContent({
                         dy={10}
                         interval={0}
                         height={40}
-                        tickFormatter={(value) => t(`prefDomainDashboard.quarters.${String(value).toLowerCase()}`, String(value)) as string}
+                        tickFormatter={(value) =>
+                          t(
+                            `prefDomainDashboard.quarters.${String(value).toLowerCase()}`,
+                            String(value),
+                          ) as string
+                        }
                       />
                       <YAxis
                         orientation="left"

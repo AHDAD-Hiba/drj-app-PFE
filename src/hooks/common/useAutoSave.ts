@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from "react";
 
 export interface UseAutoSaveOptions<T> {
   enabled?: boolean;
@@ -20,11 +20,7 @@ export function useAutoSave<T>(
   onSave?: (values: T) => Promise<boolean>,
   options: UseAutoSaveOptions<T> = {},
 ) {
-  const {
-    enabled = true,
-    debounceMs = 1500,
-    compare = defaultCompare,
-  } = options;
+  const { enabled = true, debounceMs = 1500, compare = defaultCompare } = options;
 
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const previousValuesRef = useRef<T | null>(null);

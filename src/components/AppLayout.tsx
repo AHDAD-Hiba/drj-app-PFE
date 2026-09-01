@@ -29,20 +29,36 @@ import {
 
 export const AppLayout = ({ children }: { children: ReactNode }) => {
   const { t } = useTranslation();
-  const { utilisateur, signOut, role, isRegional, isPrefectoral, isEquipeRegional, isAdmin } = useAuth();
+  const { utilisateur, signOut, role, isRegional, isPrefectoral, isEquipeRegional, isAdmin } =
+    useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
   const navItems = [
-  { path: "/admin/users", label: t("nav.users"), icon: ShieldCheck, show: isAdmin },
-  { path: "/admin/etablissements", label: t("nav.etablissements"), icon: Building, show: isAdmin },
-  { path: "/admin/audit", label: t("nav.audit"), icon: History, show: isAdmin },
-  { path: "/saisie", label: t("nav.entry"), icon: FilePlus2, show: isPrefectoral },
-  { path: "/domain-dashboard", label: t("nav.domaines"), icon: Layers, show: !isEquipeRegional && !isAdmin },
-  { path: "/carte", label: t("nav.map"), icon: Map, show: !isEquipeRegional && !isAdmin },
-  { path: "/directions", label: t("nav.directions"), icon: Building2, show: isRegional },
-  { path: "/regional-dashboard", label: t("nav.reports", "Rapports"), icon: LayoutDashboard, show: isEquipeRegional },
-];
+    { path: "/admin/users", label: t("nav.users"), icon: ShieldCheck, show: isAdmin },
+    {
+      path: "/admin/etablissements",
+      label: t("nav.etablissements"),
+      icon: Building,
+      show: isAdmin,
+    },
+    { path: "/admin/audit", label: t("nav.audit"), icon: History, show: isAdmin },
+    { path: "/saisie", label: t("nav.entry"), icon: FilePlus2, show: isPrefectoral },
+    {
+      path: "/domain-dashboard",
+      label: t("nav.domaines"),
+      icon: Layers,
+      show: !isEquipeRegional && !isAdmin,
+    },
+    { path: "/carte", label: t("nav.map"), icon: Map, show: !isEquipeRegional && !isAdmin },
+    { path: "/directions", label: t("nav.directions"), icon: Building2, show: isRegional },
+    {
+      path: "/regional-dashboard",
+      label: t("nav.reports", "Rapports"),
+      icon: LayoutDashboard,
+      show: isEquipeRegional,
+    },
+  ];
 
   const formatDirectorName = (rawName: string) => {
     if (!rawName) return "";

@@ -1,10 +1,10 @@
 /** Validation d'une valeur numérique : entier ≥ 0, < 10 millions. */
 export const validateNumericField = (raw: string): { value: number; error: string | null } => {
-  if (raw === '' || raw === null || raw === undefined) return { value: 0, error: null };
-  const n = Number(String(raw).replace(/\s/g, '').replace(',', '.'));
-  if (!Number.isFinite(n)) return { value: 0, error: 'invalid' };
-  if (n < 0) return { value: 0, error: 'negative' };
-  if (n > 10_000_000) return { value: 0, error: 'tooLarge' };
+  if (raw === "" || raw === null || raw === undefined) return { value: 0, error: null };
+  const n = Number(String(raw).replace(/\s/g, "").replace(",", "."));
+  if (!Number.isFinite(n)) return { value: 0, error: "invalid" };
+  if (n < 0) return { value: 0, error: "negative" };
+  if (n > 10_000_000) return { value: 0, error: "tooLarge" };
   if (!Number.isInteger(n)) return { value: Math.round(n), error: null };
   return { value: n, error: null };
 };
@@ -21,9 +21,9 @@ export const clampPercentage = (value: number): number =>
 
 export const hasValue = (value: unknown): boolean => {
   if (value === null || value === undefined) return false;
-  if (typeof value === 'string') return value.trim().length > 0;
-  if (typeof value === 'number') return Number.isFinite(value);
-  if (typeof value === 'boolean') return value;
+  if (typeof value === "string") return value.trim().length > 0;
+  if (typeof value === "number") return Number.isFinite(value);
+  if (typeof value === "boolean") return value;
   if (Array.isArray(value)) return value.length > 0;
   return true;
 };
@@ -32,7 +32,7 @@ export const hasPositiveNumber = (value: number | null | undefined): boolean =>
   Number(value ?? 0) > 0;
 
 export const hasText = (value?: string | null): boolean =>
-  typeof value === 'string' && value.trim().length > 0;
+  typeof value === "string" && value.trim().length > 0;
 
 export const countCompleted = (checks: boolean[]): StepCompletion => ({
   completedFields: checks.filter(Boolean).length,

@@ -1,5 +1,5 @@
-import { useState, useEffect, useMemo } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { useState, useEffect, useMemo } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 export interface Etablissement {
   id: string;
@@ -25,31 +25,31 @@ export function useAfEtablissements(directionId?: string | null) {
       try {
         setLoading(true);
         const { data, error } = await supabase
-          .from('etablissements')
-          .select('*')
-          .eq('est_actif', true)
-          .eq('direction_id', directionId)
-          .order('nom');
-          
+          .from("etablissements")
+          .select("*")
+          .eq("est_actif", true)
+          .eq("direction_id", directionId)
+          .order("nom");
+
         if (error) throw error;
         if (!cancelled) setItems((data as Etablissement[]) || []);
       } catch (err) {
-        console.error('Erreur fetch etablissements:', err);
+        console.error("Erreur fetch etablissements:", err);
       } finally {
         if (!cancelled) setLoading(false);
       }
     };
 
     fetchEtablissements();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [directionId]);
 
   // EXTRACTION DYNAMIQUE : Récupère les types uniques présents dans la BDD
   const typesDisponibles = useMemo(() => {
     const types = new Set(
-      items
-        .map((e) => e.type_etablissement)
-        .filter((t): t is string => Boolean(t))
+      items.map((e) => e.type_etablissement).filter((t): t is string => Boolean(t)),
     );
     return Array.from(types);
   }, [items]);

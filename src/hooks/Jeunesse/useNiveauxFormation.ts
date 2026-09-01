@@ -1,5 +1,5 @@
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 export interface NiveauFormation {
   id: string;
@@ -8,12 +8,17 @@ export interface NiveauFormation {
 }
 
 export function useNiveauxFormation() {
-  const { data: items = [], isLoading, error, refetch } = useQuery({
-    queryKey: ['ref_niveaux_formation'],
+  const {
+    data: items = [],
+    isLoading,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: ["ref_niveaux_formation"],
     queryFn: async () => {
       const { data, error: err } = await supabase
-        .from('niveaux_formation')
-        .select('id, nom, nom_ar');
+        .from("niveaux_formation")
+        .select("id, nom, nom_ar");
 
       if (err) throw err;
       return (data as NiveauFormation[]) || [];

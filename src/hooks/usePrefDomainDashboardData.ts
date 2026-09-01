@@ -83,13 +83,28 @@ export function usePrefDomainDashboardData(
           data = await loadInfrastructureDashboard(directionId, requestYear, selectedDomainId);
           break;
         case "FEMME":
-          data = await loadAffairesFemininesDashboard(directionId, requestYear, selectedDomainId, lang);
+          data = await loadAffairesFemininesDashboard(
+            directionId,
+            requestYear,
+            selectedDomainId,
+            lang,
+          );
           break;
         case PROTECTION_ENFANCE_DOMAIN_CODE:
-          data = await loadProtectionEnfanceDashboard(directionId, requestYear, selectedDomainId, lang);
+          data = await loadProtectionEnfanceDashboard(
+            directionId,
+            requestYear,
+            selectedDomainId,
+            lang,
+          );
           break;
         case ENFANCE_CRECHES_DOMAIN_CODE:
-          data = await loadEnfanceCrechesDashboard(directionId, requestYear, selectedDomainId, lang);
+          data = await loadEnfanceCrechesDashboard(
+            directionId,
+            requestYear,
+            selectedDomainId,
+            lang,
+          );
           break;
         case "JEUNESSE":
         default:
@@ -124,61 +139,229 @@ export function usePrefDomainDashboardData(
     switch (domain) {
       case "INFRA":
         channel
-          .on("postgres_changes", { event: "*", schema: "public", table: "infra_depenses" }, loadDashboardData)
-          .on("postgres_changes", { event: "*", schema: "public", table: "infra_eau_electricite" }, loadDashboardData)
-          .on("postgres_changes", { event: "*", schema: "public", table: "infra_projets_btp" }, loadDashboardData)
-          .on("postgres_changes", { event: "*", schema: "public", table: "infra_projets_partenariat" }, loadDashboardData)
-          .on("postgres_changes", { event: "*", schema: "public", table: "infra_projets_en_souffrance" }, loadDashboardData);
+          .on(
+            "postgres_changes",
+            { event: "*", schema: "public", table: "infra_depenses" },
+            loadDashboardData,
+          )
+          .on(
+            "postgres_changes",
+            { event: "*", schema: "public", table: "infra_eau_electricite" },
+            loadDashboardData,
+          )
+          .on(
+            "postgres_changes",
+            { event: "*", schema: "public", table: "infra_projets_btp" },
+            loadDashboardData,
+          )
+          .on(
+            "postgres_changes",
+            { event: "*", schema: "public", table: "infra_projets_partenariat" },
+            loadDashboardData,
+          )
+          .on(
+            "postgres_changes",
+            { event: "*", schema: "public", table: "infra_projets_en_souffrance" },
+            loadDashboardData,
+          );
         break;
       case "FEMME":
         channel
-          .on("postgres_changes", { event: "*", schema: "public", table: "af_inscriptions_clubs" }, loadDashboardData)
-          .on("postgres_changes", { event: "*", schema: "public", table: "af_inscriptions_ofppt" }, loadDashboardData)
-          .on("postgres_changes", { event: "*", schema: "public", table: "af_activites_sensibilisation" }, loadDashboardData)
-          .on("postgres_changes", { event: "*", schema: "public", table: "af_portes_ouvertes" }, loadDashboardData)
-          .on("postgres_changes", { event: "*", schema: "public", table: "af_formation_cadres" }, loadDashboardData)
-          .on("postgres_changes", { event: "*", schema: "public", table: "af_mise_a_jour_reseau" }, loadDashboardData)
-          .on("postgres_changes", { event: "*", schema: "public", table: "af_ressources_humaines" }, loadDashboardData)
-          .on("postgres_changes", { event: "*", schema: "public", table: "af_integration_laureates" }, loadDashboardData)
-          .on("postgres_changes", { event: "*", schema: "public", table: "af_activites_generatrices_revenus" }, loadDashboardData)
-          .on("postgres_changes", { event: "*", schema: "public", table: "af_centres_ecoute" }, loadDashboardData)
-          .on("postgres_changes", { event: "*", schema: "public", table: "af_suivi_partenariats" }, loadDashboardData)
-          .on("postgres_changes", { event: "*", schema: "public", table: "rapports" }, loadDashboardData);
+          .on(
+            "postgres_changes",
+            { event: "*", schema: "public", table: "af_inscriptions_clubs" },
+            loadDashboardData,
+          )
+          .on(
+            "postgres_changes",
+            { event: "*", schema: "public", table: "af_inscriptions_ofppt" },
+            loadDashboardData,
+          )
+          .on(
+            "postgres_changes",
+            { event: "*", schema: "public", table: "af_activites_sensibilisation" },
+            loadDashboardData,
+          )
+          .on(
+            "postgres_changes",
+            { event: "*", schema: "public", table: "af_portes_ouvertes" },
+            loadDashboardData,
+          )
+          .on(
+            "postgres_changes",
+            { event: "*", schema: "public", table: "af_formation_cadres" },
+            loadDashboardData,
+          )
+          .on(
+            "postgres_changes",
+            { event: "*", schema: "public", table: "af_mise_a_jour_reseau" },
+            loadDashboardData,
+          )
+          .on(
+            "postgres_changes",
+            { event: "*", schema: "public", table: "af_ressources_humaines" },
+            loadDashboardData,
+          )
+          .on(
+            "postgres_changes",
+            { event: "*", schema: "public", table: "af_integration_laureates" },
+            loadDashboardData,
+          )
+          .on(
+            "postgres_changes",
+            { event: "*", schema: "public", table: "af_activites_generatrices_revenus" },
+            loadDashboardData,
+          )
+          .on(
+            "postgres_changes",
+            { event: "*", schema: "public", table: "af_centres_ecoute" },
+            loadDashboardData,
+          )
+          .on(
+            "postgres_changes",
+            { event: "*", schema: "public", table: "af_suivi_partenariats" },
+            loadDashboardData,
+          )
+          .on(
+            "postgres_changes",
+            { event: "*", schema: "public", table: "rapports" },
+            loadDashboardData,
+          );
         break;
       case PROTECTION_ENFANCE_DOMAIN_CODE:
         channel
-          .on("postgres_changes", { event: "*", schema: "public", table: "pe_statistiques_demographiques" }, loadDashboardData)
-          .on("postgres_changes", { event: "*", schema: "public", table: "pe_education" }, loadDashboardData)
-          .on("postgres_changes", { event: "*", schema: "public", table: "pe_liberte_surveillee" }, loadDashboardData)
-          .on("postgres_changes", { event: "*", schema: "public", table: "pe_rapports_exceptionnels" }, loadDashboardData)
-          .on("postgres_changes", { event: "*", schema: "public", table: "pe_activites" }, loadDashboardData)
-          .on("postgres_changes", { event: "*", schema: "public", table: "rapports" }, loadDashboardData);
+          .on(
+            "postgres_changes",
+            { event: "*", schema: "public", table: "pe_statistiques_demographiques" },
+            loadDashboardData,
+          )
+          .on(
+            "postgres_changes",
+            { event: "*", schema: "public", table: "pe_education" },
+            loadDashboardData,
+          )
+          .on(
+            "postgres_changes",
+            { event: "*", schema: "public", table: "pe_liberte_surveillee" },
+            loadDashboardData,
+          )
+          .on(
+            "postgres_changes",
+            { event: "*", schema: "public", table: "pe_rapports_exceptionnels" },
+            loadDashboardData,
+          )
+          .on(
+            "postgres_changes",
+            { event: "*", schema: "public", table: "pe_activites" },
+            loadDashboardData,
+          )
+          .on(
+            "postgres_changes",
+            { event: "*", schema: "public", table: "rapports" },
+            loadDashboardData,
+          );
         break;
       case ENFANCE_CRECHES_DOMAIN_CODE:
         channel
-          .on("postgres_changes", { event: "*", schema: "public", table: "cr_statistiques_enfants" }, loadDashboardData)
-          .on("postgres_changes", { event: "*", schema: "public", table: "cr_demandes_licences" }, loadDashboardData)
-          .on("postgres_changes", { event: "*", schema: "public", table: "cr_mouvements_fermetures" }, loadDashboardData)
-          .on("postgres_changes", { event: "*", schema: "public", table: "rapports" }, loadDashboardData);
+          .on(
+            "postgres_changes",
+            { event: "*", schema: "public", table: "cr_statistiques_enfants" },
+            loadDashboardData,
+          )
+          .on(
+            "postgres_changes",
+            { event: "*", schema: "public", table: "cr_demandes_licences" },
+            loadDashboardData,
+          )
+          .on(
+            "postgres_changes",
+            { event: "*", schema: "public", table: "cr_mouvements_fermetures" },
+            loadDashboardData,
+          )
+          .on(
+            "postgres_changes",
+            { event: "*", schema: "public", table: "rapports" },
+            loadDashboardData,
+          );
         break;
       case "JEUNESSE":
       default:
         channel
-          .on("postgres_changes", { event: "*", schema: "public", table: "activites" }, loadDashboardData)
-          .on("postgres_changes", { event: "*", schema: "public", table: "participants" }, loadDashboardData)
-          .on("postgres_changes", { event: "*", schema: "public", table: "suivi_remplissage" }, loadDashboardData)
-          .on("postgres_changes", { event: "*", schema: "public", table: "rapports" }, loadDashboardData)
-          .on("postgres_changes", { event: "*", schema: "public", table: "encadrements" }, loadDashboardData)
-          .on("postgres_changes", { event: "*", schema: "public", table: "formations" }, loadDashboardData)
-          .on("postgres_changes", { event: "*", schema: "public", table: "statistiques_formation" }, loadDashboardData)
-          .on("postgres_changes", { event: "*", schema: "public", table: "partenariats" }, loadDashboardData)
-          .on("postgres_changes", { event: "*", schema: "public", table: "activites_insertion" }, loadDashboardData)
-          .on("postgres_changes", { event: "*", schema: "public", table: "stats_insertion" }, loadDashboardData)
-          .on("postgres_changes", { event: "*", schema: "public", table: "festivals" }, loadDashboardData)
-          .on("postgres_changes", { event: "*", schema: "public", table: "statistiques_festivals" }, loadDashboardData)
-          .on("postgres_changes", { event: "*", schema: "public", table: "etablissements" }, loadDashboardData)
-          .on("postgres_changes", { event: "*", schema: "public", table: "fermetures" }, loadDashboardData)
-          .on("postgres_changes", { event: "*", schema: "public", table: "suivi_projets" }, loadDashboardData);
+          .on(
+            "postgres_changes",
+            { event: "*", schema: "public", table: "activites" },
+            loadDashboardData,
+          )
+          .on(
+            "postgres_changes",
+            { event: "*", schema: "public", table: "participants" },
+            loadDashboardData,
+          )
+          .on(
+            "postgres_changes",
+            { event: "*", schema: "public", table: "suivi_remplissage" },
+            loadDashboardData,
+          )
+          .on(
+            "postgres_changes",
+            { event: "*", schema: "public", table: "rapports" },
+            loadDashboardData,
+          )
+          .on(
+            "postgres_changes",
+            { event: "*", schema: "public", table: "encadrements" },
+            loadDashboardData,
+          )
+          .on(
+            "postgres_changes",
+            { event: "*", schema: "public", table: "formations" },
+            loadDashboardData,
+          )
+          .on(
+            "postgres_changes",
+            { event: "*", schema: "public", table: "statistiques_formation" },
+            loadDashboardData,
+          )
+          .on(
+            "postgres_changes",
+            { event: "*", schema: "public", table: "partenariats" },
+            loadDashboardData,
+          )
+          .on(
+            "postgres_changes",
+            { event: "*", schema: "public", table: "activites_insertion" },
+            loadDashboardData,
+          )
+          .on(
+            "postgres_changes",
+            { event: "*", schema: "public", table: "stats_insertion" },
+            loadDashboardData,
+          )
+          .on(
+            "postgres_changes",
+            { event: "*", schema: "public", table: "festivals" },
+            loadDashboardData,
+          )
+          .on(
+            "postgres_changes",
+            { event: "*", schema: "public", table: "statistiques_festivals" },
+            loadDashboardData,
+          )
+          .on(
+            "postgres_changes",
+            { event: "*", schema: "public", table: "etablissements" },
+            loadDashboardData,
+          )
+          .on(
+            "postgres_changes",
+            { event: "*", schema: "public", table: "fermetures" },
+            loadDashboardData,
+          )
+          .on(
+            "postgres_changes",
+            { event: "*", schema: "public", table: "suivi_projets" },
+            loadDashboardData,
+          );
         break;
     }
 

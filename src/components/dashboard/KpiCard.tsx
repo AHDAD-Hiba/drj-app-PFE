@@ -25,16 +25,18 @@ export const KpiCard = ({
   return (
     <div className="relative p-5 rounded-2xl border border-border/60 bg-card hover:shadow-md transition-all min-h-[150px] flex flex-col justify-between overflow-hidden">
       <span className={`absolute inset-y-0 start-0 w-1 ${accentBarClassName}`} />
-      <div className={`h-11 w-11 rounded-xl flex items-center justify-center ${iconWrapperClassName}`}>
+      <div
+        className={`h-11 w-11 rounded-xl flex items-center justify-center ${iconWrapperClassName}`}
+      >
         {icon}
       </div>
       <div className="space-y-1">
-        <div className={`text-3xl font-extrabold tracking-tight text-foreground tabular-nums ${valueClassName ?? ""}`}>
+        <div
+          className={`text-3xl font-extrabold tracking-tight text-foreground tabular-nums ${valueClassName ?? ""}`}
+        >
           {value}
         </div>
-        <div className="text-sm text-muted-foreground leading-snug">
-          {label}
-        </div>
+        <div className="text-sm text-muted-foreground leading-snug">{label}</div>
       </div>
     </div>
   );

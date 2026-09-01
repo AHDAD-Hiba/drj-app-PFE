@@ -114,13 +114,17 @@ export const PrefDomainDashboardSection3ProtectionEnfance = ({
                   ))}
                 </Pie>
                 <Tooltip
-                  contentStyle={{ borderRadius: "8px", border: "1px solid hsl(var(--border))", fontSize: "12px" }}
+                  contentStyle={{
+                    borderRadius: "8px",
+                    border: "1px solid hsl(var(--border))",
+                    fontSize: "12px",
+                  }}
                   formatter={(value: number) => fmtNum(value, lang)}
                 />
-                <Legend 
-                  wrapperStyle={{ fontSize: "11px", paddingTop: "10px" }} 
-                  iconType="circle" 
-                  formatter={(value: string) => 
+                <Legend
+                  wrapperStyle={{ fontSize: "11px", paddingTop: "10px" }}
+                  iconType="circle"
+                  formatter={(value: string) =>
                     t(`prefDomainDashboard.protectionEnfance.priseEnChargeTypes.${value}`, value)
                   }
                 />
@@ -133,7 +137,10 @@ export const PrefDomainDashboardSection3ProtectionEnfance = ({
         <Card className="p-5 flex flex-col">
           <div className="mb-4">
             <h3 className="text-sm font-bold text-foreground">
-              {t("prefDomainDashboard.protectionEnfance.section3.incidentsTitle", "Incidents par type")}
+              {t(
+                "prefDomainDashboard.protectionEnfance.section3.incidentsTitle",
+                "Incidents par type",
+              )}
             </h3>
             <p className="text-xs text-muted-foreground mt-0.5">
               {t(
@@ -149,7 +156,11 @@ export const PrefDomainDashboardSection3ProtectionEnfance = ({
                 layout="vertical"
                 margin={{ top: 10, right: 20, left: lang === "ar" ? 30 : 10, bottom: 20 }}
               >
-                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="hsl(var(--border))" />
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  horizontal={false}
+                  stroke="hsl(var(--border))"
+                />
                 <XAxis
                   type="number"
                   allowDecimals={false}
@@ -164,17 +175,29 @@ export const PrefDomainDashboardSection3ProtectionEnfance = ({
                   orientation="left"
                   axisLine={{ stroke: "hsl(var(--muted-foreground))" }}
                   tickLine={{ stroke: "hsl(var(--muted-foreground))" }}
-                  width={100} 
-                  tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))", textAnchor: "end", dx: lang === "ar" ? -50 : 0 }}
+                  width={100}
+                  tick={{
+                    fontSize: 11,
+                    fill: "hsl(var(--muted-foreground))",
+                    textAnchor: "end",
+                    dx: lang === "ar" ? -50 : 0,
+                  }}
                 />
                 <Tooltip
                   cursor={{ fill: "hsl(var(--muted)/0.4)" }}
-                  contentStyle={{ borderRadius: "8px", border: "1px solid hsl(var(--border))", fontSize: "12px" }}
+                  contentStyle={{
+                    borderRadius: "8px",
+                    border: "1px solid hsl(var(--border))",
+                    fontSize: "12px",
+                  }}
                   formatter={(value: number) => fmtNum(value, lang)}
                 />
                 <Bar dataKey="value" radius={[0, 4, 4, 0]} maxBarSize={40}>
                   {incidentsParType.map((entry, idx) => (
-                    <Cell key={entry.id} fill={CATEGORICAL_COLORS[idx % CATEGORICAL_COLORS.length]} />
+                    <Cell
+                      key={entry.id}
+                      fill={CATEGORICAL_COLORS[idx % CATEGORICAL_COLORS.length]}
+                    />
                   ))}
                 </Bar>
               </BarChart>
@@ -183,60 +206,76 @@ export const PrefDomainDashboardSection3ProtectionEnfance = ({
         </Card>
 
         {/* Carte 3 : Bénéficiaires par domaine d'activité (Horizontal Bar) */}
-<Card className="p-5 flex flex-col">
-  <div className="mb-4">
-    <h3 className="text-sm font-bold text-foreground">
-      {t(
-        "prefDomainDashboard.protectionEnfance.activitesTitles.title",
-        "Bénéficiaires par domaine d'activité",
-      )}
-    </h3>
-    <p className="text-xs text-muted-foreground mt-0.5">
-      {t(
-        "prefDomainDashboard.protectionEnfance.activitesTitles.subtitle",
-        "Volume de bénéficiaires, par domaine d'activité",
-      )}
-    </p>
-  </div>
-  <div className="h-[250px] w-full mt-auto">
-    <ResponsiveContainer width="100%" height="100%">
-      <BarChart
-        data={beneficiairesParDomaine}
-        layout="vertical"
-        margin={{ top: 10, right: 20, left: 10, bottom: 20 }}
-      >
-        <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="hsl(var(--border))" />
-        <XAxis
-          type="number"
-          allowDecimals={false}
-          axisLine={{ stroke: "hsl(var(--muted-foreground))" }}
-          tickLine={{ stroke: "hsl(var(--muted-foreground))" }}
-          tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
-          tickFormatter={(v: number) => fmtNum(v, lang)}
-        />
-        <YAxis
-          type="category"
-          dataKey="name"
-          orientation="left"
-          axisLine={{ stroke: "hsl(var(--muted-foreground))" }}
-          tickLine={{ stroke: "hsl(var(--muted-foreground))" }}
-          width={110}
-          tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))", textAnchor: "end", dx: lang === "ar" ? -90 : 0 }}
-        />
-        <Tooltip
-          cursor={{ fill: "hsl(var(--muted)/0.4)" }}
-          contentStyle={{ borderRadius: "8px", border: "1px solid hsl(var(--border))", fontSize: "12px" }}
-          formatter={(value: number) => fmtNum(value, lang)}
-        />
-        <Bar dataKey="value" radius={[0, 4, 4, 0]} maxBarSize={40}>
-          {beneficiairesParDomaine.map((entry, idx) => (
-            <Cell key={entry.id} fill={CATEGORICAL_COLORS[idx % CATEGORICAL_COLORS.length]} />
-          ))}
-        </Bar>
-      </BarChart>
-    </ResponsiveContainer>
-  </div>
-</Card>
+        <Card className="p-5 flex flex-col">
+          <div className="mb-4">
+            <h3 className="text-sm font-bold text-foreground">
+              {t(
+                "prefDomainDashboard.protectionEnfance.activitesTitles.title",
+                "Bénéficiaires par domaine d'activité",
+              )}
+            </h3>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              {t(
+                "prefDomainDashboard.protectionEnfance.activitesTitles.subtitle",
+                "Volume de bénéficiaires, par domaine d'activité",
+              )}
+            </p>
+          </div>
+          <div className="h-[250px] w-full mt-auto">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={beneficiairesParDomaine}
+                layout="vertical"
+                margin={{ top: 10, right: 20, left: 10, bottom: 20 }}
+              >
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  horizontal={false}
+                  stroke="hsl(var(--border))"
+                />
+                <XAxis
+                  type="number"
+                  allowDecimals={false}
+                  axisLine={{ stroke: "hsl(var(--muted-foreground))" }}
+                  tickLine={{ stroke: "hsl(var(--muted-foreground))" }}
+                  tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
+                  tickFormatter={(v: number) => fmtNum(v, lang)}
+                />
+                <YAxis
+                  type="category"
+                  dataKey="name"
+                  orientation="left"
+                  axisLine={{ stroke: "hsl(var(--muted-foreground))" }}
+                  tickLine={{ stroke: "hsl(var(--muted-foreground))" }}
+                  width={110}
+                  tick={{
+                    fontSize: 11,
+                    fill: "hsl(var(--muted-foreground))",
+                    textAnchor: "end",
+                    dx: lang === "ar" ? -90 : 0,
+                  }}
+                />
+                <Tooltip
+                  cursor={{ fill: "hsl(var(--muted)/0.4)" }}
+                  contentStyle={{
+                    borderRadius: "8px",
+                    border: "1px solid hsl(var(--border))",
+                    fontSize: "12px",
+                  }}
+                  formatter={(value: number) => fmtNum(value, lang)}
+                />
+                <Bar dataKey="value" radius={[0, 4, 4, 0]} maxBarSize={40}>
+                  {beneficiairesParDomaine.map((entry, idx) => (
+                    <Cell
+                      key={entry.id}
+                      fill={CATEGORICAL_COLORS[idx % CATEGORICAL_COLORS.length]}
+                    />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </Card>
       </div>
     </section>
   );

@@ -1,24 +1,23 @@
-import { useState, useEffect, useMemo } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { computePeCompleteness } from '@/lib/peCompleteness';
+import { useState, useEffect, useMemo } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { computePeCompleteness } from "@/lib/peCompleteness";
 
-import { usePeDemographie } from './usePeStep1';
-import { usePeEducation } from './usePeStep1';
-import { usePeAteliers } from './usePeStep1';
-import { usePeFormation } from './usePeStep1';
-import { usePeActivites } from './usePeStep2';
-import { usePeConseilEnfant } from './usePeStep2';
-import { usePeDons } from './usePeStep2';
-import { usePeIncidents } from './usePeStep2';
-import { usePePartenariats } from './usePeStep3';
-import { usePeFormations } from './usePeStep3';
-import { usePeAmenagements } from './usePeStep3';
-import { usePeVisites } from './usePeStep3';
-import { usePeStatistiquesLS } from './usePeStep4';
-import { usePeRapportsJudiciaires } from './usePeStep4';
+import { usePeDemographie } from "./usePeStep1";
+import { usePeEducation } from "./usePeStep1";
+import { usePeAteliers } from "./usePeStep1";
+import { usePeFormation } from "./usePeStep1";
+import { usePeActivites } from "./usePeStep2";
+import { usePeConseilEnfant } from "./usePeStep2";
+import { usePeDons } from "./usePeStep2";
+import { usePeIncidents } from "./usePeStep2";
+import { usePePartenariats } from "./usePeStep3";
+import { usePeFormations } from "./usePeStep3";
+import { usePeAmenagements } from "./usePeStep3";
+import { usePeVisites } from "./usePeStep3";
+import { usePeStatistiquesLS } from "./usePeStep4";
+import { usePeRapportsJudiciaires } from "./usePeStep4";
 
 export function usePeCompleteness(rapportId: string | null, refreshTrigger?: number) {
-
   // STEP 1 (IMMÉDIAT)
   const demographie = usePeDemographie(rapportId);
   const education = usePeEducation(rapportId);
@@ -46,7 +45,7 @@ export function usePeCompleteness(rapportId: string | null, refreshTrigger?: num
   const formationPerso = usePeFormations(rapportId, { enabled: loadStep3 });
   const amenagement = usePeAmenagements(rapportId, { enabled: loadStep3 });
   const visites = usePeVisites(rapportId, { enabled: loadStep3 });
-  
+
   // STEP 4 (APRÈS 1200ms)
   const [loadStep4, setLoadStep4] = useState(false);
   useEffect(() => {
@@ -115,5 +114,4 @@ export function usePeCompleteness(rapportId: string | null, refreshTrigger?: num
     statsLS.items,
     rapportsJudic.items,
   ]);
-
 }

@@ -1,9 +1,9 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { Session, User } from '@supabase/supabase-js';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
-export type AppRole = 'directeur_regional' | 'directeur_prefectoral' | 'equipe_regional' | 'admin';
+import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { Session, User } from "@supabase/supabase-js";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+export type AppRole = "directeur_regional" | "directeur_prefectoral" | "equipe_regional" | "admin";
 
 interface Utilisateur {
   id: string;
@@ -54,18 +54,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   // 2. Récupération & Caching du profil Utilisateur avec React Query
-  const {
-    data: utilisateur = null,
-    isLoading: isProfileLoading,
-  } = useQuery({
-    queryKey: ['utilisateur_profil', user?.id],
+  const { data: utilisateur = null, isLoading: isProfileLoading } = useQuery({
+    queryKey: ["utilisateur_profil", user?.id],
     queryFn: async () => {
       if (!user?.id) return null;
 
       const { data, error } = await (supabase as any)
-        .from('utilisateurs')
-        .select('*')
-        .eq('auth_user_id', user.id)
+        .from("utilisateurs")
+        .select("*")
+        .eq("auth_user_id", user.id)
         .maybeSingle();
 
       if (data && data.est_actif === false) {
@@ -74,7 +71,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         throw new Error("Compte désactivé");
       }
       if (error) {
-        console.error('[useAuth] Erreur chargement profil utilisateur:', error);
+        console.error("[useAuth] Erreur chargement profil utilisateur:", error);
         throw error;
       }
 
@@ -91,27 +88,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     await supabase.auth.signOut();
     setUser(null);
     setSession(null);
-    queryClient.removeQueries({ queryKey: ['utilisateur_profil'] });
+    queryClient.removeQueries({ queryKey: ["utilisateur_profil"] });
   };
 
   const loading = authInitializing || (Boolean(user) && isProfileLoading);
 
   const role = utilisateur?.role ?? null;
-  const isRegional = role === 'directeur_regional';
-  const isPrefectoral = role === 'directeur_prefectoral';
-  const isEquipeRegional = role === 'equipe_regional';
-  const isAdmin = role === 'admin';
+  const isRegional = role === "directeur_regional";
+  const isPrefectoral = role === "directeur_prefectoral";
+  const isEquipeRegional = role === "equipe_regional";
+  const isAdmin = role === "admin";
 
   const roleRedirectPath =
-    role === 'equipe_regional'
-      ? '/regional-dashboard'
-      : role === 'admin'
-      ? '/admin/users'
-      : role === 'directeur_regional'
-      ? '/domain-dashboard'
-      : role === 'directeur_prefectoral'
-      ? '/saisie'
-      : '/auth';
+    role === "equipe_regional"
+      ? "/regional-dashboard"
+      : role === "admin"
+        ? "/admin/users"
+        : role === "directeur_regional"
+          ? "/domain-dashboard"
+          : role === "directeur_prefectoral"
+            ? "/saisie"
+            : "/auth";
 
   return (
     <AuthContext.Provider
@@ -136,6 +133,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
 export const useAuth = () => {
   const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error('useAuth must be used within AuthProvider');
+  if (!ctx) throw new Error("useAuth must be used within AuthProvider");
   return ctx;
 };

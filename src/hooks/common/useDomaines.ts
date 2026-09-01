@@ -1,5 +1,5 @@
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 export interface Domaine {
   id: string;
@@ -9,13 +9,18 @@ export interface Domaine {
 }
 
 export const useDomaines = () => {
-  const { data: domaines = [], isLoading, error, refetch } = useQuery({
-    queryKey: ['ref_domaines'],
+  const {
+    data: domaines = [],
+    isLoading,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: ["ref_domaines"],
     queryFn: async () => {
       const { data, error: err } = await supabase
-        .from('domaines')
-        .select('id, code, nom_fr, nom_ar')
-        .order('code', { ascending: true });
+        .from("domaines")
+        .select("id, code, nom_fr, nom_ar")
+        .order("code", { ascending: true });
 
       if (err) throw err;
       return (data as Domaine[]) || [];

@@ -1,13 +1,8 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import {
-  useForm,
-  type DefaultValues,
-  type FieldValues,
-  type UseFormReturn,
-} from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import type { ZodType } from 'zod';
-import { useAutoSave } from '@/hooks/common/useAutoSave';
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useForm, type DefaultValues, type FieldValues, type UseFormReturn } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import type { ZodType } from "zod";
+import { useAutoSave } from "@/hooks/common/useAutoSave";
 
 export interface UseStepFormOptions<T extends FieldValues> {
   schema: ZodType<T>;
@@ -132,7 +127,7 @@ export function useStepForm<T extends FieldValues = FieldValues>(
       const success = await onSaveRef.current!(values);
 
       if (!success) {
-        throw new Error('Enregistrement échoué');
+        throw new Error("Enregistrement échoué");
       }
     })();
   }, [disabled, form]);

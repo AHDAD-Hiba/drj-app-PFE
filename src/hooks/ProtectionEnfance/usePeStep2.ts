@@ -1,4 +1,4 @@
-import { useEntityEntries, BaseEntry } from '../common/useEntityEntries';
+import { useEntityEntries, BaseEntry } from "../common/useEntityEntries";
 
 // ============================================================================
 // 1. ACTIVITÉS ET PROGRAMMES (pe_activites)
@@ -18,29 +18,29 @@ const buildActivitePayload = (entry: PeActiviteEntry, rId: string) => ({
   etablissement_id: entry.etablissement_id || null,
   domaine_id: entry.domaine_id || null,
   domaine_autre: entry.domaine_autre?.trim() || null,
-  nom_activite: entry.nom_activite?.trim() || '',
+  nom_activite: entry.nom_activite?.trim() || "",
   nombre_beneficiaires: Number(entry.nombre_beneficiaires) || 0,
-  partenaires: entry.partenaires?.trim() || '',
+  partenaires: entry.partenaires?.trim() || "",
 });
 
 const mapActiviteRow = (row: any, local_id: string): PeActiviteEntry => ({
   local_id,
   id: row.id,
   etablissement_id: row.etablissement_id || null,
-  domaine_id: row.domaine_id || '',
-  domaine_autre: row.domaine_autre || '',
-  nom_activite: row.nom_activite || '',
+  domaine_id: row.domaine_id || "",
+  domaine_autre: row.domaine_autre || "",
+  nom_activite: row.nom_activite || "",
   nombre_beneficiaires: Number(row.nombre_beneficiaires) || 0,
-  partenaires: row.partenaires || '',
+  partenaires: row.partenaires || "",
 });
 
 export function usePeActivites(rapportId: string | null, options?: { enabled?: boolean }) {
   return useEntityEntries<PeActiviteEntry>({
     rapportId,
-    tableName: 'pe_activites',
+    tableName: "pe_activites",
     buildPayload: buildActivitePayload,
     mapRowToEntry: mapActiviteRow,
-    // 🛡️ Garde-fou renforcé : On exige toujours qu'au moins le nom de l'activité OU (domaine + nom) soit saisi 
+    // 🛡️ Garde-fou renforcé : On exige toujours qu'au moins le nom de l'activité OU (domaine + nom) soit saisi
     // pour éviter de sauvegarder des lignes Droits de l'Enfant dont seul le domaine_id est pré-rempli.
     validateBeforeSave: (entry) => Boolean(entry.nom_activite?.trim()),
     enabled: options?.enabled ?? true,
@@ -60,22 +60,22 @@ const buildConseilPayload = (entry: PeConseilEntry, rId: string) => ({
   ...(entry.id ? { id: entry.id } : {}),
   rapport_id: rId,
   etablissement_id: entry.etablissement_id,
-  nom_session: entry.nom_session?.trim() || '',
+  nom_session: entry.nom_session?.trim() || "",
   date_session: entry.date_session || null,
 });
 
 const mapConseilRow = (row: any, local_id: string): PeConseilEntry => ({
   local_id,
   id: row.id,
-  etablissement_id: row.etablissement_id || '',
-  nom_session: row.nom_session || '',
-  date_session: row.date_session || '',
+  etablissement_id: row.etablissement_id || "",
+  nom_session: row.nom_session || "",
+  date_session: row.date_session || "",
 });
 
 export function usePeConseilEnfant(rapportId: string | null, options?: { enabled?: boolean }) {
   return useEntityEntries<PeConseilEntry>({
     rapportId,
-    tableName: 'pe_conseil_enfant',
+    tableName: "pe_conseil_enfant",
     buildPayload: buildConseilPayload,
     mapRowToEntry: mapConseilRow,
     validateBeforeSave: (entry) => Boolean(entry.etablissement_id && entry.nom_session?.trim()),
@@ -99,31 +99,32 @@ const buildDonPayload = (entry: PeDonEntry, rId: string) => ({
   ...(entry.id ? { id: entry.id } : {}),
   rapport_id: rId,
   etablissement_id: entry.etablissement_id,
-  donateur: entry.donateur?.trim() || '',
-  nature_don: entry.nature_don?.trim() || '',
+  donateur: entry.donateur?.trim() || "",
+  nature_don: entry.nature_don?.trim() || "",
   date_reception: entry.date_reception || null,
   beneficiaires: Number(entry.beneficiaires) || 0,
-  observations: entry.observations?.trim() || '',
+  observations: entry.observations?.trim() || "",
 });
 
 const mapDonRow = (row: any, local_id: string): PeDonEntry => ({
   local_id,
   id: row.id,
-  etablissement_id: row.etablissement_id || '',
-  donateur: row.donateur || '',
-  nature_don: row.nature_don || '',
-  date_reception: row.date_reception || '',
+  etablissement_id: row.etablissement_id || "",
+  donateur: row.donateur || "",
+  nature_don: row.nature_don || "",
+  date_reception: row.date_reception || "",
   beneficiaires: Number(row.beneficiaires) || 0,
-  observations: row.observations || '',
+  observations: row.observations || "",
 });
 
 export function usePeDons(rapportId: string | null, options?: { enabled?: boolean }) {
   return useEntityEntries<PeDonEntry>({
     rapportId,
-    tableName: 'pe_dons',
+    tableName: "pe_dons",
     buildPayload: buildDonPayload,
     mapRowToEntry: mapDonRow,
-    validateBeforeSave: (entry) => Boolean(entry.etablissement_id && (entry.donateur?.trim() || entry.nature_don?.trim())),
+    validateBeforeSave: (entry) =>
+      Boolean(entry.etablissement_id && (entry.donateur?.trim() || entry.nature_don?.trim())),
     enabled: options?.enabled ?? true,
   });
 }
@@ -144,25 +145,25 @@ const buildIncidentPayload = (entry: PeIncidentEntry, rId: string) => ({
   rapport_id: rId,
   type_incident_id: entry.type_incident_id || null,
   type_incident_autre: entry.type_incident_autre?.trim() || null,
-  sujet_detaille: entry.sujet_detaille?.trim() || '',
+  sujet_detaille: entry.sujet_detaille?.trim() || "",
   nombre_cas: Number(entry.nombre_cas) || 0,
-  observations: entry.observations?.trim() || '',
+  observations: entry.observations?.trim() || "",
 });
 
 const mapIncidentRow = (row: any, local_id: string): PeIncidentEntry => ({
   local_id,
   id: row.id,
-  type_incident_id: row.type_incident_id || '',
-  type_incident_autre: row.type_incident_autre || '',
-  sujet_detaille: row.sujet_detaille || '',
+  type_incident_id: row.type_incident_id || "",
+  type_incident_autre: row.type_incident_autre || "",
+  sujet_detaille: row.sujet_detaille || "",
   nombre_cas: Number(row.nombre_cas) || 0,
-  observations: row.observations || '',
+  observations: row.observations || "",
 });
 
 export function usePeIncidents(rapportId: string | null, options?: { enabled?: boolean }) {
   return useEntityEntries<PeIncidentEntry>({
     rapportId,
-    tableName: 'pe_rapports_exceptionnels',
+    tableName: "pe_rapports_exceptionnels",
     buildPayload: buildIncidentPayload,
     mapRowToEntry: mapIncidentRow,
     validateBeforeSave: (entry) => Boolean(entry.type_incident_id || entry.sujet_detaille?.trim()),

@@ -41,11 +41,16 @@ type PeEducationRow = Database["public"]["Tables"]["pe_education"]["Row"];
 type PeFormationBeneficiairesRow =
   Database["public"]["Tables"]["pe_formation_beneficiaires"]["Row"];
 type PeLiberteSurveilleeRow = Database["public"]["Tables"]["pe_liberte_surveillee"]["Row"];
-type PeRapportsExceptionnelsRow =
-  Database["public"]["Tables"]["pe_rapports_exceptionnels"]["Row"];
+type PeRapportsExceptionnelsRow = Database["public"]["Tables"]["pe_rapports_exceptionnels"]["Row"];
 type RefTypesIncidentRow = Database["public"]["Tables"]["ref_types_incident"]["Row"];
-type RapportRow = Pick<Database["public"]["Tables"]["rapports"]["Row"], "id" | "direction_id" | "statut_rapport" | "trimestre">;
-type DirectionRow = Pick<Database["public"]["Tables"]["directions"]["Row"], "id" | "nom_fr" | "nom_ar">;
+type RapportRow = Pick<
+  Database["public"]["Tables"]["rapports"]["Row"],
+  "id" | "direction_id" | "statut_rapport" | "trimestre"
+>;
+type DirectionRow = Pick<
+  Database["public"]["Tables"]["directions"]["Row"],
+  "id" | "nom_fr" | "nom_ar"
+>;
 
 // --- Types exposés (consommés par ProtectionEnfanceRegionalSections.tsx) ---
 
@@ -123,7 +128,7 @@ interface PeDirectionData {
 
 // --- Helpers d'agrégation (privés, mêmes formules que le service préfectoral) ---
 
-const sumBy = <T,>(rows: T[], selector: (row: T) => number | null | undefined): number =>
+const sumBy = <T>(rows: T[], selector: (row: T) => number | null | undefined): number =>
   rows.reduce((acc, row) => acc + (selector(row) || 0), 0);
 
 const average = (values: number[]): number =>
@@ -139,7 +144,10 @@ const toRegionalStatus = (statut: RapportRow["statut_rapport"]): RegionalStatus 
 
 /** Statut par direction — pattern directionStatus repris à l'identique de femmeRegionalService.ts. */
 const directionStatus = (rapports: RapportRow[]): RegionalStatus => {
-  if (rapports.length === 0 || rapports.every((rapport) => rapport.statut_rapport === "NON_COMMENCE")) {
+  if (
+    rapports.length === 0 ||
+    rapports.every((rapport) => rapport.statut_rapport === "NON_COMMENCE")
+  ) {
     return "NON_COMMENCE";
   }
   return rapports.every((rapport) => rapport.statut_rapport === "VALIDE") ? "TERMINE" : "EN_COURS";
@@ -149,7 +157,10 @@ const directionStatus = (rapports: RapportRow[]): RegionalStatus => {
 
 const loadAllRows = async <T>(table: string, rapportIds: string[]): Promise<T[]> => {
   if (rapportIds.length === 0) return [];
-  const { data, error } = await supabase.from(table as any).select("*").in("rapport_id", rapportIds);
+  const { data, error } = await supabase
+    .from(table as any)
+    .select("*")
+    .in("rapport_id", rapportIds);
   if (error) {
     // Pattern d'erreur identique à Femme/Infrastructure : on ne masque pas
     // l'erreur, mais on ne casse pas le dashboard régional pour autant — la
@@ -181,8 +192,20 @@ const buildKpis = (
     // implémentation, voir en-tête du fichier.
     tauxPreparationIntegrationMoyen: average(tauxRenseignes),
     totalBeneficiairesEducationFormation:
-      sumBy(education, (e) => (e.beneficiaires_formel || 0) + (e.beneficiaires_non_formel || 0) + (e.beneficiaires_soutien || 0)) +
-      sumBy(formationBeneficiaires, (f) => (f.beneficiaires_intra || 0) + (f.beneficiaires_extra || 0) + (f.beneficiaires_initiation || 0)),
+      sumBy(
+        education,
+        (e) =>
+          (e.beneficiaires_formel || 0) +
+          (e.beneficiaires_non_formel || 0) +
+          (e.beneficiaires_soutien || 0),
+      ) +
+      sumBy(
+        formationBeneficiaires,
+        (f) =>
+          (f.beneficiaires_intra || 0) +
+          (f.beneficiaires_extra || 0) +
+          (f.beneficiaires_initiation || 0),
+      ),
     // ⚠️ Source unique = pe_liberte_surveillee (PAS pe_statistiques_demographiques.ls_integres_*)
     totalIntegrationsLiberteSurveillee: sumBy(
       liberteSurveillee,
@@ -241,13 +264,19 @@ const calculatePeScore = (
     "totalIncidentsSignales",
     "totalMigrantsNonAccompagnes",
   ];
-  const score = positiveKpis.reduce(
-    (total, kpi) => total + positiveKpiScore(directionKpis[kpi], regionalKpis[kpi]) * (PE_SCORE_WEIGHTS[kpi] / 100),
-    0,
-  ) + negativeKpis.reduce(
-    (total, kpi) => total + negativeKpiScore(directionKpis[kpi], regionalKpis[kpi]) * (PE_SCORE_WEIGHTS[kpi] / 100),
-    0,
-  );
+  const score =
+    positiveKpis.reduce(
+      (total, kpi) =>
+        total +
+        positiveKpiScore(directionKpis[kpi], regionalKpis[kpi]) * (PE_SCORE_WEIGHTS[kpi] / 100),
+      0,
+    ) +
+    negativeKpis.reduce(
+      (total, kpi) =>
+        total +
+        negativeKpiScore(directionKpis[kpi], regionalKpis[kpi]) * (PE_SCORE_WEIGHTS[kpi] / 100),
+      0,
+    );
 
   return clampScore(score);
 };
@@ -273,11 +302,27 @@ const kpisForRows = (
       totalBeneficiairesPriseEnCharge: totalBeneficiaires,
       tauxPreparationIntegrationMoyen: average(tauxRenseignes),
       totalBeneficiairesEducationFormation:
-        sumBy(education, (e) => (e.beneficiaires_formel || 0) + (e.beneficiaires_non_formel || 0) + (e.beneficiaires_soutien || 0)) +
-        sumBy(formationBeneficiaires, (f) => (f.beneficiaires_intra || 0) + (f.beneficiaires_extra || 0) + (f.beneficiaires_initiation || 0)),
+        sumBy(
+          education,
+          (e) =>
+            (e.beneficiaires_formel || 0) +
+            (e.beneficiaires_non_formel || 0) +
+            (e.beneficiaires_soutien || 0),
+        ) +
+        sumBy(
+          formationBeneficiaires,
+          (f) =>
+            (f.beneficiaires_intra || 0) +
+            (f.beneficiaires_extra || 0) +
+            (f.beneficiaires_initiation || 0),
+        ),
       totalIntegrationsLiberteSurveillee: sumBy(
         liberteSurveillee,
-        (l) => (l.integres_scolaire || 0) + (l.integres_formation_pro || 0) + (l.integres_stage || 0) + (l.integres_associations || 0),
+        (l) =>
+          (l.integres_scolaire || 0) +
+          (l.integres_formation_pro || 0) +
+          (l.integres_stage || 0) +
+          (l.integres_associations || 0),
       ),
       totalIncidentsSignales: totalIncidents,
       totalMigrantsNonAccompagnes: sumBy(stats, (s) => s.migrants_non_accompagnes),
@@ -297,11 +342,17 @@ const buildSection3 = (
   // --- Visualisation 1 : Éducation vs Formation, consolidé sur toutes les directions ---
   const totalEducation = sumBy(
     education,
-    (e) => (e.beneficiaires_formel || 0) + (e.beneficiaires_non_formel || 0) + (e.beneficiaires_soutien || 0),
+    (e) =>
+      (e.beneficiaires_formel || 0) +
+      (e.beneficiaires_non_formel || 0) +
+      (e.beneficiaires_soutien || 0),
   );
   const totalFormation = sumBy(
     formationBeneficiaires,
-    (f) => (f.beneficiaires_intra || 0) + (f.beneficiaires_extra || 0) + (f.beneficiaires_initiation || 0),
+    (f) =>
+      (f.beneficiaires_intra || 0) +
+      (f.beneficiaires_extra || 0) +
+      (f.beneficiaires_initiation || 0),
   );
   const educationFormation: PeEducationFormationDatum[] = [
     { name: "Éducation", value: totalEducation },
@@ -313,12 +364,19 @@ const buildSection3 = (
   const incidentsByType = new Map<string, number>();
   rapportsExceptionnels.forEach((r) => {
     if (!r.type_incident_id) return;
-    incidentsByType.set(r.type_incident_id, (incidentsByType.get(r.type_incident_id) || 0) + (r.nombre_cas || 0));
+    incidentsByType.set(
+      r.type_incident_id,
+      (incidentsByType.get(r.type_incident_id) || 0) + (r.nombre_cas || 0),
+    );
   });
   const incidentsParType: PeIncidentTypeDatum[] = Array.from(incidentsByType.entries())
     .map(([id, value]) => {
       const ref = typeIncidentById.get(id);
-      const name = ref ? (lang === "ar" ? ref.libelle_ar || ref.libelle_fr : ref.libelle_fr || ref.libelle_ar) : id;
+      const name = ref
+        ? lang === "ar"
+          ? ref.libelle_ar || ref.libelle_fr
+          : ref.libelle_fr || ref.libelle_ar
+        : id;
       return { id, name, value };
     })
     .sort((a, b) => b.value - a.value);
@@ -339,8 +397,10 @@ const buildEvolution = (
   trimestreByRapport: Map<string, string | null>,
   trimestresAvecRapport: Set<string>,
 ) => {
-  const rowsForTrimestre = <T extends { rapport_id: string | null }>(rows: T[], trimestre: string) =>
-    rows.filter((row) => row.rapport_id && trimestreByRapport.get(row.rapport_id) === trimestre);
+  const rowsForTrimestre = <T extends { rapport_id: string | null }>(
+    rows: T[],
+    trimestre: string,
+  ) => rows.filter((row) => row.rapport_id && trimestreByRapport.get(row.rapport_id) === trimestre);
 
   const genre: PeEvolutionGenreDatum[] = TRIMESTRES.map((trimestre) => {
     if (!trimestresAvecRapport.has(trimestre)) {
@@ -373,10 +433,16 @@ const buildEvolution = (
  * partir du chemin réel pe_* -> rapports -> directions.
  * Pas de `detailed` régional. Score : PE_SCORE_WEIGHTS (voir comparison.score).
  */
-export async function loadPeRegionalDashboard(year: number, lang = "fr"): Promise<PeRegionalDashboardData> {
+export async function loadPeRegionalDashboard(
+  year: number,
+  lang = "fr",
+): Promise<PeRegionalDashboardData> {
   const [directionsResult, rapportsResult, typesIncidentResult] = await Promise.all([
     supabase.from("directions").select("id, nom_fr, nom_ar"),
-    supabase.from("rapports").select("id, direction_id, statut_rapport, trimestre").eq("annee", year),
+    supabase
+      .from("rapports")
+      .select("id, direction_id, statut_rapport, trimestre")
+      .eq("annee", year),
     supabase.from("ref_types_incident").select("*"),
   ]);
 
@@ -385,13 +451,14 @@ export async function loadPeRegionalDashboard(year: number, lang = "fr"): Promis
   const typesIncident = (typesIncidentResult.data ?? []) as RefTypesIncidentRow[];
   const rapportIds = rapports.map((rapport) => rapport.id);
 
-  const [stats, education, formationBeneficiaires, liberteSurveillee, rapportsExceptionnels] = await Promise.all([
-    loadAllRows<PeStatistiquesDemographiquesRow>("pe_statistiques_demographiques", rapportIds),
-    loadAllRows<PeEducationRow>("pe_education", rapportIds),
-    loadAllRows<PeFormationBeneficiairesRow>("pe_formation_beneficiaires", rapportIds),
-    loadAllRows<PeLiberteSurveilleeRow>("pe_liberte_surveillee", rapportIds),
-    loadAllRows<PeRapportsExceptionnelsRow>("pe_rapports_exceptionnels", rapportIds),
-  ]);
+  const [stats, education, formationBeneficiaires, liberteSurveillee, rapportsExceptionnels] =
+    await Promise.all([
+      loadAllRows<PeStatistiquesDemographiquesRow>("pe_statistiques_demographiques", rapportIds),
+      loadAllRows<PeEducationRow>("pe_education", rapportIds),
+      loadAllRows<PeFormationBeneficiairesRow>("pe_formation_beneficiaires", rapportIds),
+      loadAllRows<PeLiberteSurveilleeRow>("pe_liberte_surveillee", rapportIds),
+      loadAllRows<PeRapportsExceptionnelsRow>("pe_rapports_exceptionnels", rapportIds),
+    ]);
 
   // --- Regroupement par direction (pattern rapportsByDirection / rowsForDirection de Femme/Infrastructure) ---
   const rapportsByDirection = new Map<string, RapportRow[]>();
@@ -402,25 +469,50 @@ export async function loadPeRegionalDashboard(year: number, lang = "fr"): Promis
     rapportsByDirection.set(rapport.direction_id, directionRapports);
   });
   const rapportIdsByDirection = new Map(
-    Array.from(rapportsByDirection, ([directionId, directionRapports]) => [directionId, new Set(directionRapports.map((r) => r.id))]),
+    Array.from(rapportsByDirection, ([directionId, directionRapports]) => [
+      directionId,
+      new Set(directionRapports.map((r) => r.id)),
+    ]),
   );
-  const rowsForDirection = <T extends { rapport_id: string | null }>(rows: T[], directionId: string): T[] => {
+  const rowsForDirection = <T extends { rapport_id: string | null }>(
+    rows: T[],
+    directionId: string,
+  ): T[] => {
     const ids = rapportIdsByDirection.get(directionId);
     return ids ? rows.filter((row) => row.rapport_id && ids.has(row.rapport_id)) : [];
   };
 
   // --- KPI régionaux (6 KPI) ---
-  const kpis = buildKpis(stats, education, formationBeneficiaires, liberteSurveillee, rapportsExceptionnels);
+  const kpis = buildKpis(
+    stats,
+    education,
+    formationBeneficiaires,
+    liberteSurveillee,
+    rapportsExceptionnels,
+  );
 
   // --- Section 3 (2 visualisations) ---
-  const section3 = buildSection3(education, formationBeneficiaires, rapportsExceptionnels, typesIncident, lang);
+  const section3 = buildSection3(
+    education,
+    formationBeneficiaires,
+    rapportsExceptionnels,
+    typesIncident,
+    lang,
+  );
 
   // --- Section 4 (2 évolutions trimestrielles) ---
-  const trimestreByRapport = new Map<string, string | null>(rapports.map((r) => [r.id, r.trimestre]));
+  const trimestreByRapport = new Map<string, string | null>(
+    rapports.map((r) => [r.id, r.trimestre]),
+  );
   const trimestresAvecRapport = new Set(
     rapports.map((r) => r.trimestre).filter((t): t is NonNullable<typeof t> => Boolean(t)),
   );
-  const evolution = buildEvolution(stats, rapportsExceptionnels, trimestreByRapport, trimestresAvecRapport);
+  const evolution = buildEvolution(
+    stats,
+    rapportsExceptionnels,
+    trimestreByRapport,
+    trimestresAvecRapport,
+  );
 
   // --- Performance par direction : KPI, score et classement régional ---
   const directionsData: PeDirectionData[] = directions.map((direction) => {
@@ -452,23 +544,58 @@ export async function loadPeRegionalDashboard(year: number, lang = "fr"): Promis
   directionsData.forEach((direction, index) => {
     if (direction.score <= 0 || direction.statut === "NON_COMMENCE") return;
     rankableIndex += 1;
-    direction.rang_regional = index > 0 && direction.score === directionsData[index - 1].score
-      ? directionsData[index - 1].rang_regional
-      : rankableIndex;
+    direction.rang_regional =
+      index > 0 && direction.score === directionsData[index - 1].score
+        ? directionsData[index - 1].rang_regional
+        : rankableIndex;
   });
 
-  const completedDirections = directionsData.filter((direction) => direction.statut === "TERMINE").length;
-  const inProgressDirections = directionsData.filter((direction) => direction.statut === "EN_COURS").length;
+  const completedDirections = directionsData.filter(
+    (direction) => direction.statut === "TERMINE",
+  ).length;
+  const inProgressDirections = directionsData.filter(
+    (direction) => direction.statut === "EN_COURS",
+  ).length;
   return {
-    status: { hasData: rapportIds.length > 0, submittedReports: rapports.length, completedDirections, inProgressDirections, notStartedDirections: directionsData.length - completedDirections - inProgressDirections },
+    status: {
+      hasData: rapportIds.length > 0,
+      submittedReports: rapports.length,
+      completedDirections,
+      inProgressDirections,
+      notStartedDirections: directionsData.length - completedDirections - inProgressDirections,
+    },
     kpis,
     section3,
     evolution,
     comparison: {
-      directions: directionsData.map((direction) => ({ id: direction.id, name: direction.nom_fr || `Direction ${direction.id}`, status: direction.statut, primary: direction.metric_primary, secondary: direction.metric_secondary, rank: direction.rang_regional < 99 ? direction.rang_regional : null, score: direction.score })),
-      primary: { key: "beneficiaires_prise_en_charge", label: "Bénéficiaires pris en charge", regionalAverage: directionsData.length ? kpis.totalBeneficiairesPriseEnCharge / directionsData.length : null },
-      secondary: { key: "integrations_liberte_surveillee", label: "Intégrations en liberté surveillée", regionalAverage: directionsData.length ? kpis.totalIntegrationsLiberteSurveillee / directionsData.length : null },
-      score: { label: "Score Protection de l'Enfance", methodology: "Pondération existante : prise en charge 25 %, préparation à l'intégration 20 %, éducation/formation 15 %, intégrations LS 15 %, incidents 12,5 %, migrants non accompagnés 12,5 % (indicateurs de risque inversés). Score relatif à la région, borné 0–100." },
+      directions: directionsData.map((direction) => ({
+        id: direction.id,
+        name: direction.nom_fr || `Direction ${direction.id}`,
+        status: direction.statut,
+        primary: direction.metric_primary,
+        secondary: direction.metric_secondary,
+        rank: direction.rang_regional < 99 ? direction.rang_regional : null,
+        score: direction.score,
+      })),
+      primary: {
+        key: "beneficiaires_prise_en_charge",
+        label: "Bénéficiaires pris en charge",
+        regionalAverage: directionsData.length
+          ? kpis.totalBeneficiairesPriseEnCharge / directionsData.length
+          : null,
+      },
+      secondary: {
+        key: "integrations_liberte_surveillee",
+        label: "Intégrations en liberté surveillée",
+        regionalAverage: directionsData.length
+          ? kpis.totalIntegrationsLiberteSurveillee / directionsData.length
+          : null,
+      },
+      score: {
+        label: "Score Protection de l'Enfance",
+        methodology:
+          "Pondération existante : prise en charge 25 %, préparation à l'intégration 20 %, éducation/formation 15 %, intégrations LS 15 %, incidents 12,5 %, migrants non accompagnés 12,5 % (indicateurs de risque inversés). Score relatif à la région, borné 0–100.",
+      },
     },
   };
 }

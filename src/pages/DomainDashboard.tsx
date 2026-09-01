@@ -1,8 +1,8 @@
-import { useAuth } from '@/hooks/common/useAuth';
+import { useAuth } from "@/hooks/common/useAuth";
 import { Navigate } from "react-router-dom";
-import PrefDomainDashboard from './PrefDomainDashboard';
-import RegDomainDashboard from './RegDomainDashboard';
-import { Loader2 } from 'lucide-react';
+import PrefDomainDashboard from "./PrefDomainDashboard";
+import RegDomainDashboard from "./RegDomainDashboard";
+import { Loader2 } from "lucide-react";
 
 const DomainDashboard = () => {
   const { isRegional, isPrefectoral, loading } = useAuth();
@@ -18,13 +18,13 @@ const DomainDashboard = () => {
   // (Le Routage Interne)
   if (isRegional) {
     return <RegDomainDashboard />;
- }
- 
- if (isPrefectoral) {
+  }
+
+  if (isPrefectoral) {
     return <PrefDomainDashboard />;
- }
- 
- return <Navigate to="/auth" replace />;
+  }
+
+  return <Navigate to="/auth" replace />;
 };
 
 export default DomainDashboard;

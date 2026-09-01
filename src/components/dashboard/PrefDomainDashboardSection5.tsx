@@ -1,8 +1,5 @@
 import type { TFunction } from "i18next";
-import {
-  PrefDomainBenchmarkTable,
-  type PrefDomainBenchmarkRow,
-} from "./PrefDomainBenchmarkTable";
+import { PrefDomainBenchmarkTable, type PrefDomainBenchmarkRow } from "./PrefDomainBenchmarkTable";
 
 interface PrefDomainDashboardSection5Props {
   benchmark: PrefDomainBenchmarkRow[];

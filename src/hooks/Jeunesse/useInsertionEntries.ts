@@ -1,13 +1,13 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import type { Database } from '@/integrations/supabase/types';
+import { useCallback, useEffect, useRef, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
 
 export interface InsertionEntry {
   local_id: string;
   id?: string;
   sujet: string;
   duree_valeur: number;
-  unite_duree: 'heure' | 'jour' | 'semaine' | 'mois' | '';
+  unite_duree: "heure" | "jour" | "semaine" | "mois" | "";
   type_partenaire_id: string;
   autre_partenaire?: string;
   femmes: number;
@@ -16,8 +16,8 @@ export interface InsertionEntry {
   urbain: number;
 }
 
-type DbActiviteRow = Database['public']['Tables']['activites_insertion']['Row'];
-type DbStatsRow = Database['public']['Tables']['stats_insertion']['Row'];
+type DbActiviteRow = Database["public"]["Tables"]["activites_insertion"]["Row"];
+type DbStatsRow = Database["public"]["Tables"]["stats_insertion"]["Row"];
 type DbActiviteWithStats = DbActiviteRow & {
   stats_insertion?: DbStatsRow[] | DbStatsRow | null;
 };
@@ -41,11 +41,11 @@ const toInsertionEntry = (
 ): InternalInsertionEntry => ({
   local_id,
   id: activite.id,
-  sujet: activite.sujet ?? '',
+  sujet: activite.sujet ?? "",
   duree_valeur: activite.duree_valeur ?? 0,
-  unite_duree: (activite.unite_duree as InsertionEntry['unite_duree']) ?? '',
-  type_partenaire_id: activite.type_partenaire_id ?? '',
-  autre_partenaire: activite.autre_partenaire ?? '',
+  unite_duree: (activite.unite_duree as InsertionEntry["unite_duree"]) ?? "",
+  type_partenaire_id: activite.type_partenaire_id ?? "",
+  autre_partenaire: activite.autre_partenaire ?? "",
   stats_id: stats?.id,
   femmes: stats?.femmes ?? 0,
   hommes: stats?.hommes ?? 0,
@@ -64,21 +64,25 @@ export function useInsertionEntries(rapportId: string | null, options?: { enable
   const pendingSaveRef = useRef<Set<string>>(new Set());
 
   // Helper pour garder itemsRef.current synchronisé immédiatement
-  const updateItems = useCallback((newItemsOrUpdater: React.SetStateAction<InternalInsertionEntry[]>) => {
-    setItems((prev) => {
-      const next = typeof newItemsOrUpdater === 'function' ? newItemsOrUpdater(prev) : newItemsOrUpdater;
-      itemsRef.current = next;
-      return next;
-    });
-  }, []);
+  const updateItems = useCallback(
+    (newItemsOrUpdater: React.SetStateAction<InternalInsertionEntry[]>) => {
+      setItems((prev) => {
+        const next =
+          typeof newItemsOrUpdater === "function" ? newItemsOrUpdater(prev) : newItemsOrUpdater;
+        itemsRef.current = next;
+        return next;
+      });
+    },
+    [],
+  );
 
   const updateLocal = useCallback(
     (local_id: string, patch: Partial<InsertionEntry>) => {
       updateItems((prev) =>
-        prev.map((item) => (item.local_id === local_id ? { ...item, ...patch } : item))
+        prev.map((item) => (item.local_id === local_id ? { ...item, ...patch } : item)),
       );
     },
-    [updateItems]
+    [updateItems],
   );
 
   const saveEntry = useCallback(
@@ -97,7 +101,7 @@ export function useInsertionEntries(rapportId: string | null, options?: { enable
       }
 
       const updatedEntry = existing;
-      const sujetClean = updatedEntry.sujet?.trim() ?? '';
+      const sujetClean = updatedEntry.sujet?.trim() ?? "";
 
       // 🛡️ SÉCURITÉ : Ne pas tenter d'upsert si le sujet est vide
       if (!sujetClean) {
@@ -111,15 +115,15 @@ export function useInsertionEntries(rapportId: string | null, options?: { enable
           rapport_id: rapportId,
           sujet: sujetClean,
           duree_valeur: Number(updatedEntry.duree_valeur) || 0,
-          unite_duree: updatedEntry.unite_duree === '' ? null : updatedEntry.unite_duree,
+          unite_duree: updatedEntry.unite_duree === "" ? null : updatedEntry.unite_duree,
           type_partenaire_id: updatedEntry.type_partenaire_id || null,
           autre_partenaire: updatedEntry.autre_partenaire || null,
         };
 
         const { data: activiteData, error: activiteError } = await supabase
-          .from('activites_insertion')
+          .from("activites_insertion")
           .upsert(activitePayload as any)
-          .select('id')
+          .select("id")
           .single();
 
         if (activiteError) throw activiteError;
@@ -134,9 +138,9 @@ export function useInsertionEntries(rapportId: string | null, options?: { enable
         };
 
         const { data: statsData, error: statsError } = await supabase
-          .from('stats_insertion')
-          .upsert(statsPayload as any, { onConflict: existing.stats_id ? 'id' : 'activite_id' })
-          .select('id')
+          .from("stats_insertion")
+          .upsert(statsPayload as any, { onConflict: existing.stats_id ? "id" : "activite_id" })
+          .select("id")
           .single();
 
         if (statsError) throw statsError;
@@ -145,13 +149,13 @@ export function useInsertionEntries(rapportId: string | null, options?: { enable
           prev.map((item) =>
             item.local_id === local_id
               ? { ...item, id: activiteData.id, stats_id: statsData.id }
-              : item
-          )
+              : item,
+          ),
         );
 
         return true;
       } catch (error) {
-        console.error('[useInsertionEntries] update error:', error);
+        console.error("[useInsertionEntries] update error:", error);
         return false;
       } finally {
         savingEntriesRef.current.delete(local_id);
@@ -163,7 +167,7 @@ export function useInsertionEntries(rapportId: string | null, options?: { enable
         }
       }
     },
-    [rapportId, updateItems]
+    [rapportId, updateItems],
   );
 
   const reload = useCallback(async (): Promise<InternalInsertionEntry[]> => {
@@ -176,13 +180,13 @@ export function useInsertionEntries(rapportId: string | null, options?: { enable
 
     try {
       const { data, error } = await supabase
-        .from('activites_insertion')
-        .select('*, stats_insertion(*)')
-        .eq('rapport_id', rapportId)
-        .order('id', { ascending: true });
+        .from("activites_insertion")
+        .select("*, stats_insertion(*)")
+        .eq("rapport_id", rapportId)
+        .order("id", { ascending: true });
 
       if (error) {
-        console.error('[useInsertionEntries] reload error:', error);
+        console.error("[useInsertionEntries] reload error:", error);
         return [];
       }
 
@@ -190,19 +194,21 @@ export function useInsertionEntries(rapportId: string | null, options?: { enable
       const localIdById = new Map(
         itemsRef.current
           .filter((item): item is InternalInsertionEntry & { id: string } => Boolean(item.id))
-          .map((item) => [item.id as string, item.local_id] as const)
+          .map((item) => [item.id as string, item.local_id] as const),
       );
 
       const normalized = rows.map((row) =>
         toInsertionEntry(
           row,
           normalizeStats(row.stats_insertion),
-          localIdById.get(row.id) ?? crypto.randomUUID()
-        )
+          localIdById.get(row.id) ?? crypto.randomUUID(),
+        ),
       );
 
       updateItems((prev) => {
-        const normalizedByLocalId = new Map(normalized.map((item) => [item.local_id, item] as const));
+        const normalizedByLocalId = new Map(
+          normalized.map((item) => [item.local_id, item] as const),
+        );
         const merged = normalized.map((serverItem) => {
           const currentItem = prev.find((item) => item.local_id === serverItem.local_id);
           const hasPendingLocalChange =
@@ -212,12 +218,14 @@ export function useInsertionEntries(rapportId: string | null, options?: { enable
 
           return currentItem && hasPendingLocalChange ? currentItem : serverItem;
         });
-        const unsavedLocalItems = prev.filter((item) => !item.id && !normalizedByLocalId.has(item.local_id));
+        const unsavedLocalItems = prev.filter(
+          (item) => !item.id && !normalizedByLocalId.has(item.local_id),
+        );
         return [...merged, ...unsavedLocalItems];
       });
       return normalized;
     } catch (e) {
-      console.error('[useInsertionEntries] unexpected reload error:', e);
+      console.error("[useInsertionEntries] unexpected reload error:", e);
       return [];
     } finally {
       setLoading(false);
@@ -226,20 +234,20 @@ export function useInsertionEntries(rapportId: string | null, options?: { enable
 
   useEffect(() => {
     let cancelled = false;
-    
+
     // Si désactivé, vider les items et retourner
     if (!enabled) {
       updateItems([]);
       setLoading(false);
       return;
     }
-    
+
     if (!rapportId) {
       updateItems([]);
       setLoading(false);
       return;
     }
- 
+
     setLoading(true);
     (async () => {
       try {
@@ -248,22 +256,24 @@ export function useInsertionEntries(rapportId: string | null, options?: { enable
         if (!cancelled) setLoading(false);
       }
     })();
- 
-    return () => { cancelled = true; };
-  }, [rapportId, reload, updateItems, enabled]); 
+
+    return () => {
+      cancelled = true;
+    };
+  }, [rapportId, reload, updateItems, enabled]);
   const add = useCallback(
-    async (entry: Omit<InsertionEntry, 'local_id'> & { local_id?: string }): Promise<boolean> => {
+    async (entry: Omit<InsertionEntry, "local_id"> & { local_id?: string }): Promise<boolean> => {
       if (!rapportId) return false;
 
       const local_id = entry.local_id ?? crypto.randomUUID();
       const optimisticEntry: InternalInsertionEntry = {
         local_id,
         id: undefined,
-        sujet: entry.sujet ?? '',
+        sujet: entry.sujet ?? "",
         duree_valeur: entry.duree_valeur ?? 0,
-        unite_duree: entry.unite_duree ?? '',
-        type_partenaire_id: entry.type_partenaire_id ?? '',
-        autre_partenaire: entry.autre_partenaire ?? '',
+        unite_duree: entry.unite_duree ?? "",
+        type_partenaire_id: entry.type_partenaire_id ?? "",
+        autre_partenaire: entry.autre_partenaire ?? "",
         femmes: entry.femmes ?? 0,
         hommes: entry.hommes ?? 0,
         rural: entry.rural ?? 0,
@@ -273,7 +283,7 @@ export function useInsertionEntries(rapportId: string | null, options?: { enable
       updateItems((prev) => [...prev, optimisticEntry]);
       return true;
     },
-    [rapportId, updateItems]
+    [rapportId, updateItems],
   );
 
   const update = useCallback(
@@ -291,7 +301,7 @@ export function useInsertionEntries(rapportId: string | null, options?: { enable
 
       return true;
     },
-    [updateLocal, saveEntry]
+    [updateLocal, saveEntry],
   );
 
   const remove = useCallback(
@@ -304,15 +314,15 @@ export function useInsertionEntries(rapportId: string | null, options?: { enable
       if (!existing.id) return true;
 
       try {
-        await supabase.from('stats_insertion').delete().eq('activite_id', existing.id);
-        await supabase.from('activites_insertion').delete().eq('id', existing.id);
+        await supabase.from("stats_insertion").delete().eq("activite_id", existing.id);
+        await supabase.from("activites_insertion").delete().eq("id", existing.id);
         return true;
       } catch (error) {
-        console.error('[useInsertionEntries] remove error:', error);
+        console.error("[useInsertionEntries] remove error:", error);
         return false;
       }
     },
-    [updateItems]
+    [updateItems],
   );
 
   return {

@@ -2,7 +2,13 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import type { PrefDomainBenchmarkRow } from "@/components/dashboard/PrefDomainBenchmarkTable";
 import type { DashboardData } from "@/services/prefDomainDashboardTypes";
-import { averageDirectionalKpis, filterByRapportIds, loadRegionalDirectionIds, loadRegionalReportsForDirectionIds, uniqueIds } from "@/services/prefDomainRegionalBenchmark";
+import {
+  averageDirectionalKpis,
+  filterByRapportIds,
+  loadRegionalDirectionIds,
+  loadRegionalReportsForDirectionIds,
+  uniqueIds,
+} from "@/services/prefDomainRegionalBenchmark";
 
 type CrStatistiquesEnfantsRow = Database["public"]["Tables"]["cr_statistiques_enfants"]["Row"];
 type CrTraitementLicencesRow = Database["public"]["Tables"]["cr_traitement_licences"]["Row"];
@@ -16,7 +22,8 @@ type CrActivitesEnfantsRow = Database["public"]["Tables"]["cr_activites_enfants"
 type CrStatsInfrastructuresRow = Database["public"]["Tables"]["cr_stats_infrastructures"]["Row"];
 type CrControleCrechesRow = Database["public"]["Tables"]["cr_controle_creches"]["Row"];
 type CrFormationsCadresRow = Database["public"]["Tables"]["cr_formations_cadres"]["Row"];
-type CrPartenariatsConventionsRow = Database["public"]["Tables"]["cr_partenariats_conventions"]["Row"];
+type CrPartenariatsConventionsRow =
+  Database["public"]["Tables"]["cr_partenariats_conventions"]["Row"];
 type CrAnalysesPonctuellesRow = Database["public"]["Tables"]["cr_analyses_ponctuelles"]["Row"];
 type CrSondagesEtudesRow = Database["public"]["Tables"]["cr_sondages_etudes"]["Row"];
 type DirCrechesPriveesRow = Database["public"]["Tables"]["dir_creches_privees"]["Row"];
@@ -110,7 +117,7 @@ export type EnfanceCrechesDashboardData = DashboardData<
   EnfanceCrechesSection6Data
 >;
 
-const sumBy = <T,>(rows: T[], selector: (row: T) => number | null | undefined): number =>
+const sumBy = <T>(rows: T[], selector: (row: T) => number | null | undefined): number =>
   rows.reduce((acc, row) => acc + (selector(row) || 0), 0);
 
 const average = (values: number[]): number =>
@@ -127,7 +134,11 @@ const emptyEvolutionEnfants = (): EnfanceCrechesEvolutionDatum[] =>
   (["T1", "T2", "T3", "T4"] as const).map((name) => ({ name, Garcons: null, Filles: null }));
 
 const emptyEvolutionMouvements = (): EnfanceCrechesEvolutionMouvementsDatum[] =>
-  (["T1", "T2", "T3", "T4"] as const).map((name) => ({ name, Fermetures: null, Reouvertures: null }));
+  (["T1", "T2", "T3", "T4"] as const).map((name) => ({
+    name,
+    Fermetures: null,
+    Reouvertures: null,
+  }));
 
 const emptyDetailed = (): EnfanceCrechesSection6Data => ({
   licences: {
@@ -136,7 +147,13 @@ const emptyDetailed = (): EnfanceCrechesSection6Data => ({
     traitement: { demandesTraitees: 0, delaiMoyen: 0 },
   },
   enfants: { total: 0, urbain: 0, rural: 0, activites: [] },
-  infrastructureQualite: { crechesCreees: 0, crechesEquipees: 0, crechesQualifiees: 0, labelsObtenus: 0, controles: [] },
+  infrastructureQualite: {
+    crechesCreees: 0,
+    crechesEquipees: 0,
+    crechesQualifiees: 0,
+    labelsObtenus: 0,
+    controles: [],
+  },
   mouvements: { totalFermetures: 0, totalReouvertures: 0, details: [] },
   cadres: { totalCadres: 0, formations: [], statuts: [] },
   partenariats: { conventions: [], analyses: [], sondages: [] },
@@ -164,22 +181,34 @@ const loadRapports = async (directionId: string, year: number) => {
 };
 
 const loadStatistics = async (rapportIds: string[]) => {
-  const { data } = await supabase.from("cr_statistiques_enfants").select("*").in("rapport_id", rapportIds);
+  const { data } = await supabase
+    .from("cr_statistiques_enfants")
+    .select("*")
+    .in("rapport_id", rapportIds);
   return (data || []) as CrStatistiquesEnfantsRow[];
 };
 
 const loadTraitementLicences = async (rapportIds: string[]) => {
-  const { data } = await supabase.from("cr_traitement_licences").select("*").in("rapport_id", rapportIds);
+  const { data } = await supabase
+    .from("cr_traitement_licences")
+    .select("*")
+    .in("rapport_id", rapportIds);
   return (data || []) as CrTraitementLicencesRow[];
 };
 
 const loadDemandesLicences = async (rapportIds: string[]) => {
-  const { data } = await supabase.from("cr_demandes_licences").select("*").in("rapport_id", rapportIds);
+  const { data } = await supabase
+    .from("cr_demandes_licences")
+    .select("*")
+    .in("rapport_id", rapportIds);
   return (data || []) as CrDemandesLicencesRow[];
 };
 
 const loadCadresAssermentes = async (rapportIds: string[]) => {
-  const { data } = await supabase.from("cr_cadres_assermentes").select("*").in("rapport_id", rapportIds);
+  const { data } = await supabase
+    .from("cr_cadres_assermentes")
+    .select("*")
+    .in("rapport_id", rapportIds);
   return (data || []) as CrCadresAssermentesRow[];
 };
 
@@ -189,42 +218,66 @@ const loadLabelQualite = async (rapportIds: string[]) => {
 };
 
 const loadMouvementsFermetures = async (rapportIds: string[]) => {
-  const { data } = await supabase.from("cr_mouvements_fermetures").select("*").in("rapport_id", rapportIds);
+  const { data } = await supabase
+    .from("cr_mouvements_fermetures")
+    .select("*")
+    .in("rapport_id", rapportIds);
   return (data || []) as CrMouvementsFermeturesRow[];
 };
 
 const loadActivitesEnfants = async (rapportIds: string[]) => {
-  const { data } = await supabase.from("cr_activites_enfants").select("*").in("rapport_id", rapportIds);
+  const { data } = await supabase
+    .from("cr_activites_enfants")
+    .select("*")
+    .in("rapport_id", rapportIds);
   return (data || []) as CrActivitesEnfantsRow[];
 };
 
 const loadStatsInfrastructures = async (rapportIds: string[]) => {
-  const { data } = await supabase.from("cr_stats_infrastructures").select("*").in("rapport_id", rapportIds);
+  const { data } = await supabase
+    .from("cr_stats_infrastructures")
+    .select("*")
+    .in("rapport_id", rapportIds);
   return (data || []) as CrStatsInfrastructuresRow[];
 };
 
 const loadControleCreches = async (rapportIds: string[]) => {
-  const { data } = await supabase.from("cr_controle_creches").select("*").in("rapport_id", rapportIds);
+  const { data } = await supabase
+    .from("cr_controle_creches")
+    .select("*")
+    .in("rapport_id", rapportIds);
   return (data || []) as CrControleCrechesRow[];
 };
 
 const loadFormationsCadres = async (rapportIds: string[]) => {
-  const { data } = await supabase.from("cr_formations_cadres").select("*").in("rapport_id", rapportIds);
+  const { data } = await supabase
+    .from("cr_formations_cadres")
+    .select("*")
+    .in("rapport_id", rapportIds);
   return (data || []) as CrFormationsCadresRow[];
 };
 
 const loadPartenariatsConventions = async (rapportIds: string[]) => {
-  const { data } = await supabase.from("cr_partenariats_conventions").select("*").in("rapport_id", rapportIds);
+  const { data } = await supabase
+    .from("cr_partenariats_conventions")
+    .select("*")
+    .in("rapport_id", rapportIds);
   return (data || []) as CrPartenariatsConventionsRow[];
 };
 
 const loadAnalysesPonctuelles = async (rapportIds: string[]) => {
-  const { data } = await supabase.from("cr_analyses_ponctuelles").select("*").in("rapport_id", rapportIds);
+  const { data } = await supabase
+    .from("cr_analyses_ponctuelles")
+    .select("*")
+    .in("rapport_id", rapportIds);
   return (data || []) as CrAnalysesPonctuellesRow[];
 };
 
 const loadSondagesEtudes = async (rapportIds: string[]) => {
-  const { data } = await supabase.from("cr_sondages_etudes").select("*").in("rapport_id", rapportIds);
+  const { data } = await supabase
+    .from("cr_sondages_etudes")
+    .select("*")
+    .in("rapport_id", rapportIds);
   return (data || []) as CrSondagesEtudesRow[];
 };
 
@@ -258,7 +311,9 @@ const buildKpis = (
   enfantsPrisesEnCharge: sumBy(stats, (s) => (s.garcons || 0) + (s.filles || 0)),
   demandesLicencesTraitees: sumBy(traitementLicences, (row) => row.nombre_demandes_traitees),
   delaiMoyenTraitementJours: average(
-    traitementLicences.map((row) => row.delai_moyen_traitement_jours).filter((v): v is number => v !== null && v !== undefined),
+    traitementLicences
+      .map((row) => row.delai_moyen_traitement_jours)
+      .filter((v): v is number => v !== null && v !== undefined),
   ),
   cadresAssermentes: sumBy(cadresAssermentes, (row) => row.nombre_cadres),
   crechesLabelliseesQualite: labelQualite.filter((row) => row.statut_label === "obtenue").length,
@@ -287,7 +342,11 @@ const buildSection3 = (
   )
     .map(([id, value]) => {
       const ref = typeById.get(id);
-      const name = ref ? (lang === "ar" ? ref.libelle_ar || ref.libelle_fr : ref.libelle_fr || ref.libelle_ar) : id;
+      const name = ref
+        ? lang === "ar"
+          ? ref.libelle_ar || ref.libelle_fr
+          : ref.libelle_fr || ref.libelle_ar
+        : id;
       return { id, name, value };
     })
     .sort((a, b) => b.value - a.value);
@@ -301,7 +360,11 @@ const buildSection3 = (
   )
     .map(([id, value]) => {
       const ref = statutById.get(id);
-      const name = ref ? (lang === "ar" ? ref.libelle_ar || ref.libelle_fr : ref.libelle_fr || ref.libelle_ar) : id;
+      const name = ref
+        ? lang === "ar"
+          ? ref.libelle_ar || ref.libelle_fr
+          : ref.libelle_fr || ref.libelle_ar
+        : id;
       return { id, name, value };
     })
     .sort((a, b) => b.value - a.value);
@@ -309,13 +372,13 @@ const buildSection3 = (
   const enfantsParZone = [
     {
       name: "Urbain",
-      Garcons: sumBy(stats, (row) => row.urbain ? row.garcons || 0 : 0),
-      Filles: sumBy(stats, (row) => row.urbain ? row.filles || 0 : 0),
+      Garcons: sumBy(stats, (row) => (row.urbain ? row.garcons || 0 : 0)),
+      Filles: sumBy(stats, (row) => (row.urbain ? row.filles || 0 : 0)),
     },
     {
       name: "Rural",
-      Garcons: sumBy(stats, (row) => row.rural ? row.garcons || 0 : 0),
-      Filles: sumBy(stats, (row) => row.rural ? row.filles || 0 : 0),
+      Garcons: sumBy(stats, (row) => (row.rural ? row.garcons || 0 : 0)),
+      Filles: sumBy(stats, (row) => (row.rural ? row.filles || 0 : 0)),
     },
   ];
 
@@ -382,12 +445,42 @@ const buildBenchmark = (
     Number.isFinite(regionalAverages[key]) ? (regionalAverages[key] as number) : fallback;
 
   return [
-    { kpi: "Enfants pris en charge", monScore: kpis.enfantsPrisesEnCharge, moyenneReg: regional("enfantsPrisesEnCharge", 0), isPercentage: false },
-    { kpi: "Demandes de licences traitées", monScore: kpis.demandesLicencesTraitees, moyenneReg: regional("demandesLicencesTraitees", 0), isPercentage: false },
-    { kpi: "Délai moyen de traitement (jours)", monScore: kpis.delaiMoyenTraitementJours, moyenneReg: regional("delaiMoyenTraitementJours", 0), isPercentage: true },
-    { kpi: "Cadres assermentés", monScore: kpis.cadresAssermentes, moyenneReg: regional("cadresAssermentes", 0), isPercentage: false },
-    { kpi: "Crèches labellisées qualité (obtenues)", monScore: kpis.crechesLabelliseesQualite, moyenneReg: regional("crechesLabelliseesQualite", 0), isPercentage: false },
-    { kpi: "Fermetures de crèches signalées", monScore: kpis.fermeturesCrechesSignalees, moyenneReg: regional("fermeturesCrechesSignalees", 0), isPercentage: false },
+    {
+      kpi: "Enfants pris en charge",
+      monScore: kpis.enfantsPrisesEnCharge,
+      moyenneReg: regional("enfantsPrisesEnCharge", 0),
+      isPercentage: false,
+    },
+    {
+      kpi: "Demandes de licences traitées",
+      monScore: kpis.demandesLicencesTraitees,
+      moyenneReg: regional("demandesLicencesTraitees", 0),
+      isPercentage: false,
+    },
+    {
+      kpi: "Délai moyen de traitement (jours)",
+      monScore: kpis.delaiMoyenTraitementJours,
+      moyenneReg: regional("delaiMoyenTraitementJours", 0),
+      isPercentage: true,
+    },
+    {
+      kpi: "Cadres assermentés",
+      monScore: kpis.cadresAssermentes,
+      moyenneReg: regional("cadresAssermentes", 0),
+      isPercentage: false,
+    },
+    {
+      kpi: "Crèches labellisées qualité (obtenues)",
+      monScore: kpis.crechesLabelliseesQualite,
+      moyenneReg: regional("crechesLabelliseesQualite", 0),
+      isPercentage: false,
+    },
+    {
+      kpi: "Fermetures de crèches signalées",
+      monScore: kpis.fermeturesCrechesSignalees,
+      moyenneReg: regional("fermeturesCrechesSignalees", 0),
+      isPercentage: false,
+    },
   ];
 };
 
@@ -425,9 +518,10 @@ const buildDetailed = (
   )
     .map(([id, value]) => ({
       id,
-      name: lang === "ar"
-        ? typeById.get(id)?.libelle_ar || typeById.get(id)?.libelle_fr || id
-        : typeById.get(id)?.libelle_fr || typeById.get(id)?.libelle_ar || id,
+      name:
+        lang === "ar"
+          ? typeById.get(id)?.libelle_ar || typeById.get(id)?.libelle_fr || id
+          : typeById.get(id)?.libelle_fr || typeById.get(id)?.libelle_ar || id,
       value,
     }))
     .sort((a, b) => b.value - a.value);
@@ -441,16 +535,17 @@ const buildDetailed = (
   )
     .map(([id, value]) => ({
       id,
-      name: lang === "ar"
-        ? statutById.get(id)?.libelle_ar || statutById.get(id)?.libelle_fr || id
-        : statutById.get(id)?.libelle_fr || statutById.get(id)?.libelle_ar || id,
+      name:
+        lang === "ar"
+          ? statutById.get(id)?.libelle_ar || statutById.get(id)?.libelle_fr || id
+          : statutById.get(id)?.libelle_fr || statutById.get(id)?.libelle_ar || id,
       value,
     }))
     .sort((a, b) => b.value - a.value);
 
   const totalEnfants = sumBy(stats, (row) => (row.garcons || 0) + (row.filles || 0));
-  const urbain = sumBy(stats, (row) => row.urbain ? (row.garcons || 0) + (row.filles || 0) : 0);
-  const rural = sumBy(stats, (row) => row.rural ? (row.garcons || 0) + (row.filles || 0) : 0);
+  const urbain = sumBy(stats, (row) => (row.urbain ? (row.garcons || 0) + (row.filles || 0) : 0));
+  const rural = sumBy(stats, (row) => (row.rural ? (row.garcons || 0) + (row.filles || 0) : 0));
   const activites = activitesEnfants.map((row) => ({
     nom: row.nom_activite,
     garcons: row.garcons || 0,
@@ -484,7 +579,10 @@ const buildDetailed = (
       acc.set(key, (acc.get(key) || 0) + (row.nombre_cadres || 0));
       return acc;
     }, new Map()),
-  ).map(([id, count]) => ({ statut: statutsCadreById.get(id)?.libelle_fr || statutsCadreById.get(id)?.libelle_ar || id, count }));
+  ).map(([id, count]) => ({
+    statut: statutsCadreById.get(id)?.libelle_fr || statutsCadreById.get(id)?.libelle_ar || id,
+    count,
+  }));
 
   return {
     licences: {
@@ -492,7 +590,11 @@ const buildDetailed = (
       demandesParStatut,
       traitement: {
         demandesTraitees: sumBy(traitementsLicences, (row) => row.nombre_demandes_traitees),
-        delaiMoyen: average(traitementsLicences.map((row) => row.delai_moyen_traitement_jours).filter((v): v is number => v !== null && v !== undefined)),
+        delaiMoyen: average(
+          traitementsLicences
+            .map((row) => row.delai_moyen_traitement_jours)
+            .filter((v): v is number => v !== null && v !== undefined),
+        ),
       },
     },
     enfants: { total: totalEnfants, urbain, rural, activites },
@@ -504,15 +606,36 @@ const buildDetailed = (
       controles: controlesData,
     },
     mouvements: {
-      totalFermetures: sumBy(mouvements.filter((row) => row.type_mouvement === "fermeture"), (row) => row.nombre_creches),
-      totalReouvertures: sumBy(mouvements.filter((row) => row.type_mouvement === "reouverture"), (row) => row.nombre_creches),
+      totalFermetures: sumBy(
+        mouvements.filter((row) => row.type_mouvement === "fermeture"),
+        (row) => row.nombre_creches,
+      ),
+      totalReouvertures: sumBy(
+        mouvements.filter((row) => row.type_mouvement === "reouverture"),
+        (row) => row.nombre_creches,
+      ),
       details: detailsMouvements,
     },
-    cadres: { totalCadres: sumBy(cadres, (row) => row.nombre_cadres), formations: formationsData, statuts: statutsCadreData },
+    cadres: {
+      totalCadres: sumBy(cadres, (row) => row.nombre_cadres),
+      formations: formationsData,
+      statuts: statutsCadreData,
+    },
     partenariats: {
-      conventions: partenariats.map((row) => ({ partenaire: row.partenaire, nombre: row.nombre_conventions || 0, objectif: row.objectif || null })),
-      analyses: analyses.map((row) => ({ sujet: row.sujet, beneficiaires: row.nombre_beneficiaires || 0 })),
-      sondages: sondages.map((row) => ({ type: row.type_sondage, participants: row.nombre_participants || 0, resultats: row.resultats || null })),
+      conventions: partenariats.map((row) => ({
+        partenaire: row.partenaire,
+        nombre: row.nombre_conventions || 0,
+        objectif: row.objectif || null,
+      })),
+      analyses: analyses.map((row) => ({
+        sujet: row.sujet,
+        beneficiaires: row.nombre_beneficiaires || 0,
+      })),
+      sondages: sondages.map((row) => ({
+        type: row.type_sondage,
+        participants: row.nombre_participants || 0,
+        resultats: row.resultats || null,
+      })),
     },
   };
 };
@@ -553,7 +676,9 @@ export const loadEnfanceCrechesDashboard = async (
 
   const rapportIds = rapports.map((row) => row.id);
   const localRapportIdSet = new Set(rapportIds);
-  const rapportTrimestreById = new Map<string, string | null>(rapports.map((row) => [row.id, row.trimestre]));
+  const rapportTrimestreById = new Map<string, string | null>(
+    rapports.map((row) => [row.id, row.trimestre]),
+  );
   const latestRapport = rapports[0];
 
   const regionalDirectionIds = await regionalDirectionIdsPromise;
@@ -634,14 +759,24 @@ export const loadEnfanceCrechesDashboard = async (
       .filter((value): value is EnfanceCrechesKpisRaw => value !== null),
   ) as Partial<Record<keyof EnfanceCrechesKpisRaw, number>>;
 
-  const kpis = buildKpis(stats, traitementLicences, cadresAssermentes, labelQualite, mouvementsFermetures);
+  const kpis = buildKpis(
+    stats,
+    traitementLicences,
+    cadresAssermentes,
+    labelQualite,
+    mouvementsFermetures,
+  );
 
-  const workflowStatus = status?.statut || (latestRapport.statut_rapport === "VALIDE"
-    ? "TERMINE"
-    : latestRapport.statut_rapport === "NON_COMMENCE"
-      ? "NON_COMMENCE"
-      : "EN_COURS");
-  const progressPct = status?.progression_pourcentage ?? (workflowStatus === "TERMINE" ? 100 : workflowStatus === "EN_COURS" ? 50 : 0);
+  const workflowStatus =
+    status?.statut ||
+    (latestRapport.statut_rapport === "VALIDE"
+      ? "TERMINE"
+      : latestRapport.statut_rapport === "NON_COMMENCE"
+        ? "NON_COMMENCE"
+        : "EN_COURS");
+  const progressPct =
+    status?.progression_pourcentage ??
+    (workflowStatus === "TERMINE" ? 100 : workflowStatus === "EN_COURS" ? 50 : 0);
 
   return {
     status: {

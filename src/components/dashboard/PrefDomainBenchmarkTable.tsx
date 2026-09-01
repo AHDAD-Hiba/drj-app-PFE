@@ -42,7 +42,8 @@ const KPI_TRANSLATION_KEYS: Record<string, string> = {
   "Montant des arriérés": "arrieres",
   "Total inscriptions formation": "totalInscriptionsFormation",
   "Taux d'intégration des lauréates": "tauxIntegrationLaureates",
-  "Bénéficiaires sensibilisation + portes ouvertes": "totalBeneficiairesSensibilisationPortesOuvertes",
+  "Bénéficiaires sensibilisation + portes ouvertes":
+    "totalBeneficiairesSensibilisationPortesOuvertes",
   "Bénéficiaires AGR": "totalBeneficiairesAgr",
   "Partenariats suivis": "totalPartenariatsSuivis",
   "Séances centres d'écoute": "totalSeancesCentresEcoute",
@@ -60,20 +61,32 @@ const KPI_TRANSLATION_KEYS: Record<string, string> = {
   "Fermetures de crèches signalées": "fermeturesCrechesSignalees",
 };
 
-export const PrefDomainBenchmarkTable = ({ rows, t, lang, className = "bg-card w-full overflow-x-auto" }: PrefDomainBenchmarkTableProps) => {
+export const PrefDomainBenchmarkTable = ({
+  rows,
+  t,
+  lang,
+  className = "bg-card w-full overflow-x-auto",
+}: PrefDomainBenchmarkTableProps) => {
   return (
     <Card className={className}>
       <Table>
         <TableHeader className="bg-muted/50">
           <TableRow>
-            <TableHead className={`${lang === "ar" ? "text-right" : "text-left"} font-semibold py-4`}>
+            <TableHead
+              className={`${lang === "ar" ? "text-right" : "text-left"} font-semibold py-4`}
+            >
               {t("prefDomainDashboard.benchmark.columns.indicator", "Indicateur")}
             </TableHead>
             <TableHead className={`${lang === "ar" ? "text-left" : "text-right"} font-semibold`}>
               {t("prefDomainDashboard.benchmark.columns.prefecture", "Préfecture")}
             </TableHead>
             <TableHead className={`${lang === "ar" ? "text-left" : "text-right"} font-semibold`}>
-              {t("prefDomainDashboard.benchmark.columns.regionalAverage", "Moyenne Régionale") as string}
+              {
+                t(
+                  "prefDomainDashboard.benchmark.columns.regionalAverage",
+                  "Moyenne Régionale",
+                ) as string
+              }
             </TableHead>
             <TableHead className={`${lang === "ar" ? "text-left" : "text-right"} font-semibold`}>
               {t("prefDomainDashboard.benchmark.columns.variance", "Écart") as string}
@@ -85,26 +98,38 @@ export const PrefDomainBenchmarkTable = ({ rows, t, lang, className = "bg-card w
             const ecart = Number((item.monScore - item.moyenneReg).toFixed(1));
             const isPositive = ecart > 0;
             const isNegative = ecart < 0;
-            const formatValue = (val: number) => (item.isPercentage ? `${val.toFixed(1)}%` : val.toFixed(1));
+            const formatValue = (val: number) =>
+              item.isPercentage ? `${val.toFixed(1)}%` : val.toFixed(1);
 
             const kpiTranslationKey = KPI_TRANSLATION_KEYS[item.kpi] || item.kpi;
 
             return (
               <TableRow key={idx} className="hover:bg-muted/20 transition-colors">
-                <TableCell className={`${lang === "ar" ? "text-right" : "text-left"} font-medium text-xs sm:text-sm py-3 sm:py-4`}>
+                <TableCell
+                  className={`${lang === "ar" ? "text-right" : "text-left"} font-medium text-xs sm:text-sm py-3 sm:py-4`}
+                >
                   {t(`prefDomainDashboard.benchmark.kpis.${kpiTranslationKey}`, item.kpi) as string}
                 </TableCell>
 
-                <TableCell className={`${lang === "ar" ? "text-left" : "text-right"} font-bold tabular-nums text-xs sm:text-sm`}>
+                <TableCell
+                  className={`${lang === "ar" ? "text-left" : "text-right"} font-bold tabular-nums text-xs sm:text-sm`}
+                >
                   <span dir="ltr">{formatValue(item.monScore)}</span>
                 </TableCell>
 
-                <TableCell className={`${lang === "ar" ? "text-left" : "text-right"} text-muted-foreground tabular-nums text-xs sm:text-sm`}>
+                <TableCell
+                  className={`${lang === "ar" ? "text-left" : "text-right"} text-muted-foreground tabular-nums text-xs sm:text-sm`}
+                >
                   <span dir="ltr">{formatValue(item.moyenneReg)}</span>
                 </TableCell>
 
-                <TableCell className={`${lang === "ar" ? "text-left" : "text-right"} tabular-nums text-xs sm:text-sm`}>
-                  <div className={`flex items-center ${lang === "ar" ? "justify-start" : "justify-end"} gap-1`} dir="ltr">
+                <TableCell
+                  className={`${lang === "ar" ? "text-left" : "text-right"} tabular-nums text-xs sm:text-sm`}
+                >
+                  <div
+                    className={`flex items-center ${lang === "ar" ? "justify-start" : "justify-end"} gap-1`}
+                    dir="ltr"
+                  >
                     {isPositive && (
                       <>
                         <TrendingUp className="w-3.5 h-3.5 text-emerald-500" />

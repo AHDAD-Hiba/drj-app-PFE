@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { averageDirectionalKpis, filterByRapportIds, uniqueIds } from "./prefDomainRegionalBenchmark";
+import {
+  averageDirectionalKpis,
+  filterByRapportIds,
+  uniqueIds,
+} from "./prefDomainRegionalBenchmark";
 
 describe("averageDirectionalKpis", () => {
   it("returns the arithmetic mean for each KPI across same-region directions", () => {

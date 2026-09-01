@@ -100,7 +100,11 @@ export const PrefDomainDashboardSection4ProtectionEnfance = ({
                 <XAxis {...xAxisProps} />
                 <YAxis {...yAxisProps} />
                 <Tooltip
-                  contentStyle={{ borderRadius: "8px", border: "1px solid hsl(var(--border))", fontSize: "12px" }}
+                  contentStyle={{
+                    borderRadius: "8px",
+                    border: "1px solid hsl(var(--border))",
+                    fontSize: "12px",
+                  }}
                 />
                 <Legend wrapperStyle={{ fontSize: "11px", paddingTop: "10px" }} iconType="circle" />
                 <Area
@@ -157,7 +161,11 @@ export const PrefDomainDashboardSection4ProtectionEnfance = ({
                 <XAxis {...xAxisProps} />
                 <YAxis {...yAxisProps} />
                 <Tooltip
-                  contentStyle={{ borderRadius: "8px", border: "1px solid hsl(var(--border))", fontSize: "12px" }}
+                  contentStyle={{
+                    borderRadius: "8px",
+                    border: "1px solid hsl(var(--border))",
+                    fontSize: "12px",
+                  }}
                 />
                 <Legend wrapperStyle={{ fontSize: "11px", paddingTop: "10px" }} iconType="circle" />
                 <Area

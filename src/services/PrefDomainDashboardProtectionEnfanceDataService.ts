@@ -2,7 +2,13 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import type { PrefDomainBenchmarkRow } from "@/components/dashboard/PrefDomainBenchmarkTable";
 import type { DashboardData } from "@/services/prefDomainDashboardTypes";
-import { averageDirectionalKpis, filterByRapportIds, loadRegionalDirectionIds, loadRegionalReportsForDirectionIds, uniqueIds } from "@/services/prefDomainRegionalBenchmark";
+import {
+  averageDirectionalKpis,
+  filterByRapportIds,
+  loadRegionalDirectionIds,
+  loadRegionalReportsForDirectionIds,
+  uniqueIds,
+} from "@/services/prefDomainRegionalBenchmark";
 
 // --- Service dédié au domaine "Protection de l'Enfance" (PE) ---
 // Suit exactement le même contrat que les services Infrastructure / Affaires
@@ -32,10 +38,8 @@ type PePartenariatsRow = Database["public"]["Tables"]["pe_partenariats"]["Row"];
 type PeFormationPersonnelRow = Database["public"]["Tables"]["pe_formation_personnel"]["Row"];
 type PeVisitesOfficiellesRow = Database["public"]["Tables"]["pe_visites_officielles"]["Row"];
 type PeDonsRow = Database["public"]["Tables"]["pe_dons"]["Row"];
-type PeAmenagementEquipementRow =
-  Database["public"]["Tables"]["pe_amenagement_equipement"]["Row"];
-type PeRapportsExceptionnelsRow =
-  Database["public"]["Tables"]["pe_rapports_exceptionnels"]["Row"];
+type PeAmenagementEquipementRow = Database["public"]["Tables"]["pe_amenagement_equipement"]["Row"];
+type PeRapportsExceptionnelsRow = Database["public"]["Tables"]["pe_rapports_exceptionnels"]["Row"];
 type PeRapportsJudiciairesRow = Database["public"]["Tables"]["pe_rapports_judiciaires"]["Row"];
 type RefDomainesActiviteRow = Database["public"]["Tables"]["ref_domaines_activite"]["Row"];
 type RefTypesIncidentRow = Database["public"]["Tables"]["ref_types_incident"]["Row"];
@@ -143,7 +147,12 @@ export interface ProtectionEnfanceSection6Data {
     parCible: { cible: string; count: number; beneficiaires: number }[];
   };
   visitesDons: {
-    visites: { entite: string; date: string | null; type: string | null; nombreVisiteurs: number }[];
+    visites: {
+      entite: string;
+      date: string | null;
+      type: string | null;
+      nombreVisiteurs: number;
+    }[];
     totalVisiteurs: number;
     dons: { donateur: string; nature: string; beneficiaires: number }[];
     totalDons: number;
@@ -169,7 +178,7 @@ export type ProtectionEnfanceDashboardData = DashboardData<
 
 // --- Helpers d'agrégation (privés) ---
 
-const sumBy = <T,>(rows: T[], selector: (row: T) => number | null | undefined): number =>
+const sumBy = <T>(rows: T[], selector: (row: T) => number | null | undefined): number =>
   rows.reduce((acc, row) => acc + (selector(row) || 0), 0);
 
 const average = (values: number[]): number =>
@@ -294,10 +303,7 @@ const loadPeConseilEnfant = async (rapportIds: string[]) => {
 };
 
 const loadPePartenariats = async (rapportIds: string[]) => {
-  const { data } = await supabase
-    .from("pe_partenariats")
-    .select("*")
-    .in("rapport_id", rapportIds);
+  const { data } = await supabase.from("pe_partenariats").select("*").in("rapport_id", rapportIds);
   return (data || []) as PePartenariatsRow[];
 };
 
@@ -378,7 +384,10 @@ const buildKpis = (
     tauxPreparationIntegrationMoyen: average(tauxRenseignes),
     totalBeneficiairesEducationFormation: sumBy(
       education,
-      (e) => (e.beneficiaires_formel || 0) + (e.beneficiaires_non_formel || 0) + (e.beneficiaires_soutien || 0),
+      (e) =>
+        (e.beneficiaires_formel || 0) +
+        (e.beneficiaires_non_formel || 0) +
+        (e.beneficiaires_soutien || 0),
     ),
     // ⚠️ Source unique = pe_liberte_surveillee (PAS pe_statistiques_demographiques.ls_integres_*)
     totalIntegrationsLiberteSurveillee: sumBy(
@@ -409,7 +418,10 @@ const buildSection3 = (
   ]);
   stats.forEach((s) => {
     const total = (s.garcons || 0) + (s.filles || 0);
-    priseEnChargeMap.set(s.type_prise_charge, (priseEnChargeMap.get(s.type_prise_charge) || 0) + total);
+    priseEnChargeMap.set(
+      s.type_prise_charge,
+      (priseEnChargeMap.get(s.type_prise_charge) || 0) + total,
+    );
   });
   const priseEnCharge: ProtectionEnfancePriseChargeDatum[] = [
     { name: "centre_sauvegarde", value: priseEnChargeMap.get("centre_sauvegarde") || 0 },
@@ -421,9 +433,14 @@ const buildSection3 = (
   const incidentsByType = new Map<string, number>();
   rapportsExceptionnels.forEach((r) => {
     if (!r.type_incident_id) return;
-    incidentsByType.set(r.type_incident_id, (incidentsByType.get(r.type_incident_id) || 0) + (r.nombre_cas || 0));
+    incidentsByType.set(
+      r.type_incident_id,
+      (incidentsByType.get(r.type_incident_id) || 0) + (r.nombre_cas || 0),
+    );
   });
-  const incidentsParType: ProtectionEnfanceIncidentTypeDatum[] = Array.from(incidentsByType.entries())
+  const incidentsParType: ProtectionEnfanceIncidentTypeDatum[] = Array.from(
+    incidentsByType.entries(),
+  )
     .map(([id, value]) => {
       const ref = typeIncidentById.get(id);
       const name = ref ? (lang === "ar" ? ref.libelle_ar : ref.libelle_fr || ref.libelle_ar) : id;
@@ -590,7 +607,11 @@ const buildDetailed = (
   const activitesParDomaine = Array.from(activitesByDomaineMap.entries())
     .map(([id, nombreBeneficiaires]) => {
       const ref = domaineById.get(id);
-      const domaine = ref ? (lang === "ar" ? ref.libelle_ar : ref.libelle_fr || ref.libelle_ar) : id;
+      const domaine = ref
+        ? lang === "ar"
+          ? ref.libelle_ar
+          : ref.libelle_fr || ref.libelle_ar
+        : id;
       return { domaine, nombreBeneficiaires };
     })
     .sort((a, b) => b.nombreBeneficiaires - a.nombreBeneficiaires);
@@ -635,7 +656,10 @@ const buildDetailed = (
   const incidentsByType = new Map<string, number>();
   rapportsExceptionnels.forEach((r) => {
     if (!r.type_incident_id) return;
-    incidentsByType.set(r.type_incident_id, (incidentsByType.get(r.type_incident_id) || 0) + (r.nombre_cas || 0));
+    incidentsByType.set(
+      r.type_incident_id,
+      (incidentsByType.get(r.type_incident_id) || 0) + (r.nombre_cas || 0),
+    );
   });
   const incidentsParType = Array.from(incidentsByType.entries())
     .map(([id, count]) => {
@@ -758,7 +782,9 @@ export const loadProtectionEnfanceDashboard = async (
 
   const rapportIds = rapports.map((r) => r.id);
   const localRapportIdSet = new Set(rapportIds);
-  const rapportTrimestreById = new Map<string, string | null>(rapports.map((r) => [r.id, r.trimestre]));
+  const rapportTrimestreById = new Map<string, string | null>(
+    rapports.map((r) => [r.id, r.trimestre]),
+  );
   const latestRapport = rapports[0]; // déjà trié par trimestre décroissant
 
   const regionalDirectionIds = await regionalDirectionIdsPromise;
@@ -836,12 +862,16 @@ export const loadProtectionEnfanceDashboard = async (
 
   const kpis = buildKpis(stats, education, liberteSurveillee, rapportsExceptionnels);
 
-  const workflowStatus = status?.statut || (latestRapport.statut_rapport === "VALIDE"
-    ? "TERMINE"
-    : latestRapport.statut_rapport === "NON_COMMENCE"
-      ? "NON_COMMENCE"
-      : "EN_COURS");
-  const progressPct = status?.progression_pourcentage ?? (workflowStatus === "TERMINE" ? 100 : workflowStatus === "EN_COURS" ? 50 : 0);
+  const workflowStatus =
+    status?.statut ||
+    (latestRapport.statut_rapport === "VALIDE"
+      ? "TERMINE"
+      : latestRapport.statut_rapport === "NON_COMMENCE"
+        ? "NON_COMMENCE"
+        : "EN_COURS");
+  const progressPct =
+    status?.progression_pourcentage ??
+    (workflowStatus === "TERMINE" ? 100 : workflowStatus === "EN_COURS" ? 50 : 0);
 
   return {
     status: {
@@ -852,7 +882,14 @@ export const loadProtectionEnfanceDashboard = async (
       reportStatus: latestRapport.statut_rapport,
     },
     kpis,
-    section3: buildSection3(stats, rapportsExceptionnels, typesIncident, activites, domainesActivite, lang),
+    section3: buildSection3(
+      stats,
+      rapportsExceptionnels,
+      typesIncident,
+      activites,
+      domainesActivite,
+      lang,
+    ),
     evolution: buildEvolution(rapportTrimestreById, stats, rapportsExceptionnels),
     benchmark: buildBenchmark(kpis, regionalAverage),
     detailed: buildDetailed(

@@ -1,10 +1,10 @@
-import { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
-import { Moon, Sun } from 'lucide-react';
-import { useAuth } from '@/hooks/common/useAuth';
+import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
+import { Moon, Sun } from "lucide-react";
+import { useAuth } from "@/hooks/common/useAuth";
 import {
   PREFECTURE_COORDS,
   REGION_CENTER,
@@ -13,49 +13,51 @@ import {
   CASA_CLUSTER_CENTER,
   CASA_CLUSTER_RADIUS,
   CASA_SPIDERFY_BREAKPOINT,
-} from '@/lib/prefectureCoords';
-import type { Database } from '@/integrations/supabase/types';
+} from "@/lib/prefectureCoords";
+import type { Database } from "@/integrations/supabase/types";
 
-type Direction = Database['public']['Tables']['directions']['Row'];
-type Rapport   = Database['public']['Tables']['rapports']['Row'];
+type Direction = Database["public"]["Tables"]["directions"]["Row"];
+type Rapport = Database["public"]["Tables"]["rapports"]["Row"];
 
-type BaseLayerKey = 'dark' | 'light';
+type BaseLayerKey = "dark" | "light";
 
 const TILE_LAYERS: Record<BaseLayerKey, { url: string; attribution: string }> = {
   dark: {
-    url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
+    url: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+    attribution:
+      '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
   },
   light: {
-    url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
+    url: "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
+    attribution:
+      '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
   },
 };
 
-const STORAGE_KEY = 'drj-cs.map.baselayer';
+const STORAGE_KEY = "drj-cs.map.baselayer";
 
 interface Props {
   directions: Direction[];
-  rapports: (Rapport & { global_score?: number })[]; 
+  rapports: (Rapport & { global_score?: number })[];
   totals: Map<string, number>;
   height?: number;
 }
 
 const scoreColor = (score: number | null) => {
-  if (score == null) return '#64748b';
-  if (score >= 90) return 'hsl(158, 65%, 38%)';
-  if (score >= 70) return 'hsl(142, 60%, 45%)';
-  if (score >= 50) return 'hsl(38, 85%, 50%)'; 
-  return 'hsl(0, 75%, 52%)';
+  if (score == null) return "#64748b";
+  if (score >= 90) return "hsl(158, 65%, 38%)";
+  if (score >= 70) return "hsl(142, 60%, 45%)";
+  if (score >= 50) return "hsl(38, 85%, 50%)";
+  return "hsl(0, 75%, 52%)";
 };
 
 // تحديث الدالة لتقرأ من قسم map.legend الجديد
 const scoreLabel = (score: number | null, t: any) => {
-  if (score == null) return '—';
-  if (score >= 90) return t('map.legend.excellence');
-  if (score >= 70) return t('map.legend.bon');
-  if (score >= 50) return t('map.legend.moyen');
-  return t('map.legend.improve');
+  if (score == null) return "—";
+  if (score >= 90) return t("map.legend.excellence");
+  if (score >= 70) return t("map.legend.bon");
+  if (score >= 50) return t("map.legend.moyen");
+  return t("map.legend.improve");
 };
 
 const spiderfyPosition = (code: string): [number, number] => {
@@ -72,19 +74,21 @@ export const LeafletMap = ({ directions, rapports, totals, height = 520 }: Props
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
   const tileLayerRef = useRef<L.TileLayer | null>(null);
-  const markersRef = useRef<Map<string, { marker: L.Marker; line: L.Polyline | null; realLatLng: L.LatLngExpression }>>(new Map());
+  const markersRef = useRef<
+    Map<string, { marker: L.Marker; line: L.Polyline | null; realLatLng: L.LatLngExpression }>
+  >(new Map());
   const clusterCircleRef = useRef<L.Circle | null>(null);
   const navigate = useNavigate();
   const { i18n, t } = useTranslation();
-  const isAr = i18n.language === 'ar';
-  
+  const isAr = i18n.language === "ar";
+
   const { utilisateur: profile } = useAuth();
-  const isRegional = profile?.role === 'directeur_regional';
+  const isRegional = profile?.role === "directeur_regional";
 
   const [baseLayer, setBaseLayer] = useState<BaseLayerKey>(() => {
-    if (typeof window === 'undefined') return 'dark';
+    if (typeof window === "undefined") return "dark";
     const v = window.localStorage.getItem(STORAGE_KEY);
-    return v === 'light' || v === 'dark' ? v : 'dark';
+    return v === "light" || v === "dark" ? v : "dark";
   });
 
   useEffect(() => {
@@ -102,7 +106,7 @@ export const LeafletMap = ({ directions, rapports, totals, height = 520 }: Props
     const cfg = TILE_LAYERS[baseLayer];
     tileLayerRef.current = L.tileLayer(cfg.url, {
       attribution: cfg.attribution,
-      subdomains: 'abcd',
+      subdomains: "abcd",
       maxZoom: 19,
     }).addTo(map);
 
@@ -120,12 +124,14 @@ export const LeafletMap = ({ directions, rapports, totals, height = 520 }: Props
     const cfg = TILE_LAYERS[baseLayer];
     tileLayerRef.current = L.tileLayer(cfg.url, {
       attribution: cfg.attribution,
-      subdomains: 'abcd',
+      subdomains: "abcd",
       maxZoom: 19,
     }).addTo(map);
     try {
       window.localStorage.setItem(STORAGE_KEY, baseLayer);
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }, [baseLayer]);
 
   useEffect(() => {
@@ -133,15 +139,15 @@ export const LeafletMap = ({ directions, rapports, totals, height = 520 }: Props
     if (!map) return;
 
     const layer = L.layerGroup().addTo(map);
-    const subByPref = new Map(rapports.map(s => [s.direction_id, s]));
+    const subByPref = new Map(rapports.map((s) => [s.direction_id, s]));
 
     markersRef.current.clear();
 
-    directions.forEach(pref => {
+    directions.forEach((pref) => {
       const coord = PREFECTURE_COORDS[pref.code as keyof typeof PREFECTURE_COORDS];
       if (!coord) return;
       const sub = subByPref.get(pref.id);
-      
+
       const score = sub?.global_score != null ? Number(sub.global_score) : null;
       const color = scoreColor(score);
       const name = isAr ? pref.nom_ar : pref.nom_fr;
@@ -150,11 +156,11 @@ export const LeafletMap = ({ directions, rapports, totals, height = 520 }: Props
       const html = `
         <div class="leaflet-pref-marker" style="--c:${color}">
           <span class="leaflet-pref-pulse"></span>
-          <span class="leaflet-pref-dot">${score != null ? score.toFixed(0) : '·'}</span>
+          <span class="leaflet-pref-dot">${score != null ? score.toFixed(0) : "·"}</span>
         </div>
       `;
       const icon = L.divIcon({
-        className: 'leaflet-pref-icon',
+        className: "leaflet-pref-icon",
         html,
         iconSize: [32, 32],
         iconAnchor: [16, 16],
@@ -169,7 +175,7 @@ export const LeafletMap = ({ directions, rapports, totals, height = 520 }: Props
           color,
           weight: 1,
           opacity: 0.55,
-          dashArray: '3 3',
+          dashArray: "3 3",
           interactive: false,
         }).addTo(layer);
       }
@@ -178,7 +184,7 @@ export const LeafletMap = ({ directions, rapports, totals, height = 520 }: Props
 
       // هنا تم تصحيح الترجمات داخل الـ Popup
       const popupHtml = `
-        <div class="leaflet-pref-popup" dir="${isAr ? 'rtl' : 'ltr'}">
+        <div class="leaflet-pref-popup" dir="${isAr ? "rtl" : "ltr"}">
           <div class="lpp-head" style="background:${color}">
             <div class="lpp-name">${name}</div>
             <div class="lpp-code">${pref.code}</div>
@@ -188,7 +194,7 @@ export const LeafletMap = ({ directions, rapports, totals, height = 520 }: Props
               sub
                 ? `
                   <div class="lpp-row">
-                    <span>${t('map.score')}</span>
+                    <span>${t("map.score")}</span>
                     <strong>${Number(sub.global_score ?? 0).toFixed(0)}%</strong>
                   </div>
 
@@ -199,12 +205,12 @@ export const LeafletMap = ({ directions, rapports, totals, height = 520 }: Props
                   ${
                     isRegional
                       ? `<button class="lpp-cta" data-pref-id="${pref.id}">
-                          ${isAr ? '←' : ''} ${t('map.viewFile')} ${!isAr ? '→' : ''}
+                          ${isAr ? "←" : ""} ${t("map.viewFile")} ${!isAr ? "→" : ""}
                          </button>`
-                      : ''
+                      : ""
                   }
                 `
-                : `<div class="lpp-empty text-center text-muted-foreground p-2">${t('map.noData')}</div>`
+                : `<div class="lpp-empty text-center text-muted-foreground p-2">${t("map.noData")}</div>`
             }
           </div>
         </div>
@@ -212,25 +218,25 @@ export const LeafletMap = ({ directions, rapports, totals, height = 520 }: Props
 
       marker.bindPopup(popupHtml, {
         maxWidth: 260,
-        className: 'leaflet-pref-popup-wrap',
+        className: "leaflet-pref-popup-wrap",
       });
 
-      marker.on('popupopen', e => {
+      marker.on("popupopen", (e) => {
         if (!isRegional) return;
         const node = (e.popup as L.Popup).getElement();
-        const btn = node?.querySelector<HTMLButtonElement>('.lpp-cta');
-        btn?.addEventListener('click', () => navigate(`/directions/${pref.id}`));
+        const btn = node?.querySelector<HTMLButtonElement>(".lpp-cta");
+        btn?.addEventListener("click", () => navigate(`/directions/${pref.id}`));
       });
     });
 
     const clusterCircle = L.circle(CASA_CLUSTER_CENTER, {
       radius: 9000,
-      color: 'hsl(158, 50%, 50%)',
+      color: "hsl(158, 50%, 50%)",
       weight: 1.5,
       opacity: 0.55,
-      fillColor: 'hsl(158, 55%, 24%)',
+      fillColor: "hsl(158, 55%, 24%)",
       fillOpacity: 0.08,
-      dashArray: '4 4',
+      dashArray: "4 4",
       interactive: false,
     }).addTo(layer);
     clusterCircleRef.current = clusterCircle;
@@ -239,7 +245,7 @@ export const LeafletMap = ({ directions, rapports, totals, height = 520 }: Props
       const zoom = map.getZoom();
       const shouldSpread = zoom < CASA_SPIDERFY_BREAKPOINT;
 
-      CASA_CLUSTER_CODES.forEach(code => {
+      CASA_CLUSTER_CODES.forEach((code) => {
         const entry = markersRef.current.get(code);
         if (!entry) return;
         const target: L.LatLngExpression = shouldSpread ? spiderfyPosition(code) : entry.realLatLng;
@@ -259,10 +265,10 @@ export const LeafletMap = ({ directions, rapports, totals, height = 520 }: Props
     };
 
     applySpiderfy();
-    map.on('zoomend', applySpiderfy);
+    map.on("zoomend", applySpiderfy);
 
     return () => {
-      map.off('zoomend', applySpiderfy);
+      map.off("zoomend", applySpiderfy);
       layer.clearLayers();
       map.removeLayer(layer);
       markersRef.current.clear();
@@ -271,26 +277,39 @@ export const LeafletMap = ({ directions, rapports, totals, height = 520 }: Props
   }, [directions, rapports, totals, isAr, i18n.language, navigate, t, isRegional]);
 
   return (
-    <div className="relative w-full rounded-xl overflow-hidden ring-1 ring-border" style={{ height }}>
+    <div
+      className="relative w-full rounded-xl overflow-hidden ring-1 ring-border"
+      style={{ height }}
+    >
       <div ref={containerRef} className="absolute inset-0" />
-      
+
       {/* هنا تم تصحيح ترجمة الـ Legend بالكامل وتنسيق اتجاه النسب المئوية */}
-      <div 
+      <div
         className="pointer-events-none absolute bottom-3 z-[400] bg-card/95 backdrop-blur border border-border rounded-lg px-3 py-2 shadow-elegant"
-        style={{ [isAr ? 'left' : 'right']: '12px' }}
+        style={{ [isAr ? "left" : "right"]: "12px" }}
       >
         <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1.5 text-start">
-          {t('map.score')}
+          {t("map.score")}
         </div>
-        <div className="flex items-center gap-3" style={{ flexDirection: isAr ? 'row-reverse' : 'row' }}>
+        <div
+          className="flex items-center gap-3"
+          style={{ flexDirection: isAr ? "row-reverse" : "row" }}
+        >
           {[
-            { c: 'hsl(0, 75%, 52%)', l: '< 50%' },
-            { c: 'hsl(38, 85%, 50%)', l: '50% - 69%' },
-            { c: 'hsl(142, 60%, 45%)', l: '70% - 89%' },
-            { c: 'hsl(158, 65%, 38%)', l: '90% - 100%' },
+            { c: "hsl(0, 75%, 52%)", l: "< 50%" },
+            { c: "hsl(38, 85%, 50%)", l: "50% - 69%" },
+            { c: "hsl(142, 60%, 45%)", l: "70% - 89%" },
+            { c: "hsl(158, 65%, 38%)", l: "90% - 100%" },
           ].map((s, i) => (
-            <div key={i} className="flex items-center gap-1.5" style={{ flexDirection: isAr ? 'row-reverse' : 'row' }}>
-              <span className="h-2.5 w-2.5 rounded-full flex-shrink-0" style={{ background: s.c }} />
+            <div
+              key={i}
+              className="flex items-center gap-1.5"
+              style={{ flexDirection: isAr ? "row-reverse" : "row" }}
+            >
+              <span
+                className="h-2.5 w-2.5 rounded-full flex-shrink-0"
+                style={{ background: s.c }}
+              />
               <span className="text-[10px] font-medium tabular-nums text-foreground">{s.l}</span>
             </div>
           ))}
@@ -301,33 +320,37 @@ export const LeafletMap = ({ directions, rapports, totals, height = 520 }: Props
       <div className="absolute top-3 start-3 z-[400] bg-card/95 backdrop-blur border border-border rounded-lg p-1 shadow-elegant flex items-center gap-0.5">
         <button
           type="button"
-          onClick={() => setBaseLayer('dark')}
+          onClick={() => setBaseLayer("dark")}
           className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11px] font-semibold transition-smooth ${
-            baseLayer === 'dark' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+            baseLayer === "dark"
+              ? "bg-primary text-primary-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground hover:bg-muted"
           }`}
         >
           <Moon className="h-3.5 w-3.5" />
-          <span className="hidden sm:inline">{t('map.themeDark')}</span>
+          <span className="hidden sm:inline">{t("map.themeDark")}</span>
         </button>
         <button
           type="button"
-          onClick={() => setBaseLayer('light')}
+          onClick={() => setBaseLayer("light")}
           className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11px] font-semibold transition-smooth ${
-            baseLayer === 'light' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+            baseLayer === "light"
+              ? "bg-primary text-primary-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground hover:bg-muted"
           }`}
         >
           <Sun className="h-3.5 w-3.5" />
-          <span className="hidden sm:inline">{t('map.themeLight')}</span>
+          <span className="hidden sm:inline">{t("map.themeLight")}</span>
         </button>
       </div>
 
       {/* Hint Casa */}
       <div className="pointer-events-none absolute top-3 end-3 z-[400] bg-card/95 backdrop-blur border border-border rounded-lg px-3 py-2 shadow-elegant max-w-[220px]">
         <div className="text-[10px] font-bold uppercase tracking-wider text-primary mb-1 text-start">
-          {t('map.casaWilaya')}
+          {t("map.casaWilaya")}
         </div>
         <div className="text-[10px] text-muted-foreground leading-snug text-start">
-          {t('map.casaHint', { zoom: CASA_SPIDERFY_BREAKPOINT })}
+          {t("map.casaHint", { zoom: CASA_SPIDERFY_BREAKPOINT })}
         </div>
       </div>
     </div>

@@ -1,4 +1,4 @@
-import { useEntityEntries, BaseEntry } from '../common/useEntityEntries';
+import { useEntityEntries, BaseEntry } from "../common/useEntityEntries";
 
 export interface InfraEauElectriciteEntry extends BaseEntry {
   type_filtre?: string; // Champ UI uniquement (non persisté)
@@ -11,11 +11,14 @@ export interface InfraEauElectriciteEntry extends BaseEntry {
 
 const buildPayload = (entry: InfraEauElectriciteEntry, rId: string) => {
   // 🎯 NE PAS inclure 'id' si la ligne n'est pas encore créée en BDD (évite l'échec sur id temporaire)
-  const isPersisted = entry.id && !entry.id.includes('-'); 
+  const isPersisted = entry.id && !entry.id.includes("-");
 
   const payload: any = {
     rapport_id: rId,
-    etablissement_id: entry.etablissement_id && entry.etablissement_id.trim() !== '' ? entry.etablissement_id : null,
+    etablissement_id:
+      entry.etablissement_id && entry.etablissement_id.trim() !== ""
+        ? entry.etablissement_id
+        : null,
     arrieres_eau: Number(entry.arrieres_eau) || 0,
     arrieres_electricite: Number(entry.arrieres_electricite) || 0,
     consommation_eau: Number(entry.consommation_eau) || 0,
@@ -33,8 +36,8 @@ const buildPayload = (entry: InfraEauElectriciteEntry, rId: string) => {
 const mapRowToEntry = (row: any, local_id: string): InfraEauElectriciteEntry => ({
   local_id,
   id: row.id, // L'ID réel retourné par PostgreSQL
-  etablissement_id: row.etablissement_id ?? '',
-  type_filtre: '', 
+  etablissement_id: row.etablissement_id ?? "",
+  type_filtre: "",
   arrieres_eau: Number(row.arrieres_eau) || 0,
   arrieres_electricite: Number(row.arrieres_electricite) || 0,
   consommation_eau: Number(row.consommation_eau) || 0,
@@ -44,11 +47,12 @@ const mapRowToEntry = (row: any, local_id: string): InfraEauElectriciteEntry => 
 export function useInfraEauElectricite(rapportId: string | null, options?: { enabled?: boolean }) {
   return useEntityEntries<InfraEauElectriciteEntry>({
     rapportId,
-    tableName: 'infra_eau_electricite',
+    tableName: "infra_eau_electricite",
     buildPayload,
     mapRowToEntry,
     enabled: options?.enabled ?? true,
     // 🛡️ Garde-fou : Ne tente la sauvegarde en BDD que si etablissement_id n'est pas vide
-    validateBeforeSave: (entry) => Boolean(entry.etablissement_id && entry.etablissement_id.trim() !== ''),
+    validateBeforeSave: (entry) =>
+      Boolean(entry.etablissement_id && entry.etablissement_id.trim() !== ""),
   });
 }

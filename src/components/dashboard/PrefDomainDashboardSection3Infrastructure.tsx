@@ -76,7 +76,10 @@ export const PrefDomainDashboardSection3Infrastructure = ({
     <section className="space-y-4">
       <div>
         <h2 className="text-lg font-bold text-foreground">
-          {t("prefDomainDashboard.infrastructure.section3.title", "Vue d'ensemble Budget & Projets")}
+          {t(
+            "prefDomainDashboard.infrastructure.section3.title",
+            "Vue d'ensemble Budget & Projets",
+          )}
         </h2>
       </div>
 
@@ -85,10 +88,16 @@ export const PrefDomainDashboardSection3Infrastructure = ({
         <Card className="p-5 flex flex-col">
           <div className="mb-4">
             <h3 className="text-sm font-bold text-foreground">
-              {t("prefDomainDashboard.infrastructure.section3.budgetTitle", "Budget Fonctionnement vs Investissement")}
+              {t(
+                "prefDomainDashboard.infrastructure.section3.budgetTitle",
+                "Budget Fonctionnement vs Investissement",
+              )}
             </h3>
             <p className="text-xs text-muted-foreground mt-0.5">
-              {t("prefDomainDashboard.infrastructure.section3.budgetSubtitle", "Payé vs Reste à payer (DH)")}
+              {t(
+                "prefDomainDashboard.infrastructure.section3.budgetSubtitle",
+                "Payé vs Reste à payer (DH)",
+              )}
             </p>
           </div>
           <div className="h-[250px] w-full mt-auto">
@@ -112,11 +121,19 @@ export const PrefDomainDashboardSection3Infrastructure = ({
                   axisLine={{ stroke: "hsl(var(--muted-foreground))" }}
                   tickLine={{ stroke: "hsl(var(--muted-foreground))" }}
                   width={55}
-                  tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))", dx: lang === "ar" ? -20 : 0 }}
+                  tick={{
+                    fontSize: 11,
+                    fill: "hsl(var(--muted-foreground))",
+                    dx: lang === "ar" ? -20 : 0,
+                  }}
                 />
                 <Tooltip
                   cursor={{ fill: "hsl(var(--muted)/0.4)" }}
-                  contentStyle={{ borderRadius: "8px", border: "1px solid hsl(var(--border))", fontSize: "12px" }}
+                  contentStyle={{
+                    borderRadius: "8px",
+                    border: "1px solid hsl(var(--border))",
+                    fontSize: "12px",
+                  }}
                   formatter={(value: number) => fmtDH(value, lang)}
                 />
                 <Legend wrapperStyle={{ fontSize: "11px", paddingTop: "10px" }} iconType="circle" />
@@ -145,7 +162,10 @@ export const PrefDomainDashboardSection3Infrastructure = ({
         <Card className="p-5 flex flex-col">
           <div className="mb-4">
             <h3 className="text-sm font-bold text-foreground">
-              {t("prefDomainDashboard.infrastructure.section3.projectStateTitle", "État des projets")}
+              {t(
+                "prefDomainDashboard.infrastructure.section3.projectStateTitle",
+                "État des projets",
+              )}
             </h3>
             <p className="text-xs text-muted-foreground mt-0.5">
               {t(
@@ -166,15 +186,22 @@ export const PrefDomainDashboardSection3Infrastructure = ({
                   paddingAngle={2}
                 >
                   {etatProjetsData.map((entry) => (
-                    <Cell key={entry.name} fill={ETAT_PROJETS_COLORS[entry.name] || "hsl(var(--muted-foreground))"} />
+                    <Cell
+                      key={entry.name}
+                      fill={ETAT_PROJETS_COLORS[entry.name] || "hsl(var(--muted-foreground))"}
+                    />
                   ))}
                 </Pie>
                 <Tooltip
-                  contentStyle={{ borderRadius: "8px", border: "1px solid hsl(var(--border))", fontSize: "12px" }}
+                  contentStyle={{
+                    borderRadius: "8px",
+                    border: "1px solid hsl(var(--border))",
+                    fontSize: "12px",
+                  }}
                 />
-                <Legend 
-                  wrapperStyle={{ fontSize: "11px", paddingTop: "10px" }} 
-                  iconType="circle" 
+                <Legend
+                  wrapperStyle={{ fontSize: "11px", paddingTop: "10px" }}
+                  iconType="circle"
                   formatter={(value, entry: any) => entry.payload?.nameLabel || value}
                 />
               </PieChart>
@@ -186,10 +213,16 @@ export const PrefDomainDashboardSection3Infrastructure = ({
         <Card className="p-5 flex flex-col">
           <div className="mb-4">
             <h3 className="text-sm font-bold text-foreground">
-              {t("prefDomainDashboard.infrastructure.section3.projectNatureTitle", "Nature des projets")}
+              {t(
+                "prefDomainDashboard.infrastructure.section3.projectNatureTitle",
+                "Nature des projets",
+              )}
             </h3>
             <p className="text-xs text-muted-foreground mt-0.5">
-              {t("prefDomainDashboard.infrastructure.section3.projectNatureSubtitle", "Construction vs Aménagement")}
+              {t(
+                "prefDomainDashboard.infrastructure.section3.projectNatureSubtitle",
+                "Construction vs Aménagement",
+              )}
             </p>
           </div>
           <div className="h-[250px] w-full mt-auto">
@@ -199,7 +232,11 @@ export const PrefDomainDashboardSection3Infrastructure = ({
                 layout="vertical"
                 margin={{ top: 10, right: 20, left: lang === "ar" ? 75 : 10, bottom: 20 }}
               >
-                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="hsl(var(--border))" />
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  horizontal={false}
+                  stroke="hsl(var(--border))"
+                />
                 <XAxis
                   type="number"
                   allowDecimals={false}
@@ -214,15 +251,26 @@ export const PrefDomainDashboardSection3Infrastructure = ({
                   axisLine={{ stroke: "hsl(var(--muted-foreground))" }}
                   tickLine={{ stroke: "hsl(var(--muted-foreground))" }}
                   width={90}
-                  tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))", dx: lang === "ar" ? -25 : 0 }}
+                  tick={{
+                    fontSize: 11,
+                    fill: "hsl(var(--muted-foreground))",
+                    dx: lang === "ar" ? -25 : 0,
+                  }}
                 />
                 <Tooltip
                   cursor={{ fill: "hsl(var(--muted)/0.4)" }}
-                  contentStyle={{ borderRadius: "8px", border: "1px solid hsl(var(--border))", fontSize: "12px" }}
+                  contentStyle={{
+                    borderRadius: "8px",
+                    border: "1px solid hsl(var(--border))",
+                    fontSize: "12px",
+                  }}
                 />
                 <Bar dataKey="value" radius={[0, 4, 4, 0]} maxBarSize={40}>
                   {natureProjetsData.map((entry) => (
-                    <Cell key={entry.name} fill={NATURE_PROJETS_COLORS[entry.name] || "hsl(var(--primary))"} />
+                    <Cell
+                      key={entry.name}
+                      fill={NATURE_PROJETS_COLORS[entry.name] || "hsl(var(--primary))"}
+                    />
                   ))}
                 </Bar>
               </BarChart>
@@ -231,5 +279,5 @@ export const PrefDomainDashboardSection3Infrastructure = ({
         </Card>
       </div>
     </section>
-  )
+  );
 };

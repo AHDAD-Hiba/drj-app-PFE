@@ -20,7 +20,14 @@ interface EvolutionChartProps {
   cardClassName?: string;
 }
 
-export const EvolutionChart = ({ title, subtitle, data, t, lang, cardClassName = "" }: EvolutionChartProps) => {
+export const EvolutionChart = ({
+  title,
+  subtitle,
+  data,
+  t,
+  lang,
+  cardClassName = "",
+}: EvolutionChartProps) => {
   return (
     <Card className={`p-5 ${cardClassName}`.trim()}>
       <div className="mb-6">
@@ -50,7 +57,12 @@ export const EvolutionChart = ({ title, subtitle, data, t, lang, cardClassName =
               dy={10}
               interval={0}
               height={40}
-              tickFormatter={(value) => t(`prefDomainDashboard.quarters.${String(value).toLowerCase()}`, String(value)) as string}
+              tickFormatter={(value) =>
+                t(
+                  `prefDomainDashboard.quarters.${String(value).toLowerCase()}`,
+                  String(value),
+                ) as string
+              }
             />
             <YAxis
               orientation="left"

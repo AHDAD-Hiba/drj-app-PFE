@@ -6,28 +6,38 @@ export const averageDirectionalKpis = <T extends object>(directionKpis: T[]) => 
   }
 
   const keys = new Set<string>();
-  directionKpis.forEach((kpis) => Object.keys(kpis as Record<string, unknown>).forEach((key) => keys.add(key)));
+  directionKpis.forEach((kpis) =>
+    Object.keys(kpis as Record<string, unknown>).forEach((key) => keys.add(key)),
+  );
 
   const averages = {} as Record<string, number>;
   keys.forEach((key) => {
     const values = directionKpis
       .map((kpis) => Number((kpis as Record<string, unknown>)[key] ?? 0))
       .filter((value) => Number.isFinite(value));
-    averages[key] = values.length === 0 ? 0 : values.reduce((sum, value) => sum + value, 0) / values.length;
+    averages[key] =
+      values.length === 0 ? 0 : values.reduce((sum, value) => sum + value, 0) / values.length;
   });
 
   return averages as Partial<Record<keyof T, number>>;
 };
 
 export const loadRegionalDirectionIds = async (directionId: string): Promise<string[]> => {
-  const { data: direction } = await supabase.from("directions").select("region").eq("id", directionId).maybeSingle();
+  const { data: direction } = await supabase
+    .from("directions")
+    .select("region")
+    .eq("id", directionId)
+    .maybeSingle();
   const region = direction?.region;
 
   if (region === null || region === undefined || region === "") {
     return [directionId];
   }
 
-  const { data: regionalDirections } = await supabase.from("directions").select("id").eq("region", region);
+  const { data: regionalDirections } = await supabase
+    .from("directions")
+    .select("id")
+    .eq("region", region);
   const ids = (regionalDirections ?? []).map((row) => row.id);
 
   return ids.length > 0 ? ids : [directionId];
@@ -44,7 +54,11 @@ export const loadRegionalReportsForDirectionIds = async (directionIds: string[],
     .eq("annee", year)
     .in("direction_id", directionIds);
 
-  return (data ?? []) as Array<{ id: string; direction_id: string | null; trimestre: string | null }>;
+  return (data ?? []) as Array<{
+    id: string;
+    direction_id: string | null;
+    trimestre: string | null;
+  }>;
 };
 
 export const uniqueIds = (ids: Array<string | null | undefined>) =>

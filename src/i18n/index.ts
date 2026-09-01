@@ -1,8 +1,8 @@
-import i18n from 'i18next';
-import { initReactI18next } from 'react-i18next';
-import LanguageDetector from 'i18next-browser-languagedetector';
-import fr from './locales/fr.json';
-import ar from './locales/ar.json';
+import i18n from "i18next";
+import { initReactI18next } from "react-i18next";
+import LanguageDetector from "i18next-browser-languagedetector";
+import fr from "./locales/fr.json";
+import ar from "./locales/ar.json";
 
 i18n
   .use(LanguageDetector)
@@ -12,22 +12,22 @@ i18n
       fr: { translation: fr },
       ar: { translation: ar },
     },
-    fallbackLng: 'fr',
-    supportedLngs: ['fr', 'ar'],
+    fallbackLng: "fr",
+    supportedLngs: ["fr", "ar"],
     interpolation: { escapeValue: false },
     detection: {
-      order: ['localStorage', 'navigator'],
-      caches: ['localStorage'],
+      order: ["localStorage", "navigator"],
+      caches: ["localStorage"],
     },
   });
 
 const applyDirection = (lng: string) => {
-  const dir = lng === 'ar' ? 'rtl' : 'ltr';
+  const dir = lng === "ar" ? "rtl" : "ltr";
   document.documentElement.dir = dir;
   document.documentElement.lang = lng;
 };
 
-applyDirection(i18n.language || 'fr');
-i18n.on('languageChanged', applyDirection);
+applyDirection(i18n.language || "fr");
+i18n.on("languageChanged", applyDirection);
 
 export default i18n;

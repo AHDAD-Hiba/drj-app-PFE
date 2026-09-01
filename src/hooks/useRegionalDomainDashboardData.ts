@@ -22,7 +22,9 @@ const languageAffectsData = (domain: RegionalDomainCode) =>
   domain === "FEMME" || domain === "PE" || domain === "CRECHES";
 
 const toError = (reason: unknown) =>
-  reason instanceof Error ? reason : new Error("Le chargement du tableau de bord regional a echoue.");
+  reason instanceof Error
+    ? reason
+    : new Error("Le chargement du tableau de bord regional a echoue.");
 
 export function useRegionalDomainDashboardData(
   domain: RegionalDomainCode,
@@ -46,7 +48,13 @@ export function useRegionalDomainDashboardData(
     const cached = cache.get(key);
 
     if (cached) {
-      setState({ data: cached, contentDomain: domain, loading: false, isRefreshing: false, error: null });
+      setState({
+        data: cached,
+        contentDomain: domain,
+        loading: false,
+        isRefreshing: false,
+        error: null,
+      });
       return;
     }
 

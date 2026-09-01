@@ -1,25 +1,44 @@
-import { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/hooks/common/useAuth';
-import { useToast } from '@/hooks/common/use-toast';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { SafeInput } from '@/components/form/SafeInput';
+import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/common/useAuth";
+import { useToast } from "@/hooks/common/use-toast";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { SafeInput } from "@/components/form/SafeInput";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from '@/components/ui/select';
-import { Calendar, Layers, ArrowRight, ArrowLeft, FileText, CheckCircle2, Loader2, Send } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import{ useDomaines } from '@/hooks/common/useDomaines';
-export type Quarter = 't1' | 't2' | 't3' | 't4';
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Calendar,
+  Layers,
+  ArrowRight,
+  ArrowLeft,
+  FileText,
+  CheckCircle2,
+  Loader2,
+  Send,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { useDomaines } from "@/hooks/common/useDomaines";
+export type Quarter = "t1" | "t2" | "t3" | "t4";
 
 export interface ReportSelection {
   year: number;
   quarter?: Quarter;
-  domain: string; 
+  domain: string;
   rapportId?: string;
   directionId?: string;
 }
@@ -41,24 +60,24 @@ interface DomaineItem {
   statut: "NON_COMMENCE" | "EN_COURS" | "TERMINE";
 }
 
-const QUARTERS: Quarter[] = ['t1', 't2', 't3', 't4'];
+const QUARTERS: Quarter[] = ["t1", "t2", "t3", "t4"];
 
-export const PreFormSelection = ({ 
-  initial, 
+export const PreFormSelection = ({
+  initial,
   reportStatus,
   onStatusChange,
   onValidate,
   onReturnCorrection,
-  onComplete 
+  onComplete,
 }: Props) => {
   const { t, i18n } = useTranslation();
   const { utilisateur, isEquipeRegional } = useAuth();
   const { toast } = useToast();
-  const isAr = i18n.language === 'ar';
-  
+  const isAr = i18n.language === "ar";
+
   const [stage, setStage] = useState<1 | 2>(1);
   const [sel, setSel] = useState<ReportSelection>(initial);
-  const [loading, setLoading] = useState(false);  
+  const [loading, setLoading] = useState(false);
 
   const [rapportId, setRapportId] = useState<string | null>(null);
   const [domainesAvecStatut, setDomainesAvecStatut] = useState<DomaineItem[]>([]);
@@ -69,7 +88,7 @@ export const PreFormSelection = ({
 
   useEffect(() => {
     if (domainesReference.length > 0 && !sel.domain) {
-      setSel(s => ({
+      setSel((s) => ({
         ...s,
         domain: domainesReference[0].code.toLowerCase(),
       }));
@@ -78,28 +97,28 @@ export const PreFormSelection = ({
 
   useEffect(() => {
     const prefetchDomainesBase = async () => {
-      const { data, error } = await supabase.from('domaines').select('code');
+      const { data, error } = await supabase.from("domaines").select("code");
       if (!error && data && data.length > 0 && !sel.domain) {
-        setSel(s => ({ ...s, domain: data[0].code }));
+        setSel((s) => ({ ...s, domain: data[0].code }));
       }
     };
     prefetchDomainesBase();
   }, []);
 
   useEffect(() => {
-  if (!initial.rapportId || domainesLoading) return;
+    if (!initial.rapportId || domainesLoading) return;
 
-  setRapportId(initial.rapportId);
-  loadDomaines(initial.rapportId);
-  setStage(2);
-}, [initial.rapportId, domainesLoading]);
+    setRapportId(initial.rapportId);
+    loadDomaines(initial.rapportId);
+    setStage(2);
+  }, [initial.rapportId, domainesLoading]);
 
   const handleNextToDomains = async () => {
     if (!utilisateur?.direction_id) {
-      toast({ 
-        title: "Erreur", 
-        description: "Impossible d'identifier votre direction.", 
-        variant: "destructive" 
+      toast({
+        title: "Erreur",
+        description: "Impossible d'identifier votre direction.",
+        variant: "destructive",
       });
       return;
     }
@@ -108,33 +127,34 @@ export const PreFormSelection = ({
 
     setLoading(true);
     try {
-      const { data: canCreate, error: checkError } = await supabase.rpc(
-        'can_create_next_report',
-        {
-          p_direction_id: utilisateur.direction_id,
-          p_annee: sel.year,
-          p_trimestre: sel.quarter,
-        }
-      );
+      const { data: canCreate, error: checkError } = await supabase.rpc("can_create_next_report", {
+        p_direction_id: utilisateur.direction_id,
+        p_annee: sel.year,
+        p_trimestre: sel.quarter,
+      });
 
       if (checkError) throw checkError;
 
       if (!canCreate) {
         toast({
-          title: isAr ? 'غير مسموح' : 'Action non autorisée',
+          title: isAr ? "غير مسموح" : "Action non autorisée",
           description: isAr
-            ? 'يجب إتمام وإرسال جميع مجالات التقرير السابق أولاً'
-            : 'Tous les domaines du rapport précédent doivent être terminés avant.',
-          variant: 'destructive',
+            ? "يجب إتمام وإرسال جميع مجالات التقرير السابق أولاً"
+            : "Tous les domaines du rapport précédent doivent être terminés avant.",
+          variant: "destructive",
         });
         setLoading(false);
         return;
       }
 
       const previousQuarter =
-        sel.quarter === "t2" ? "t1" : 
-        sel.quarter === "t3" ? "t2" : 
-        sel.quarter === "t4" ? "t3" : null;
+        sel.quarter === "t2"
+          ? "t1"
+          : sel.quarter === "t3"
+            ? "t2"
+            : sel.quarter === "t4"
+              ? "t3"
+              : null;
 
       if (previousQuarter) {
         const { data: previousReport } = await supabase
@@ -147,11 +167,11 @@ export const PreFormSelection = ({
 
         if (!previousReport || previousReport.statut_rapport !== "VALIDE") {
           toast({
-            title: isAr ? 'غير مسموح' : 'Action non autorisée',
+            title: isAr ? "غير مسموح" : "Action non autorisée",
             description: isAr
               ? `يجب المصادقة على تقرير الفصل السابق (${previousQuarter.toUpperCase()}) أولاً.`
               : `Le rapport du trimestre précédent (${previousQuarter.toUpperCase()}) doit être validé d'abord.`,
-            variant: 'destructive',
+            variant: "destructive",
           });
           setLoading(false);
           return;
@@ -160,11 +180,11 @@ export const PreFormSelection = ({
 
       // 🎯 2. Modification ici : On sélectionne AUSSI statut_rapport
       const query = supabase
-        .from('rapports')
-        .select('id, statut_rapport')
-        .eq('annee', sel.year)
-        .eq('trimestre', sel.quarter)
-        .eq('direction_id', utilisateur.direction_id);
+        .from("rapports")
+        .select("id, statut_rapport")
+        .eq("annee", sel.year)
+        .eq("trimestre", sel.quarter)
+        .eq("direction_id", utilisateur.direction_id);
 
       const { data: existingRapport, error: fetchError } = await query.maybeSingle();
       if (fetchError) throw fetchError;
@@ -178,28 +198,28 @@ export const PreFormSelection = ({
 
       if (!currentRapportId) {
         const { data: newRapport, error: insertError } = await supabase
-          .from('rapports')
+          .from("rapports")
           .insert({
             annee: sel.year,
             trimestre: sel.quarter,
-            direction_id: utilisateur.direction_id
+            direction_id: utilisateur.direction_id,
           })
-          .select('id, statut_rapport')
+          .select("id, statut_rapport")
           .single();
 
         if (insertError) {
-            if (insertError.code === '23505') {
-                const { data: recoveredRapport } = await query.maybeSingle();
-                if (recoveredRapport) {
-                  currentRapportId = recoveredRapport.id;
-                  onStatusChange?.(recoveredRapport.statut_rapport);
-                }
-            } else {
-                throw insertError;
+          if (insertError.code === "23505") {
+            const { data: recoveredRapport } = await query.maybeSingle();
+            if (recoveredRapport) {
+              currentRapportId = recoveredRapport.id;
+              onStatusChange?.(recoveredRapport.statut_rapport);
             }
+          } else {
+            throw insertError;
+          }
         } else {
-            currentRapportId = newRapport.id;
-            onStatusChange?.(newRapport.statut_rapport);
+          currentRapportId = newRapport.id;
+          onStatusChange?.(newRapport.statut_rapport);
         }
       }
 
@@ -221,17 +241,20 @@ export const PreFormSelection = ({
               domaine_id: d.id,
               statut: "NON_COMMENCE",
               progression_pourcentage: 0,
-            }))
+            })),
           );
         }
       }
 
       await loadDomaines(currentRapportId!);
-      
-      setStage(2);
 
+      setStage(2);
     } catch (error: any) {
-      toast({ title: "Erreur de base de données", description: error.message, variant: "destructive" });
+      toast({
+        title: "Erreur de base de données",
+        description: error.message,
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
@@ -239,21 +262,16 @@ export const PreFormSelection = ({
 
   const loadDomaines = async (rId: string) => {
     const { data, error } = await supabase
-      .from('suivi_remplissage')
-      .select('domaine_id, statut')
-      .eq('rapport_id', rId);
+      .from("suivi_remplissage")
+      .select("domaine_id, statut")
+      .eq("rapport_id", rId);
 
     if (error) throw error;
 
-    const domainesMap = new Map(
-      domainesReference.map(domaine => [
-        domaine.id,
-        domaine,
-      ])
-    );
+    const domainesMap = new Map(domainesReference.map((domaine) => [domaine.id, domaine]));
 
     const formattedDomaines: DomaineItem[] = (data || [])
-      .map(row => {
+      .map((row) => {
         const domaine = domainesMap.get(row.domaine_id);
 
         if (!domaine) return null;
@@ -272,7 +290,7 @@ export const PreFormSelection = ({
 
     const allTermine =
       formattedDomaines.length > 0 &&
-      formattedDomaines.every(domaine => domaine.statut === 'TERMINE');
+      formattedDomaines.every((domaine) => domaine.statut === "TERMINE");
 
     setCanSubmitReport(allTermine);
   };
@@ -281,29 +299,28 @@ export const PreFormSelection = ({
     if (!rapportId) return;
     setLoading(true);
     try {
-        const { error } = await supabase
-            .from('rapports')
-            .update({ 
-              statut_rapport: 'SOUMIS',
-              date_soumission: new Date().toISOString(),
-              commentaire_correction: null // Assurez-vous d'avoir renommé la colonne en BDD
-            })
-            .eq('id', rapportId);
-        
-        if (error) throw error;
-        
-        toast({ 
-            title: isAr ? "تم بنجاح" : "Succès", 
-            description: isAr ? "تم إرسال التقرير بنجاح" : "Le rapport a été soumis avec succès." 
-        });
+      const { error } = await supabase
+        .from("rapports")
+        .update({
+          statut_rapport: "SOUMIS",
+          date_soumission: new Date().toISOString(),
+          commentaire_correction: null, // Assurez-vous d'avoir renommé la colonne en BDD
+        })
+        .eq("id", rapportId);
 
-        //4. Mise à jour instantanée du statut interne
-        onStatusChange?.('SOUMIS');
+      if (error) throw error;
 
+      toast({
+        title: isAr ? "تم بنجاح" : "Succès",
+        description: isAr ? "تم إرسال التقرير بنجاح" : "Le rapport a été soumis avec succès.",
+      });
+
+      //4. Mise à jour instantanée du statut interne
+      onStatusChange?.("SOUMIS");
     } catch (error: any) {
-        toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      toast({ title: "Erreur", description: error.message, variant: "destructive" });
     } finally {
-        setLoading(false);
+      setLoading(false);
     }
   };
 
@@ -315,17 +332,14 @@ export const PreFormSelection = ({
   const canNextFromStage1 = !!sel.year && !!sel.quarter;
 
   const stages = [
-    { id: 1, label: isAr ? 'اختيار التقرير' : 'Choisir le rapport', icon: Calendar },
-    { id: 2, label: isAr ? 'اختيار المجال' : 'Choisir le domaine', icon: Layers },
-    { id: 3, label: isAr ? 'الاستمارة' : 'Formulaire', icon: FileText },
+    { id: 1, label: isAr ? "اختيار التقرير" : "Choisir le rapport", icon: Calendar },
+    { id: 2, label: isAr ? "اختيار المجال" : "Choisir le domaine", icon: Layers },
+    { id: 3, label: isAr ? "الاستمارة" : "Formulaire", icon: FileText },
   ];
 
   // 🎯 5. Condition basée sur le statut INTERNE, garantissant que c'est bien la valeur en base de données
-  const shouldShowSubmitButton = 
-    !isEquipeRegional && 
-    canSubmitReport && 
-    reportStatus !== 'SOUMIS' && 
-    reportStatus !== 'VALIDE';
+  const shouldShowSubmitButton =
+    !isEquipeRegional && canSubmitReport && reportStatus !== "SOUMIS" && reportStatus !== "VALIDE";
 
   return (
     <div className="space-y-5">
@@ -338,26 +352,33 @@ export const PreFormSelection = ({
             return (
               <li key={s.id} className="flex-1 flex items-center min-w-0">
                 <div className="flex flex-col items-center gap-1.5 flex-1 min-w-0">
-                  <div className={cn(
-                    'h-10 w-10 rounded-full flex items-center justify-center border-2 transition-smooth flex-shrink-0',
-                    done && 'bg-primary text-primary-foreground border-primary',
-                    active && 'bg-primary-soft text-primary border-primary ring-4 ring-primary/15',
-                    !done && !active && 'bg-card text-muted-foreground border-border',
-                  )}>
+                  <div
+                    className={cn(
+                      "h-10 w-10 rounded-full flex items-center justify-center border-2 transition-smooth flex-shrink-0",
+                      done && "bg-primary text-primary-foreground border-primary",
+                      active &&
+                        "bg-primary-soft text-primary border-primary ring-4 ring-primary/15",
+                      !done && !active && "bg-card text-muted-foreground border-border",
+                    )}
+                  >
                     {done ? <CheckCircle2 className="h-5 w-5" /> : <Icon className="h-5 w-5" />}
                   </div>
-                  <span className={cn(
-                    'text-[10px] sm:text-xs font-medium text-center leading-tight',
-                    active ? 'text-primary' : done ? 'text-foreground' : 'text-muted-foreground',
-                  )}>
+                  <span
+                    className={cn(
+                      "text-[10px] sm:text-xs font-medium text-center leading-tight",
+                      active ? "text-primary" : done ? "text-foreground" : "text-muted-foreground",
+                    )}
+                  >
                     {s.label}
                   </span>
                 </div>
                 {idx < stages.length - 1 && (
-                  <div className={cn(
-                    'h-0.5 flex-1 mx-1 sm:mx-2 transition-smooth',
-                    s.id < stage ? 'bg-primary' : 'bg-border',
-                  )} />
+                  <div
+                    className={cn(
+                      "h-0.5 flex-1 mx-1 sm:mx-2 transition-smooth",
+                      s.id < stage ? "bg-primary" : "bg-border",
+                    )}
+                  />
                 )}
               </li>
             );
@@ -370,39 +391,37 @@ export const PreFormSelection = ({
           <div>
             <h2 className="text-xl font-bold flex items-center gap-2">
               <Calendar className="h-5 w-5 text-primary" />
-              {isAr ? 'اختيار التقرير' : 'Choisir le rapport'}
+              {isAr ? "اختيار التقرير" : "Choisir le rapport"}
             </h2>
             <p className="text-sm text-muted-foreground mt-1">
-              {isAr ? 'حدد السنة والفصل' : 'Sélectionnez l’année et le trimestre'}
+              {isAr ? "حدد السنة والفصل" : "Sélectionnez l’année et le trimestre"}
             </p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label className="text-xs font-medium">{isAr ? 'السنة' : 'Année'}</Label>
+              <Label className="text-xs font-medium">{isAr ? "السنة" : "Année"}</Label>
               <SafeInput
                 type="number"
                 min={2026}
                 max={2099}
                 value={sel.year}
-                onChange={e => setSel(s => ({ ...s, year: Number(e.target.value) || s.year }))}
+                onChange={(e) => setSel((s) => ({ ...s, year: Number(e.target.value) || s.year }))}
                 className="h-10"
               />
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-xs font-medium">
-                {isAr ? 'الفصل' : 'Trimestre'}
-              </Label>
+              <Label className="text-xs font-medium">{isAr ? "الفصل" : "Trimestre"}</Label>
               <Select
                 value={sel.quarter}
-                onValueChange={(v: Quarter) => setSel(s => ({ ...s, quarter: v }))}
+                onValueChange={(v: Quarter) => setSel((s) => ({ ...s, quarter: v }))}
               >
                 <SelectTrigger className="h-10">
-                  <SelectValue placeholder={isAr ? 'اختر الفصل' : 'Choisir le trimestre'} />
+                  <SelectValue placeholder={isAr ? "اختر الفصل" : "Choisir le trimestre"} />
                 </SelectTrigger>
                 <SelectContent>
-                  {QUARTERS.map(q => (
+                  {QUARTERS.map((q) => (
                     <SelectItem key={q} value={q}>
                       {t(`PreFormSelection.quarters.${q}`)}
                     </SelectItem>
@@ -412,9 +431,13 @@ export const PreFormSelection = ({
             </div>
           </div>
           <div className="flex justify-end pt-2">
-            <Button onClick={handleNextToDomains} disabled={!canNextFromStage1 || loading} className="gap-1.5">
+            <Button
+              onClick={handleNextToDomains}
+              disabled={!canNextFromStage1 || loading}
+              className="gap-1.5"
+            >
               {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-              {isAr ? 'التالي' : 'Suivant'}
+              {isAr ? "التالي" : "Suivant"}
               {isAr ? <ArrowLeft className="h-4 w-4" /> : <ArrowRight className="h-4 w-4" />}
             </Button>
           </div>
@@ -424,26 +447,28 @@ export const PreFormSelection = ({
       {stage === 2 && (
         <Card className="p-5 sm:p-7 space-y-5">
           <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-xl font-bold flex items-center gap-2">
-                  <Layers className="h-5 w-5 text-primary" />
-                  {isAr ? 'اختيار المجال' : 'Choisir le domaine'}
-                </h2>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {isAr ? 'اختر المجال المراد تعبئته' : 'Sélectionnez le domaine à renseigner'}
-                </p>
-              </div>
+            <div>
+              <h2 className="text-xl font-bold flex items-center gap-2">
+                <Layers className="h-5 w-5 text-primary" />
+                {isAr ? "اختيار المجال" : "Choisir le domaine"}
+              </h2>
+              <p className="text-sm text-muted-foreground mt-1">
+                {isAr ? "اختر المجال المراد تعبئته" : "Sélectionnez le domaine à renseigner"}
+              </p>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {domainesAvecStatut.map((d) => {
               const selected = sel.domain === d.code;
-              
+
               const badgeClass =
-                d.statut === "TERMINE" ? "bg-success/15 text-success" :
-                d.statut === "EN_COURS" ? "bg-info/15 text-info" :
-                "bg-warning/15 text-warning";
-                
+                d.statut === "TERMINE"
+                  ? "bg-success/15 text-success"
+                  : d.statut === "EN_COURS"
+                    ? "bg-info/15 text-info"
+                    : "bg-warning/15 text-warning";
+
               const badgeLabel = t(`status.${d.statut}`);
 
               return (
@@ -455,32 +480,41 @@ export const PreFormSelection = ({
                     "rounded-xl border-2 p-4 text-start transition-smooth flex items-center justify-between",
                     selected
                       ? "border-primary bg-primary-soft ring-4 ring-primary/15"
-                      : "border-border hover:border-primary/50"
+                      : "border-border hover:border-primary/50",
                   )}
                 >
                   <div className="flex flex-col gap-1.5">
-                    <p className="font-semibold text-sm">
-                      {isAr ? d.nom_ar : d.nom_fr}
-                    </p>
-                    <span className={cn("inline-flex rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider w-fit", badgeClass)}>
+                    <p className="font-semibold text-sm">{isAr ? d.nom_ar : d.nom_fr}</p>
+                    <span
+                      className={cn(
+                        "inline-flex rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider w-fit",
+                        badgeClass,
+                      )}
+                    >
                       {badgeLabel}
                     </span>
                   </div>
 
-                  <div className={cn(
+                  <div
+                    className={cn(
                       "h-8 w-8 rounded-full flex items-center justify-center transition-colors",
-                      selected ? "bg-primary text-white" : "bg-muted text-muted-foreground"
-                  )}>
-                      {d.statut === "TERMINE" ? <CheckCircle2 className="h-4 w-4" /> : <Layers className="h-4 w-4" />}
+                      selected ? "bg-primary text-white" : "bg-muted text-muted-foreground",
+                    )}
+                  >
+                    {d.statut === "TERMINE" ? (
+                      <CheckCircle2 className="h-4 w-4" />
+                    ) : (
+                      <Layers className="h-4 w-4" />
+                    )}
                   </div>
                 </button>
               );
             })}
-            
+
             {domainesAvecStatut.length === 0 && (
-                <div className="col-span-1 sm:col-span-2 text-center py-6 text-sm text-muted-foreground border-2 border-dashed rounded-xl">
-                    Aucun domaine trouvé dans la base de données.
-                </div>
+              <div className="col-span-1 sm:col-span-2 text-center py-6 text-sm text-muted-foreground border-2 border-dashed rounded-xl">
+                Aucun domaine trouvé dans la base de données.
+              </div>
             )}
           </div>
 
@@ -498,51 +532,64 @@ export const PreFormSelection = ({
             ) : (
               <div className="h-10 w-24" />
             )}
-            
+
             <div className="flex items-center gap-3">
               {/* Le bouton dépendra désormais de la BDD et non d'une variable par défaut */}
               {shouldShowSubmitButton && (
-                <Button 
+                <Button
                   onClick={() => setConfirmSubmitOpen(true)}
                   disabled={loading}
                   className="bg-emerald-700 hover:bg-emerald-800 text-white gap-1.5 h-10 px-4 rounded-md font-medium shadow-sm transition-colors"
                 >
                   <Send className="h-4 w-4" />
-                  {isAr ? 'إرسال التقرير النهائي' : 'Soumettre le rapport'}
+                  {isAr ? "إرسال التقرير النهائي" : "Soumettre le rapport"}
                 </Button>
               )}
-              
-              <Button onClick={handleOpenForm} disabled={loading || !sel.domain} className="gap-1.5 h-10 px-4">
+
+              <Button
+                onClick={handleOpenForm}
+                disabled={loading || !sel.domain}
+                className="gap-1.5 h-10 px-4"
+              >
                 {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-                {isAr ? 'افتح الاستمارة' : 'Accéder au formulaire'}
+                {isAr ? "افتح الاستمارة" : "Accéder au formulaire"}
               </Button>
             </div>
-          </div>        
+          </div>
         </Card>
       )}
 
       <Dialog open={confirmSubmitOpen} onOpenChange={setConfirmSubmitOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{isAr ? 'تأكيد الإرسال النهائي' : 'Confirmation de soumission'}</DialogTitle>
+            <DialogTitle>
+              {isAr ? "تأكيد الإرسال النهائي" : "Confirmation de soumission"}
+            </DialogTitle>
           </DialogHeader>
           <div className="py-3">
             <p className="text-sm text-muted-foreground">
-              {isAr 
-                ? 'هل أنت متأكد أنك تريد إرسال التقرير النهائي؟ سيتم إرساله إلى الفريق الجهوي ولن تتمكن من تعديل أي مجال.'
-                : 'Êtes-vous sûr de vouloir soumettre le rapport final ? Il sera envoyé à l\'équipe régionale et ne pourra plus être modifié.'}
+              {isAr
+                ? "هل أنت متأكد أنك تريد إرسال التقرير النهائي؟ سيتم إرساله إلى الفريق الجهوي ولن تتمكن من تعديل أي مجال."
+                : "Êtes-vous sûr de vouloir soumettre le rapport final ? Il sera envoyé à l'équipe régionale et ne pourra plus être modifié."}
             </p>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setConfirmSubmitOpen(false)} disabled={loading}>
-              {isAr ? 'إلغاء' : 'Annuler'}
+            <Button
+              variant="outline"
+              onClick={() => setConfirmSubmitOpen(false)}
+              disabled={loading}
+            >
+              {isAr ? "إلغاء" : "Annuler"}
             </Button>
-            <Button 
-              onClick={() => { setConfirmSubmitOpen(false); handleSubmitReport(); }} 
-              disabled={loading} 
+            <Button
+              onClick={() => {
+                setConfirmSubmitOpen(false);
+                handleSubmitReport();
+              }}
+              disabled={loading}
               className="bg-emerald-700 hover:bg-emerald-800 text-white"
             >
-              {isAr ? 'تأكيد الإرسال' : 'Confirmer'}
+              {isAr ? "تأكيد الإرسال" : "Confirmer"}
             </Button>
           </DialogFooter>
         </DialogContent>

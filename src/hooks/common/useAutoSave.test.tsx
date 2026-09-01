@@ -1,8 +1,8 @@
-import { act, renderHook } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { useAutoSave } from './useAutoSave';
+import { act, renderHook } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { useAutoSave } from "./useAutoSave";
 
-describe('useAutoSave', () => {
+describe("useAutoSave", () => {
   beforeEach(() => {
     vi.useFakeTimers();
   });
@@ -12,15 +12,15 @@ describe('useAutoSave', () => {
     vi.useRealTimers();
   });
 
-  it('flushes the pending save immediately when requested', async () => {
+  it("flushes the pending save immediately when requested", async () => {
     const onSave = vi.fn().mockResolvedValue(true);
 
     const { result, rerender } = renderHook(
       ({ values }) => useAutoSave(values, onSave, { enabled: true, debounceMs: 1000 }),
-      { initialProps: { values: { draft: 'A' } } },
+      { initialProps: { values: { draft: "A" } } },
     );
 
-    rerender({ values: { draft: 'B' } });
+    rerender({ values: { draft: "B" } });
 
     expect(onSave).not.toHaveBeenCalled();
 
@@ -28,6 +28,6 @@ describe('useAutoSave', () => {
       await result.current.flush();
     });
 
-    expect(onSave).toHaveBeenCalledWith({ draft: 'B' });
+    expect(onSave).toHaveBeenCalledWith({ draft: "B" });
   });
 });

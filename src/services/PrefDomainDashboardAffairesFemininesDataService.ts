@@ -2,7 +2,13 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import type { PrefDomainBenchmarkRow } from "@/components/dashboard/PrefDomainBenchmarkTable";
 import type { DashboardData } from "@/services/prefDomainDashboardTypes";
-import { averageDirectionalKpis, filterByRapportIds, loadRegionalDirectionIds, loadRegionalReportsForDirectionIds, uniqueIds } from "@/services/prefDomainRegionalBenchmark";
+import {
+  averageDirectionalKpis,
+  filterByRapportIds,
+  loadRegionalDirectionIds,
+  loadRegionalReportsForDirectionIds,
+  uniqueIds,
+} from "@/services/prefDomainRegionalBenchmark";
 
 // --- Service dédié au domaine "Affaires Féminines" ---
 // Suit exactement le même contrat que PrefDomainDashboardInfrastructureDataService.ts
@@ -154,7 +160,7 @@ export type AffairesFemininesDashboardData = DashboardData<
 
 // --- Helpers d'agrégation (privés) ---
 
-const sumBy = <T,>(rows: T[], selector: (row: T) => number | null | undefined): number =>
+const sumBy = <T>(rows: T[], selector: (row: T) => number | null | undefined): number =>
   rows.reduce((acc, row) => acc + (selector(row) || 0), 0);
 
 const ratioPct = (numerator: number, denominator: number): number =>
@@ -226,7 +232,10 @@ const loadActivitesSensibilisation = async (rapportIds: string[]) => {
 };
 
 const loadPortesOuvertes = async (rapportIds: string[]) => {
-  const { data } = await supabase.from("af_portes_ouvertes").select("*").in("rapport_id", rapportIds);
+  const { data } = await supabase
+    .from("af_portes_ouvertes")
+    .select("*")
+    .in("rapport_id", rapportIds);
   return (data || []) as AfPortesOuvertesRow[];
 };
 
@@ -271,7 +280,10 @@ const loadActivitesGeneratricesRevenus = async (rapportIds: string[]) => {
 };
 
 const loadCentresEcoute = async (rapportIds: string[]) => {
-  const { data } = await supabase.from("af_centres_ecoute").select("*").in("rapport_id", rapportIds);
+  const { data } = await supabase
+    .from("af_centres_ecoute")
+    .select("*")
+    .in("rapport_id", rapportIds);
   return (data || []) as AfCentresEcouteRow[];
 };
 
@@ -345,7 +357,11 @@ const buildSection3 = (
     bySecteur.entries(),
   ).map(([secteurId, total]) => {
     const secteur = secteurById.get(secteurId);
-    const nom = secteur ? (lang === "ar" ? secteur.nom_ar : secteur.nom_fr || secteur.nom_ar) : secteurId;
+    const nom = secteur
+      ? lang === "ar"
+        ? secteur.nom_ar
+        : secteur.nom_fr || secteur.nom_ar
+      : secteurId;
     return { secteurId, nom, total };
   });
   // Tri par volume décroissant
@@ -437,8 +453,7 @@ const buildEvolution = (
 
   activiteSociale.forEach((row) => {
     if (agrByQuarter.has(row.name)) row.beneficiairesAgr = agrByQuarter.get(row.name)!;
-    if (seancesByQuarter.has(row.name))
-      row.seancesCentresEcoute = seancesByQuarter.get(row.name)!;
+    if (seancesByQuarter.has(row.name)) row.seancesCentresEcoute = seancesByQuarter.get(row.name)!;
     if (partenariatsByQuarter.has(row.name))
       row.partenariatsSuivis = partenariatsByQuarter.get(row.name)!;
   });
@@ -503,7 +518,7 @@ const buildDetailed = (
   centresEcoute: AfCentresEcouteRow[],
   ressourcesHumaines: AfRessourcesHumainesRow[],
   formationCadres: AfFormationCadresRow[],
-miseAJourReseau: AfMiseAJourReseauRow[],
+  miseAJourReseau: AfMiseAJourReseauRow[],
   suiviPartenariats: AfSuiviPartenariatsRow[],
   secteurs: AfSecteursRow[],
   filieres: AfFilieresRow[],
@@ -539,7 +554,7 @@ miseAJourReseau: AfMiseAJourReseauRow[],
       (inscriptionsBySecteur.get(r.secteur_id) || 0) + (r.inscrites_annee_2 || 0),
     );
   });
-const parSecteur = Array.from(inscriptionsBySecteur.entries())
+  const parSecteur = Array.from(inscriptionsBySecteur.entries())
     .map(([secteurId, inscriptions]) => {
       const s = secteurById.get(secteurId);
       return {
@@ -650,7 +665,10 @@ const parSecteur = Array.from(inscriptionsBySecteur.entries())
         ressourcesHumaines.filter((r) => r.type_rh === "besoin"),
         (r) => r.nombre,
       ),
-      parProfil: Array.from(rhProfileCounts.entries()).map(([profil, nombre]) => ({ profil, nombre })),
+      parProfil: Array.from(rhProfileCounts.entries()).map(([profil, nombre]) => ({
+        profil,
+        nombre,
+      })),
       cadresFormes: sumBy(formationCadres, (r) => r.nombre_cadres),
       parDomaineFormation: Array.from(cadresByDomaine.entries()).map(([domaine, cadres]) => ({
         domaine,
@@ -722,14 +740,16 @@ export const loadAffairesFemininesDashboard = async (
         integration: emptyEvolutionIntegration(),
         activiteSociale: emptyEvolutionActiviteSociale(),
       },
-benchmark: buildBenchmark(emptyKpis),
+      benchmark: buildBenchmark(emptyKpis),
       detailed: buildDetailed([], [], [], [], [], [], [], [], [], [], [], [], [], lang),
     };
   }
 
   const rapportIds = rapports.map((r) => r.id);
   const localRapportIdSet = new Set(rapportIds);
-  const rapportTrimestreById = new Map<string, string | null>(rapports.map((r) => [r.id, r.trimestre]));
+  const rapportTrimestreById = new Map<string, string | null>(
+    rapports.map((r) => [r.id, r.trimestre]),
+  );
   const latestRapport = rapports[0]; // déjà trié par trimestre décroissant
 
   const regionalDirectionIds = await regionalDirectionIdsPromise;
@@ -804,9 +824,13 @@ benchmark: buildBenchmark(emptyKpis),
           regionalInscriptionsClubs.filter((row) => row.rapport_id && ids.has(row.rapport_id)),
           regionalInscriptionsOfppt.filter((row) => row.rapport_id && ids.has(row.rapport_id)),
           regionalIntegrationLaureates.filter((row) => row.rapport_id && ids.has(row.rapport_id)),
-          regionalActivitesSensibilisation.filter((row) => row.rapport_id && ids.has(row.rapport_id)),
+          regionalActivitesSensibilisation.filter(
+            (row) => row.rapport_id && ids.has(row.rapport_id),
+          ),
           regionalPortesOuvertes.filter((row) => row.rapport_id && ids.has(row.rapport_id)),
-          regionalActivitesGeneratricesRevenus.filter((row) => row.rapport_id && ids.has(row.rapport_id)),
+          regionalActivitesGeneratricesRevenus.filter(
+            (row) => row.rapport_id && ids.has(row.rapport_id),
+          ),
           regionalCentresEcoute.filter((row) => row.rapport_id && ids.has(row.rapport_id)),
           regionalSuiviPartenariats.filter((row) => row.rapport_id && ids.has(row.rapport_id)),
         );
@@ -825,12 +849,16 @@ benchmark: buildBenchmark(emptyKpis),
     suiviPartenariats,
   );
 
-  const workflowStatus = status?.statut || (latestRapport.statut_rapport === "VALIDE"
-    ? "TERMINE"
-    : latestRapport.statut_rapport === "NON_COMMENCE"
-      ? "NON_COMMENCE"
-      : "EN_COURS");
-  const progressPct = status?.progression_pourcentage ?? (workflowStatus === "TERMINE" ? 100 : workflowStatus === "EN_COURS" ? 50 : 0);
+  const workflowStatus =
+    status?.statut ||
+    (latestRapport.statut_rapport === "VALIDE"
+      ? "TERMINE"
+      : latestRapport.statut_rapport === "NON_COMMENCE"
+        ? "NON_COMMENCE"
+        : "EN_COURS");
+  const progressPct =
+    status?.progression_pourcentage ??
+    (workflowStatus === "TERMINE" ? 100 : workflowStatus === "EN_COURS" ? 50 : 0);
 
   return {
     status: {
@@ -841,7 +869,7 @@ benchmark: buildBenchmark(emptyKpis),
       reportStatus: latestRapport.statut_rapport,
     },
     kpis,
-section3: buildSection3(inscriptionsOfppt, secteurs, activitesSensibilisation, lang),
+    section3: buildSection3(inscriptionsOfppt, secteurs, activitesSensibilisation, lang),
     evolution: buildEvolution(
       rapportTrimestreById,
       integrationLaureates,
@@ -861,7 +889,7 @@ section3: buildSection3(inscriptionsOfppt, secteurs, activitesSensibilisation, l
       ressourcesHumaines,
       formationCadres,
       miseAJourReseau,
-suiviPartenariats,
+      suiviPartenariats,
       secteurs,
       filieres,
       lang,

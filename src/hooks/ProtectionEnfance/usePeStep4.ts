@@ -1,10 +1,10 @@
-import { useEntityEntries, BaseEntry } from '../common/useEntityEntries';
+import { useEntityEntries, BaseEntry } from "../common/useEntityEntries";
 
 // ============================================================================
 // 1. STATISTIQUES & INTEGRATION (pe_statistiques_demographiques)
 // ============================================================================
 export interface PeStatsLSEntry extends BaseEntry {
-  type_prise_charge: 'liberte_surveillee' | 'centre_sauvegarde'; // On autorise les deux pour le filtrage
+  type_prise_charge: "liberte_surveillee" | "centre_sauvegarde"; // On autorise les deux pour le filtrage
   garcons: number;
   filles: number;
   migrants_non_accompagnes: number; // AJOUT DU CHAMP MIGRANTS
@@ -18,7 +18,7 @@ const buildStatsLSPayload = (entry: PeStatsLSEntry, rId: string) => ({
   ...(entry.id ? { id: entry.id } : {}),
   rapport_id: rId,
   etablissement_id: null,
-  type_prise_charge: 'liberte_surveillee', // À la sauvegarde, on force toujours LS
+  type_prise_charge: "liberte_surveillee", // À la sauvegarde, on force toujours LS
   garcons: Number(entry.garcons) || 0,
   filles: Number(entry.filles) || 0,
   migrants_non_accompagnes: Number(entry.migrants_non_accompagnes) || 0, // AJOUT DU CHAMP
@@ -44,7 +44,7 @@ const mapStatsLSRow = (row: any, local_id: string): PeStatsLSEntry => ({
 export function usePeStatistiquesLS(rapportId: string | null, options?: { enabled?: boolean }) {
   return useEntityEntries<PeStatsLSEntry>({
     rapportId,
-    tableName: 'pe_statistiques_demographiques',
+    tableName: "pe_statistiques_demographiques",
     buildPayload: buildStatsLSPayload,
     mapRowToEntry: mapStatsLSRow,
     enabled: options?.enabled ?? true,
@@ -70,10 +70,13 @@ const mapRapportJudiciaireRow = (row: any, local_id: string): PeRapportJudiciair
   nombre_rapports: Number(row.nombre_rapports) || 0,
 });
 
-export function usePeRapportsJudiciaires(rapportId: string | null, options?: { enabled?: boolean }) {
+export function usePeRapportsJudiciaires(
+  rapportId: string | null,
+  options?: { enabled?: boolean },
+) {
   return useEntityEntries<PeRapportJudiciaireEntry>({
     rapportId,
-    tableName: 'pe_rapports_judiciaires',
+    tableName: "pe_rapports_judiciaires",
     buildPayload: buildRapportJudiciairePayload,
     mapRowToEntry: mapRapportJudiciaireRow,
     enabled: options?.enabled ?? true,

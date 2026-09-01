@@ -11,9 +11,5 @@ export function hasDuplicate<T>(
   getLocalId: (item: T) => string,
   predicate: (item: T) => boolean,
 ): boolean {
-  return items.some(
-    item =>
-      getLocalId(item) !== currentLocalId &&
-      predicate(item)
-  );
+  return items.some((item) => getLocalId(item) !== currentLocalId && predicate(item));
 }

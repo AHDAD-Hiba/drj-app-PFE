@@ -1,4 +1,4 @@
-import { useEntityEntries, BaseEntry } from '../common/useEntityEntries';
+import { useEntityEntries, BaseEntry } from "../common/useEntityEntries";
 
 export interface AfIntegrationLaureateEntry extends BaseEntry {
   type_formation: string;
@@ -17,15 +17,18 @@ const buildPayload = (entry: AfIntegrationLaureateEntry, rId: string) => ({
 const mapRowToEntry = (row: any, local_id: string): AfIntegrationLaureateEntry => ({
   local_id,
   id: row.id,
-  type_formation: row.type_formation ?? '',
+  type_formation: row.type_formation ?? "",
   nombre_laureates: row.nombre_laureates ?? 0,
   nombre_integrees: row.nombre_integrees ?? 0,
 });
 
-export function useAfIntegrationLaureates(rapportId: string | null, options?: { enabled?: boolean }) {
+export function useAfIntegrationLaureates(
+  rapportId: string | null,
+  options?: { enabled?: boolean },
+) {
   return useEntityEntries<AfIntegrationLaureateEntry>({
     rapportId,
-    tableName: 'af_integration_laureates',
+    tableName: "af_integration_laureates",
     buildPayload,
     mapRowToEntry,
     enabled: options?.enabled ?? true,

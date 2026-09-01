@@ -3,7 +3,16 @@ import type { Database } from "@/integrations/supabase/types";
 import type { DashboardData } from "@/services/prefDomainDashboardTypes";
 import { loadRegionalDirectionIds } from "@/services/prefDomainRegionalBenchmark";
 
-type RapportRow = Pick<Database["public"]["Tables"]["rapports"]["Row"], "id" | "direction_id" | "annee" | "trimestre" | "statut_rapport" | "commentaire_correction" | "updated_at">;
+type RapportRow = Pick<
+  Database["public"]["Tables"]["rapports"]["Row"],
+  | "id"
+  | "direction_id"
+  | "annee"
+  | "trimestre"
+  | "statut_rapport"
+  | "commentaire_correction"
+  | "updated_at"
+>;
 type ActiviteRow = Database["public"]["Tables"]["activites"]["Row"];
 type ParticipantRow = Database["public"]["Tables"]["participants"]["Row"];
 type FormationRow = Database["public"]["Tables"]["formations"]["Row"];
@@ -52,7 +61,9 @@ type DynamicSupabaseTable = {
   };
 };
 
-const fromDynamicTable = supabase.from as unknown as (table: string) => DynamicSupabaseTable;
+const fromDynamicTable = supabase.from.bind(supabase) as unknown as (
+  table: string,
+) => DynamicSupabaseTable;
 
 const loadRows = async <T>(table: string, rapportIds: string[]): Promise<T[]> => {
   if (rapportIds.length === 0) return [];
@@ -122,8 +133,14 @@ const loadJeunesseSnapshot = async (
     loadRows<EncadrementRow>("encadrements", rapportIds),
     loadRows<MouvementAssociationRow>("mouvements_associations", rapportIds),
     loadRows<FermetureRow>("fermetures", rapportIds),
-    supabase.from("types_partenaires").select("*").then(({ data }) => (data ?? []) as TypePartenaireRow[]),
-    supabase.from("types_fermeture").select("*").then(({ data }) => (data ?? []) as TypeFermetureRow[]),
+    supabase
+      .from("types_partenaires")
+      .select("*")
+      .then(({ data }) => (data ?? []) as TypePartenaireRow[]),
+    supabase
+      .from("types_fermeture")
+      .select("*")
+      .then(({ data }) => (data ?? []) as TypeFermetureRow[]),
     uniqueDirectionIds.length === 0
       ? Promise.resolve([])
       : supabase
@@ -142,9 +159,21 @@ const loadJeunesseSnapshot = async (
           .then(({ data }) => (data ?? []) as EtablissementRow[]),
   ]);
   const [formationStats, festivalStats, insertionStats] = await Promise.all([
-    loadRowsByColumn<FormationStatsRow>("statistiques_formation", "formation_id", formations.map((row) => row.id)),
-    loadRowsByColumn<FestivalStatsRow>("statistiques_festivals", "festival_id", festivals.map((row) => row.id)),
-    loadRowsByColumn<InsertionStatsRow>("stats_insertion", "activite_id", insertions.map((row) => row.id)),
+    loadRowsByColumn<FormationStatsRow>(
+      "statistiques_formation",
+      "formation_id",
+      formations.map((row) => row.id),
+    ),
+    loadRowsByColumn<FestivalStatsRow>(
+      "statistiques_festivals",
+      "festival_id",
+      festivals.map((row) => row.id),
+    ),
+    loadRowsByColumn<InsertionStatsRow>(
+      "stats_insertion",
+      "activite_id",
+      insertions.map((row) => row.id),
+    ),
   ]);
 
   return {
@@ -169,32 +198,59 @@ const loadJeunesseSnapshot = async (
   };
 };
 
-const scopeSnapshotToDirection = (snapshot: JeunesseSnapshot, directionId: string): JeunesseSnapshot => {
-  const directionRapports = snapshot.directionRapports.filter((rapport) => rapport.direction_id === directionId);
+const scopeSnapshotToDirection = (
+  snapshot: JeunesseSnapshot,
+  directionId: string,
+): JeunesseSnapshot => {
+  const directionRapports = snapshot.directionRapports.filter(
+    (rapport) => rapport.direction_id === directionId,
+  );
   const rapportIds = new Set(directionRapports.map((rapport) => rapport.id));
-  const formations = snapshot.formations.filter((row) => row.rapport_id && rapportIds.has(row.rapport_id));
+  const formations = snapshot.formations.filter(
+    (row) => row.rapport_id && rapportIds.has(row.rapport_id),
+  );
   const formationIds = new Set(formations.map((row) => row.id));
-  const festivals = snapshot.festivals.filter((row) => row.rapport_id && rapportIds.has(row.rapport_id));
+  const festivals = snapshot.festivals.filter(
+    (row) => row.rapport_id && rapportIds.has(row.rapport_id),
+  );
   const festivalIds = new Set(festivals.map((row) => row.id));
-  const insertions = snapshot.insertions.filter((row) => row.rapport_id && rapportIds.has(row.rapport_id));
+  const insertions = snapshot.insertions.filter(
+    (row) => row.rapport_id && rapportIds.has(row.rapport_id),
+  );
   const insertionIds = new Set(insertions.map((row) => row.id));
 
   return {
     ...snapshot,
     directionRapports,
     activites: snapshot.activites.filter((row) => row.rapport_id && rapportIds.has(row.rapport_id)),
-    participants: snapshot.participants.filter((row) => row.rapport_id && rapportIds.has(row.rapport_id)),
-    encadrements: snapshot.encadrements.filter((row) => row.rapport_id && rapportIds.has(row.rapport_id)),
+    participants: snapshot.participants.filter(
+      (row) => row.rapport_id && rapportIds.has(row.rapport_id),
+    ),
+    encadrements: snapshot.encadrements.filter(
+      (row) => row.rapport_id && rapportIds.has(row.rapport_id),
+    ),
     formations,
-    formationStats: snapshot.formationStats.filter((row) => row.formation_id && formationIds.has(row.formation_id)),
+    formationStats: snapshot.formationStats.filter(
+      (row) => row.formation_id && formationIds.has(row.formation_id),
+    ),
     festivals,
-    festivalStats: snapshot.festivalStats.filter((row) => row.festival_id && festivalIds.has(row.festival_id)),
+    festivalStats: snapshot.festivalStats.filter(
+      (row) => row.festival_id && festivalIds.has(row.festival_id),
+    ),
     insertions,
-    insertionStats: snapshot.insertionStats.filter((row) => row.activite_id && insertionIds.has(row.activite_id)),
-    partenariats: snapshot.partenariats.filter((row) => row.rapport_id && rapportIds.has(row.rapport_id)),
+    insertionStats: snapshot.insertionStats.filter(
+      (row) => row.activite_id && insertionIds.has(row.activite_id),
+    ),
+    partenariats: snapshot.partenariats.filter(
+      (row) => row.rapport_id && rapportIds.has(row.rapport_id),
+    ),
     projets: snapshot.projets.filter((row) => row.rapport_id && rapportIds.has(row.rapport_id)),
-    mouvements: snapshot.mouvements.filter((row) => row.rapport_id && rapportIds.has(row.rapport_id)),
-    fermetures: snapshot.fermetures.filter((row) => row.rapport_id && rapportIds.has(row.rapport_id)),
+    mouvements: snapshot.mouvements.filter(
+      (row) => row.rapport_id && rapportIds.has(row.rapport_id),
+    ),
+    fermetures: snapshot.fermetures.filter(
+      (row) => row.rapport_id && rapportIds.has(row.rapport_id),
+    ),
     demographie: snapshot.demographie.filter((row) => row.direction_id === directionId),
     etablissements: snapshot.etablissements.filter((row) => row.direction_id === directionId),
   };
@@ -214,12 +270,17 @@ const buildSection2FromSnapshot = (snapshot: JeunesseSnapshot) => {
     etablissements,
   } = snapshot;
 
-  const activiteTotal = activites.reduce((total, row) => total + sum([
-    row.activites_culturelles,
-    row.activites_educatives,
-    row.activites_sportives,
-    row.renforcement_capacites,
-  ]), 0);
+  const activiteTotal = activites.reduce(
+    (total, row) =>
+      total +
+      sum([
+        row.activites_culturelles,
+        row.activites_educatives,
+        row.activites_sportives,
+        row.renforcement_capacites,
+      ]),
+    0,
+  );
   const campingHommes = sum(participants.map((row) => row.hommes));
   const campingFemmes = sum(participants.map((row) => row.femmes));
   const formationHommes = sum(formationStats.map((row) => row.nombre_beneficiaires_hommes));
@@ -229,15 +290,23 @@ const buildSection2FromSnapshot = (snapshot: JeunesseSnapshot) => {
   const insertionHommes = sum(insertionStats.map((row) => row.hommes));
   const insertionFemmes = sum(insertionStats.map((row) => row.femmes));
   const totalBeneficiaires = sum([
-    campingHommes, campingFemmes, formationHommes, formationFemmes,
-    festivalHommes, festivalFemmes, insertionHommes, insertionFemmes,
+    campingHommes,
+    campingFemmes,
+    formationHommes,
+    formationFemmes,
+    festivalHommes,
+    festivalFemmes,
+    insertionHommes,
+    insertionFemmes,
   ]);
   const femmes = sum([campingFemmes, formationFemmes, festivalFemmes, insertionFemmes]);
   const dernierStatut = new Map<string, SuiviProjetRow>();
   projets.forEach((projet) => {
     const rapport = directionRapports.find((item) => item.id === projet.rapport_id);
     const previous = dernierStatut.get(projet.etablissement_id ?? "");
-    const previousRapport = previous ? directionRapports.find((item) => item.id === previous.rapport_id) : undefined;
+    const previousRapport = previous
+      ? directionRapports.find((item) => item.id === previous.rapport_id)
+      : undefined;
     if (!previous || (rapport?.trimestre ?? "") > (previousRapport?.trimestre ?? "")) {
       if (projet.etablissement_id) dernierStatut.set(projet.etablissement_id, projet);
     }
@@ -247,17 +316,24 @@ const buildSection2FromSnapshot = (snapshot: JeunesseSnapshot) => {
       .filter(([, projet]) => projet.statut === "en_cours" || projet.statut === "ferme")
       .map(([id]) => id),
   );
-  const etablissementsActifs = etablissements
-    .filter((etablissement) => etablissement.type_etablissement === "maison_jeunes" && !blockedIds.has(etablissement.id))
-    .length;
+  const etablissementsActifs = etablissements.filter(
+    (etablissement) =>
+      etablissement.type_etablissement === "maison_jeunes" && !blockedIds.has(etablissement.id),
+  ).length;
   const demographieRow = demographie[0];
 
   return {
     total_activites: activiteTotal,
     total_beneficiaires: totalBeneficiaires,
     taux_feminisation: totalBeneficiaires > 0 ? (femmes * 100) / totalBeneficiaires : 0,
-    taux_ruralite: sum(participants.map((row) => row.milieu_rural)) + sum(festivalStats.map((row) => row.nbr_rural)) + sum(insertionStats.map((row) => row.nbr_rural)),
-    taux_couverture: demographieRow && demographieRow.population_jeune > 0 ? (totalBeneficiaires * 100) / demographieRow.population_jeune : 0,
+    taux_ruralite:
+      sum(participants.map((row) => row.milieu_rural)) +
+      sum(festivalStats.map((row) => row.nbr_rural)) +
+      sum(insertionStats.map((row) => row.nbr_rural)),
+    taux_couverture:
+      demographieRow && demographieRow.population_jeune > 0
+        ? (totalBeneficiaires * 100) / demographieRow.population_jeune
+        : 0,
     total_partenariats: sum(partenariats.map((row) => row.nombre_conventions)),
     etablissements_actifs: etablissementsActifs,
   };
@@ -330,16 +406,60 @@ const buildSection3FromSnapshot = (snapshot: JeunesseSnapshot) => {
 };
 
 const buildSection4FromSnapshot = (snapshot: JeunesseSnapshot) => {
-  const { directionRapports, participants, formations, formationStats, festivals, festivalStats, insertions, insertionStats } = snapshot;
-  const quarterForReport = new Map(directionRapports.map((rapport) => [rapport.id, rapport.trimestre?.toUpperCase()]));
+  const {
+    directionRapports,
+    participants,
+    formations,
+    formationStats,
+    festivals,
+    festivalStats,
+    insertions,
+    insertionStats,
+  } = snapshot;
+  const quarterForReport = new Map(
+    directionRapports.map((rapport) => [rapport.id, rapport.trimestre?.toUpperCase()]),
+  );
   const quarters = ["T1", "T2", "T3", "T4"];
 
   return quarters.map((name) => ({
     name,
-    Camping: sum(participants.filter((row) => quarterForReport.get(row.rapport_id ?? "") === name).map((row) => (row.hommes ?? 0) + (row.femmes ?? 0))),
-    Formation: sum(formationStats.filter((row) => quarterForReport.get(formations.find((formation) => formation.id === row.formation_id)?.rapport_id ?? "") === name).map((row) => (row.nombre_beneficiaires_hommes ?? 0) + (row.nombre_beneficiaires_femmes ?? 0))),
-    Festivals: sum(festivalStats.filter((row) => quarterForReport.get(festivals.find((festival) => festival.id === row.festival_id)?.rapport_id ?? "") === name).map((row) => (row.nombre_hommes ?? 0) + (row.nombre_femmes ?? 0))),
-    Insertion: sum(insertionStats.filter((row) => quarterForReport.get(insertions.find((insertion) => insertion.id === row.activite_id)?.rapport_id ?? "") === name).map((row) => (row.hommes ?? 0) + (row.femmes ?? 0))),
+    Camping: sum(
+      participants
+        .filter((row) => quarterForReport.get(row.rapport_id ?? "") === name)
+        .map((row) => (row.hommes ?? 0) + (row.femmes ?? 0)),
+    ),
+    Formation: sum(
+      formationStats
+        .filter(
+          (row) =>
+            quarterForReport.get(
+              formations.find((formation) => formation.id === row.formation_id)?.rapport_id ?? "",
+            ) === name,
+        )
+        .map(
+          (row) => (row.nombre_beneficiaires_hommes ?? 0) + (row.nombre_beneficiaires_femmes ?? 0),
+        ),
+    ),
+    Festivals: sum(
+      festivalStats
+        .filter(
+          (row) =>
+            quarterForReport.get(
+              festivals.find((festival) => festival.id === row.festival_id)?.rapport_id ?? "",
+            ) === name,
+        )
+        .map((row) => (row.nombre_hommes ?? 0) + (row.nombre_femmes ?? 0)),
+    ),
+    Insertion: sum(
+      insertionStats
+        .filter(
+          (row) =>
+            quarterForReport.get(
+              insertions.find((insertion) => insertion.id === row.activite_id)?.rapport_id ?? "",
+            ) === name,
+        )
+        .map((row) => (row.hommes ?? 0) + (row.femmes ?? 0)),
+    ),
   }));
 };
 
@@ -358,10 +478,16 @@ const loadRegionalJeunesseSnapshot = async (
 
   const { data: regionalReports } = await supabase
     .from("rapports")
-    .select("id, direction_id, annee, trimestre, statut_rapport, commentaire_correction, updated_at")
+    .select(
+      "id, direction_id, annee, trimestre, statut_rapport, commentaire_correction, updated_at",
+    )
     .eq("annee", year)
     .in("direction_id", regionalDirectionIds);
-  const regionalSnapshot = await loadJeunesseSnapshot((regionalReports ?? []) as RapportRow[], regionalDirectionIds, year);
+  const regionalSnapshot = await loadJeunesseSnapshot(
+    (regionalReports ?? []) as RapportRow[],
+    regionalDirectionIds,
+    year,
+  );
 
   return { regionalDirections: regionalDirectionIds.map((id) => ({ id })), regionalSnapshot };
 };
@@ -375,15 +501,48 @@ const buildSection5FromSnapshot = (
     buildSection2FromSnapshot(scopeSnapshotToDirection(regionalSnapshot, regionalDirection.id)),
   );
   const averageKpi = (key: keyof typeof currentKpis) =>
-    regionalKpis.length === 0 ? 0 : regionalKpis.reduce((total, kpis) => total + Number(kpis[key] ?? 0), 0) / regionalKpis.length;
+    regionalKpis.length === 0
+      ? 0
+      : regionalKpis.reduce((total, kpis) => total + Number(kpis[key] ?? 0), 0) /
+        regionalKpis.length;
 
   return [
-    { kpi: "Total des Activités", monScore: currentKpis.total_activites, moyenneReg: averageKpi("total_activites"), isPercentage: false },
-    { kpi: "Total Bénéficiaires", monScore: currentKpis.total_beneficiaires, moyenneReg: averageKpi("total_beneficiaires"), isPercentage: false },
-    { kpi: "Taux de Couverture", monScore: currentKpis.taux_couverture, moyenneReg: averageKpi("taux_couverture"), isPercentage: true },
-    { kpi: "Taux de Féminisation", monScore: currentKpis.taux_feminisation, moyenneReg: averageKpi("taux_feminisation"), isPercentage: true },
-    { kpi: "Partenariats Actifs", monScore: currentKpis.total_partenariats, moyenneReg: averageKpi("total_partenariats"), isPercentage: false },
-    { kpi: "Établ. Opérationnels", monScore: currentKpis.etablissements_actifs, moyenneReg: averageKpi("etablissements_actifs"), isPercentage: false },
+    {
+      kpi: "Total des Activités",
+      monScore: currentKpis.total_activites,
+      moyenneReg: averageKpi("total_activites"),
+      isPercentage: false,
+    },
+    {
+      kpi: "Total Bénéficiaires",
+      monScore: currentKpis.total_beneficiaires,
+      moyenneReg: averageKpi("total_beneficiaires"),
+      isPercentage: false,
+    },
+    {
+      kpi: "Taux de Couverture",
+      monScore: currentKpis.taux_couverture,
+      moyenneReg: averageKpi("taux_couverture"),
+      isPercentage: true,
+    },
+    {
+      kpi: "Taux de Féminisation",
+      monScore: currentKpis.taux_feminisation,
+      moyenneReg: averageKpi("taux_feminisation"),
+      isPercentage: true,
+    },
+    {
+      kpi: "Partenariats Actifs",
+      monScore: currentKpis.total_partenariats,
+      moyenneReg: averageKpi("total_partenariats"),
+      isPercentage: false,
+    },
+    {
+      kpi: "Établ. Opérationnels",
+      monScore: currentKpis.etablissements_actifs,
+      moyenneReg: averageKpi("etablissements_actifs"),
+      isPercentage: false,
+    },
   ];
 };
 
@@ -406,7 +565,9 @@ const buildSection6FromSnapshot = (snapshot: JeunesseSnapshot) => {
     typePartenaires,
     typeFermetures,
   } = snapshot;
-  const totalStaff = sum(encadrements.map((row) => (row.nombre_hommes ?? 0) + (row.nombre_femmes ?? 0)));
+  const totalStaff = sum(
+    encadrements.map((row) => (row.nombre_hommes ?? 0) + (row.nombre_femmes ?? 0)),
+  );
   const totalCamping = sum(participants.map((row) => (row.hommes ?? 0) + (row.femmes ?? 0)));
   const typePartenaireById = new Map(typePartenaires.map((row) => [row.id, row.nom]));
   const conventionsByType = new Map<string, number>();
@@ -419,7 +580,9 @@ const buildSection6FromSnapshot = (snapshot: JeunesseSnapshot) => {
     if (!project.etablissement_id) return;
     const previous = latestProjectByEstablishment.get(project.etablissement_id);
     const currentReport = directionRapports.find((report) => report.id === project.rapport_id);
-    const previousReport = previous ? directionRapports.find((report) => report.id === previous.rapport_id) : undefined;
+    const previousReport = previous
+      ? directionRapports.find((report) => report.id === previous.rapport_id)
+      : undefined;
     if (!previous || (currentReport?.trimestre ?? "") > (previousReport?.trimestre ?? "")) {
       latestProjectByEstablishment.set(project.etablissement_id, project);
     }
@@ -429,7 +592,9 @@ const buildSection6FromSnapshot = (snapshot: JeunesseSnapshot) => {
     if (!closure.etablissement_id) return;
     const previous = latestClosureByEstablishment.get(closure.etablissement_id);
     const currentReport = directionRapports.find((report) => report.id === closure.rapport_id);
-    const previousReport = previous ? directionRapports.find((report) => report.id === previous.rapport_id) : undefined;
+    const previousReport = previous
+      ? directionRapports.find((report) => report.id === previous.rapport_id)
+      : undefined;
     if (!previous || (currentReport?.trimestre ?? "") > (previousReport?.trimestre ?? "")) {
       latestClosureByEstablishment.set(closure.etablissement_id, closure);
     }
@@ -468,14 +633,22 @@ const buildSection6FromSnapshot = (snapshot: JeunesseSnapshot) => {
         besoins_specifiques: sum(participants.map((row) => row.besoins_specifiques)),
       },
       encadrement: {
-        ratio: totalStaff === 0 || totalCamping === 0 ? "0:0" : `1:${Math.round(totalCamping / totalStaff)}`,
+        ratio:
+          totalStaff === 0 || totalCamping === 0
+            ? "0:0"
+            : `1:${Math.round(totalCamping / totalStaff)}`,
         total_staff: totalStaff,
         hommes: sum(encadrements.map((row) => row.nombre_hommes)),
         femmes: sum(encadrements.map((row) => row.nombre_femmes)),
       },
       formations: {
         total_sessions: formations.length,
-        beneficiaires: sum(formationStats.map((row) => (row.nombre_beneficiaires_hommes ?? 0) + (row.nombre_beneficiaires_femmes ?? 0))),
+        beneficiaires: sum(
+          formationStats.map(
+            (row) =>
+              (row.nombre_beneficiaires_hommes ?? 0) + (row.nombre_beneficiaires_femmes ?? 0),
+          ),
+        ),
       },
     },
     conventions: {
@@ -485,25 +658,47 @@ const buildSection6FromSnapshot = (snapshot: JeunesseSnapshot) => {
     },
     insertion: {
       total_activites: insertions.length,
-      partenaires_actifs: new Set(insertions.map((row) => row.type_partenaire_id).filter(Boolean)).size,
+      partenaires_actifs: new Set(insertions.map((row) => row.type_partenaire_id).filter(Boolean))
+        .size,
       volume_horaire: `${sum(insertions.map((row) => row.duree_valeur))} Heures`,
-      genre: { hommes: sum(insertionStats.map((row) => row.hommes)), femmes: sum(insertionStats.map((row) => row.femmes)) },
-      milieu: { urbain: sum(insertionStats.map((row) => row.nbr_urbain)), rural: sum(insertionStats.map((row) => row.nbr_rural)) },
+      genre: {
+        hommes: sum(insertionStats.map((row) => row.hommes)),
+        femmes: sum(insertionStats.map((row) => row.femmes)),
+      },
+      milieu: {
+        urbain: sum(insertionStats.map((row) => row.nbr_urbain)),
+        rural: sum(insertionStats.map((row) => row.nbr_rural)),
+      },
     },
     festivals: {
       total_evenements: festivals.length,
       total_provinces: sum(festivalStats.map((row) => row.nbr_provinces_participantes)),
       qualifies: sum(festivalStats.map((row) => row.nbr_participants_qualifies)),
-      total_participants: sum(festivalStats.map((row) => (row.nombre_hommes ?? 0) + (row.nombre_femmes ?? 0))),
-      genre: { hommes: sum(festivalStats.map((row) => row.nombre_hommes)), femmes: sum(festivalStats.map((row) => row.nombre_femmes)) },
-      milieu: { urbain: sum(festivalStats.map((row) => row.nbr_urbain)), rural: sum(festivalStats.map((row) => row.nbr_rural)) },
+      total_participants: sum(
+        festivalStats.map((row) => (row.nombre_hommes ?? 0) + (row.nombre_femmes ?? 0)),
+      ),
+      genre: {
+        hommes: sum(festivalStats.map((row) => row.nombre_hommes)),
+        femmes: sum(festivalStats.map((row) => row.nombre_femmes)),
+      },
+      milieu: {
+        urbain: sum(festivalStats.map((row) => row.nbr_urbain)),
+        rural: sum(festivalStats.map((row) => row.nbr_rural)),
+      },
     },
     etablissements: {
       total: 0,
       operationnels: 0,
-      nouvellement_creees: Array.from(latestProjectByEstablishment.values()).filter((row) => row.statut === "nouvel").length,
-      en_cours_realisation: Array.from(latestProjectByEstablishment.values()).filter((row) => row.statut === "en_cours").length,
-      fermees: { total: latestClosureByEstablishment.size, causes: Array.from(causes, ([cause, count]) => ({ cause, count })) },
+      nouvellement_creees: Array.from(latestProjectByEstablishment.values()).filter(
+        (row) => row.statut === "nouvel",
+      ).length,
+      en_cours_realisation: Array.from(latestProjectByEstablishment.values()).filter(
+        (row) => row.statut === "en_cours",
+      ).length,
+      fermees: {
+        total: latestClosureByEstablishment.size,
+        causes: Array.from(causes, ([cause, count]) => ({ cause, count })),
+      },
     },
   };
 };
@@ -576,47 +771,49 @@ const formatBenchmarkData = (data: Record<string, number> | null) => {
   ];
 };
 
-type LegacySection6ViewData = Partial<Record<
-  | "camp_staff_total"
-  | "camp_benef_total"
-  | "act_assocs"
-  | "act_clubs"
-  | "act_conventions"
-  | "act_sport"
-  | "act_cult"
-  | "act_educ"
-  | "act_renf"
-  | "assoc_entrants"
-  | "assoc_sortants"
-  | "benef_entrants"
-  | "benef_sortants"
-  | "camp_mre"
-  | "camp_besoins_spec"
-  | "camp_staff_h"
-  | "camp_staff_f"
-  | "form_total_sessions"
-  | "form_beneficiaires"
-  | "conv_total_global"
-  | "conv_types_distincts"
-  | "ins_total_activites"
-  | "ins_partenaires_actifs"
-  | "ins_volume_h"
-  | "ins_hommes"
-  | "ins_femmes"
-  | "ins_urbain"
-  | "ins_rural"
-  | "fest_total"
-  | "fest_provinces"
-  | "fest_qualifies"
-  | "fest_hommes"
-  | "fest_femmes"
-  | "fest_urbain"
-  | "fest_rural"
-  | "etab_nouvel"
-  | "etab_en_cours"
-  | "etab_total_fermes",
-  number
->> & {
+type LegacySection6ViewData = Partial<
+  Record<
+    | "camp_staff_total"
+    | "camp_benef_total"
+    | "act_assocs"
+    | "act_clubs"
+    | "act_conventions"
+    | "act_sport"
+    | "act_cult"
+    | "act_educ"
+    | "act_renf"
+    | "assoc_entrants"
+    | "assoc_sortants"
+    | "benef_entrants"
+    | "benef_sortants"
+    | "camp_mre"
+    | "camp_besoins_spec"
+    | "camp_staff_h"
+    | "camp_staff_f"
+    | "form_total_sessions"
+    | "form_beneficiaires"
+    | "conv_total_global"
+    | "conv_types_distincts"
+    | "ins_total_activites"
+    | "ins_partenaires_actifs"
+    | "ins_volume_h"
+    | "ins_hommes"
+    | "ins_femmes"
+    | "ins_urbain"
+    | "ins_rural"
+    | "fest_total"
+    | "fest_provinces"
+    | "fest_qualifies"
+    | "fest_hommes"
+    | "fest_femmes"
+    | "fest_urbain"
+    | "fest_rural"
+    | "etab_nouvel"
+    | "etab_en_cours"
+    | "etab_total_fermes",
+    number
+  >
+> & {
   repartition_partenaires_json?: unknown[];
   causes_fermeture_json?: unknown[];
 };
@@ -749,14 +946,16 @@ export type JeunesseDashboardData = DashboardData<
 export const loadDashboard = async (
   directionId: string,
   year: number,
-  domaineId?: string
+  domaineId?: string,
 ): Promise<JeunesseDashboardData> => {
   const regionalDirectionIdsPromise = loadRegionalDirectionIds(directionId);
 
   // 1. Charger tous les rapports de l'année pour agréger les tables brutes.
   const { data: rapportsData } = await supabase
     .from("rapports")
-    .select("id, direction_id, annee, trimestre, statut_rapport, commentaire_correction, updated_at")
+    .select(
+      "id, direction_id, annee, trimestre, statut_rapport, commentaire_correction, updated_at",
+    )
     .eq("direction_id", directionId)
     .eq("annee", year)
     .order("trimestre", { ascending: false });
@@ -794,21 +993,34 @@ export const loadDashboard = async (
     loadSection1FromTables(rapport.id, domaineId),
     regionalDirectionIdsPromise,
   ]);
-  const regionalData = await loadRegionalJeunesseSnapshot(directionId, year, rapports, regionalDirectionIds);
+  const regionalData = await loadRegionalJeunesseSnapshot(
+    directionId,
+    year,
+    rapports,
+    regionalDirectionIds,
+  );
   const currentSnapshot = scopeSnapshotToDirection(regionalData.regionalSnapshot, directionId);
   const section2 = buildSection2FromSnapshot(currentSnapshot);
   const section3 = buildSection3FromSnapshot(currentSnapshot);
   const section4 = buildSection4FromSnapshot(currentSnapshot);
-  const section5 = buildSection5FromSnapshot(section2, regionalData.regionalDirections, regionalData.regionalSnapshot);
+  const section5 = buildSection5FromSnapshot(
+    section2,
+    regionalData.regionalDirections,
+    regionalData.regionalSnapshot,
+  );
   const section6 = buildSection6FromSnapshot(currentSnapshot);
 
   // 4. On retourne les vraies données
-  const workflowStatus = section1?.statut || (rapport.statut_rapport === "VALIDE"
-    ? "TERMINE"
-    : rapport.statut_rapport === "NON_COMMENCE"
-      ? "NON_COMMENCE"
-      : "EN_COURS");
-  const progressPct = section1?.progression_pourcentage ?? (workflowStatus === "TERMINE" ? 100 : workflowStatus === "EN_COURS" ? 50 : 0);
+  const workflowStatus =
+    section1?.statut ||
+    (rapport.statut_rapport === "VALIDE"
+      ? "TERMINE"
+      : rapport.statut_rapport === "NON_COMMENCE"
+        ? "NON_COMMENCE"
+        : "EN_COURS");
+  const progressPct =
+    section1?.progression_pourcentage ??
+    (workflowStatus === "TERMINE" ? 100 : workflowStatus === "EN_COURS" ? 50 : 0);
 
   return {
     status: {

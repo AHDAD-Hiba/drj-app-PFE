@@ -1,5 +1,5 @@
-import { useCallback } from 'react';
-import { useDraftSubmission } from './useDraftSubmission';
+import { useCallback } from "react";
+import { useDraftSubmission } from "./useDraftSubmission";
 
 /**
  * Central orchestrator for domain workflow.
@@ -17,7 +17,6 @@ export interface UseDomainSubmissionOpts {
   domaineId: string;
   debounceMs?: number;
   completeness?: number;
-
 }
 
 export const useDomainSubmission = ({
@@ -89,7 +88,7 @@ export const useDomainSubmission = ({
     saveNow,
     submit,
     ensureEnCours,
-    
+
     completeness,
   };
 };

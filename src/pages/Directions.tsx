@@ -1,25 +1,25 @@
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/hooks/common/useAuth';
-import { AppLayout } from '@/components/AppLayout';
-import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Search, ChevronRight, MapPin, Trophy } from 'lucide-react';
-import { DEFAULT_YEAR } from '@/components/YearSwitcher';
-import { RegionalFilters, type RegionalDomainOption } from '@/components/dashboard/RegionalFilters';
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/common/useAuth";
+import { AppLayout } from "@/components/AppLayout";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Search, ChevronRight, MapPin, Trophy } from "lucide-react";
+import { DEFAULT_YEAR } from "@/components/YearSwitcher";
+import { RegionalFilters, type RegionalDomainOption } from "@/components/dashboard/RegionalFilters";
 import {
   getRegionalDashboardService,
   getRegionalMetricLabels,
-} from '@/services/regional/regionalDashboardServices';
-import { formatNumber } from '@/lib/data';
+} from "@/services/regional/regionalDashboardServices";
+import { formatNumber } from "@/lib/data";
 
 const STATUS_STYLE: Record<string, string> = {
-  TERMINE: 'bg-success/15 text-success border-success/30',
-  EN_COURS: 'bg-info/15 text-info border-info/30',
-  NON_COMMENCE: 'bg-warning/15 text-warning border-warning/30',
+  TERMINE: "bg-success/15 text-success border-success/30",
+  EN_COURS: "bg-info/15 text-info border-info/30",
+  NON_COMMENCE: "bg-warning/15 text-warning border-warning/30",
 };
 
 interface DirectionCardData {
@@ -39,9 +39,9 @@ const Directions = () => {
   const navigate = useNavigate();
 
   const [data, setData] = useState<DirectionCardData[]>([]);
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState("");
   const [year, setYear] = useState<number>(DEFAULT_YEAR);
-  const [filterDomain, setFilterDomain] = useState<string>('JEUNESSE');
+  const [filterDomain, setFilterDomain] = useState<string>("JEUNESSE");
   const [dbDomains, setDbDomains] = useState<RegionalDomainOption[]>([]);
   const [nomArById, setNomArById] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
@@ -51,7 +51,7 @@ const Directions = () => {
   // RegDomainDashboard.tsx, pour alimenter le même composant RegionalFilters.
   useEffect(() => {
     const fetchDomains = async () => {
-      const { data: domains } = await supabase.from('domaines').select('*');
+      const { data: domains } = await supabase.from("domaines").select("*");
       if (domains) setDbDomains(domains as RegionalDomainOption[]);
     };
     void fetchDomains();
@@ -64,7 +64,7 @@ const Directions = () => {
   // déjà existant sur cette page, sans dupliquer de logique métier.
   useEffect(() => {
     const fetchNomsAr = async () => {
-      const { data: dirs } = await supabase.from('directions').select('id, nom_ar');
+      const { data: dirs } = await supabase.from("directions").select("id, nom_ar");
       if (dirs) {
         const map: Record<string, string> = {};
         dirs.forEach((d) => {
@@ -96,7 +96,9 @@ const Directions = () => {
 
       const { hasRealRanking } = getRegionalMetricLabels(filterDomain, t);
 
-      const sorted = [...result.comparison.directions].sort((a, b) => (a.rank ?? Number.MAX_SAFE_INTEGER) - (b.rank ?? Number.MAX_SAFE_INTEGER));
+      const sorted = [...result.comparison.directions].sort(
+        (a, b) => (a.rank ?? Number.MAX_SAFE_INTEGER) - (b.rank ?? Number.MAX_SAFE_INTEGER),
+      );
 
       const mapped: DirectionCardData[] = sorted.map((dir, index) => ({
         id: dir.id,
@@ -104,7 +106,7 @@ const Directions = () => {
         nomAr: nomArById[dir.id] ?? null,
         statut: dir.status,
         score: dir.score || 0,
-        rang: hasRealRanking ? dir.rank ?? index + 1 : null,
+        rang: hasRealRanking ? (dir.rank ?? index + 1) : null,
         metricPrimary: dir.primary ?? 0,
         metricSecondary: dir.secondary ?? 0,
       }));
@@ -118,7 +120,7 @@ const Directions = () => {
     };
   }, [filterDomain, year, nomArById, t]);
 
-  const getName = (d: DirectionCardData) => (lang === 'ar' ? d.nomAr || d.nomFr : d.nomFr);
+  const getName = (d: DirectionCardData) => (lang === "ar" ? d.nomAr || d.nomFr : d.nomFr);
   const showSearch = !isDirector;
 
   const directionId = profile?.direction_id ?? null;
@@ -135,23 +137,26 @@ const Directions = () => {
   );
 
   const formatMetric = (value: number, isPercent: boolean) =>
-    `${formatNumber(value, lang)}${isPercent ? '%' : ''}`;
+    `${formatNumber(value, lang)}${isPercent ? "%" : ""}`;
 
   const formatScore = (value: number) =>
-    typeof value === 'number' && Number.isFinite(value)
-      ? new Intl.NumberFormat(lang === 'ar' ? 'ar-MA' : 'fr-FR', { maximumFractionDigits: 2 }).format(value)
+    typeof value === "number" && Number.isFinite(value)
+      ? new Intl.NumberFormat(lang === "ar" ? "ar-MA" : "fr-FR", {
+          maximumFractionDigits: 2,
+        }).format(value)
       : value;
 
   return (
     <AppLayout>
       {/* الـ dir هنا كيتحكم فالاتجاه ديال الصفحة كاملة ديناميكياً */}
-      <div className="space-y-5 animate-fade-in" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
+      <div className="space-y-5 animate-fade-in" dir={lang === "ar" ? "rtl" : "ltr"}>
         <div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-foreground">
-            {t('directionsTab.title', 'Directions')}
+            {t("directionsTab.title", "Directions")}
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {filtered.length} {t('directionsTab.countSuffix', 'Directions - Année')} <span dir="ltr">{year}</span>
+            {filtered.length} {t("directionsTab.countSuffix", "Directions - Année")}{" "}
+            <span dir="ltr">{year}</span>
           </p>
         </div>
 
@@ -161,15 +166,15 @@ const Directions = () => {
           filterDomain={filterDomain}
           onFilterDomainChange={setFilterDomain}
           domains={dbDomains}
-          yearLabel={t('common.year', 'Année')}
-          domainLabel={t('RegDomainDashboard.filters.domain', 'Domaine')}
+          yearLabel={t("common.year", "Année")}
+          domainLabel={t("RegDomainDashboard.filters.domain", "Domaine")}
         />
 
         {showSearch && (
           <div className="relative max-w-md">
             <Search className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder={t('directionsTab.searchPlaceholder', 'Rechercher une direction...')}
+              placeholder={t("directionsTab.searchPlaceholder", "Rechercher une direction...")}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="ps-10 h-11"
@@ -186,12 +191,14 @@ const Directions = () => {
         ) : (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {filtered.map((dir) => {
-              const statusKey = dir.statut?.toLowerCase().replace(' ', '_') || 'non_commence';
+              const statusKey = dir.statut?.toLowerCase().replace(" ", "_") || "non_commence";
 
               return (
                 <Card
                   key={dir.id}
-                  onClick={() => navigate(`/directions/${dir.id}?domain=${filterDomain}&year=${year}`)}
+                  onClick={() =>
+                    navigate(`/directions/${dir.id}?domain=${filterDomain}&year=${year}`)
+                  }
                   className="p-5 cursor-pointer hover:shadow-elegant hover:-translate-y-0.5 transition-smooth gradient-card border-border/60 group flex flex-col justify-between"
                 >
                   <div>
@@ -228,15 +235,21 @@ const Directions = () => {
                           {formatScore(dir.score)}%
                         </div>
                         <div className="text-[10px] text-muted-foreground font-bold uppercase tracking-wide mt-1">
-                          {t('directionsTab.scoreGlobal', 'Score Global')}
+                          {t("directionsTab.scoreGlobal", "Score Global")}
                         </div>
                       </div>
 
                       <div className="flex flex-col flex-1 items-center justify-center text-center">
-                        <div className="text-xl font-extrabold text-secondary tabular-nums" dir="ltr">
+                        <div
+                          className="text-xl font-extrabold text-secondary tabular-nums"
+                          dir="ltr"
+                        >
                           {formatMetric(dir.metricPrimary, isPrimaryPercent)}
                         </div>
-                        <div className="text-[10px] text-muted-foreground font-bold uppercase tracking-wide mt-1 truncate max-w-full" title={metricPrimaryLabel}>
+                        <div
+                          className="text-[10px] text-muted-foreground font-bold uppercase tracking-wide mt-1 truncate max-w-full"
+                          title={metricPrimaryLabel}
+                        >
                           {metricPrimaryLabel}
                         </div>
                       </div>
@@ -247,7 +260,10 @@ const Directions = () => {
                     <div className="flex items-center justify-between text-xs text-muted-foreground border-t border-border pt-3">
                       <span className="flex items-center gap-1.5" dir="ltr">
                         {formatMetric(dir.metricSecondary, false)}
-                        <span className="normal-case text-[10px]" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
+                        <span
+                          className="normal-case text-[10px]"
+                          dir={lang === "ar" ? "rtl" : "ltr"}
+                        >
                           {metricSecondaryLabel}
                         </span>
                       </span>

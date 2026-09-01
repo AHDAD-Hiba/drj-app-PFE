@@ -1,4 +1,4 @@
-import { useEntityEntries, BaseEntry } from '@/hooks/common/useEntityEntries';
+import { useEntityEntries, BaseEntry } from "@/hooks/common/useEntityEntries";
 
 export interface PartenariatEntry extends BaseEntry {
   type_partenaire_id: string;
@@ -17,20 +17,20 @@ const buildPayload = (entry: PartenariatEntry, rId: string) => ({
 const mapRowToEntry = (row: any, local_id: string): PartenariatEntry => ({
   local_id,
   id: row.id,
-  type_partenaire_id: row.type_partenaire_id ?? '',
-  autre_partenaire: row.autre_partenaire ?? '',
+  type_partenaire_id: row.type_partenaire_id ?? "",
+  autre_partenaire: row.autre_partenaire ?? "",
   nombre_conventions: Number(row.nombre_conventions) || 0,
 });
 
-export function usePartenariatEntries(rapportId: string | null , options?: { enabled?: boolean }) {
+export function usePartenariatEntries(rapportId: string | null, options?: { enabled?: boolean }) {
   return useEntityEntries<PartenariatEntry>({
     rapportId,
-    tableName: 'partenariats',
+    tableName: "partenariats",
     enabled: options?.enabled ?? true,
     buildPayload,
     mapRowToEntry,
     buildConflictTarget: (entry) =>
-      entry.id ? 'id' : 'rapport_id,type_partenaire_id,autre_partenaire',
+      entry.id ? "id" : "rapport_id,type_partenaire_id,autre_partenaire",
     // 🛡️ N'enregistre pas en BDD si aucun type de partenaire n'est sélectionné
     validateBeforeSave: (entry) => Boolean(entry.type_partenaire_id),
   });

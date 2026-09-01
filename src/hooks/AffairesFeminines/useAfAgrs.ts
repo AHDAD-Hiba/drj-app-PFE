@@ -1,4 +1,4 @@
-import { useEntityEntries, BaseEntry } from '../common/useEntityEntries';
+import { useEntityEntries, BaseEntry } from "../common/useEntityEntries";
 
 export interface AfAgrEntry extends BaseEntry {
   etablissement_id: string;
@@ -17,15 +17,15 @@ const buildPayload = (entry: AfAgrEntry, rId: string) => ({
 const mapRowToEntry = (row: any, local_id: string): AfAgrEntry => ({
   local_id,
   id: row.id,
-  etablissement_id: row.etablissement_id ?? '',
+  etablissement_id: row.etablissement_id ?? "",
   nombre_beneficiaires: row.nombre_beneficiaires ?? 0,
-  partenaires: row.partenaires ?? '',
+  partenaires: row.partenaires ?? "",
 });
 
 export function useAfAgrs(rapportId: string | null, options?: { enabled?: boolean }) {
   return useEntityEntries<AfAgrEntry>({
     rapportId,
-    tableName: 'af_activites_generatrices_revenus',
+    tableName: "af_activites_generatrices_revenus",
     buildPayload,
     mapRowToEntry,
     enabled: options?.enabled ?? true,

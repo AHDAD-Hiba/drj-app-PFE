@@ -55,10 +55,7 @@ export const PrefDomainDashboardSection3AffairesFeminines = ({
     <section className="space-y-4">
       <div>
         <h2 className="text-lg font-bold text-foreground">
-          {t(
-            "prefDomainDashboard.affairesFeminines.section3.title",
-            "Formation & Territorial",
-          )}
+          {t("prefDomainDashboard.affairesFeminines.section3.title", "Formation & Territorial")}
         </h2>
       </div>
 
@@ -86,7 +83,11 @@ export const PrefDomainDashboardSection3AffairesFeminines = ({
                 layout="vertical"
                 margin={{ top: 10, right: 20, left: lang === "ar" ? 80 : 10, bottom: 20 }}
               >
-                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="hsl(var(--border))" />
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  horizontal={false}
+                  stroke="hsl(var(--border))"
+                />
                 <XAxis
                   type="number"
                   allowDecimals={false}
@@ -102,12 +103,26 @@ export const PrefDomainDashboardSection3AffairesFeminines = ({
                   axisLine={{ stroke: "hsl(var(--muted-foreground))" }}
                   tickLine={{ stroke: "hsl(var(--muted-foreground))" }}
                   width={110}
-                  tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))", dx: lang === "ar" ? -25 : 0 }}
+                  tick={{
+                    fontSize: 11,
+                    fill: "hsl(var(--muted-foreground))",
+                    dx: lang === "ar" ? -25 : 0,
+                  }}
                 />
                 <Tooltip
                   cursor={{ fill: "hsl(var(--muted)/0.4)" }}
-                  contentStyle={{ borderRadius: "8px", border: "1px solid hsl(var(--border))", fontSize: "12px" }}
-                  formatter={(value: number) => [fmtNum(value, lang), t("prefDomainDashboard.affairesFeminines.section3.inscriptions", "Inscriptions")]}
+                  contentStyle={{
+                    borderRadius: "8px",
+                    border: "1px solid hsl(var(--border))",
+                    fontSize: "12px",
+                  }}
+                  formatter={(value: number) => [
+                    fmtNum(value, lang),
+                    t(
+                      "prefDomainDashboard.affairesFeminines.section3.inscriptions",
+                      "Inscriptions",
+                    ),
+                  ]}
                 />
                 <Bar dataKey="total" radius={[0, 4, 4, 0]} maxBarSize={40}>
                   {formationParSecteur.map((entry, idx) => (
@@ -142,7 +157,12 @@ export const PrefDomainDashboardSection3AffairesFeminines = ({
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
                 data={singleUrbainRural}
-                margin={{ top: 10, right: lang === "ar" ? 45 : 10, left: lang === "ar" ? 10 : 30, bottom: 20 }}
+                margin={{
+                  top: 10,
+                  right: lang === "ar" ? 45 : 10,
+                  left: lang === "ar" ? 10 : 30,
+                  bottom: 20,
+                }}
               >
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
                 <XAxis
@@ -162,12 +182,20 @@ export const PrefDomainDashboardSection3AffairesFeminines = ({
                   axisLine={{ stroke: "hsl(var(--muted-foreground))" }}
                   tickLine={{ stroke: "hsl(var(--muted-foreground))" }}
                   width={45}
-                  tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))", dx: lang === "ar" ? -18 : 0 }}
+                  tick={{
+                    fontSize: 11,
+                    fill: "hsl(var(--muted-foreground))",
+                    dx: lang === "ar" ? -18 : 0,
+                  }}
                   tickFormatter={(v: number) => fmtNum(v, lang)}
                 />
                 <Tooltip
                   cursor={{ fill: "hsl(var(--muted)/0.4)" }}
-                  contentStyle={{ borderRadius: "8px", border: "1px solid hsl(var(--border))", fontSize: "12px" }}
+                  contentStyle={{
+                    borderRadius: "8px",
+                    border: "1px solid hsl(var(--border))",
+                    fontSize: "12px",
+                  }}
                   formatter={(value: number, name) =>
                     `${fmtNum(value, lang)} (${t(
                       "prefDomainDashboard.affairesFeminines.section3.urbainRuralPct",
@@ -202,7 +230,10 @@ export const PrefDomainDashboardSection3AffairesFeminines = ({
 };
 
 // Calcule le pourcentage (urbain ou rural) sur la barre globale unique
-const urbanRuralPct = (name: string | number, data: AffairesFemininesUrbainRuralDatum[]): number => {
+const urbanRuralPct = (
+  name: string | number,
+  data: AffairesFemininesUrbainRuralDatum[],
+): number => {
   const row = data[0];
   if (!row || row.total === 0) return 0;
   if (name === "urbain") return (row.urbain / row.total) * 100;

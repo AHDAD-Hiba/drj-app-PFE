@@ -1,5 +1,5 @@
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 export interface TypePartenaire {
   id: string;
@@ -8,13 +8,18 @@ export interface TypePartenaire {
 }
 
 export function useTypesPartenaires() {
-  const { data: items = [], isLoading, error, refetch } = useQuery({
-    queryKey: ['ref_types_partenaires'],
+  const {
+    data: items = [],
+    isLoading,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: ["ref_types_partenaires"],
     queryFn: async () => {
       const { data, error: err } = await supabase
-        .from('types_partenaires')
-        .select('id, nom, nom_ar')
-        .order('nom', { ascending: true });
+        .from("types_partenaires")
+        .select("id, nom, nom_ar")
+        .order("nom", { ascending: true });
 
       if (err) throw err;
       return (data as TypePartenaire[]) || [];

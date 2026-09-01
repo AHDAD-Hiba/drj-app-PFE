@@ -1,4 +1,4 @@
-import { useEntityEntries, BaseEntry } from '../common/useEntityEntries';
+import { useEntityEntries, BaseEntry } from "../common/useEntityEntries";
 
 export interface AfInscriptionOfpptEntry extends BaseEntry {
   etablissement_id: string;
@@ -24,10 +24,10 @@ const buildPayload = (entry: AfInscriptionOfpptEntry, rId: string) => ({
 const mapRowToEntry = (row: any, local_id: string): AfInscriptionOfpptEntry => ({
   local_id,
   id: row.id,
-  etablissement_id: row.etablissement_id ?? '',
-  secteur_id: row.secteur_id ?? '',
-  filiere_id: row.filiere_id ?? '',
-  niveau_formation: row.niveau_formation ?? '',
+  etablissement_id: row.etablissement_id ?? "",
+  secteur_id: row.secteur_id ?? "",
+  filiere_id: row.filiere_id ?? "",
+  niveau_formation: row.niveau_formation ?? "",
   inscrites_annee_1: row.inscrites_annee_1 ?? 0,
   inscrites_annee_2: row.inscrites_annee_2 ?? 0,
 });
@@ -35,8 +35,8 @@ const mapRowToEntry = (row: any, local_id: string): AfInscriptionOfpptEntry => (
 export function useAfInscriptionsOfppt(rapportId: string | null, options?: { enabled?: boolean }) {
   return useEntityEntries<AfInscriptionOfpptEntry>({
     rapportId,
-    tableName: 'af_inscriptions_ofppt',
-    buildPayload,  // On passe juste la référence
+    tableName: "af_inscriptions_ofppt",
+    buildPayload, // On passe juste la référence
     mapRowToEntry, // On passe juste la référence
     enabled: options?.enabled ?? true,
   });

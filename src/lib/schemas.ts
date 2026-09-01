@@ -1,27 +1,75 @@
-import * as z from 'zod';
+import * as z from "zod";
 
 // Schema for 'activites' table - specifically for 'permanente' type
 export const permanentActivitySchema = z.object({
-  nombre_associations: z.number().int().min(0, { message: "Must be a non-negative number." }).default(0),
-  nombre_conventions: z.number().int().min(0, { message: "Must be a non-negative number." }).default(0),
+  nombre_associations: z
+    .number()
+    .int()
+    .min(0, { message: "Must be a non-negative number." })
+    .default(0),
+  nombre_conventions: z
+    .number()
+    .int()
+    .min(0, { message: "Must be a non-negative number." })
+    .default(0),
   nombre_clubs: z.number().int().min(0, { message: "Must be a non-negative number." }).default(0),
-  activites_educatives: z.number().int().min(0, { message: "Must be a non-negative number." }).default(0),
-  activites_culturelles: z.number().int().min(0, { message: "Must be a non-negative number." }).default(0),
-  activites_sportives: z.number().int().min(0, { message: "Must be a non-negative number." }).default(0),
-  renforcement_capacites: z.number().int().min(0, { message: "Must be a non-negative number." }).default(0),
+  activites_educatives: z
+    .number()
+    .int()
+    .min(0, { message: "Must be a non-negative number." })
+    .default(0),
+  activites_culturelles: z
+    .number()
+    .int()
+    .min(0, { message: "Must be a non-negative number." })
+    .default(0),
+  activites_sportives: z
+    .number()
+    .int()
+    .min(0, { message: "Must be a non-negative number." })
+    .default(0),
+  renforcement_capacites: z
+    .number()
+    .int()
+    .min(0, { message: "Must be a non-negative number." })
+    .default(0),
 });
 
 export type PermanentActivityFormValues = z.infer<typeof permanentActivitySchema>;
 
 // Schema for 'activites' table - specifically for 'rayonnante' type
 export const rayonanteActivitySchema = z.object({
-  nombre_associations: z.number().int().min(0, { message: "Must be a non-negative number." }).default(0),
-  nombre_conventions: z.number().int().min(0, { message: "Must be a non-negative number." }).default(0),
+  nombre_associations: z
+    .number()
+    .int()
+    .min(0, { message: "Must be a non-negative number." })
+    .default(0),
+  nombre_conventions: z
+    .number()
+    .int()
+    .min(0, { message: "Must be a non-negative number." })
+    .default(0),
   nombre_clubs: z.number().int().min(0, { message: "Must be a non-negative number." }).default(0),
-  activites_educatives: z.number().int().min(0, { message: "Must be a non-negative number." }).default(0),
-  activites_culturelles: z.number().int().min(0, { message: "Must be a non-negative number." }).default(0),
-  activites_sportives: z.number().int().min(0, { message: "Must be a non-negative number." }).default(0),
-  renforcement_capacites: z.number().int().min(0, { message: "Must be a non-negative number." }).default(0),
+  activites_educatives: z
+    .number()
+    .int()
+    .min(0, { message: "Must be a non-negative number." })
+    .default(0),
+  activites_culturelles: z
+    .number()
+    .int()
+    .min(0, { message: "Must be a non-negative number." })
+    .default(0),
+  activites_sportives: z
+    .number()
+    .int()
+    .min(0, { message: "Must be a non-negative number." })
+    .default(0),
+  renforcement_capacites: z
+    .number()
+    .int()
+    .min(0, { message: "Must be a non-negative number." })
+    .default(0),
 });
 
 export type RayonanteActivityFormValues = z.infer<typeof rayonanteActivitySchema>;
@@ -40,7 +88,7 @@ export const suiviProjetSchema = z.object({
   id: z.string().optional(), // ID is optional for new entries
   etablissement_id: z.string(), // Foreign key to etablissements
   rapport_id: z.string(), // Foreign key to rapports
-  statut: z.enum(['nouvel', 'en_cours'], { message: "Statut du projet est requis." }), // Matches statut_projet_enum
+  statut: z.enum(["nouvel", "en_cours"], { message: "Statut du projet est requis." }), // Matches statut_projet_enum
 });
 
 export type SuiviProjetFormValues = z.infer<typeof suiviProjetSchema>;
@@ -187,8 +235,10 @@ export const mouvementAssociationSchema = z.object({
   id: z.string().optional(),
   rapport_id: z.string(),
   nom_association: z.string().min(1, { message: "Nom de l'association est requis." }),
-  type_mouvement: z.enum(['entrante', 'sortante'], { message: "Type de mouvement est requis." }),
-  date_mouvement: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, { message: "Date doit être au format YYYY-MM-DD." }), // Assuming date string format
+  type_mouvement: z.enum(["entrante", "sortante"], { message: "Type de mouvement est requis." }),
+  date_mouvement: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, { message: "Date doit être au format YYYY-MM-DD." }), // Assuming date string format
 });
 export type MouvementAssociationFormValues = z.infer<typeof mouvementAssociationSchema>;
 
@@ -218,6 +268,6 @@ export const suiviRemplissageSchema = z.object({
   rapport_id: z.string(),
   direction_id: z.string(),
   domaine_id: z.string(),
-  statut: z.enum(['NON_COMMENCE', 'EN_COURS', 'TERMINE']),
+  statut: z.enum(["NON_COMMENCE", "EN_COURS", "TERMINE"]),
 });
 export type SuiviRemplissageFormValues = z.infer<typeof suiviRemplissageSchema>;

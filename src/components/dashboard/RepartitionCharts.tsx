@@ -62,7 +62,12 @@ export const RepartitionCharts = ({
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
             data={data}
-            margin={{ top: 10, right: lang === "ar" ? 45 : 10, left: lang === "ar" ? 10 : 30, bottom: 20 }}
+            margin={{
+              top: 10,
+              right: lang === "ar" ? 45 : 10,
+              left: lang === "ar" ? 10 : 30,
+              bottom: 20,
+            }}
           >
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
             <XAxis
@@ -73,7 +78,12 @@ export const RepartitionCharts = ({
               dy={10}
               interval={0}
               height={36}
-              tickFormatter={(value) => t(`prefDomainDashboard.programs.${String(value).toLowerCase()}`, String(value)) as string}
+              tickFormatter={(value) =>
+                t(
+                  `prefDomainDashboard.programs.${String(value).toLowerCase()}`,
+                  String(value),
+                ) as string
+              }
             />
             <YAxis
               orientation="left"
@@ -97,20 +107,55 @@ export const RepartitionCharts = ({
               }}
               formatter={config.tooltipFormatter}
             />
-            {config.legend ? <Legend wrapperStyle={{ fontSize: "11px", paddingTop: "10px" }} iconType="circle" /> : null}
+            {config.legend ? (
+              <Legend wrapperStyle={{ fontSize: "11px", paddingTop: "10px" }} iconType="circle" />
+            ) : null}
             {chartType === "volume" ? (
-              <Bar dataKey="total" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} maxBarSize={50} />
+              <Bar
+                dataKey="total"
+                fill="hsl(var(--primary))"
+                radius={[4, 4, 0, 0]}
+                maxBarSize={50}
+              />
             ) : null}
             {chartType === "mixity" ? (
               <>
-                <Bar dataKey="hommesPct" name={t("prefDomainDashboard.charts.men", "Hommes")} stackId="a" fill="#3b82f6" radius={[0, 0, 4, 4]} maxBarSize={50} />
-                <Bar dataKey="femmesPct" name={t("prefDomainDashboard.charts.women", "Femmes")} stackId="a" fill="#ec4899" radius={[4, 4, 0, 0]} maxBarSize={50} />
+                <Bar
+                  dataKey="hommesPct"
+                  name={t("prefDomainDashboard.charts.men", "Hommes")}
+                  stackId="a"
+                  fill="#3b82f6"
+                  radius={[0, 0, 4, 4]}
+                  maxBarSize={50}
+                />
+                <Bar
+                  dataKey="femmesPct"
+                  name={t("prefDomainDashboard.charts.women", "Femmes")}
+                  stackId="a"
+                  fill="#ec4899"
+                  radius={[4, 4, 0, 0]}
+                  maxBarSize={50}
+                />
               </>
             ) : null}
             {chartType === "coverage" ? (
               <>
-                <Bar dataKey="urbainPct" name={t("prefDomainDashboard.charts.urban", "Urbain")} stackId="a" fill="#f59e0b" radius={[0, 0, 4, 4]} maxBarSize={50} />
-                <Bar dataKey="ruralPct" name={t("prefDomainDashboard.charts.rural", "Rural")} stackId="a" fill="#10b981" radius={[4, 4, 0, 0]} maxBarSize={50} />
+                <Bar
+                  dataKey="urbainPct"
+                  name={t("prefDomainDashboard.charts.urban", "Urbain")}
+                  stackId="a"
+                  fill="#f59e0b"
+                  radius={[0, 0, 4, 4]}
+                  maxBarSize={50}
+                />
+                <Bar
+                  dataKey="ruralPct"
+                  name={t("prefDomainDashboard.charts.rural", "Rural")}
+                  stackId="a"
+                  fill="#10b981"
+                  radius={[4, 4, 0, 0]}
+                  maxBarSize={50}
+                />
               </>
             ) : null}
           </BarChart>

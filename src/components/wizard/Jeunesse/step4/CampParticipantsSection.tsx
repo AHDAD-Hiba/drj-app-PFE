@@ -1,16 +1,20 @@
-import { useTranslation } from 'react-i18next';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
+import { useTranslation } from "react-i18next";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from '@/components/ui/select';
-import { Plus, Trash2, AlertTriangle } from 'lucide-react';
-import { NumericField } from '@/components/form/NumericField';
-import { useProgrammesCamping } from '@/hooks/Jeunesse/useProgrammesCamping';
-import { useNiveauxFormation } from '@/hooks/Jeunesse/useNiveauxFormation';
-import type { CampEntry } from '@/hooks/Jeunesse/useCampingEntries';
-import { SafeInput } from '@/components/form/SafeInput';
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Plus, Trash2, AlertTriangle } from "lucide-react";
+import { NumericField } from "@/components/form/NumericField";
+import { useProgrammesCamping } from "@/hooks/Jeunesse/useProgrammesCamping";
+import { useNiveauxFormation } from "@/hooks/Jeunesse/useNiveauxFormation";
+import type { CampEntry } from "@/hooks/Jeunesse/useCampingEntries";
+import { SafeInput } from "@/components/form/SafeInput";
 
 interface CampParticipantsSectionProps {
   camps: CampEntry[];
@@ -30,60 +34,56 @@ export const CampParticipantsSection = ({
   disabled,
 }: CampParticipantsSectionProps) => {
   const { i18n } = useTranslation();
-  const isAr = i18n.language === 'ar';
+  const isAr = i18n.language === "ar";
   const { items: programmes } = useProgrammesCamping();
   const { items: niveauxFormation } = useNiveauxFormation();
-  const autreProgrammeId =
-    programmes.find(
-      p =>
-        p.nom?.toLowerCase() === 'autre' ||
-        p.nom_ar === 'أخرى'
-    )?.id;
+  const autreProgrammeId = programmes.find(
+    (p) => p.nom?.toLowerCase() === "autre" || p.nom_ar === "أخرى",
+  )?.id;
 
-  const autreNiveauId =
-  niveauxFormation.find(
-    n =>
-      n.nom?.toLowerCase() === 'autre' ||
-      n.nom_ar === 'أخرى'
+  const autreNiveauId = niveauxFormation.find(
+    (n) => n.nom?.toLowerCase() === "autre" || n.nom_ar === "أخرى",
   )?.id;
 
   return (
     <Card className="p-5 sm:p-6 space-y-4 bg-background">
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div>
-          <h3 className="text-base font-semibold">
-            {isAr ? 'قائمة المخيمات' : 'Liste des camps'}
-          </h3>
+          <h3 className="text-base font-semibold">{isAr ? "قائمة المخيمات" : "Liste des camps"}</h3>
           <p className="text-xs text-muted-foreground">
-            {isAr ? 'أضف كل مخيّم على حدة مع تفاصيل المشاركين والتأطير' : 'Ajoutez chaque camp avec les détails des participants et de l\'encadrement'}
+            {isAr
+              ? "أضف كل مخيّم على حدة مع تفاصيل المشاركين والتأطير"
+              : "Ajoutez chaque camp avec les détails des participants et de l'encadrement"}
           </p>
         </div>
         <Button
           type="button"
           size="sm"
-          onClick={() => void onAddCamp({
-            local_id: crypto.randomUUID(),
-            programme_id: '',
-            autre_programme: '',
-            girls: 0,
-            boys: 0,
-            rural: 0,
-            urban: 0,
-            immigrant_children: 0,
-            special_needs: 0,
-            encadrements: [],
-          })}
+          onClick={() =>
+            void onAddCamp({
+              local_id: crypto.randomUUID(),
+              programme_id: "",
+              autre_programme: "",
+              girls: 0,
+              boys: 0,
+              rural: 0,
+              urban: 0,
+              immigrant_children: 0,
+              special_needs: 0,
+              encadrements: [],
+            })
+          }
           disabled={disabled}
           className="gap-1.5"
         >
           <Plus className="h-4 w-4" />
-          {isAr ? 'إضافة مخيّم' : 'Ajouter un camp'}
+          {isAr ? "إضافة مخيّم" : "Ajouter un camp"}
         </Button>
       </div>
 
       {camps.length === 0 ? (
         <div className="text-center py-4 text-xs text-muted-foreground border-2 border-dashed border-border rounded-lg">
-          {isAr ? 'لا توجد مخيمات' : 'Aucun camp enregistré'}
+          {isAr ? "لا توجد مخيمات" : "Aucun camp enregistré"}
         </div>
       ) : (
         <div className="space-y-3 pt-2">
@@ -98,36 +98,27 @@ export const CampParticipantsSection = ({
                 className="border border-border rounded-lg p-4 bg-muted/20 space-y-3"
               >
                 <div className="flex items-center justify-between gap-2 flex-wrap">
-                  <span className="text-xs font-semibold text-muted-foreground">
-                    #{idx + 1}
-                  </span>
+                  <span className="text-xs font-semibold text-muted-foreground">#{idx + 1}</span>
                   <div className="space-y-1.5 w-full order-2">
-                    <Label className="text-xs">
-                      {isAr ? 'نوع المخيم' : 'Type de camp'}
-                    </Label>
+                    <Label className="text-xs">{isAr ? "نوع المخيم" : "Type de camp"}</Label>
                     <Select
-                      value={c.programme_id || 'none'}
+                      value={c.programme_id || "none"}
                       onValueChange={(v) =>
                         onUpdateCamp(c.local_id, {
-                          programme_id: v === 'none' ? '' : v,
-                          autre_programme: v === autreProgrammeId ? c.autre_programme : '',
+                          programme_id: v === "none" ? "" : v,
+                          autre_programme: v === autreProgrammeId ? c.autre_programme : "",
                         })
                       }
                       disabled={disabled}
                     >
-                    
                       <SelectTrigger className="h-9">
                         <SelectValue
-                          placeholder={
-                            isAr
-                              ? 'اختر نوع المخيم'
-                              : 'Choisir le type de camp'
-                          }
+                          placeholder={isAr ? "اختر نوع المخيم" : "Choisir le type de camp"}
                         />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="none">
-                          {isAr ? 'اختر نوع المخيم' : 'Choisir le type de camp'}
+                          {isAr ? "اختر نوع المخيم" : "Choisir le type de camp"}
                         </SelectItem>
                         {programmes.map((p) => (
                           <SelectItem key={p.id} value={p.id}>
@@ -139,18 +130,18 @@ export const CampParticipantsSection = ({
                     {c.programme_id === autreProgrammeId && (
                       <div className="space-y-1.5 mt-3">
                         <Label className="text-xs">
-                          {isAr ? 'تحديد نوع المخيم' : 'Préciser le type'}
+                          {isAr ? "تحديد نوع المخيم" : "Préciser le type"}
                         </Label>
 
                         <SafeInput
-                          value={c.autre_programme ?? ''}
+                          value={c.autre_programme ?? ""}
                           onValueChange={(val) =>
                             onUpdateCamp(c.local_id, {
                               autre_programme: val,
                             })
                           }
                           disabled={disabled}
-                          placeholder={isAr ? 'أدخل نوع المخيم...' : 'Précisez le type de camp...'}
+                          placeholder={isAr ? "أدخل نوع المخيم..." : "Précisez le type de camp..."}
                         />
                       </div>
                     )}
@@ -170,27 +161,23 @@ export const CampParticipantsSection = ({
                 {/* Participants Section */}
                 <div className="space-y-3 pt-4 border-t">
                   <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    {isAr ? 'المشاركون' : 'Participants'}
+                    {isAr ? "المشاركون" : "Participants"}
                   </h4>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                     <NumericField
-                      label={isAr ? 'فتيات' : 'Filles'}
+                      label={isAr ? "فتيات" : "Filles"}
                       value={Number(c.girls) || 0}
-                      onChange={(v) =>
-                        onUpdateCamp(c.local_id, { girls: v })
-                      }
+                      onChange={(v) => onUpdateCamp(c.local_id, { girls: v })}
                       disabled={disabled}
                     />
                     <NumericField
-                      label={isAr ? 'فتيان' : 'Garçons'}
+                      label={isAr ? "فتيان" : "Garçons"}
                       value={Number(c.boys) || 0}
-                      onChange={(v) =>
-                        onUpdateCamp(c.local_id, { boys: v })
-                      }
+                      onChange={(v) => onUpdateCamp(c.local_id, { boys: v })}
                       disabled={disabled}
                     />
                     <NumericField
-                      label={isAr ? 'المجموع' : 'Total'}
+                      label={isAr ? "المجموع" : "Total"}
                       value={total}
                       computed
                       disabled={disabled}
@@ -199,35 +186,27 @@ export const CampParticipantsSection = ({
                     <div className="col-span-1 hidden sm:block"></div>
 
                     <NumericField
-                      label={isAr ? 'حضري' : 'Urbain'}
+                      label={isAr ? "حضري" : "Urbain"}
                       value={Number(c.urban) || 0}
-                      onChange={(v) =>
-                        onUpdateCamp(c.local_id, { urban: v })
-                      }
+                      onChange={(v) => onUpdateCamp(c.local_id, { urban: v })}
                       disabled={disabled}
                     />
                     <NumericField
-                      label={isAr ? 'قروي' : 'Rural'}
+                      label={isAr ? "قروي" : "Rural"}
                       value={Number(c.rural) || 0}
-                      onChange={(v) =>
-                        onUpdateCamp(c.local_id, { rural: v })
-                      }
+                      onChange={(v) => onUpdateCamp(c.local_id, { rural: v })}
                       disabled={disabled}
                     />
                     <NumericField
-                      label={isAr ? 'أبناء المهاجرين' : "Enfants d'immigrés"}
+                      label={isAr ? "أبناء المهاجرين" : "Enfants d'immigrés"}
                       value={Number(c.immigrant_children) || 0}
-                      onChange={(v) =>
-                        onUpdateCamp(c.local_id, { immigrant_children: v })
-                      }
+                      onChange={(v) => onUpdateCamp(c.local_id, { immigrant_children: v })}
                       disabled={disabled}
                     />
                     <NumericField
-                      label={isAr ? 'احتياجات خاصة' : 'Besoins spécifiques'}
+                      label={isAr ? "احتياجات خاصة" : "Besoins spécifiques"}
                       value={Number(c.special_needs) || 0}
-                      onChange={(v) =>
-                        onUpdateCamp(c.local_id, { special_needs: v })
-                      }
+                      onChange={(v) => onUpdateCamp(c.local_id, { special_needs: v })}
                       disabled={disabled}
                     />
                   </div>
@@ -237,74 +216,72 @@ export const CampParticipantsSection = ({
                       <AlertTriangle className="h-4 w-4" />
                       <span>
                         {isAr
-                          ? 'تنبيه: يجب أن يكون مجموع (حضري + قروي) مساوياً للمجموع العام (فتيات + فتيان).'
-                          : 'Attention : Le total (Urbain + Rural) doit être égal au total général (Filles + Garçons).'}
+                          ? "تنبيه: يجب أن يكون مجموع (حضري + قروي) مساوياً للمجموع العام (فتيات + فتيان)."
+                          : "Attention : Le total (Urbain + Rural) doit être égal au total général (Filles + Garçons)."}
                       </span>
                     </div>
                   )}
                 </div>
-                  {/* Encadrement Section */}
-                  <div className="space-y-3 pt-4 border-t">
-                    <div className="flex items-center justify-between">
-                      <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                        {isAr ? 'التأطير' : 'Encadrement'}
-                      </h4>
+                {/* Encadrement Section */}
+                <div className="space-y-3 pt-4 border-t">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      {isAr ? "التأطير" : "Encadrement"}
+                    </h4>
 
-                      <Button
-                        type="button"
-                        size="sm"
-                        disabled={disabled}
-                        className="gap-1.5"
-                        onClick={() =>
-                          onUpdateCamp(c.local_id, {
-                            encadrements: [
-                              ...(c.encadrements || []),
-                              {
-                                local_id: crypto.randomUUID(),
-                                niveau_formation_id: '',
-                                autre_niveau_formation: '',
-                                nombre_femmes: 0,
-                                nombre_hommes: 0,
-                              },
-                            ],
-                          })
-                        }
-                      >
-                        <Plus className="h-4 w-4" />
-                        {isAr ? 'إضافة' : 'Ajouter'}
-                      </Button>
-                    </div>
+                    <Button
+                      type="button"
+                      size="sm"
+                      disabled={disabled}
+                      className="gap-1.5"
+                      onClick={() =>
+                        onUpdateCamp(c.local_id, {
+                          encadrements: [
+                            ...(c.encadrements || []),
+                            {
+                              local_id: crypto.randomUUID(),
+                              niveau_formation_id: "",
+                              autre_niveau_formation: "",
+                              nombre_femmes: 0,
+                              nombre_hommes: 0,
+                            },
+                          ],
+                        })
+                      }
+                    >
+                      <Plus className="h-4 w-4" />
+                      {isAr ? "إضافة" : "Ajouter"}
+                    </Button>
+                  </div>
 
-                    {(c.encadrements || []).map((enc, encIdx) => (
-                      <div
-                        key={enc.local_id}
-                        className="border border-border rounded-lg p-4 bg-background/50 space-y-3"
-                      >
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="text-xs font-semibold text-muted-foreground">
-                            #{encIdx + 1}
-                          </span>
+                  {(c.encadrements || []).map((enc, encIdx) => (
+                    <div
+                      key={enc.local_id}
+                      className="border border-border rounded-lg p-4 bg-background/50 space-y-3"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-xs font-semibold text-muted-foreground">
+                          #{encIdx + 1}
+                        </span>
 
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-                            disabled={disabled}
-                            onClick={() => void onRemoveEncadrement(c.local_id, enc.local_id)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                          disabled={disabled}
+                          onClick={() => void onRemoveEncadrement(c.local_id, enc.local_id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         <div className="space-y-1.5">
-                          <Label className="text-xs">
-                            {isAr ? 'مستوى التكوين' : 'Niveau'}
-                          </Label>
+                          <Label className="text-xs">{isAr ? "مستوى التكوين" : "Niveau"}</Label>
 
                           <Select
-                            value={enc.niveau_formation_id || 'none'}
+                            value={enc.niveau_formation_id || "none"}
                             disabled={disabled}
                             onValueChange={(v) => {
                               onUpdateCamp(c.local_id, {
@@ -312,33 +289,22 @@ export const CampParticipantsSection = ({
                                   e.local_id === enc.local_id
                                     ? {
                                         ...e,
-                                        niveau_formation_id:
-                                          v === 'none' ? '' : v,
-                                         autre_niveau_formation:
-                                          v === autreNiveauId
-                                            ? e.autre_niveau_formation
-                                            : '',
+                                        niveau_formation_id: v === "none" ? "" : v,
+                                        autre_niveau_formation:
+                                          v === autreNiveauId ? e.autre_niveau_formation : "",
                                       }
-                                    : e
+                                    : e,
                                 ),
                               });
                             }}
                           >
                             <SelectTrigger className="h-9">
-                              <SelectValue
-                                placeholder={
-                                  isAr
-                                    ? 'اختر المستوى'
-                                    : 'Choisir niveau'
-                                }
-                              />
+                              <SelectValue placeholder={isAr ? "اختر المستوى" : "Choisir niveau"} />
                             </SelectTrigger>
 
                             <SelectContent>
                               <SelectItem value="none">
-                                {isAr
-                                  ? 'اختر المستوى'
-                                  : 'Choisir niveau'}
+                                {isAr ? "اختر المستوى" : "Choisir niveau"}
                               </SelectItem>
 
                               {niveauxFormation.map((n) => (
@@ -348,17 +314,15 @@ export const CampParticipantsSection = ({
                               ))}
                             </SelectContent>
                           </Select>
-                          
+
                           {enc.niveau_formation_id === autreNiveauId && (
                             <div className="space-y-1.5 mt-3">
                               <Label className="text-xs">
-                                {isAr
-                                  ? 'تحديد مستوى التكوين'
-                                  : 'Préciser le niveau'}
+                                {isAr ? "تحديد مستوى التكوين" : "Préciser le niveau"}
                               </Label>
 
                               <SafeInput
-                                value={enc.autre_niveau_formation ?? ''}
+                                value={enc.autre_niveau_formation ?? ""}
                                 onValueChange={(val) =>
                                   onUpdateCamp(c.local_id, {
                                     encadrements: c.encadrements.map((x) =>
@@ -367,26 +331,26 @@ export const CampParticipantsSection = ({
                                             ...x,
                                             autre_niveau_formation: val,
                                           }
-                                        : x
+                                        : x,
                                     ),
                                   })
                                 }
                                 disabled={disabled}
-                                placeholder={isAr ? 'أدخل مستوى التكوين...' : 'Précisez le niveau...'}
+                                placeholder={
+                                  isAr ? "أدخل مستوى التكوين..." : "Précisez le niveau..."
+                                }
                               />
                             </div>
                           )}
                         </div>
 
                         <NumericField
-                          label={isAr ? 'مؤطرات' : 'Monitrices'}
+                          label={isAr ? "مؤطرات" : "Monitrices"}
                           value={enc.nombre_femmes}
                           onChange={(v) =>
                             onUpdateCamp(c.local_id, {
                               encadrements: c.encadrements.map((e) =>
-                                e.local_id === enc.local_id
-                                  ? { ...e, nombre_femmes: v }
-                                  : e
+                                e.local_id === enc.local_id ? { ...e, nombre_femmes: v } : e,
                               ),
                             })
                           }
@@ -394,24 +358,21 @@ export const CampParticipantsSection = ({
                         />
 
                         <NumericField
-                          label={isAr ? 'مؤطرون' : 'Moniteurs'}
+                          label={isAr ? "مؤطرون" : "Moniteurs"}
                           value={enc.nombre_hommes}
                           onChange={(v) =>
                             onUpdateCamp(c.local_id, {
                               encadrements: c.encadrements.map((e) =>
-                                e.local_id === enc.local_id
-                                  ? { ...e, nombre_hommes: v }
-                                  : e
+                                e.local_id === enc.local_id ? { ...e, nombre_hommes: v } : e,
                               ),
                             })
                           }
                           disabled={disabled}
                         />
-                        </div>
                       </div>
-                    ))}
-                  </div>
-
+                    </div>
+                  ))}
+                </div>
               </div>
             );
           })}

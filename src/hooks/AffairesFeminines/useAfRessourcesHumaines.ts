@@ -1,4 +1,4 @@
-import { useEntityEntries, BaseEntry } from '../common/useEntityEntries';
+import { useEntityEntries, BaseEntry } from "../common/useEntityEntries";
 
 export interface AfRessourceHumaineEntry extends BaseEntry {
   etablissement_id: string;
@@ -23,22 +23,23 @@ const buildPayload = (entry: AfRessourceHumaineEntry, rId: string) => ({
 const mapRowToEntry = (row: any, local_id: string): AfRessourceHumaineEntry => ({
   local_id,
   id: row.id,
-  etablissement_id: row.etablissement_id ?? '',
-  type_rh: row.type_rh ?? '',
-  profile: row.profile ?? '',
-  mission: row.mission ?? '',
+  etablissement_id: row.etablissement_id ?? "",
+  type_rh: row.type_rh ?? "",
+  profile: row.profile ?? "",
+  mission: row.mission ?? "",
   nombre: Number(row.nombre) ?? 0,
-  observations: row.observations ?? '',
+  observations: row.observations ?? "",
 });
 
 export function useAfRessourcesHumaines(rapportId: string | null, options?: { enabled?: boolean }) {
   return useEntityEntries<AfRessourceHumaineEntry>({
     rapportId,
-    tableName: 'af_ressources_humaines',
+    tableName: "af_ressources_humaines",
     buildPayload,
     mapRowToEntry,
     enabled: options?.enabled ?? true,
     // 🛡️ Valide si un profil, un établissement ou un type RH est renseigné
-    validateBeforeSave: (entry) => Boolean(entry.etablissement_id || entry.profile?.trim() || entry.type_rh),
+    validateBeforeSave: (entry) =>
+      Boolean(entry.etablissement_id || entry.profile?.trim() || entry.type_rh),
   });
 }

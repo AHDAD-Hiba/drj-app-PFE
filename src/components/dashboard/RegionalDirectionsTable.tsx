@@ -94,8 +94,16 @@ export function RegionalDirectionsTable({
                   <ArrowUpDown className="h-3 w-3 text-muted-foreground/50 transition-colors group-hover:text-primary" />
                 </div>
               </TableHead>
-              {metricPrimaryLabel && <TableHead className="text-center text-[11px] font-bold uppercase tracking-wider text-muted-foreground">{metricPrimaryLabel}</TableHead>}
-              {metricSecondaryLabel && <TableHead className="text-center text-[11px] font-bold uppercase tracking-wider text-muted-foreground">{metricSecondaryLabel}</TableHead>}
+              {metricPrimaryLabel && (
+                <TableHead className="text-center text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                  {metricPrimaryLabel}
+                </TableHead>
+              )}
+              {metricSecondaryLabel && (
+                <TableHead className="text-center text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                  {metricSecondaryLabel}
+                </TableHead>
+              )}
               <TableHead className="text-end text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
                 {statusLabel}
               </TableHead>
@@ -108,7 +116,8 @@ export function RegionalDirectionsTable({
 
               let statusConfig = {
                 label: statusLabels.NON_COMMENCE,
-                badgeClass: "bg-destructive/10 ring-1 ring-destructive/20 text-destructive border-0",
+                badgeClass:
+                  "bg-destructive/10 ring-1 ring-destructive/20 text-destructive border-0",
                 Icon: AlertCircle,
               };
 
@@ -154,19 +163,45 @@ export function RegionalDirectionsTable({
                   </TableCell>
 
                   <TableCell className="text-center">
-                    <span className="text-[15px] font-extrabold tabular-nums text-foreground" dir="ltr">
+                    <span
+                      className="text-[15px] font-extrabold tabular-nums text-foreground"
+                      dir="ltr"
+                    >
                       {row.score.toFixed(2)}%
                     </span>
                   </TableCell>
 
-                  {metricPrimaryLabel && <TableCell className="text-center"><span className="text-[15px] font-extrabold tabular-nums text-foreground" dir="ltr">{formatPrimaryMetric(row.metric_primary ?? 0)}</span></TableCell>}
-                  {metricSecondaryLabel && <TableCell className="text-center"><span className="text-[15px] font-extrabold tabular-nums text-foreground" dir="ltr">{formatSecondaryMetric(row.metric_secondary ?? 0)}</span></TableCell>}
+                  {metricPrimaryLabel && (
+                    <TableCell className="text-center">
+                      <span
+                        className="text-[15px] font-extrabold tabular-nums text-foreground"
+                        dir="ltr"
+                      >
+                        {formatPrimaryMetric(row.metric_primary ?? 0)}
+                      </span>
+                    </TableCell>
+                  )}
+                  {metricSecondaryLabel && (
+                    <TableCell className="text-center">
+                      <span
+                        className="text-[15px] font-extrabold tabular-nums text-foreground"
+                        dir="ltr"
+                      >
+                        {formatSecondaryMetric(row.metric_secondary ?? 0)}
+                      </span>
+                    </TableCell>
+                  )}
 
                   <TableCell className="text-end">
                     <div className="flex justify-end">
-                      <Badge variant="outline" className={`gap-1.5 px-2.5 py-1 shadow-none ${statusConfig.badgeClass}`}>
+                      <Badge
+                        variant="outline"
+                        className={`gap-1.5 px-2.5 py-1 shadow-none ${statusConfig.badgeClass}`}
+                      >
                         <statusConfig.Icon className="h-3.5 w-3.5" />
-                        <span className="text-xs font-semibold tracking-wide">{statusConfig.label}</span>
+                        <span className="text-xs font-semibold tracking-wide">
+                          {statusConfig.label}
+                        </span>
                       </Badge>
                     </div>
                   </TableCell>

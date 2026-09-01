@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import type { Database } from '@/integrations/supabase/types';
+import { useCallback, useEffect, useRef, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
 
 export interface FestivalEntry {
   local_id: string;
@@ -14,10 +14,10 @@ export interface FestivalEntry {
   hommes: number;
 }
 
-type FestivalEntryDraft = Omit<FestivalEntry, 'local_id'> & { local_id?: string };
+type FestivalEntryDraft = Omit<FestivalEntry, "local_id"> & { local_id?: string };
 
-type DbFestivalRow = Database['public']['Tables']['festivals']['Row'];
-type DbStatRow = Database['public']['Tables']['statistiques_festivals']['Row'];
+type DbFestivalRow = Database["public"]["Tables"]["festivals"]["Row"];
+type DbStatRow = Database["public"]["Tables"]["statistiques_festivals"]["Row"];
 
 type InternalFestivalEntry = FestivalEntry & { statistiques_id?: string };
 
@@ -32,7 +32,7 @@ const toFestivalEntry = (
 ): InternalFestivalEntry => ({
   local_id,
   id: festival.id,
-  name: festival.nom ?? '',
+  name: festival.nom ?? "",
   statistiques_id: stats?.id,
   participants_qualifies: stats?.nbr_participants_qualifies ?? 0,
   provinces_participantes: stats?.nbr_provinces_participantes ?? 0,
@@ -61,21 +61,25 @@ export function useFestivalEntries(rapportId: string | null, options?: { enabled
   const pendingSaveRef = useRef<Set<string>>(new Set());
 
   // Mise à jour synchrone de itemsRef
-  const updateItems = useCallback((newItemsOrUpdater: React.SetStateAction<InternalFestivalEntry[]>) => {
-    setItems((prev) => {
-      const next = typeof newItemsOrUpdater === 'function' ? newItemsOrUpdater(prev) : newItemsOrUpdater;
-      itemsRef.current = next;
-      return next;
-    });
-  }, []);
+  const updateItems = useCallback(
+    (newItemsOrUpdater: React.SetStateAction<InternalFestivalEntry[]>) => {
+      setItems((prev) => {
+        const next =
+          typeof newItemsOrUpdater === "function" ? newItemsOrUpdater(prev) : newItemsOrUpdater;
+        itemsRef.current = next;
+        return next;
+      });
+    },
+    [],
+  );
 
   const updateLocal = useCallback(
     (local_id: string, patch: Partial<FestivalEntry>) => {
       updateItems((prev) =>
-        prev.map((item) => (item.local_id === local_id ? { ...item, ...patch } : item))
+        prev.map((item) => (item.local_id === local_id ? { ...item, ...patch } : item)),
       );
     },
-    [updateItems]
+    [updateItems],
   );
 
   const saveEntry = useCallback(
@@ -94,7 +98,7 @@ export function useFestivalEntries(rapportId: string | null, options?: { enabled
       }
 
       const updatedEntry = existing;
-      const nomClean = updatedEntry.name?.trim() ?? '';
+      const nomClean = updatedEntry.name?.trim() ?? "";
 
       // 🛡️ NE PAS ENVOYER EN BDD SI LE NOM EST VIDE
       if (!nomClean) {
@@ -110,9 +114,9 @@ export function useFestivalEntries(rapportId: string | null, options?: { enabled
         };
 
         const { data: festivalData, error: festivalError } = await supabase
-          .from('festivals')
-          .upsert(festivalPayload as any, { onConflict: existing.id ? 'id' : 'rapport_id,nom' })
-          .select('id')
+          .from("festivals")
+          .upsert(festivalPayload as any, { onConflict: existing.id ? "id" : "rapport_id,nom" })
+          .select("id")
           .single();
 
         if (festivalError) throw festivalError;
@@ -129,9 +133,11 @@ export function useFestivalEntries(rapportId: string | null, options?: { enabled
         };
 
         const { data: statsData, error: statsError } = await supabase
-          .from('statistiques_festivals')
-          .upsert(statsFields as any, { onConflict: existing.statistiques_id ? 'id' : 'festival_id' })
-          .select('id')
+          .from("statistiques_festivals")
+          .upsert(statsFields as any, {
+            onConflict: existing.statistiques_id ? "id" : "festival_id",
+          })
+          .select("id")
           .single();
 
         if (statsError) throw statsError;
@@ -140,13 +146,13 @@ export function useFestivalEntries(rapportId: string | null, options?: { enabled
           prev.map((item) =>
             item.local_id === local_id
               ? { ...item, id: festivalData.id, statistiques_id: statsData.id }
-              : item
-          )
+              : item,
+          ),
         );
 
         return true;
       } catch (error) {
-        console.error('[useFestivalEntries] update error:', error);
+        console.error("[useFestivalEntries] update error:", error);
         return false;
       } finally {
         savingEntriesRef.current.delete(local_id);
@@ -158,7 +164,7 @@ export function useFestivalEntries(rapportId: string | null, options?: { enabled
         }
       }
     },
-    [rapportId, updateItems]
+    [rapportId, updateItems],
   );
 
   const reload = useCallback(async (): Promise<InternalFestivalEntry[]> => {
@@ -171,13 +177,13 @@ export function useFestivalEntries(rapportId: string | null, options?: { enabled
 
     try {
       const { data, error } = await supabase
-        .from('festivals')
-        .select('*, statistiques_festivals(*)')
-        .eq('rapport_id', rapportId)
-        .order('created_at', { ascending: true });
+        .from("festivals")
+        .select("*, statistiques_festivals(*)")
+        .eq("rapport_id", rapportId)
+        .order("created_at", { ascending: true });
 
       if (error) {
-        console.error('[useFestivalEntries] reload error:', error);
+        console.error("[useFestivalEntries] reload error:", error);
         return [];
       }
 
@@ -185,19 +191,21 @@ export function useFestivalEntries(rapportId: string | null, options?: { enabled
       const localIdById = new Map(
         itemsRef.current
           .filter((item): item is InternalFestivalEntry & { id: string } => Boolean(item.id))
-          .map((item) => [item.id as string, item.local_id] as const)
+          .map((item) => [item.id as string, item.local_id] as const),
       );
 
       const normalized = rows.map((row) =>
         toFestivalEntry(
           row,
           normalizeStats(row.statistiques_festivals),
-          localIdById.get(row.id) ?? crypto.randomUUID()
-        )
+          localIdById.get(row.id) ?? crypto.randomUUID(),
+        ),
       );
 
       updateItems((prev) => {
-        const normalizedByLocalId = new Map(normalized.map((item) => [item.local_id, item] as const));
+        const normalizedByLocalId = new Map(
+          normalized.map((item) => [item.local_id, item] as const),
+        );
         const merged = normalized.map((serverItem) => {
           const currentItem = prev.find((item) => item.local_id === serverItem.local_id);
           const hasPendingLocalChange =
@@ -207,12 +215,14 @@ export function useFestivalEntries(rapportId: string | null, options?: { enabled
 
           return currentItem && hasPendingLocalChange ? currentItem : serverItem;
         });
-        const unsavedLocalItems = prev.filter((item) => !item.id && !normalizedByLocalId.has(item.local_id));
+        const unsavedLocalItems = prev.filter(
+          (item) => !item.id && !normalizedByLocalId.has(item.local_id),
+        );
         return [...merged, ...unsavedLocalItems];
       });
       return normalized;
     } catch (e) {
-      console.error('[useFestivalEntries] unexpected reload error:', e);
+      console.error("[useFestivalEntries] unexpected reload error:", e);
       return [];
     } finally {
       setLoading(false);
@@ -221,20 +231,20 @@ export function useFestivalEntries(rapportId: string | null, options?: { enabled
 
   useEffect(() => {
     let cancelled = false;
-    
+
     // Si désactivé, vider les items et retourner
     if (!enabled) {
       updateItems([]);
       setLoading(false);
       return;
     }
-    
+
     if (!rapportId) {
       updateItems([]);
       setLoading(false);
       return;
     }
- 
+
     setLoading(true);
     (async () => {
       try {
@@ -243,10 +253,12 @@ export function useFestivalEntries(rapportId: string | null, options?: { enabled
         if (!cancelled) setLoading(false);
       }
     })();
- 
-    return () => { cancelled = true; };
-  }, [rapportId, reload, updateItems, enabled]); 
-  
+
+    return () => {
+      cancelled = true;
+    };
+  }, [rapportId, reload, updateItems, enabled]);
+
   const add = useCallback(
     async (entry: FestivalEntryDraft): Promise<boolean> => {
       if (!rapportId) return false;
@@ -255,7 +267,7 @@ export function useFestivalEntries(rapportId: string | null, options?: { enabled
       const optimisticItem: InternalFestivalEntry = {
         local_id,
         id: undefined,
-        name: entry.name ?? '',
+        name: entry.name ?? "",
         participants_qualifies: entry.participants_qualifies ?? 0,
         provinces_participantes: entry.provinces_participantes ?? 0,
         rural: entry.rural ?? 0,
@@ -267,7 +279,7 @@ export function useFestivalEntries(rapportId: string | null, options?: { enabled
       updateItems((prev) => [...prev, optimisticItem]);
       return true;
     },
-    [rapportId, updateItems]
+    [rapportId, updateItems],
   );
 
   const update = useCallback(
@@ -285,7 +297,7 @@ export function useFestivalEntries(rapportId: string | null, options?: { enabled
 
       return true;
     },
-    [updateLocal, saveEntry]
+    [updateLocal, saveEntry],
   );
 
   const remove = useCallback(
@@ -298,23 +310,17 @@ export function useFestivalEntries(rapportId: string | null, options?: { enabled
       if (!existing.id) return true;
 
       try {
-        await supabase
-          .from('statistiques_festivals')
-          .delete()
-          .eq('festival_id', existing.id);
+        await supabase.from("statistiques_festivals").delete().eq("festival_id", existing.id);
 
-        await supabase
-          .from('festivals')
-          .delete()
-          .eq('id', existing.id);
+        await supabase.from("festivals").delete().eq("id", existing.id);
 
         return true;
       } catch (error) {
-        console.error('[useFestivalEntries] remove error:', error);
+        console.error("[useFestivalEntries] remove error:", error);
         return false;
       }
     },
-    [updateItems]
+    [updateItems],
   );
 
   return {

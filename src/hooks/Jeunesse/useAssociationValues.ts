@@ -1,5 +1,5 @@
-import { useCallback } from 'react';
-import { useEntityEntries, BaseEntry } from '@/hooks/common/useEntityEntries';
+import { useCallback } from "react";
+import { useEntityEntries, BaseEntry } from "@/hooks/common/useEntityEntries";
 
 export interface AssociationValue extends BaseEntry {
   categorie_association_id: string;
@@ -19,13 +19,13 @@ const mapRowToEntry = (row: any, localId: string): AssociationValue => ({
   nombre_associations: Number(row.nombre_associations) || 0,
 });
 
-export function useAssociationValues(rapportId: string | null , options?: { enabled?: boolean }) {
+export function useAssociationValues(rapportId: string | null, options?: { enabled?: boolean }) {
   const entity = useEntityEntries<AssociationValue>({
     rapportId,
-    tableName: 'valeurs_associations',
+    tableName: "valeurs_associations",
     buildPayload,
     mapRowToEntry,
-    buildConflictTarget: () => 'rapport_id,categorie_association_id',
+    buildConflictTarget: () => "rapport_id,categorie_association_id",
     validateBeforeSave: (entry) =>
       Boolean(entry.categorie_association_id) && Number(entry.nombre_associations) > 0,
     enabled: options?.enabled ?? true,
@@ -35,9 +35,7 @@ export function useAssociationValues(rapportId: string | null , options?: { enab
     async (categorieId: string, count: number) => {
       const safeCount = Math.max(0, Number(count) || 0);
 
-      const existing = entity.items.find(
-        (item) => item.categorie_association_id === categorieId
-      );
+      const existing = entity.items.find((item) => item.categorie_association_id === categorieId);
 
       if (safeCount > 0) {
         if (existing) {
@@ -46,7 +44,7 @@ export function useAssociationValues(rapportId: string | null , options?: { enab
         } else {
           // 🎯 CAS 2 : L'entrée n'existe pas -> On crée avec `add` PUIS on force l'autosave via `update`
           const newLocalId = crypto.randomUUID();
-          
+
           await entity.add({
             local_id: newLocalId,
             categorie_association_id: categorieId,
@@ -66,7 +64,7 @@ export function useAssociationValues(rapportId: string | null , options?: { enab
       }
       return true;
     },
-    [entity]
+    [entity],
   );
 
   return {

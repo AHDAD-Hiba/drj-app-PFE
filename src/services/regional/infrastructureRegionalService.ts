@@ -6,9 +6,16 @@ type InfraDepensesRow = Database["public"]["Tables"]["infra_depenses"]["Row"];
 type InfraEauElectriciteRow = Database["public"]["Tables"]["infra_eau_electricite"]["Row"];
 type InfraProjetsBtpRow = Database["public"]["Tables"]["infra_projets_btp"]["Row"];
 type InfraProjetsPartenariatRow = Database["public"]["Tables"]["infra_projets_partenariat"]["Row"];
-type InfraProjetsEnSouffranceRow = Database["public"]["Tables"]["infra_projets_en_souffrance"]["Row"];
-type RapportRow = Pick<Database["public"]["Tables"]["rapports"]["Row"], "id" | "direction_id" | "statut_rapport" | "trimestre">;
-type EtablissementRow = Pick<Database["public"]["Tables"]["etablissements"]["Row"], "id" | "nom" | "direction_id">;
+type InfraProjetsEnSouffranceRow =
+  Database["public"]["Tables"]["infra_projets_en_souffrance"]["Row"];
+type RapportRow = Pick<
+  Database["public"]["Tables"]["rapports"]["Row"],
+  "id" | "direction_id" | "statut_rapport" | "trimestre"
+>;
+type EtablissementRow = Pick<
+  Database["public"]["Tables"]["etablissements"]["Row"],
+  "id" | "nom" | "direction_id"
+>;
 
 export interface InfrastructureRegionalData {
   financial: {
@@ -71,7 +78,10 @@ export interface InfrastructureRegionalData {
 export type InfrastructureRegionalKpis = InfrastructureRegionalData["financial"];
 export type InfrastructureRegionalSection3 = InfrastructureRegionalData["projects"];
 export type InfrastructureRegionalEvolution = InfrastructureRegionalData["evolution"];
-export type InfrastructureRegionalDetailed = Pick<InfrastructureRegionalData, "utilities" | "blockedProjects">;
+export type InfrastructureRegionalDetailed = Pick<
+  InfrastructureRegionalData,
+  "utilities" | "blockedProjects"
+>;
 export type InfrastructureRegionalDashboardData = RegionalDashboardData<
   InfrastructureRegionalKpis,
   InfrastructureRegionalSection3,
@@ -89,7 +99,7 @@ interface InfrastructureDirectionData {
   metric_secondary: number;
 }
 
-const sumBy = <T,>(rows: T[], selector: (row: T) => number | null | undefined) =>
+const sumBy = <T>(rows: T[], selector: (row: T) => number | null | undefined) =>
   rows.reduce((total, row) => {
     const value = selector(row);
     return total + (typeof value === "number" && Number.isFinite(value) ? value : 0);
@@ -148,7 +158,10 @@ const calculateInfrastructureScore = (
   if (!isActive) return 0;
 
   const scores = [
-    positiveKpiScore(directionKpis.taux_execution_budgetaire, regionalKpis.taux_execution_budgetaire) *
+    positiveKpiScore(
+      directionKpis.taux_execution_budgetaire,
+      regionalKpis.taux_execution_budgetaire,
+    ) *
       (INFRASTRUCTURE_SCORE_WEIGHTS.taux_execution_budgetaire / 100),
     positiveKpiScore(directionKpis.budget_paye, regionalKpis.budget_paye) *
       (INFRASTRUCTURE_SCORE_WEIGHTS.budget_paye / 100),
@@ -178,7 +191,10 @@ const toRegionalStatus = (statut: RapportRow["statut_rapport"]): RegionalStatus 
 };
 
 const directionStatus = (rapports: RapportRow[]): RegionalStatus => {
-  if (rapports.length === 0 || rapports.every((rapport) => rapport.statut_rapport === "NON_COMMENCE")) {
+  if (
+    rapports.length === 0 ||
+    rapports.every((rapport) => rapport.statut_rapport === "NON_COMMENCE")
+  ) {
     return "NON_COMMENCE";
   }
   return rapports.every((rapport) => rapport.statut_rapport === "VALIDE") ? "TERMINE" : "EN_COURS";
@@ -212,7 +228,9 @@ const buildEvolutionFinanciere = (
     if (!trimestresAvecRapport.has(trimestre)) {
       return { trimestre, credits_engages: null, credits_payes: null };
     }
-    const rows = depenses.filter((row) => row.rapport_id && trimestreByRapport.get(row.rapport_id) === trimestre);
+    const rows = depenses.filter(
+      (row) => row.rapport_id && trimestreByRapport.get(row.rapport_id) === trimestre,
+    );
     return {
       trimestre,
       credits_engages: sumBy(rows, (row) => row.credits_engages),
@@ -230,8 +248,12 @@ const buildEvolutionProjets = (
     if (!trimestresAvecRapport.has(trimestre)) {
       return { trimestre, projets_btp: null, projets_partenariat: null };
     }
-    const btpRows = btp.filter((row) => row.rapport_id && trimestreByRapport.get(row.rapport_id) === trimestre);
-    const partenariatRows = partenariat.filter((row) => row.rapport_id && trimestreByRapport.get(row.rapport_id) === trimestre);
+    const btpRows = btp.filter(
+      (row) => row.rapport_id && trimestreByRapport.get(row.rapport_id) === trimestre,
+    );
+    const partenariatRows = partenariat.filter(
+      (row) => row.rapport_id && trimestreByRapport.get(row.rapport_id) === trimestre,
+    );
     return {
       trimestre,
       projets_btp: btpRows.length,
@@ -252,11 +274,17 @@ const buildInfrastructureData = (
     rapports.map((rapport) => [rapport.id, rapport.trimestre]),
   );
   const trimestresAvecRapport = new Set(
-    rapports.map((rapport) => rapport.trimestre).filter((t): t is NonNullable<typeof t> => Boolean(t)),
+    rapports
+      .map((rapport) => rapport.trimestre)
+      .filter((t): t is NonNullable<typeof t> => Boolean(t)),
   );
   const totalDepenses = totalsForDepenses(depenses);
-  const fonctionnement = totalsForDepenses(depenses.filter((row) => row.type_depense === "fonctionnement"));
-  const investissement = totalsForDepenses(depenses.filter((row) => row.type_depense === "investissement"));
+  const fonctionnement = totalsForDepenses(
+    depenses.filter((row) => row.type_depense === "fonctionnement"),
+  );
+  const investissement = totalsForDepenses(
+    depenses.filter((row) => row.type_depense === "investissement"),
+  );
   const coutTotal = sumBy(btp, (row) => row.cout_projet);
   const montantPaye = sumBy(btp, (row) => row.montant_paye);
   const typesEtablissements = partenariat.flatMap((row) => row.types_etablissements ?? []);
@@ -282,8 +310,14 @@ const buildInfrastructureData = (
       partenariat: {
         total: partenariat.length,
         avancement_moyen: average(partenariat.map((row) => row.taux_avancement)),
-        par_phase: countBy(partenariat.map((row) => row.phase_projet), "phase_projet") as { phase_projet: string; total: number }[],
-        par_types_etablissements: countBy(typesEtablissements, "type_etablissement") as { type_etablissement: string; total: number }[],
+        par_phase: countBy(
+          partenariat.map((row) => row.phase_projet),
+          "phase_projet",
+        ) as { phase_projet: string; total: number }[],
+        par_types_etablissements: countBy(typesEtablissements, "type_etablissement") as {
+          type_etablissement: string;
+          total: number;
+        }[],
       },
     },
     utilities: {
@@ -297,7 +331,9 @@ const buildInfrastructureData = (
       projets: enSouffrance.map((row) => ({
         id: row.id,
         etablissement_id: row.etablissement_id,
-        etablissement: row.etablissement_id ? etablissementsById.get(row.etablissement_id)?.nom ?? null : null,
+        etablissement: row.etablissement_id
+          ? (etablissementsById.get(row.etablissement_id)?.nom ?? null)
+          : null,
         causes_blocage: row.causes_blocage,
         solutions_proposees: row.solutions_proposees,
         observations: row.observations,
@@ -320,39 +356,50 @@ export async function loadInfrastructureRegionalDashboard(
 ): Promise<InfrastructureRegionalDashboardData> {
   const [directionsResult, rapportsResult] = await Promise.all([
     supabase.from("directions").select("id, nom_fr, nom_ar"),
-    supabase.from("rapports").select("id, direction_id, statut_rapport, trimestre").eq("annee", year),
+    supabase
+      .from("rapports")
+      .select("id, direction_id, statut_rapport, trimestre")
+      .eq("annee", year),
   ]);
 
   const directions = directionsResult.data ?? [];
   const rapports = (rapportsResult.data ?? []) as RapportRow[];
   const rapportIds = rapports.map((rapport) => rapport.id);
 
-  const [depensesResult, eauElectriciteResult, btpResult, partenariatResult, enSouffranceResult] = rapportIds.length
-    ? await Promise.all([
-        supabase.from("infra_depenses").select("*").in("rapport_id", rapportIds),
-        supabase.from("infra_eau_electricite").select("*").in("rapport_id", rapportIds),
-        supabase.from("infra_projets_btp").select("*").in("rapport_id", rapportIds),
-        supabase.from("infra_projets_partenariat").select("*").in("rapport_id", rapportIds),
-        supabase.from("infra_projets_en_souffrance").select("*").in("rapport_id", rapportIds),
-      ])
-    : [{ data: [] }, { data: [] }, { data: [] }, { data: [] }, { data: [] }];
+  const [depensesResult, eauElectriciteResult, btpResult, partenariatResult, enSouffranceResult] =
+    rapportIds.length
+      ? await Promise.all([
+          supabase.from("infra_depenses").select("*").in("rapport_id", rapportIds),
+          supabase.from("infra_eau_electricite").select("*").in("rapport_id", rapportIds),
+          supabase.from("infra_projets_btp").select("*").in("rapport_id", rapportIds),
+          supabase.from("infra_projets_partenariat").select("*").in("rapport_id", rapportIds),
+          supabase.from("infra_projets_en_souffrance").select("*").in("rapport_id", rapportIds),
+        ])
+      : [{ data: [] }, { data: [] }, { data: [] }, { data: [] }, { data: [] }];
 
   const depenses = (depensesResult.data ?? []) as InfraDepensesRow[];
   const eauElectricite = (eauElectriciteResult.data ?? []) as InfraEauElectriciteRow[];
   const btp = (btpResult.data ?? []) as InfraProjetsBtpRow[];
   const partenariat = (partenariatResult.data ?? []) as InfraProjetsPartenariatRow[];
   const enSouffrance = (enSouffranceResult.data ?? []) as InfraProjetsEnSouffranceRow[];
-  const etablissementIds = Array.from(new Set([
-    ...eauElectricite,
-    ...btp,
-    ...partenariat,
-    ...enSouffrance,
-  ].map((row) => row.etablissement_id).filter((id): id is string => Boolean(id))));
+  const etablissementIds = Array.from(
+    new Set(
+      [...eauElectricite, ...btp, ...partenariat, ...enSouffrance]
+        .map((row) => row.etablissement_id)
+        .filter((id): id is string => Boolean(id)),
+    ),
+  );
   const etablissementsResult = etablissementIds.length
-    ? await supabase.from("etablissements").select("id, nom, direction_id").in("id", etablissementIds)
+    ? await supabase
+        .from("etablissements")
+        .select("id, nom, direction_id")
+        .in("id", etablissementIds)
     : { data: [] };
   const etablissementsById = new Map(
-    ((etablissementsResult.data ?? []) as EtablissementRow[]).map((etablissement) => [etablissement.id, etablissement]),
+    ((etablissementsResult.data ?? []) as EtablissementRow[]).map((etablissement) => [
+      etablissement.id,
+      etablissement,
+    ]),
   );
 
   const rapportsByDirection = new Map<string, RapportRow[]>();
@@ -363,9 +410,15 @@ export async function loadInfrastructureRegionalDashboard(
     rapportsByDirection.set(rapport.direction_id, directionRapports);
   });
   const rapportIdsByDirection = new Map(
-    Array.from(rapportsByDirection, ([directionId, directionRapports]) => [directionId, new Set(directionRapports.map((rapport) => rapport.id))]),
+    Array.from(rapportsByDirection, ([directionId, directionRapports]) => [
+      directionId,
+      new Set(directionRapports.map((rapport) => rapport.id)),
+    ]),
   );
-  const rowsForDirection = <T extends { rapport_id: string | null }>(rows: T[], directionId: string) => {
+  const rowsForDirection = <T extends { rapport_id: string | null }>(
+    rows: T[],
+    directionId: string,
+  ) => {
     const ids = rapportIdsByDirection.get(directionId);
     return ids ? rows.filter((row) => row.rapport_id && ids.has(row.rapport_id)) : [];
   };
@@ -418,9 +471,14 @@ export async function loadInfrastructureRegionalDashboard(
     const totals = totalsForDepenses(directionDepenses);
     const directionReports = rapportsByDirection.get(direction.id) ?? [];
     const status = directionStatus(directionReports);
-    const isActive = totals.credits_payes > 0 || directionBtp.length > 0 || directionPartenariat.length > 0;
+    const isActive =
+      totals.credits_payes > 0 || directionBtp.length > 0 || directionPartenariat.length > 0;
     const score = hasInfrastructureData
-      ? calculateInfrastructureScore(directionKpis(direction.id), regionalKpis, isActive && status !== "NON_COMMENCE")
+      ? calculateInfrastructureScore(
+          directionKpis(direction.id),
+          regionalKpis,
+          isActive && status !== "NON_COMMENCE",
+        )
       : 0;
 
     return {
@@ -441,15 +499,28 @@ export async function loadInfrastructureRegionalDashboard(
     directionsData.forEach((direction, index) => {
       if (direction.score <= 0 || direction.statut === "NON_COMMENCE") return;
       rankableIndex += 1;
-      direction.rang_regional = index > 0 && direction.score === directionsData[index - 1].score
-        ? directionsData[index - 1].rang_regional
-        : rankableIndex;
+      direction.rang_regional =
+        index > 0 && direction.score === directionsData[index - 1].score
+          ? directionsData[index - 1].rang_regional
+          : rankableIndex;
     });
   }
 
-  const regionalData = buildInfrastructureData(depenses, eauElectricite, btp, partenariat, enSouffrance, etablissementsById, rapports);
-  const completedDirections = directionsData.filter((direction) => direction.statut === "TERMINE").length;
-  const inProgressDirections = directionsData.filter((direction) => direction.statut === "EN_COURS").length;
+  const regionalData = buildInfrastructureData(
+    depenses,
+    eauElectricite,
+    btp,
+    partenariat,
+    enSouffrance,
+    etablissementsById,
+    rapports,
+  );
+  const completedDirections = directionsData.filter(
+    (direction) => direction.statut === "TERMINE",
+  ).length;
+  const inProgressDirections = directionsData.filter(
+    (direction) => direction.statut === "EN_COURS",
+  ).length;
 
   return {
     status: {
@@ -473,9 +544,23 @@ export async function loadInfrastructureRegionalDashboard(
         rank: direction.rang_regional < 99 ? direction.rang_regional : null,
         score: direction.score,
       })),
-      primary: { key: "taux_execution_budgetaire", label: "Taux d'exécution budgétaire", regionalAverage: regionalKpis.taux_execution_budgetaire },
-      secondary: { key: "nombre_projets", label: "Nombre de projets", regionalAverage: directionsData.length ? (regionalKpis.projets_btp + regionalKpis.projets_partenariat) / directionsData.length : null },
-      score: { label: "Score Infrastructure", methodology: "Pondération existante : exécution budgétaire 25 %, budget payé 20 %, projets BTP 15 %, partenariats 15 %, projets bloqués 12,5 %, arriérés 12,5 % (indicateurs négatifs inversés). Score relatif à la région, borné 0–100." },
+      primary: {
+        key: "taux_execution_budgetaire",
+        label: "Taux d'exécution budgétaire",
+        regionalAverage: regionalKpis.taux_execution_budgetaire,
+      },
+      secondary: {
+        key: "nombre_projets",
+        label: "Nombre de projets",
+        regionalAverage: directionsData.length
+          ? (regionalKpis.projets_btp + regionalKpis.projets_partenariat) / directionsData.length
+          : null,
+      },
+      score: {
+        label: "Score Infrastructure",
+        methodology:
+          "Pondération existante : exécution budgétaire 25 %, budget payé 20 %, projets BTP 15 %, partenariats 15 %, projets bloqués 12,5 %, arriérés 12,5 % (indicateurs négatifs inversés). Score relatif à la région, borné 0–100.",
+      },
     },
   };
 }

@@ -1,18 +1,18 @@
-import { memo } from 'react';
-import { useTranslation } from 'react-i18next';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { SafeInput } from '@/components/form/SafeInput';
-import { Label } from '@/components/ui/label';
-import { Plus, Trash2, Trophy, AlertTriangle } from 'lucide-react';
-import { NumericField } from '@/components/form/NumericField';
+import { memo } from "react";
+import { useTranslation } from "react-i18next";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { SafeInput } from "@/components/form/SafeInput";
+import { Label } from "@/components/ui/label";
+import { Plus, Trash2, Trophy, AlertTriangle } from "lucide-react";
+import { NumericField } from "@/components/form/NumericField";
 
-import { StepComponentProps } from '@/config/wizard.types';
-import { useFestivalEntries, type FestivalEntry } from '@/hooks/Jeunesse/useFestivalEntries';
+import { StepComponentProps } from "@/config/wizard.types";
+import { useFestivalEntries, type FestivalEntry } from "@/hooks/Jeunesse/useFestivalEntries";
 
 const createEmptyFestival = (): FestivalEntry => ({
   local_id: crypto.randomUUID(),
-  name: '',
+  name: "",
   participants_qualifies: 0,
   provinces_participantes: 0,
   rural: 0,
@@ -21,13 +21,9 @@ const createEmptyFestival = (): FestivalEntry => ({
   hommes: 0,
 });
 
-export const Step6Festival = memo(({
-  rapportId,
-  disabled,
-  onActivity,
-}: StepComponentProps) => {
+export const Step6Festival = memo(({ rapportId, disabled, onActivity }: StepComponentProps) => {
   const { i18n } = useTranslation();
-  const isAr = i18n.language === 'ar';
+  const isAr = i18n.language === "ar";
 
   const festivalEntries = useFestivalEntries(rapportId);
   const festivals = festivalEntries.items;
@@ -54,10 +50,12 @@ export const Step6Festival = memo(({
           <div>
             <h2 className="text-lg font-bold flex items-center gap-2">
               <Trophy className="h-5 w-5 text-primary" />
-              {isAr ? 'مهرجانات الشباب' : 'Festivals de jeunesse'}
+              {isAr ? "مهرجانات الشباب" : "Festivals de jeunesse"}
             </h2>
             <p className="text-sm text-muted-foreground">
-              {isAr ? 'أضف كل مهرجان مع تفاصيل الإقصائيات والمؤهلين' : 'Ajoutez chaque festival avec éliminatoires et qualifiés'}
+              {isAr
+                ? "أضف كل مهرجان مع تفاصيل الإقصائيات والمؤهلين"
+                : "Ajoutez chaque festival avec éliminatoires et qualifiés"}
             </p>
           </div>
           <Button
@@ -68,13 +66,13 @@ export const Step6Festival = memo(({
             className="gap-1.5"
           >
             <Plus className="h-4 w-4" />
-            {isAr ? 'إضافة مهرجان' : 'Ajouter un festival'}
+            {isAr ? "إضافة مهرجان" : "Ajouter un festival"}
           </Button>
         </div>
 
         {festivals.length === 0 ? (
           <div className="text-center py-4 text-xs text-muted-foreground border-2 border-dashed border-border rounded-lg">
-            {isAr ? 'لا توجد مهرجانات' : 'Aucun festival enregistré'}
+            {isAr ? "لا توجد مهرجانات" : "Aucun festival enregistré"}
           </div>
         ) : (
           <div className="space-y-3 pt-2">
@@ -103,13 +101,13 @@ export const Step6Festival = memo(({
                   </div>
 
                   <div className="space-y-1.5">
-                    <Label className="text-xs">{isAr ? 'اسم المهرجان' : 'Nom du festival'}</Label>
+                    <Label className="text-xs">{isAr ? "اسم المهرجان" : "Nom du festival"}</Label>
                     <SafeInput
                       value={festival.name}
                       maxLength={200}
                       className="h-9"
                       disabled={disabled}
-                      placeholder={isAr ? 'اسم المهرجان...' : 'Nom du festival...'}
+                      placeholder={isAr ? "اسم المهرجان..." : "Nom du festival..."}
                       onValueChange={(val) =>
                         handleUpdateFestival(festival.local_id, { name: val.slice(0, 200) })
                       }
@@ -118,19 +116,27 @@ export const Step6Festival = memo(({
 
                   <section className="space-y-2">
                     <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                      {isAr ? 'الإقصائيات' : 'Éliminatoires'}
+                      {isAr ? "الإقصائيات" : "Éliminatoires"}
                     </h4>
                     <div className="grid grid-cols-2 gap-3">
                       <NumericField
-                        label={isAr ? 'عدد الأقاليم المشاركة' : 'Nombre de provinces participantes'}
+                        label={isAr ? "عدد الأقاليم المشاركة" : "Nombre de provinces participantes"}
                         value={festival.provinces_participantes ?? 0}
-                        onChange={(value) => handleUpdateFestival(festival.local_id, { provinces_participantes: value })}
+                        onChange={(value) =>
+                          handleUpdateFestival(festival.local_id, {
+                            provinces_participantes: value,
+                          })
+                        }
                         disabled={disabled}
                       />
                       <NumericField
-                        label={isAr ? 'عدد المشاركين المتأهلين' : 'Nombre de participants qualifiés'}
+                        label={
+                          isAr ? "عدد المشاركين المتأهلين" : "Nombre de participants qualifiés"
+                        }
                         value={festival.participants_qualifies ?? 0}
-                        onChange={(value) => handleUpdateFestival(festival.local_id, { participants_qualifies: value })}
+                        onChange={(value) =>
+                          handleUpdateFestival(festival.local_id, { participants_qualifies: value })
+                        }
                         disabled={disabled}
                       />
                     </div>
@@ -138,19 +144,23 @@ export const Step6Festival = memo(({
 
                   <section className="space-y-2">
                     <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                      {isAr ? 'التوزيع' : 'Répartition'}
+                      {isAr ? "التوزيع" : "Répartition"}
                     </h4>
                     <div className="grid grid-cols-2 gap-3">
                       <NumericField
-                        label={isAr ? 'عدد (حضري)' : 'Nbr Urbain'}
+                        label={isAr ? "عدد (حضري)" : "Nbr Urbain"}
                         value={festival.urbain ?? 0}
-                        onChange={(value) => handleUpdateFestival(festival.local_id, { urbain: value })}
+                        onChange={(value) =>
+                          handleUpdateFestival(festival.local_id, { urbain: value })
+                        }
                         disabled={disabled}
                       />
                       <NumericField
-                        label={isAr ? 'عدد (قروي)' : 'Nbr Rural'}
+                        label={isAr ? "عدد (قروي)" : "Nbr Rural"}
                         value={festival.rural ?? 0}
-                        onChange={(value) => handleUpdateFestival(festival.local_id, { rural: value })}
+                        onChange={(value) =>
+                          handleUpdateFestival(festival.local_id, { rural: value })
+                        }
                         disabled={disabled}
                       />
                     </div>
@@ -158,19 +168,23 @@ export const Step6Festival = memo(({
 
                   <section className="space-y-2">
                     <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                      {isAr ? 'الجنس' : 'Genre'}
+                      {isAr ? "الجنس" : "Genre"}
                     </h4>
                     <div className="grid grid-cols-2 gap-3">
                       <NumericField
-                        label={isAr ? 'عدد النساء' : 'Nombre de femmes'}
+                        label={isAr ? "عدد النساء" : "Nombre de femmes"}
                         value={festival.femmes ?? 0}
-                        onChange={(value) => handleUpdateFestival(festival.local_id, { femmes: value })}
+                        onChange={(value) =>
+                          handleUpdateFestival(festival.local_id, { femmes: value })
+                        }
                         disabled={disabled}
                       />
                       <NumericField
-                        label={isAr ? 'عدد الرجال' : 'Nombre d’hommes'}
+                        label={isAr ? "عدد الرجال" : "Nombre d’hommes"}
                         value={festival.hommes ?? 0}
-                        onChange={(value) => handleUpdateFestival(festival.local_id, { hommes: value })}
+                        onChange={(value) =>
+                          handleUpdateFestival(festival.local_id, { hommes: value })
+                        }
                         disabled={disabled}
                       />
                     </div>
@@ -178,10 +192,10 @@ export const Step6Festival = memo(({
 
                   <section className="space-y-2">
                     <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                      {isAr ? 'المجموع' : 'Total'}
+                      {isAr ? "المجموع" : "Total"}
                     </h4>
                     <NumericField
-                      label={isAr ? 'المجموع' : 'Total participants'}
+                      label={isAr ? "المجموع" : "Total participants"}
                       value={totalGenre}
                       onChange={() => undefined}
                       disabled={true}
@@ -194,8 +208,8 @@ export const Step6Festival = memo(({
                       <AlertTriangle className="h-4 w-4" />
                       <span>
                         {isAr
-                          ? 'تنبيه: يجب أن يكون مجموع (حضري + قروي) مساوياً للمجموع العام (نساء + رجال).'
-                          : 'Attention : Le total (Urbain + Rural) doit être égal au total général (Femmes + Hommes).'}
+                          ? "تنبيه: يجب أن يكون مجموع (حضري + قروي) مساوياً للمجموع العام (نساء + رجال)."
+                          : "Attention : Le total (Urbain + Rural) doit être égal au total général (Femmes + Hommes)."}
                       </span>
                     </div>
                   )}
@@ -209,4 +223,4 @@ export const Step6Festival = memo(({
   );
 });
 
-Step6Festival.displayName = 'Step6Festival';
+Step6Festival.displayName = "Step6Festival";

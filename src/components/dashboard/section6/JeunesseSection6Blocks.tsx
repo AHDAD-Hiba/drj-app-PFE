@@ -163,17 +163,30 @@ export const buildJeunesseSection6Blocks = (
           (act.activites_educatives || 0) +
           (act.activites_culturelles || 0) +
           (act.renforcement_capacites || 0);
-        const pctSport = totalAnim ? Math.round(((act.activites_sportives || 0) / totalAnim) * 100) : 0;
-        const pctEduc = totalAnim ? Math.round(((act.activites_educatives || 0) / totalAnim) * 100) : 0;
-        const pctCult = totalAnim ? Math.round(((act.activites_culturelles || 0) / totalAnim) * 100) : 0;
-        const pctRenf = totalAnim ? Math.round(((act.renforcement_capacites || 0) / totalAnim) * 100) : 0;
+        const pctSport = totalAnim
+          ? Math.round(((act.activites_sportives || 0) / totalAnim) * 100)
+          : 0;
+        const pctEduc = totalAnim
+          ? Math.round(((act.activites_educatives || 0) / totalAnim) * 100)
+          : 0;
+        const pctCult = totalAnim
+          ? Math.round(((act.activites_culturelles || 0) / totalAnim) * 100)
+          : 0;
+        const pctRenf = totalAnim
+          ? Math.round(((act.renforcement_capacites || 0) / totalAnim) * 100)
+          : 0;
 
         return (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <div className="space-y-4">
               <div>
                 <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">
-                  {t("prefDomainDashboard.details.activities.ecosystem", "Écosystème & Structures") as string}
+                  {
+                    t(
+                      "prefDomainDashboard.details.activities.ecosystem",
+                      "Écosystème & Structures",
+                    ) as string
+                  }
                 </h4>
                 <div className="grid grid-cols-3 gap-3">
                   <div className="p-3 bg-muted/30 rounded-xl border border-border/50 flex flex-col items-center justify-center text-center">
@@ -181,7 +194,12 @@ export const buildJeunesseSection6Blocks = (
                       {act.nombre_associations || 0}
                     </span>
                     <span className="text-[10px] font-medium text-muted-foreground mt-1">
-                      {t("prefDomainDashboard.details.activities.associations", "Associations") as string}
+                      {
+                        t(
+                          "prefDomainDashboard.details.activities.associations",
+                          "Associations",
+                        ) as string
+                      }
                     </span>
                   </div>
                   <div className="p-3 bg-muted/30 rounded-xl border border-border/50 flex flex-col items-center justify-center text-center">
@@ -189,7 +207,12 @@ export const buildJeunesseSection6Blocks = (
                       {act.nombre_clubs || 0}
                     </span>
                     <span className="text-[10px] font-medium text-muted-foreground mt-1">
-                      {t("prefDomainDashboard.details.activities.activeClubs", "Clubs Actifs") as string}
+                      {
+                        t(
+                          "prefDomainDashboard.details.activities.activeClubs",
+                          "Clubs Actifs",
+                        ) as string
+                      }
                     </span>
                   </div>
                   <div className="p-3 bg-muted/30 rounded-xl border border-border/50 flex flex-col items-center justify-center text-center">
@@ -197,7 +220,12 @@ export const buildJeunesseSection6Blocks = (
                       {act.nombre_conventions || 0}
                     </span>
                     <span className="text-[10px] font-medium text-muted-foreground mt-1">
-                      {t("prefDomainDashboard.details.activities.conventions", "Conventions") as string}
+                      {
+                        t(
+                          "prefDomainDashboard.details.activities.conventions",
+                          "Conventions",
+                        ) as string
+                      }
                     </span>
                   </div>
                 </div>
@@ -206,57 +234,109 @@ export const buildJeunesseSection6Blocks = (
 
             <div>
               <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3 flex justify-between items-end">
-                <span>{t("prefDomainDashboard.details.activities.animationVolume", "Volume d'Animation") as string}</span>
+                <span>
+                  {
+                    t(
+                      "prefDomainDashboard.details.activities.animationVolume",
+                      "Volume d'Animation",
+                    ) as string
+                  }
+                </span>
                 <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded font-bold">
-                  {t("prefDomainDashboard.details.activities.totalActions", { count: totalAnim, defaultValue: `Total: ${totalAnim} Actions` }) as string}
+                  {
+                    t("prefDomainDashboard.details.activities.totalActions", {
+                      count: totalAnim,
+                      defaultValue: `Total: ${totalAnim} Actions`,
+                    }) as string
+                  }
                 </span>
               </h4>
               <div className="space-y-3.5">
                 <div>
                   <div className="flex justify-between text-xs mb-1">
                     <span className="font-medium text-foreground">
-                      {t("prefDomainDashboard.details.activities.sportsActivities", "Activités Sportives") as string}
+                      {
+                        t(
+                          "prefDomainDashboard.details.activities.sportsActivities",
+                          "Activités Sportives",
+                        ) as string
+                      }
                     </span>
-                    <span className="font-bold" dir="ltr">{act.activites_sportives || 0}</span>
+                    <span className="font-bold" dir="ltr">
+                      {act.activites_sportives || 0}
+                    </span>
                   </div>
                   <div className="w-full bg-muted rounded-full h-1.5">
-                    <div className="bg-orange-500 h-1.5 rounded-full" style={{ width: `${pctSport}%` }}></div>
+                    <div
+                      className="bg-orange-500 h-1.5 rounded-full"
+                      style={{ width: `${pctSport}%` }}
+                    ></div>
                   </div>
                 </div>
 
                 <div>
                   <div className="flex justify-between text-xs mb-1">
                     <span className="font-medium text-foreground">
-                      {t("prefDomainDashboard.details.activities.educActivities", "Activités Éducatives") as string}
+                      {
+                        t(
+                          "prefDomainDashboard.details.activities.educActivities",
+                          "Activités Éducatives",
+                        ) as string
+                      }
                     </span>
-                    <span className="font-bold" dir="ltr">{act.activites_educatives || 0}</span>
+                    <span className="font-bold" dir="ltr">
+                      {act.activites_educatives || 0}
+                    </span>
                   </div>
                   <div className="w-full bg-muted rounded-full h-1.5">
-                    <div className="bg-blue-500 h-1.5 rounded-full" style={{ width: `${pctEduc}%` }}></div>
+                    <div
+                      className="bg-blue-500 h-1.5 rounded-full"
+                      style={{ width: `${pctEduc}%` }}
+                    ></div>
                   </div>
                 </div>
 
                 <div>
                   <div className="flex justify-between text-xs mb-1">
                     <span className="font-medium text-foreground">
-                      {t("prefDomainDashboard.details.activities.cultActivities", "Activités Culturelles") as string}
+                      {
+                        t(
+                          "prefDomainDashboard.details.activities.cultActivities",
+                          "Activités Culturelles",
+                        ) as string
+                      }
                     </span>
-                    <span className="font-bold" dir="ltr">{act.activites_culturelles || 0}</span>
+                    <span className="font-bold" dir="ltr">
+                      {act.activites_culturelles || 0}
+                    </span>
                   </div>
                   <div className="w-full bg-muted rounded-full h-1.5">
-                    <div className="bg-pink-500 h-1.5 rounded-full" style={{ width: `${pctCult}%` }}></div>
+                    <div
+                      className="bg-pink-500 h-1.5 rounded-full"
+                      style={{ width: `${pctCult}%` }}
+                    ></div>
                   </div>
                 </div>
 
                 <div>
                   <div className="flex justify-between text-xs mb-1">
                     <span className="font-medium text-foreground">
-                      {t("prefDomainDashboard.details.activities.capacityBuilding", "Renforcement des capacités") as string}
+                      {
+                        t(
+                          "prefDomainDashboard.details.activities.capacityBuilding",
+                          "Renforcement des capacités",
+                        ) as string
+                      }
                     </span>
-                    <span className="font-bold" dir="ltr">{act.renforcement_capacites || 0}</span>
+                    <span className="font-bold" dir="ltr">
+                      {act.renforcement_capacites || 0}
+                    </span>
                   </div>
                   <div className="w-full bg-muted rounded-full h-1.5">
-                    <div className="bg-purple-500 h-1.5 rounded-full" style={{ width: `${pctRenf}%` }}></div>
+                    <div
+                      className="bg-purple-500 h-1.5 rounded-full"
+                      style={{ width: `${pctRenf}%` }}
+                    ></div>
                   </div>
                 </div>
               </div>
@@ -287,16 +367,32 @@ export const buildJeunesseSection6Blocks = (
             <div className="space-y-6">
               <div className="space-y-3">
                 <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                  <Users2 className="h-4 w-4" /> {t("prefDomainDashboard.details.camping.participants", "Bénéficiaires & Participants") as string}
+                  <Users2 className="h-4 w-4" />{" "}
+                  {
+                    t(
+                      "prefDomainDashboard.details.camping.participants",
+                      "Bénéficiaires & Participants",
+                    ) as string
+                  }
                 </h4>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="col-span-2 p-4 bg-emerald-500/10 rounded-xl border border-emerald-500/20 flex items-center justify-between">
                     <div>
                       <span className="text-sm font-bold text-emerald-700 dark:text-emerald-400 block">
-                        {t("prefDomainDashboard.details.camping.totalBeneficiaries", "Total Bénéficiaires") as string}
+                        {
+                          t(
+                            "prefDomainDashboard.details.camping.totalBeneficiaries",
+                            "Total Bénéficiaires",
+                          ) as string
+                        }
                       </span>
                       <span className="text-[10px] text-emerald-600/80">
-                        {t("prefDomainDashboard.details.camping.summerCamps", "Colonies de vacances") as string}
+                        {
+                          t(
+                            "prefDomainDashboard.details.camping.summerCamps",
+                            "Colonies de vacances",
+                          ) as string
+                        }
                       </span>
                     </div>
                     <span className="text-3xl font-black text-emerald-600" dir="ltr">
@@ -305,7 +401,12 @@ export const buildJeunesseSection6Blocks = (
                   </div>
                   <div className="p-3 bg-muted/20 rounded-xl border border-border/50">
                     <span className="text-[11px] font-medium text-muted-foreground block mb-1">
-                      {t("prefDomainDashboard.details.camping.mreChildren", "Enfants MRE") as string}
+                      {
+                        t(
+                          "prefDomainDashboard.details.camping.mreChildren",
+                          "Enfants MRE",
+                        ) as string
+                      }
                     </span>
                     <span className="text-xl font-bold text-foreground" dir="ltr">
                       {camp.participants?.enfants_mre || 0}
@@ -313,7 +414,12 @@ export const buildJeunesseSection6Blocks = (
                   </div>
                   <div className="p-3 bg-muted/20 rounded-xl border border-border/50">
                     <span className="text-[11px] font-medium text-muted-foreground block mb-1">
-                      {t("prefDomainDashboard.details.camping.specialNeeds", "Besoins Spécifiques") as string}
+                      {
+                        t(
+                          "prefDomainDashboard.details.camping.specialNeeds",
+                          "Besoins Spécifiques",
+                        ) as string
+                      }
                     </span>
                     <span className="text-xl font-bold text-foreground" dir="ltr">
                       {camp.participants?.besoins_specifiques || 0}
@@ -324,7 +430,13 @@ export const buildJeunesseSection6Blocks = (
 
               <div className="space-y-3">
                 <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                  <Shield className="h-4 w-4" /> {t("prefDomainDashboard.details.camping.staffingDevice", "Dispositif d'Encadrement") as string}
+                  <Shield className="h-4 w-4" />{" "}
+                  {
+                    t(
+                      "prefDomainDashboard.details.camping.staffingDevice",
+                      "Dispositif d'Encadrement",
+                    ) as string
+                  }
                 </h4>
                 <div className="flex gap-3">
                   <div className="flex-1 p-3 bg-blue-500/5 rounded-xl border border-blue-500/10 flex flex-col justify-center items-center">
@@ -333,14 +445,25 @@ export const buildJeunesseSection6Blocks = (
                     </span>
                     <span className="text-[10px] text-blue-600/80 font-medium text-center">
                       {camp.encadrement?.ratio !== "0:0"
-                        ? (t("prefDomainDashboard.details.camping.ratioDesc", { count: camp.encadrement?.ratio.split(":")[1], defaultValue: `(1 encadrant pour ${camp.encadrement?.ratio.split(":")[1]} bénéficiaires)` }) as string)
-                        : (t("prefDomainDashboard.details.camping.noData", "(Aucune donnée saisie)") as string)}
+                        ? (t("prefDomainDashboard.details.camping.ratioDesc", {
+                            count: camp.encadrement?.ratio.split(":")[1],
+                            defaultValue: `(1 encadrant pour ${camp.encadrement?.ratio.split(":")[1]} bénéficiaires)`,
+                          }) as string)
+                        : (t(
+                            "prefDomainDashboard.details.camping.noData",
+                            "(Aucune donnée saisie)",
+                          ) as string)}
                     </span>
                   </div>
                   <div className="flex-[2] p-3 bg-muted/20 rounded-xl border border-border/50 flex flex-col justify-between">
                     <div className="flex justify-between items-center mb-2">
                       <span className="text-xs font-medium text-muted-foreground">
-                        {t("prefDomainDashboard.details.camping.mobilizedStaff", "Staff Mobilisé") as string}
+                        {
+                          t(
+                            "prefDomainDashboard.details.camping.mobilizedStaff",
+                            "Staff Mobilisé",
+                          ) as string
+                        }
                       </span>
                       <span className="text-sm font-bold text-foreground" dir="ltr">
                         {staffTot}
@@ -350,17 +473,41 @@ export const buildJeunesseSection6Blocks = (
                       <div
                         className="flex-1 h-2 rounded-full bg-blue-500"
                         style={{ width: `${pctStaffH}%` }}
-                        title={t("prefDomainDashboard.details.camping.menCount", { count: staffH, defaultValue: `${staffH} Hommes` }) as string}
+                        title={
+                          t("prefDomainDashboard.details.camping.menCount", {
+                            count: staffH,
+                            defaultValue: `${staffH} Hommes`,
+                          }) as string
+                        }
                       ></div>
                       <div
                         className="flex-1 h-2 rounded-full bg-pink-500"
                         style={{ width: `${pctStaffF}%` }}
-                        title={t("prefDomainDashboard.details.camping.womenCount", { count: staffF, defaultValue: `${staffF} Femmes` }) as string}
+                        title={
+                          t("prefDomainDashboard.details.camping.womenCount", {
+                            count: staffF,
+                            defaultValue: `${staffF} Femmes`,
+                          }) as string
+                        }
                       ></div>
                     </div>
                     <div className="flex justify-between text-[10px] text-muted-foreground mt-1">
-                      <span>{t("prefDomainDashboard.details.camping.menCount", { count: staffH, defaultValue: `${staffH} Hommes` }) as string}</span>
-                      <span>{t("prefDomainDashboard.details.camping.womenCount", { count: staffF, defaultValue: `${staffF} Femmes` }) as string}</span>
+                      <span>
+                        {
+                          t("prefDomainDashboard.details.camping.menCount", {
+                            count: staffH,
+                            defaultValue: `${staffH} Hommes`,
+                          }) as string
+                        }
+                      </span>
+                      <span>
+                        {
+                          t("prefDomainDashboard.details.camping.womenCount", {
+                            count: staffF,
+                            defaultValue: `${staffF} Femmes`,
+                          }) as string
+                        }
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -370,7 +517,13 @@ export const buildJeunesseSection6Blocks = (
             <div className="space-y-6">
               <div className="space-y-3">
                 <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                  <GraduationCap className="h-4 w-4" /> {t("prefDomainDashboard.details.camping.trainings", "Formations (Encadrement)") as string}
+                  <GraduationCap className="h-4 w-4" />{" "}
+                  {
+                    t(
+                      "prefDomainDashboard.details.camping.trainings",
+                      "Formations (Encadrement)",
+                    ) as string
+                  }
                 </h4>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="p-4 bg-amber-500/5 rounded-xl border border-amber-500/10 flex flex-col justify-center">
@@ -378,7 +531,12 @@ export const buildJeunesseSection6Blocks = (
                       {camp.formations?.total_sessions || 0}
                     </span>
                     <span className="text-[11px] font-medium text-amber-600/80 mt-1">
-                      {t("prefDomainDashboard.details.camping.organizedSessions", "Sessions Organisées") as string}
+                      {
+                        t(
+                          "prefDomainDashboard.details.camping.organizedSessions",
+                          "Sessions Organisées",
+                        ) as string
+                      }
                     </span>
                   </div>
                   <div className="p-4 bg-amber-500/5 rounded-xl border border-amber-500/10 flex flex-col justify-center">
@@ -386,7 +544,12 @@ export const buildJeunesseSection6Blocks = (
                       {camp.formations?.beneficiaires || 0}
                     </span>
                     <span className="text-[11px] font-medium text-amber-600/80 mt-1">
-                      {t("prefDomainDashboard.details.camping.trainedCadres", "Cadres Formés") as string}
+                      {
+                        t(
+                          "prefDomainDashboard.details.camping.trainedCadres",
+                          "Cadres Formés",
+                        ) as string
+                      }
                     </span>
                   </div>
                 </div>
@@ -394,7 +557,8 @@ export const buildJeunesseSection6Blocks = (
 
               <div className="space-y-4">
                 <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-1.5">
-                  <ArrowRightLeft className="h-4 w-4" /> {t("prefDomainDashboard.details.camping.movements", "Mouvements de la période")}
+                  <ArrowRightLeft className="h-4 w-4" />{" "}
+                  {t("prefDomainDashboard.details.camping.movements", "Mouvements de la période")}
                 </h4>
 
                 {(() => {
@@ -407,30 +571,54 @@ export const buildJeunesseSection6Blocks = (
                     <div className="grid grid-cols-2 gap-3">
                       <div className="p-3 bg-emerald-500/5 rounded-xl border border-emerald-500/10 flex flex-col justify-center">
                         <span className="text-emerald-600 font-semibold text-[11px] flex items-center gap-1.5 mb-1">
-                          <TrendingUp className="h-3.5 w-3.5" /> {t("prefDomainDashboard.details.camping.assocEntrants", "Associations Entrantes")}
+                          <TrendingUp className="h-3.5 w-3.5" />{" "}
+                          {t(
+                            "prefDomainDashboard.details.camping.assocEntrants",
+                            "Associations Entrantes",
+                          )}
                         </span>
-                        <span className="text-2xl font-bold text-foreground" dir="ltr">{assocEntrants}</span>
+                        <span className="text-2xl font-bold text-foreground" dir="ltr">
+                          {assocEntrants}
+                        </span>
                       </div>
 
                       <div className="p-3 bg-emerald-500/5 rounded-xl border border-emerald-500/10 flex flex-col justify-center">
                         <span className="text-emerald-600 font-semibold text-[11px] flex items-center gap-1.5 mb-1">
-                          <UserPlus className="h-3.5 w-3.5" /> {t("prefDomainDashboard.details.camping.benEntrants", "Bénéficiaires Entrants")}
+                          <UserPlus className="h-3.5 w-3.5" />{" "}
+                          {t(
+                            "prefDomainDashboard.details.camping.benEntrants",
+                            "Bénéficiaires Entrants",
+                          )}
                         </span>
-                        <span className="text-2xl font-bold text-foreground" dir="ltr">{benEntrants}</span>
+                        <span className="text-2xl font-bold text-foreground" dir="ltr">
+                          {benEntrants}
+                        </span>
                       </div>
 
                       <div className="p-3 bg-orange-500/5 rounded-xl border border-orange-500/10 flex flex-col justify-center">
                         <span className="text-orange-600 font-semibold text-[11px] flex items-center gap-1.5 mb-1">
-                          <TrendingDown className="h-3.5 w-3.5" /> {t("prefDomainDashboard.details.camping.assocSortants", "Associations Sortantes")}
+                          <TrendingDown className="h-3.5 w-3.5" />{" "}
+                          {t(
+                            "prefDomainDashboard.details.camping.assocSortants",
+                            "Associations Sortantes",
+                          )}
                         </span>
-                        <span className="text-2xl font-bold text-foreground" dir="ltr">{assocSortants}</span>
+                        <span className="text-2xl font-bold text-foreground" dir="ltr">
+                          {assocSortants}
+                        </span>
                       </div>
 
                       <div className="p-3 bg-orange-500/5 rounded-xl border border-orange-500/10 flex flex-col justify-center">
                         <span className="text-orange-600 font-semibold text-[11px] flex items-center gap-1.5 mb-1">
-                          <UserMinus className="h-3.5 w-3.5" /> {t("prefDomainDashboard.details.camping.benSortants", "Bénéficiaires Sortants")}
+                          <UserMinus className="h-3.5 w-3.5" />{" "}
+                          {t(
+                            "prefDomainDashboard.details.camping.benSortants",
+                            "Bénéficiaires Sortants",
+                          )}
                         </span>
-                        <span className="text-2xl font-bold text-foreground" dir="ltr">{benSortants}</span>
+                        <span className="text-2xl font-bold text-foreground" dir="ltr">
+                          {benSortants}
+                        </span>
                       </div>
                     </div>
                   );
@@ -445,19 +633,30 @@ export const buildJeunesseSection6Blocks = (
     // 3. Conventions et Partenariats
     {
       id: "conventions",
-      title: t("prefDomainDashboard.details.conventions.title", "Conventions et Partenariats") as string,
+      title: t(
+        "prefDomainDashboard.details.conventions.title",
+        "Conventions et Partenariats",
+      ) as string,
       icon: <Handshake className="h-4 w-4 text-emerald-500" />,
       content: (() => {
         const conv = dashboardData.detailed?.conventions || {};
         const repArray = conv.repartition || [];
         const totalConv = conv.total_conventions || 1;
-        const translatedTypes = t("prefDomainDashboard.details.conventions.types", { returnObjects: true }) as Record<string, string>;
+        const translatedTypes = t("prefDomainDashboard.details.conventions.types", {
+          returnObjects: true,
+        }) as Record<string, string>;
 
         return (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-10">
             <div className="space-y-4">
               <h4 className="h-7 text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                <FileText className="h-4 w-4" /> {t("prefDomainDashboard.details.conventions.summary", "Bilan des Conventions") as string}
+                <FileText className="h-4 w-4" />{" "}
+                {
+                  t(
+                    "prefDomainDashboard.details.conventions.summary",
+                    "Bilan des Conventions",
+                  ) as string
+                }
               </h4>
               <div className="grid grid-cols-2 gap-3">
                 <div className="col-span-2 p-4 bg-emerald-500/10 rounded-xl border border-emerald-500/20 flex items-center justify-between">
@@ -466,10 +665,18 @@ export const buildJeunesseSection6Blocks = (
                       <Handshake className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
                     </div>
                     <span className="font-bold text-emerald-700 dark:text-emerald-400 text-sm">
-                      {t("prefDomainDashboard.details.conventions.totalConventions", "Total Conventions") as string}
+                      {
+                        t(
+                          "prefDomainDashboard.details.conventions.totalConventions",
+                          "Total Conventions",
+                        ) as string
+                      }
                     </span>
                   </div>
-                  <span className="text-3xl font-black text-emerald-600 dark:text-emerald-400" dir="ltr">
+                  <span
+                    className="text-3xl font-black text-emerald-600 dark:text-emerald-400"
+                    dir="ltr"
+                  >
                     {conv.total_conventions || 0}
                   </span>
                 </div>
@@ -478,7 +685,12 @@ export const buildJeunesseSection6Blocks = (
                   <div className="flex items-center gap-2">
                     <Building2 className="h-4 w-4 text-muted-foreground" />
                     <span className="text-sm font-semibold text-foreground">
-                      {t("prefDomainDashboard.details.conventions.partnerTypes", "Types de Partenaires Engagés") as string}
+                      {
+                        t(
+                          "prefDomainDashboard.details.conventions.partnerTypes",
+                          "Types de Partenaires Engagés",
+                        ) as string
+                      }
                     </span>
                   </div>
                   <span className="text-xl font-bold text-foreground" dir="ltr">
@@ -491,30 +703,47 @@ export const buildJeunesseSection6Blocks = (
             <div className="space-y-4">
               <h4 className="h-7 text-xs font-bold uppercase tracking-wider text-muted-foreground flex justify-between items-center">
                 <span className="flex items-center gap-1.5">
-                  <Building2 className="h-4 w-4" /> {t("prefDomainDashboard.details.conventions.distributionByType", "Répartition par Type") as string}
+                  <Building2 className="h-4 w-4" />{" "}
+                  {
+                    t(
+                      "prefDomainDashboard.details.conventions.distributionByType",
+                      "Répartition par Type",
+                    ) as string
+                  }
                 </span>
               </h4>
 
               <div className="p-4 bg-muted/30 rounded-xl border border-border/50 space-y-4">
                 {repArray.length === 0 ? (
                   <span className="text-sm text-muted-foreground">
-                    {t("prefDomainDashboard.details.conventions.noData", "Aucune donnée disponible") as string}
+                    {
+                      t(
+                        "prefDomainDashboard.details.conventions.noData",
+                        "Aucune donnée disponible",
+                      ) as string
+                    }
                   </span>
                 ) : (
                   repArray.map((item: Section6ConventionType, index: number) => {
-                    const percentage = Math.round((item.count || 0) / totalConv * 100);
+                    const percentage = Math.round(((item.count || 0) / totalConv) * 100);
                     return (
                       <div key={index} className="space-y-1.5">
                         <div className="flex justify-between items-center text-xs">
                           <span className="text-foreground font-medium">
-                            {(translatedTypes && translatedTypes[item.type]) ? translatedTypes[item.type] : item.type}
+                            {translatedTypes && translatedTypes[item.type]
+                              ? translatedTypes[item.type]
+                              : item.type}
                           </span>
                           <span className="text-muted-foreground font-bold" dir="ltr">
-                            {item.count} <span className="text-[10px] font-normal">({percentage}%)</span>
+                            {item.count}{" "}
+                            <span className="text-[10px] font-normal">({percentage}%)</span>
                           </span>
                         </div>
                         <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
-                          <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${percentage}%` }}></div>
+                          <div
+                            className="h-full bg-emerald-500 rounded-full"
+                            style={{ width: `${percentage}%` }}
+                          ></div>
                         </div>
                       </div>
                     );
@@ -530,7 +759,10 @@ export const buildJeunesseSection6Blocks = (
     // 4. Intégration Socio-Économique
     {
       id: "insertion",
-      title: t("prefDomainDashboard.details.insertion.title", "Intégration Socio-Économique") as string,
+      title: t(
+        "prefDomainDashboard.details.insertion.title",
+        "Intégration Socio-Économique",
+      ) as string,
       icon: <Landmark className="h-4 w-4 text-indigo-500" />,
       content: (() => {
         const ins = dashboardData.detailed?.insertion || {};
@@ -549,7 +781,13 @@ export const buildJeunesseSection6Blocks = (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-10">
             <div className="space-y-4">
               <h4 className="h-7 text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                <Target className="h-4 w-4" /> {t("prefDomainDashboard.details.insertion.summary", "Bilan des Activités") as string}
+                <Target className="h-4 w-4" />{" "}
+                {
+                  t(
+                    "prefDomainDashboard.details.insertion.summary",
+                    "Bilan des Activités",
+                  ) as string
+                }
               </h4>
               <div className="grid grid-cols-2 gap-3">
                 <div className="col-span-2 p-4 bg-indigo-500/10 rounded-xl border border-indigo-500/20 flex items-center justify-between">
@@ -558,16 +796,30 @@ export const buildJeunesseSection6Blocks = (
                       <Landmark className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
                     </div>
                     <span className="font-bold text-indigo-700 dark:text-indigo-400 text-sm">
-                      {t("prefDomainDashboard.details.insertion.activitiesDone", "Activités Réalisées") as string}
+                      {
+                        t(
+                          "prefDomainDashboard.details.insertion.activitiesDone",
+                          "Activités Réalisées",
+                        ) as string
+                      }
                     </span>
                   </div>
-                  <span className="text-3xl font-black text-indigo-600 dark:text-indigo-400" dir="ltr">
+                  <span
+                    className="text-3xl font-black text-indigo-600 dark:text-indigo-400"
+                    dir="ltr"
+                  >
                     {ins.total_activites || 0}
                   </span>
                 </div>
                 <div className="p-3 bg-muted/20 rounded-xl border border-border/50 flex flex-col justify-center">
                   <span className="text-muted-foreground font-semibold text-xs flex items-center gap-1.5 mb-1">
-                    <Handshake className="h-3.5 w-3.5 text-orange-500" /> {t("prefDomainDashboard.details.insertion.activePartners", "Partenaires Actifs") as string}
+                    <Handshake className="h-3.5 w-3.5 text-orange-500" />{" "}
+                    {
+                      t(
+                        "prefDomainDashboard.details.insertion.activePartners",
+                        "Partenaires Actifs",
+                      ) as string
+                    }
                   </span>
                   <span className="text-2xl font-bold text-foreground" dir="ltr">
                     {ins.partenaires_actifs || 0}
@@ -575,9 +827,18 @@ export const buildJeunesseSection6Blocks = (
                 </div>
                 <div className="p-3 bg-muted/20 rounded-xl border border-border/50 flex flex-col justify-center">
                   <span className="text-muted-foreground font-semibold text-xs flex items-center gap-1.5 mb-1">
-                    <Clock className="h-3.5 w-3.5 text-blue-500" /> {t("prefDomainDashboard.details.insertion.globalVolume", "Volume Global") as string}
+                    <Clock className="h-3.5 w-3.5 text-blue-500" />{" "}
+                    {
+                      t(
+                        "prefDomainDashboard.details.insertion.globalVolume",
+                        "Volume Global",
+                      ) as string
+                    }
                   </span>
-                  <span className="text-2xl font-bold text-foreground" dir={lang === "ar" ? "rtl" : "ltr"}>
+                  <span
+                    className="text-2xl font-bold text-foreground"
+                    dir={lang === "ar" ? "rtl" : "ltr"}
+                  >
                     {(() => {
                       const volume = ins.volume_horaire || "0";
                       if (lang === "ar") {
@@ -594,9 +855,18 @@ export const buildJeunesseSection6Blocks = (
             <div className="space-y-4">
               <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex justify-between items-center">
                 <span className="flex items-center gap-1.5">
-                  <Users className="h-4 w-4" /> {t("prefDomainDashboard.details.insertion.beneficiaries", "Bénéficiaires") as string}
+                  <Users className="h-4 w-4" />{" "}
+                  {
+                    t(
+                      "prefDomainDashboard.details.insertion.beneficiaries",
+                      "Bénéficiaires",
+                    ) as string
+                  }
                 </span>
-                <span className="text-[10px] bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 px-2 py-0.5 rounded font-bold border border-indigo-500/20" dir="ltr">
+                <span
+                  className="text-[10px] bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 px-2 py-0.5 rounded font-bold border border-indigo-500/20"
+                  dir="ltr"
+                >
                   {t("prefDomainDashboard.details.insertion.total", "Total") as string}: {totGF}
                 </span>
               </h4>
@@ -605,7 +875,12 @@ export const buildJeunesseSection6Blocks = (
                 <div className="space-y-2">
                   <div className="flex justify-between items-center text-xs mb-1">
                     <span className="text-foreground font-bold">
-                      {t("prefDomainDashboard.details.insertion.genderDistribution", "Répartition par Genre") as string}
+                      {
+                        t(
+                          "prefDomainDashboard.details.insertion.genderDistribution",
+                          "Répartition par Genre",
+                        ) as string
+                      }
                     </span>
                   </div>
                   <div className="flex items-center gap-1.5 h-3">
@@ -622,10 +897,14 @@ export const buildJeunesseSection6Blocks = (
                   </div>
                   <div className="flex justify-between text-[10px] text-muted-foreground font-medium">
                     <span className="flex items-center gap-1">
-                      <div className="w-2 h-2 rounded-full bg-blue-500"></div> {t("prefDomainDashboard.details.insertion.men", "Hommes") as string}: <span dir="ltr">{h}</span>
+                      <div className="w-2 h-2 rounded-full bg-blue-500"></div>{" "}
+                      {t("prefDomainDashboard.details.insertion.men", "Hommes") as string}:{" "}
+                      <span dir="ltr">{h}</span>
                     </span>
                     <span className="flex items-center gap-1">
-                      {t("prefDomainDashboard.details.insertion.women", "Femmes") as string}: <span dir="ltr">{f}</span> <div className="w-2 h-2 rounded-full bg-pink-500"></div>
+                      {t("prefDomainDashboard.details.insertion.women", "Femmes") as string}:{" "}
+                      <span dir="ltr">{f}</span>{" "}
+                      <div className="w-2 h-2 rounded-full bg-pink-500"></div>
                     </span>
                   </div>
                 </div>
@@ -635,7 +914,12 @@ export const buildJeunesseSection6Blocks = (
                 <div className="space-y-2">
                   <div className="flex justify-between items-center text-xs mb-1">
                     <span className="text-foreground font-bold">
-                      {t("prefDomainDashboard.details.insertion.spatialDistribution", "Répartition Spatiale") as string}
+                      {
+                        t(
+                          "prefDomainDashboard.details.insertion.spatialDistribution",
+                          "Répartition Spatiale",
+                        ) as string
+                      }
                     </span>
                   </div>
                   <div className="flex items-center gap-1.5 h-3">
@@ -652,10 +936,13 @@ export const buildJeunesseSection6Blocks = (
                   </div>
                   <div className="flex justify-between text-[10px] text-muted-foreground font-medium">
                     <span className="flex items-center gap-1">
-                      <Building className="h-3 w-3 text-slate-500" /> {t("prefDomainDashboard.details.insertion.urban", "Urbain") as string}: <span dir="ltr">{urb}</span>
+                      <Building className="h-3 w-3 text-slate-500" />{" "}
+                      {t("prefDomainDashboard.details.insertion.urban", "Urbain") as string}:{" "}
+                      <span dir="ltr">{urb}</span>
                     </span>
                     <span className="flex items-center gap-1">
-                      {t("prefDomainDashboard.details.insertion.rural", "Rural") as string}: <span dir="ltr">{rur}</span> <TreePine className="h-3 w-3 text-emerald-500" />
+                      {t("prefDomainDashboard.details.insertion.rural", "Rural") as string}:{" "}
+                      <span dir="ltr">{rur}</span> <TreePine className="h-3 w-3 text-emerald-500" />
                     </span>
                   </div>
                 </div>
@@ -688,7 +975,13 @@ export const buildJeunesseSection6Blocks = (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-10">
             <div className="space-y-4">
               <h4 className="h-7 text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-1.5">
-                <Activity className="h-4 w-4" /> {t("prefDomainDashboard.details.festivals.summary", "Événements & Éliminatoires") as string}
+                <Activity className="h-4 w-4" />{" "}
+                {
+                  t(
+                    "prefDomainDashboard.details.festivals.summary",
+                    "Événements & Éliminatoires",
+                  ) as string
+                }
               </h4>
               <div className="grid grid-cols-2 gap-3">
                 <div className="col-span-2 p-4 bg-purple-500/10 rounded-xl border border-purple-500/20 flex items-center justify-between">
@@ -697,7 +990,12 @@ export const buildJeunesseSection6Blocks = (
                       <Trophy className="h-5 w-5 text-purple-600" />
                     </div>
                     <span className="font-bold text-purple-700 dark:text-purple-400 text-sm">
-                      {t("prefDomainDashboard.details.festivals.organized", "Festivals Organisés") as string}
+                      {
+                        t(
+                          "prefDomainDashboard.details.festivals.organized",
+                          "Festivals Organisés",
+                        ) as string
+                      }
                     </span>
                   </div>
                   <span className="text-3xl font-black text-purple-600" dir="ltr">
@@ -706,7 +1004,13 @@ export const buildJeunesseSection6Blocks = (
                 </div>
                 <div className="p-3 bg-muted/20 rounded-xl border border-border/50 flex flex-col justify-center">
                   <span className="text-muted-foreground font-semibold text-xs flex items-center gap-1.5 mb-1">
-                    <MapPin className="h-3.5 w-3.5 text-blue-500" /> {t("prefDomainDashboard.details.festivals.provinces", "Provinces (Couverture)") as string}
+                    <MapPin className="h-3.5 w-3.5 text-blue-500" />{" "}
+                    {
+                      t(
+                        "prefDomainDashboard.details.festivals.provinces",
+                        "Provinces (Couverture)",
+                      ) as string
+                    }
                   </span>
                   <span className="text-2xl font-bold text-foreground" dir="ltr">
                     {fest.total_provinces || 0}
@@ -714,7 +1018,13 @@ export const buildJeunesseSection6Blocks = (
                 </div>
                 <div className="p-3 bg-amber-500/5 rounded-xl border border-amber-500/20 flex flex-col justify-center">
                   <span className="text-amber-600 font-semibold text-xs flex items-center gap-1.5 mb-1">
-                    <Medal className="h-3.5 w-3.5" /> {t("prefDomainDashboard.details.festivals.qualified", "Qualifiés (Finales)") as string}
+                    <Medal className="h-3.5 w-3.5" />{" "}
+                    {
+                      t(
+                        "prefDomainDashboard.details.festivals.qualified",
+                        "Qualifiés (Finales)",
+                      ) as string
+                    }
                   </span>
                   <span className="text-2xl font-bold text-foreground" dir="ltr">
                     {fest.qualifies || 0}
@@ -726,9 +1036,18 @@ export const buildJeunesseSection6Blocks = (
             <div className="space-y-4">
               <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3 flex justify-between items-end">
                 <span className="flex items-center gap-1.5">
-                  <Users className="h-4 w-4" /> {t("prefDomainDashboard.details.festivals.demographics", "Démographie des Participants") as string}
+                  <Users className="h-4 w-4" />{" "}
+                  {
+                    t(
+                      "prefDomainDashboard.details.festivals.demographics",
+                      "Démographie des Participants",
+                    ) as string
+                  }
                 </span>
-                <span className="text-[10px] bg-purple-500/10 text-purple-600 px-2 py-0.5 rounded font-bold border border-purple-500/20" dir="ltr">
+                <span
+                  className="text-[10px] bg-purple-500/10 text-purple-600 px-2 py-0.5 rounded font-bold border border-purple-500/20"
+                  dir="ltr"
+                >
                   {t("prefDomainDashboard.details.festivals.total", "Total") as string}: {totGF}
                 </span>
               </h4>
@@ -737,7 +1056,12 @@ export const buildJeunesseSection6Blocks = (
                 <div className="space-y-2">
                   <div className="flex justify-between items-center text-xs mb-1">
                     <span className="text-foreground font-bold">
-                      {t("prefDomainDashboard.details.festivals.genderDistribution", "Répartition par Genre") as string}
+                      {
+                        t(
+                          "prefDomainDashboard.details.festivals.genderDistribution",
+                          "Répartition par Genre",
+                        ) as string
+                      }
                     </span>
                   </div>
                   <div className="flex items-center gap-1.5 h-3">
@@ -754,10 +1078,14 @@ export const buildJeunesseSection6Blocks = (
                   </div>
                   <div className="flex justify-between text-[10px] text-muted-foreground font-medium">
                     <span className="flex items-center gap-1">
-                      <div className="w-2 h-2 rounded-full bg-blue-500"></div> {t("prefDomainDashboard.details.festivals.men", "Hommes") as string}: <span dir="ltr">{h}</span>
+                      <div className="w-2 h-2 rounded-full bg-blue-500"></div>{" "}
+                      {t("prefDomainDashboard.details.festivals.men", "Hommes") as string}:{" "}
+                      <span dir="ltr">{h}</span>
                     </span>
                     <span className="flex items-center gap-1">
-                      {t("prefDomainDashboard.details.festivals.women", "Femmes") as string}: <span dir="ltr">{f}</span> <div className="w-2 h-2 rounded-full bg-pink-500"></div>
+                      {t("prefDomainDashboard.details.festivals.women", "Femmes") as string}:{" "}
+                      <span dir="ltr">{f}</span>{" "}
+                      <div className="w-2 h-2 rounded-full bg-pink-500"></div>
                     </span>
                   </div>
                 </div>
@@ -767,7 +1095,12 @@ export const buildJeunesseSection6Blocks = (
                 <div className="space-y-2">
                   <div className="flex justify-between items-center text-xs mb-1">
                     <span className="text-foreground font-bold">
-                      {t("prefDomainDashboard.details.festivals.spatialDistribution", "Répartition Spatiale") as string}
+                      {
+                        t(
+                          "prefDomainDashboard.details.festivals.spatialDistribution",
+                          "Répartition Spatiale",
+                        ) as string
+                      }
                     </span>
                   </div>
                   <div className="flex items-center gap-1.5 h-3">
@@ -784,10 +1117,13 @@ export const buildJeunesseSection6Blocks = (
                   </div>
                   <div className="flex justify-between text-[10px] text-muted-foreground font-medium">
                     <span className="flex items-center gap-1">
-                      <Building className="h-3 w-3 text-slate-500" /> {t("prefDomainDashboard.details.festivals.urban", "Urbain") as string}: <span dir="ltr">{urb}</span>
+                      <Building className="h-3 w-3 text-slate-500" />{" "}
+                      {t("prefDomainDashboard.details.festivals.urban", "Urbain") as string}:{" "}
+                      <span dir="ltr">{urb}</span>
                     </span>
                     <span className="flex items-center gap-1">
-                      {t("prefDomainDashboard.details.festivals.rural", "Rural") as string}: <span dir="ltr">{rur}</span> <TreePine className="h-3 w-3 text-emerald-500" />
+                      {t("prefDomainDashboard.details.festivals.rural", "Rural") as string}:{" "}
+                      <span dir="ltr">{rur}</span> <TreePine className="h-3 w-3 text-emerald-500" />
                     </span>
                   </div>
                 </div>
@@ -801,7 +1137,10 @@ export const buildJeunesseSection6Blocks = (
     // 6. Établissements & Infrastructures
     {
       id: "etablissements",
-      title: t("prefDomainDashboard.details.etablissements.title", "Établissements & Infrastructures") as string,
+      title: t(
+        "prefDomainDashboard.details.etablissements.title",
+        "Établissements & Infrastructures",
+      ) as string,
       icon: <Building2 className="h-4 w-4 text-blue-500" />,
       content: (() => {
         const etab = dashboardData.detailed?.etablissements || {};
@@ -810,15 +1149,28 @@ export const buildJeunesseSection6Blocks = (
         const vraiOperationnels = dashboardData.kpis?.activeEstablishments || 0;
         const vraiTotalParc = vraiOperationnels + totFermes + (etab.en_cours_realisation || 0);
         const divFermes = totFermes > 0 ? totFermes : 1;
-        const translatedCauses = t("prefDomainDashboard.details.etablissements.causes", { returnObjects: true }) as Record<string, string>;
+        const translatedCauses = t("prefDomainDashboard.details.etablissements.causes", {
+          returnObjects: true,
+        }) as Record<string, string>;
 
         return (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-10">
             <div className="space-y-4">
               <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3 flex justify-between items-end">
-                <span>{t("prefDomainDashboard.details.etablissements.parcStatus", "Statut du Parc Actuel") as string}</span>
-                <span className="text-[10px] bg-blue-500/10 text-blue-600 px-2 py-0.5 rounded font-bold border border-blue-500/20" dir="ltr">
-                  {t("prefDomainDashboard.details.etablissements.total", "Total") as string}: {vraiTotalParc}
+                <span>
+                  {
+                    t(
+                      "prefDomainDashboard.details.etablissements.parcStatus",
+                      "Statut du Parc Actuel",
+                    ) as string
+                  }
+                </span>
+                <span
+                  className="text-[10px] bg-blue-500/10 text-blue-600 px-2 py-0.5 rounded font-bold border border-blue-500/20"
+                  dir="ltr"
+                >
+                  {t("prefDomainDashboard.details.etablissements.total", "Total") as string}:{" "}
+                  {vraiTotalParc}
                 </span>
               </h4>
 
@@ -829,7 +1181,12 @@ export const buildJeunesseSection6Blocks = (
                       <CheckCircle2 className="h-5 w-5 text-emerald-600" />
                     </div>
                     <span className="font-bold text-emerald-700 dark:text-emerald-400 text-sm">
-                      {t("prefDomainDashboard.details.etablissements.operational", "Opérationnels / Actifs") as string}
+                      {
+                        t(
+                          "prefDomainDashboard.details.etablissements.operational",
+                          "Opérationnels / Actifs",
+                        ) as string
+                      }
                     </span>
                   </div>
                   <span className="text-3xl font-black text-emerald-600" dir="ltr">
@@ -839,7 +1196,13 @@ export const buildJeunesseSection6Blocks = (
 
                 <div className="p-3 bg-blue-500/5 rounded-xl border border-blue-500/10 flex flex-col justify-center">
                   <span className="text-blue-600 font-semibold text-xs flex items-center gap-1.5 mb-1">
-                    <Sparkles className="h-3.5 w-3.5" /> {t("prefDomainDashboard.details.etablissements.newCreation", "Nouvelle création") as string}
+                    <Sparkles className="h-3.5 w-3.5" />{" "}
+                    {
+                      t(
+                        "prefDomainDashboard.details.etablissements.newCreation",
+                        "Nouvelle création",
+                      ) as string
+                    }
                   </span>
                   <span className="text-2xl font-bold text-foreground" dir="ltr">
                     {etab.nouvellement_creees || 0}
@@ -848,7 +1211,13 @@ export const buildJeunesseSection6Blocks = (
 
                 <div className="p-3 bg-amber-500/5 rounded-xl border border-amber-500/10 flex flex-col justify-center">
                   <span className="text-amber-600 font-semibold text-xs flex items-center gap-1.5 mb-1">
-                    <HardHat className="h-3.5 w-3.5" /> {t("prefDomainDashboard.details.etablissements.underRealization", "En réalisation") as string}
+                    <HardHat className="h-3.5 w-3.5" />{" "}
+                    {
+                      t(
+                        "prefDomainDashboard.details.etablissements.underRealization",
+                        "En réalisation",
+                      ) as string
+                    }
                   </span>
                   <span className="text-2xl font-bold text-foreground" dir="ltr">
                     {etab.en_cours_realisation || 0}
@@ -859,30 +1228,58 @@ export const buildJeunesseSection6Blocks = (
 
             <div className="space-y-4">
               <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3 flex justify-between items-end">
-                <span>{t("prefDomainDashboard.details.etablissements.fermeturesAnalysis", "Analyse des Fermetures") as string}</span>
-                <span className="text-[10px] bg-red-500/10 text-red-600 px-2 py-0.5 rounded font-bold border border-red-500/20" dir="ltr">
-                  {t("prefDomainDashboard.details.etablissements.totalFermees", "Total Fermées") as string}: {etab.fermees?.total || 0}
+                <span>
+                  {
+                    t(
+                      "prefDomainDashboard.details.etablissements.fermeturesAnalysis",
+                      "Analyse des Fermetures",
+                    ) as string
+                  }
+                </span>
+                <span
+                  className="text-[10px] bg-red-500/10 text-red-600 px-2 py-0.5 rounded font-bold border border-red-500/20"
+                  dir="ltr"
+                >
+                  {
+                    t(
+                      "prefDomainDashboard.details.etablissements.totalFermees",
+                      "Total Fermées",
+                    ) as string
+                  }
+                  : {etab.fermees?.total || 0}
                 </span>
               </h4>
 
               <div className="p-4 bg-muted/30 rounded-xl border border-border/50 space-y-4">
                 {causesArray.length === 0 ? (
                   <span className="text-sm text-muted-foreground">
-                    {t("prefDomainDashboard.details.etablissements.noFermeture", "Aucune fermeture signalée") as string}
+                    {
+                      t(
+                        "prefDomainDashboard.details.etablissements.noFermeture",
+                        "Aucune fermeture signalée",
+                      ) as string
+                    }
                   </span>
                 ) : (
                   causesArray.map((item: Section6Cause, index: number) => {
-                    const percentage = Math.round((item.count || 0) / divFermes * 100);
+                    const percentage = Math.round(((item.count || 0) / divFermes) * 100);
                     return (
                       <div key={index} className="space-y-1.5">
                         <div className="flex justify-between items-center text-xs">
                           <span className="text-foreground font-medium flex items-center gap-1.5">
-                            {(translatedCauses && translatedCauses[item.cause]) ? translatedCauses[item.cause] : item.cause}
+                            {translatedCauses && translatedCauses[item.cause]
+                              ? translatedCauses[item.cause]
+                              : item.cause}
                           </span>
-                          <span className="font-bold text-foreground" dir="ltr">{item.count}</span>
+                          <span className="font-bold text-foreground" dir="ltr">
+                            {item.count}
+                          </span>
                         </div>
                         <div className="h-1.5 w-full bg-muted-foreground/20 rounded-full overflow-hidden">
-                          <div className="h-full bg-amber-500 rounded-full" style={{ width: `${percentage}%` }}></div>
+                          <div
+                            className="h-full bg-amber-500 rounded-full"
+                            style={{ width: `${percentage}%` }}
+                          ></div>
                         </div>
                       </div>
                     );

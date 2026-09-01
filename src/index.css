@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Cairo:wght@400;500;600;700;800&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Cairo:wght@400;500;600;700;800&display=swap");
 
 @tailwind base;
 @tailwind components;
@@ -47,21 +47,21 @@
     --info-foreground: 0 0% 100%;
 
     /* KPI palette catégorielle — institutionnelle marocaine */
-    --kpi-1: 158 55% 24%;   /* vert profond */
+    --kpi-1: 158 55% 24%; /* vert profond */
     --kpi-1-soft: 158 45% 94%;
-    --kpi-2: 38 75% 50%;    /* or sable */
+    --kpi-2: 38 75% 50%; /* or sable */
     --kpi-2-soft: 38 75% 94%;
-    --kpi-3: 14 70% 50%;    /* terracotta */
+    --kpi-3: 14 70% 50%; /* terracotta */
     --kpi-3-soft: 14 70% 95%;
-    --kpi-4: 210 65% 42%;   /* bleu Atlas */
+    --kpi-4: 210 65% 42%; /* bleu Atlas */
     --kpi-4-soft: 210 60% 95%;
-    --kpi-5: 280 38% 45%;   /* prune mauresque */
+    --kpi-5: 280 38% 45%; /* prune mauresque */
     --kpi-5-soft: 280 35% 95%;
-    --kpi-6: 175 55% 35%;   /* turquoise zellige */
+    --kpi-6: 175 55% 35%; /* turquoise zellige */
     --kpi-6-soft: 175 45% 94%;
-    --kpi-7: 25 60% 42%;    /* sienne / cuir */
+    --kpi-7: 25 60% 42%; /* sienne / cuir */
     --kpi-7-soft: 25 55% 94%;
-    --kpi-8: 340 55% 48%;   /* grenat / hibiscus */
+    --kpi-8: 340 55% 48%; /* grenat / hibiscus */
     --kpi-8-soft: 340 50% 95%;
 
     /* Score scale (carte choropleth, faible → fort) */
@@ -79,7 +79,12 @@
 
     /* Gradients institutionnels */
     --gradient-primary: linear-gradient(135deg, hsl(158 55% 24%), hsl(158 50% 35%));
-    --gradient-hero: linear-gradient(135deg, hsl(158 55% 24%) 0%, hsl(158 50% 35%) 50%, hsl(38 55% 55%) 100%);
+    --gradient-hero: linear-gradient(
+      135deg,
+      hsl(158 55% 24%) 0%,
+      hsl(158 50% 35%) 50%,
+      hsl(38 55% 55%) 100%
+    );
     --gradient-soft: linear-gradient(180deg, hsl(40 30% 98%), hsl(40 20% 94%));
     --gradient-card: linear-gradient(180deg, hsl(0 0% 100%), hsl(40 25% 97%));
 
@@ -129,28 +134,45 @@
     @apply border-border;
   }
   html {
-    font-family: 'Inter', system-ui, sans-serif;
+    font-family: "Inter", system-ui, sans-serif;
   }
   html[dir="rtl"] {
-    font-family: 'Cairo', 'Inter', system-ui, sans-serif;
+    font-family: "Cairo", "Inter", system-ui, sans-serif;
   }
   body {
     @apply bg-background text-foreground antialiased;
     font-feature-settings: "ss01", "cv11";
   }
-  h1, h2, h3, h4 {
+  h1,
+  h2,
+  h3,
+  h4 {
     @apply font-bold tracking-tight;
   }
 }
 
 @layer utilities {
-  .gradient-primary { background: var(--gradient-primary); }
-  .gradient-hero { background: var(--gradient-hero); }
-  .gradient-soft { background: var(--gradient-soft); }
-  .gradient-card { background: var(--gradient-card); }
-  .shadow-elegant { box-shadow: var(--shadow-elegant); }
-  .shadow-glow { box-shadow: var(--shadow-glow); }
-  .transition-smooth { transition: var(--transition-smooth); }
+  .gradient-primary {
+    background: var(--gradient-primary);
+  }
+  .gradient-hero {
+    background: var(--gradient-hero);
+  }
+  .gradient-soft {
+    background: var(--gradient-soft);
+  }
+  .gradient-card {
+    background: var(--gradient-card);
+  }
+  .shadow-elegant {
+    box-shadow: var(--shadow-elegant);
+  }
+  .shadow-glow {
+    box-shadow: var(--shadow-glow);
+  }
+  .transition-smooth {
+    transition: var(--transition-smooth);
+  }
   .text-gradient {
     background: var(--gradient-primary);
     -webkit-background-clip: text;
@@ -162,7 +184,7 @@
 /* ===== Leaflet customisations (dark theme MJCC) ===== */
 .leaflet-container {
   background: hsl(var(--muted));
-  font-family: 'Inter', system-ui, sans-serif;
+  font-family: "Inter", system-ui, sans-serif;
 }
 .leaflet-control-zoom a {
   background: hsl(var(--card)) !important;
@@ -179,39 +201,62 @@
   font-size: 10px !important;
   padding: 2px 6px !important;
 }
-.leaflet-control-attribution a { color: hsl(var(--primary)) !important; }
+.leaflet-control-attribution a {
+  color: hsl(var(--primary)) !important;
+}
 
 /* Marker — dot + pulse */
-.leaflet-pref-icon { background: transparent; border: none; }
+.leaflet-pref-icon {
+  background: transparent;
+  border: none;
+}
 .leaflet-pref-marker {
   position: relative;
-  width: 32px; height: 32px;
-  display: flex; align-items: center; justify-content: center;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 .leaflet-pref-dot {
-  position: relative; z-index: 2;
-  width: 28px; height: 28px;
+  position: relative;
+  z-index: 2;
+  width: 28px;
+  height: 28px;
   border-radius: 9999px;
   background: var(--c);
   color: #fff;
   font-weight: 800;
   font-size: 11px;
-  display: flex; align-items: center; justify-content: center;
-  box-shadow: 0 0 0 3px hsl(var(--card)), 0 4px 10px rgba(0,0,0,0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow:
+    0 0 0 3px hsl(var(--card)),
+    0 4px 10px rgba(0, 0, 0, 0.35);
   cursor: pointer;
   transition: transform 0.15s ease;
 }
-.leaflet-pref-dot:hover { transform: scale(1.15); }
+.leaflet-pref-dot:hover {
+  transform: scale(1.15);
+}
 .leaflet-pref-pulse {
-  position: absolute; inset: 0;
+  position: absolute;
+  inset: 0;
   border-radius: 9999px;
   background: var(--c);
   opacity: 0.45;
   animation: leaflet-pulse 2.4s ease-out infinite;
 }
 @keyframes leaflet-pulse {
-  0%   { transform: scale(0.6); opacity: 0.55; }
-  100% { transform: scale(2.0); opacity: 0; }
+  0% {
+    transform: scale(0.6);
+    opacity: 0.55;
+  }
+  100% {
+    transform: scale(2);
+    opacity: 0;
+  }
 }
 
 /* Popup */
@@ -224,40 +269,79 @@
   box-shadow: 0 12px 32px -8px hsl(160 35% 12% / 0.35);
 }
 .leaflet-pref-popup-wrap .leaflet-popup-content {
-  margin: 0; width: 240px !important;
+  margin: 0;
+  width: 240px !important;
 }
-.leaflet-pref-popup-wrap .leaflet-popup-tip { background: hsl(var(--card)); }
+.leaflet-pref-popup-wrap .leaflet-popup-tip {
+  background: hsl(var(--card));
+}
 .leaflet-pref-popup-wrap a.leaflet-popup-close-button {
   color: hsl(var(--primary-foreground)) !important;
   font-size: 18px !important;
   padding: 6px 8px 0 0 !important;
 }
-.lpp-head { padding: 12px 14px; color: #fff; }
-.lpp-name { font-weight: 800; font-size: 14px; line-height: 1.2; }
-.lpp-code { font-size: 10px; opacity: 0.85; font-family: ui-monospace, monospace; margin-top: 2px; }
-.lpp-body { padding: 12px 14px; font-size: 12px; }
+.lpp-head {
+  padding: 12px 14px;
+  color: #fff;
+}
+.lpp-name {
+  font-weight: 800;
+  font-size: 14px;
+  line-height: 1.2;
+}
+.lpp-code {
+  font-size: 10px;
+  opacity: 0.85;
+  font-family: ui-monospace, monospace;
+  margin-top: 2px;
+}
+.lpp-body {
+  padding: 12px 14px;
+  font-size: 12px;
+}
 .lpp-row {
-  display: flex; justify-content: space-between; align-items: baseline;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
   padding: 4px 0;
   border-bottom: 1px dashed hsl(var(--border));
 }
-.lpp-row:last-of-type { border-bottom: 0; }
-.lpp-row span { color: hsl(var(--muted-foreground)); }
-.lpp-row strong { font-weight: 700; font-variant-numeric: tabular-nums; }
-.lpp-badge {
-  display: inline-block; margin-top: 8px;
-  padding: 3px 8px; border-radius: 6px;
-  font-size: 10px; font-weight: 700;
+.lpp-row:last-of-type {
+  border-bottom: 0;
 }
-.lpp-empty { color: hsl(var(--muted-foreground)); font-size: 12px; padding: 6px 0; }
+.lpp-row span {
+  color: hsl(var(--muted-foreground));
+}
+.lpp-row strong {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.lpp-badge {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 700;
+}
+.lpp-empty {
+  color: hsl(var(--muted-foreground));
+  font-size: 12px;
+  padding: 6px 0;
+}
 .lpp-cta {
-  margin-top: 10px; width: 100%;
+  margin-top: 10px;
+  width: 100%;
   background: hsl(var(--primary));
   color: hsl(var(--primary-foreground));
-  border: none; border-radius: 8px;
+  border: none;
+  border-radius: 8px;
   padding: 8px 10px;
-  font-size: 12px; font-weight: 700;
+  font-size: 12px;
+  font-weight: 700;
   cursor: pointer;
   transition: background 0.2s ease;
 }
-.lpp-cta:hover { background: hsl(var(--primary-glow)); }
+.lpp-cta:hover {
+  background: hsl(var(--primary-glow));
+}

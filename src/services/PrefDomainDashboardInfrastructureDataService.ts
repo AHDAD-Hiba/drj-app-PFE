@@ -2,7 +2,13 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import type { PrefDomainBenchmarkRow } from "@/components/dashboard/PrefDomainBenchmarkTable";
 import type { DashboardData } from "@/services/prefDomainDashboardTypes";
-import { averageDirectionalKpis, filterByRapportIds, loadRegionalDirectionIds, loadRegionalReportsForDirectionIds, uniqueIds } from "@/services/prefDomainRegionalBenchmark";
+import {
+  averageDirectionalKpis,
+  filterByRapportIds,
+  loadRegionalDirectionIds,
+  loadRegionalReportsForDirectionIds,
+  uniqueIds,
+} from "@/services/prefDomainRegionalBenchmark";
 
 // --- Service dédié au domaine "Infrastructures, Budget et Gouvernance" ---
 // Suit exactement le même contrat que PrefDomainDashboardDataService.ts
@@ -20,7 +26,8 @@ type InfraDepensesRow = Database["public"]["Tables"]["infra_depenses"]["Row"];
 type InfraEauElectriciteRow = Database["public"]["Tables"]["infra_eau_electricite"]["Row"];
 type InfraProjetsBtpRow = Database["public"]["Tables"]["infra_projets_btp"]["Row"];
 type InfraProjetsPartenariatRow = Database["public"]["Tables"]["infra_projets_partenariat"]["Row"];
-type InfraProjetsEnSouffranceRow = Database["public"]["Tables"]["infra_projets_en_souffrance"]["Row"];
+type InfraProjetsEnSouffranceRow =
+  Database["public"]["Tables"]["infra_projets_en_souffrance"]["Row"];
 
 // --- Types exposés (consommés par les builders Section2 / Section6 et par les Sections 3/4) ---
 
@@ -130,7 +137,7 @@ export type InfrastructureDashboardData = DashboardData<
 
 // --- Helpers d'agrégation (privés) ---
 
-const sumBy = <T,>(rows: T[], selector: (row: T) => number | null | undefined): number =>
+const sumBy = <T>(rows: T[], selector: (row: T) => number | null | undefined): number =>
   rows.reduce((acc, row) => acc + (selector(row) || 0), 0);
 
 const average = (values: number[]): number =>
@@ -198,7 +205,10 @@ const loadInfraEauElectricite = async (rapportIds: string[]) => {
 };
 
 const loadInfraProjetsBtp = async (rapportIds: string[]) => {
-  const { data } = await supabase.from("infra_projets_btp").select("*").in("rapport_id", rapportIds);
+  const { data } = await supabase
+    .from("infra_projets_btp")
+    .select("*")
+    .in("rapport_id", rapportIds);
   return (data || []) as InfraProjetsBtpRow[];
 };
 
@@ -238,7 +248,8 @@ const buildKpis = (
     totalProjetsPartenariat: partenariat.length,
     totalProjetsEnSouffrance: enSouffrance.length,
     totalArrieres:
-      sumBy(eauElectricite, (e) => e.arrieres_eau) + sumBy(eauElectricite, (e) => e.arrieres_electricite),
+      sumBy(eauElectricite, (e) => e.arrieres_eau) +
+      sumBy(eauElectricite, (e) => e.arrieres_electricite),
   };
 };
 
@@ -248,7 +259,9 @@ const buildSection3 = (
   partenariat: InfraProjetsPartenariatRow[],
 ): InfrastructureSection3Data => {
   // Carte 1 : Budget Fonctionnement vs Investissement (Payé / Reste à payer)
-  const buildStage = (type: "fonctionnement" | "investissement"): InfrastructureBudgetStageDatum => {
+  const buildStage = (
+    type: "fonctionnement" | "investissement",
+  ): InfrastructureBudgetStageDatum => {
     const rows = depenses.filter((d) => d.type_depense === type);
     const ouverts = sumBy(rows, (d) => d.credits_ouverts);
     const paye = sumBy(rows, (d) => d.credits_payes);
@@ -389,12 +402,42 @@ const buildBenchmark = (
     Number.isFinite(regionalAverages[key]) ? (regionalAverages[key] as number) : fallback;
 
   return [
-    { kpi: "Taux exécution budgétaire", monScore: kpis.budgetExecutionRate, moyenneReg: regional("budgetExecutionRate", 0), isPercentage: true },
-    { kpi: "Budget payé (DH)", monScore: depensesPayesTotal, moyenneReg: regionalBudgetPaidAverage, isPercentage: false },
-    { kpi: "Nombre projets BTP", monScore: kpis.totalProjetsBtp, moyenneReg: regional("totalProjetsBtp", 0), isPercentage: false },
-    { kpi: "Nombre projets partenariat", monScore: kpis.totalProjetsPartenariat, moyenneReg: regional("totalProjetsPartenariat", 0), isPercentage: false },
-    { kpi: "Nombre projets bloqués", monScore: kpis.totalProjetsEnSouffrance, moyenneReg: regional("totalProjetsEnSouffrance", 0), isPercentage: false },
-    { kpi: "Montant des arriérés", monScore: kpis.totalArrieres, moyenneReg: regional("totalArrieres", 0), isPercentage: false },
+    {
+      kpi: "Taux exécution budgétaire",
+      monScore: kpis.budgetExecutionRate,
+      moyenneReg: regional("budgetExecutionRate", 0),
+      isPercentage: true,
+    },
+    {
+      kpi: "Budget payé (DH)",
+      monScore: depensesPayesTotal,
+      moyenneReg: regionalBudgetPaidAverage,
+      isPercentage: false,
+    },
+    {
+      kpi: "Nombre projets BTP",
+      monScore: kpis.totalProjetsBtp,
+      moyenneReg: regional("totalProjetsBtp", 0),
+      isPercentage: false,
+    },
+    {
+      kpi: "Nombre projets partenariat",
+      monScore: kpis.totalProjetsPartenariat,
+      moyenneReg: regional("totalProjetsPartenariat", 0),
+      isPercentage: false,
+    },
+    {
+      kpi: "Nombre projets bloqués",
+      monScore: kpis.totalProjetsEnSouffrance,
+      moyenneReg: regional("totalProjetsEnSouffrance", 0),
+      isPercentage: false,
+    },
+    {
+      kpi: "Montant des arriérés",
+      monScore: kpis.totalArrieres,
+      moyenneReg: regional("totalArrieres", 0),
+      isPercentage: false,
+    },
   ];
 };
 
@@ -452,7 +495,9 @@ const buildDetailed = (
     partenariat: {
       total: partenariat.length,
       avancementMoyen: average(
-        partenariat.map((p) => p.taux_avancement).filter((v): v is number => v !== null && v !== undefined),
+        partenariat
+          .map((p) => p.taux_avancement)
+          .filter((v): v is number => v !== null && v !== undefined),
       ),
       parPhase: Array.from(phaseCounts.entries()).map(([phase, count]) => ({ phase, count })),
     },
@@ -464,7 +509,9 @@ const buildDetailed = (
       montantPayeTotal,
       tauxPaiement: ratioPct(montantPayeTotal, coutTotal),
       avancementMoyen: average(
-        btp.map((b) => b.taux_avancement_travaux).filter((v): v is number => v !== null && v !== undefined),
+        btp
+          .map((b) => b.taux_avancement_travaux)
+          .filter((v): v is number => v !== null && v !== undefined),
       ),
     },
     enSouffrance: {
@@ -517,7 +564,9 @@ export const loadInfrastructureDashboard = async (
 
   const rapportIds = rapports.map((r) => r.id);
   const localRapportIdSet = new Set(rapportIds);
-  const rapportTrimestreById = new Map<string, string | null>(rapports.map((r) => [r.id, r.trimestre]));
+  const rapportTrimestreById = new Map<string, string | null>(
+    rapports.map((r) => [r.id, r.trimestre]),
+  );
   const latestRapport = rapports[0]; // déjà trié par trimestre décroissant
 
   const regionalDirectionIds = await regionalDirectionIdsPromise;
@@ -532,14 +581,15 @@ export const loadInfrastructureDashboard = async (
   });
 
   const fetchIds = uniqueIds([...rapportIds, ...regionalRapportIds]);
-  const [status, depensesAll, eauElectriciteAll, btpAll, partenariatAll, enSouffranceAll] = await Promise.all([
-    loadStatus(latestRapport.id, domaineId),
-    loadInfraDepenses(fetchIds),
-    loadInfraEauElectricite(fetchIds),
-    loadInfraProjetsBtp(fetchIds),
-    loadInfraProjetsPartenariat(fetchIds),
-    loadInfraProjetsEnSouffrance(fetchIds),
-  ]);
+  const [status, depensesAll, eauElectriciteAll, btpAll, partenariatAll, enSouffranceAll] =
+    await Promise.all([
+      loadStatus(latestRapport.id, domaineId),
+      loadInfraDepenses(fetchIds),
+      loadInfraEauElectricite(fetchIds),
+      loadInfraProjetsBtp(fetchIds),
+      loadInfraProjetsPartenariat(fetchIds),
+      loadInfraProjetsEnSouffrance(fetchIds),
+    ]);
   const depenses = filterByRapportIds(depensesAll, localRapportIdSet);
   const eauElectricite = filterByRapportIds(eauElectriciteAll, localRapportIdSet);
   const btp = filterByRapportIds(btpAll, localRapportIdSet);
@@ -567,29 +617,34 @@ export const loadInfrastructureDashboard = async (
       .filter((value): value is InfrastructureKpisRaw => value !== null),
   ) as Partial<Record<keyof InfrastructureKpisRaw, number>>;
 
-  const regionalBudgetPaidAverage = averageDirectionalKpis(
-    regionalDirectionIds
-      .map((regionalDirectionId) => {
-        const ids = regionalRapportIdsByDirection.get(regionalDirectionId);
-        if (!ids || ids.size === 0) return null;
-        return {
-          budgetPaid: sumBy(
-            regionalDepenses.filter((row) => row.rapport_id && ids.has(row.rapport_id)),
-            (row) => row.credits_payes,
-          ),
-        };
-      })
-      .filter((value): value is { budgetPaid: number } => value !== null),
-  ).budgetPaid ?? 0;
+  const regionalBudgetPaidAverage =
+    averageDirectionalKpis(
+      regionalDirectionIds
+        .map((regionalDirectionId) => {
+          const ids = regionalRapportIdsByDirection.get(regionalDirectionId);
+          if (!ids || ids.size === 0) return null;
+          return {
+            budgetPaid: sumBy(
+              regionalDepenses.filter((row) => row.rapport_id && ids.has(row.rapport_id)),
+              (row) => row.credits_payes,
+            ),
+          };
+        })
+        .filter((value): value is { budgetPaid: number } => value !== null),
+    ).budgetPaid ?? 0;
 
   const kpis = buildKpis(depenses, eauElectricite, btp, partenariat, enSouffrance);
   // زدنا هاد الجوج سطورا باش نحددو الحالة والنسبة بحال في Jeunesse
-  const workflowStatus = status?.statut || (latestRapport.statut_rapport === "VALIDE"
-    ? "TERMINE"
-    : latestRapport.statut_rapport === "NON_COMMENCE"
-      ? "NON_COMMENCE"
-      : "EN_COURS");
-  const progressPct = status?.progression_pourcentage ?? (workflowStatus === "TERMINE" ? 100 : workflowStatus === "EN_COURS" ? 50 : 0);
+  const workflowStatus =
+    status?.statut ||
+    (latestRapport.statut_rapport === "VALIDE"
+      ? "TERMINE"
+      : latestRapport.statut_rapport === "NON_COMMENCE"
+        ? "NON_COMMENCE"
+        : "EN_COURS");
+  const progressPct =
+    status?.progression_pourcentage ??
+    (workflowStatus === "TERMINE" ? 100 : workflowStatus === "EN_COURS" ? 50 : 0);
 
   return {
     status: {
@@ -602,7 +657,12 @@ export const loadInfrastructureDashboard = async (
     kpis,
     section3: buildSection3(depenses, btp, partenariat),
     evolution: buildEvolution(rapportTrimestreById, depenses, eauElectricite, btp, partenariat),
-    benchmark: buildBenchmark(kpis, sumBy(depenses, (d) => d.credits_payes), regionalAverage, regionalBudgetPaidAverage),
+    benchmark: buildBenchmark(
+      kpis,
+      sumBy(depenses, (d) => d.credits_payes),
+      regionalAverage,
+      regionalBudgetPaidAverage,
+    ),
     detailed: buildDetailed(depenses, eauElectricite, btp, partenariat, enSouffrance),
   };
 };

@@ -18,10 +18,13 @@ const requiredKeys = [
 ];
 
 const get = (obj: Record<string, any>, path: string) =>
-  path.split(".").reduce<Record<string, any> | string | number | undefined>((acc, key) => {
-    if (acc && typeof acc === "object") return (acc as Record<string, any>)[key];
-    return undefined;
-  }, obj as Record<string, any>);
+  path.split(".").reduce<Record<string, any> | string | number | undefined>(
+    (acc, key) => {
+      if (acc && typeof acc === "object") return (acc as Record<string, any>)[key];
+      return undefined;
+    },
+    obj as Record<string, any>,
+  );
 
 describe("regional dashboard i18n coverage", () => {
   it("keeps the required regional dashboard keys in both languages", () => {

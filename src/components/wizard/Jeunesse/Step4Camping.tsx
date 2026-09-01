@@ -1,30 +1,26 @@
-import { memo } from 'react';
-import { useTranslation } from 'react-i18next';
-import { Card } from '@/components/ui/card';
-import { Tent } from 'lucide-react';
+import { memo } from "react";
+import { useTranslation } from "react-i18next";
+import { Card } from "@/components/ui/card";
+import { Tent } from "lucide-react";
 
 // NOUVEAUX IMPORTS POUR NOTRE CONTRAT ET LES HOOKS INTERNES
-import { StepComponentProps } from '@/config/wizard.types';
-import { useCampingEntries } from '@/hooks/Jeunesse/useCampingEntries';
-import { useAssociationValues } from '@/hooks/Jeunesse/useAssociationValues';
-import { useMouvementsAssociations } from '@/hooks/Jeunesse/useMouvementsAssociations';
-import { useFormationEntries } from '@/hooks/Jeunesse/useFormationEntries';
+import { StepComponentProps } from "@/config/wizard.types";
+import { useCampingEntries } from "@/hooks/Jeunesse/useCampingEntries";
+import { useAssociationValues } from "@/hooks/Jeunesse/useAssociationValues";
+import { useMouvementsAssociations } from "@/hooks/Jeunesse/useMouvementsAssociations";
+import { useFormationEntries } from "@/hooks/Jeunesse/useFormationEntries";
 
-import { CampParticipantsSection } from '@/components/wizard/Jeunesse/step4/CampParticipantsSection';
-import { AssociationsSection } from '@/components/wizard/Jeunesse/step4/AssociationsSection';
-import { MouvementsSection } from '@/components/wizard/Jeunesse/step4/MouvementsSection';
-import { FormationsSection } from '@/components/wizard/Jeunesse/step4/FormationsSection';
+import { CampParticipantsSection } from "@/components/wizard/Jeunesse/step4/CampParticipantsSection";
+import { AssociationsSection } from "@/components/wizard/Jeunesse/step4/AssociationsSection";
+import { MouvementsSection } from "@/components/wizard/Jeunesse/step4/MouvementsSection";
+import { FormationsSection } from "@/components/wizard/Jeunesse/step4/FormationsSection";
 
 /**
  * Step4Camping - Orchestrateur autonome pour la section camping
  */
-export const Step4Camping = memo(({
-  rapportId,
-  disabled,
-  onActivity,
-}: StepComponentProps) => {
+export const Step4Camping = memo(({ rapportId, disabled, onActivity }: StepComponentProps) => {
   const { i18n } = useTranslation();
-  const isAr = i18n.language === 'ar';
+  const isAr = i18n.language === "ar";
 
   // 1. Centralisation et chargement de TOUS les hooks métiers requis pour cette étape
   const camps = useCampingEntries(rapportId);
@@ -32,8 +28,8 @@ export const Step4Camping = memo(({
   const mouvements = useMouvementsAssociations(rapportId);
   const formations = useFormationEntries(rapportId);
 
-// 2. Wrappers d'action corrigés pour correspondre exactement aux signatures des sous-sections
-const handleCampAdd = async (c: any) => {
+  // 2. Wrappers d'action corrigés pour correspondre exactement aux signatures des sous-sections
+  const handleCampAdd = async (c: any) => {
     if (onActivity) await onActivity();
     await camps.add(c); // On attend la fin, mais on ne retourne pas le boolean
   };
@@ -50,7 +46,7 @@ const handleCampAdd = async (c: any) => {
   const handleRemoveEncadrement = async (campLocalId: string, encadrementLocalId: string) => {
     if (onActivity) await onActivity();
     await camps.removeEncadrement(campLocalId, encadrementLocalId); // On attend la fin, mais on ne retourne pas le boolean
-  }
+  };
 
   const handleMouvementAdd = async (m: any) => {
     if (onActivity) await onActivity();
@@ -88,10 +84,10 @@ const handleCampAdd = async (c: any) => {
         <div>
           <h2 className="text-lg font-bold flex items-center gap-2">
             <Tent className="h-5 w-5 text-primary" />
-            {isAr ? 'البرنامج الوطني للتخييم' : 'Programme National de Camping'}
+            {isAr ? "البرنامج الوطني للتخييم" : "Programme National de Camping"}
           </h2>
           <p className="text-sm text-muted-foreground">
-            {isAr ? 'الجمعيات، التأطير والتكوينات' : 'Associations, encadrement et formations'}
+            {isAr ? "الجمعيات، التأطير والتكوينات" : "Associations, encadrement et formations"}
           </p>
         </div>
 
@@ -137,4 +133,4 @@ const handleCampAdd = async (c: any) => {
   );
 });
 
-Step4Camping.displayName = 'Step4Camping';
+Step4Camping.displayName = "Step4Camping";

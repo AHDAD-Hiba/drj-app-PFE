@@ -1,7 +1,7 @@
-import { ReactNode } from 'react';
-import { Navigate } from 'react-router-dom';
-import { useAuth, AppRole } from '@/hooks/common/useAuth';
-import { Loader2, ShieldAlert } from 'lucide-react';
+import { ReactNode } from "react";
+import { Navigate } from "react-router-dom";
+import { useAuth, AppRole } from "@/hooks/common/useAuth";
+import { Loader2, ShieldAlert } from "lucide-react";
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -36,9 +36,11 @@ export const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) 
           <ShieldAlert className="h-16 w-16 text-amber-500 mx-auto mb-4" />
           <h2 className="text-2xl font-bold text-gray-900 mb-2">Accès Non Autorisé</h2>
           <p className="text-gray-600 mb-6">
-            Votre rôle (<strong className="capitalize">{userRole?.replace('_', ' ') ?? 'non défini'}</strong>) ne vous permet pas d'accéder à cette page.
+            Votre rôle (
+            <strong className="capitalize">{userRole?.replace("_", " ") ?? "non défini"}</strong>)
+            ne vous permet pas d'accéder à cette page.
           </p>
-          <a 
+          <a
             href={roleRedirectPath}
             className="inline-flex items-center justify-center px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors w-full font-medium"
           >

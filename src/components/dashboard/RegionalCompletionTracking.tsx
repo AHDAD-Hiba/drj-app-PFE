@@ -25,9 +25,12 @@ export function RegionalCompletionTracking({
 }: RegionalCompletionTrackingProps) {
   const notStartedCount = totalDirections - completedCount - inProgressCount;
 
-  const completedPct = totalDirections > 0 ? Math.round((completedCount / totalDirections) * 100) : 0;
-  const inProgressPct = totalDirections > 0 ? Math.round((inProgressCount / totalDirections) * 100) : 0;
-  const notStartedPct = totalDirections > 0 ? Math.round((notStartedCount / totalDirections) * 100) : 0;
+  const completedPct =
+    totalDirections > 0 ? Math.round((completedCount / totalDirections) * 100) : 0;
+  const inProgressPct =
+    totalDirections > 0 ? Math.round((inProgressCount / totalDirections) * 100) : 0;
+  const notStartedPct =
+    totalDirections > 0 ? Math.round((notStartedCount / totalDirections) * 100) : 0;
 
   const statusCards = [
     {
@@ -77,10 +80,7 @@ export function RegionalCompletionTracking({
             const Icon = item.icon;
 
             return (
-              <div
-                key={item.key}
-                className={`rounded-lg p-3 ${item.bg} ring-1 ${item.ring}`}
-              >
+              <div key={item.key} className={`rounded-lg p-3 ${item.bg} ring-1 ${item.ring}`}>
                 <div className={`flex items-center gap-1.5 ${item.text}`}>
                   <Icon className="h-3.5 w-3.5" />
                   <span className="text-[11px] font-semibold">{item.label}</span>

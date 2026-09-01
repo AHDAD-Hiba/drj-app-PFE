@@ -1,5 +1,5 @@
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 export interface AfTypeActivite {
   id: string;
@@ -8,13 +8,18 @@ export interface AfTypeActivite {
 }
 
 export function useAfTypesActivite() {
-  const { data: items = [], isLoading, error, refetch } = useQuery({
-    queryKey: ['ref_af_types_activite'],
+  const {
+    data: items = [],
+    isLoading,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: ["ref_af_types_activite"],
     queryFn: async () => {
       const { data, error: err } = await supabase
-        .from('af_types_activite')
-        .select('*')
-        .order('nom_ar');
+        .from("af_types_activite")
+        .select("*")
+        .order("nom_ar");
 
       if (err) throw err;
       return (data as AfTypeActivite[]) || [];

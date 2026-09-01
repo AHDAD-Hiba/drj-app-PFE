@@ -79,7 +79,10 @@ export const buildAffairesFemininesKpiItems = (
       icon: <Users className="h-5 w-5" />,
       value: kpis.totalBeneficiairesAgr ?? 0,
       format: "number",
-      label: t("prefDomainDashboard.affairesFeminines.kpis.totalBeneficiairesAgr", "Bénéficiaires AGR"),
+      label: t(
+        "prefDomainDashboard.affairesFeminines.kpis.totalBeneficiairesAgr",
+        "Bénéficiaires AGR",
+      ),
       color: {
         accentBarClassName: "bg-[hsl(var(--kpi-4))]",
         iconWrapperClassName: "bg-[hsl(var(--kpi-4-soft))] text-[hsl(var(--kpi-4))]",

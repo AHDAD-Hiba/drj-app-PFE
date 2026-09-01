@@ -1,17 +1,17 @@
-import { useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/hooks/common/useAuth';
-import { AppLayout } from '@/components/AppLayout';
-import { LeafletMap } from '@/components/LeafletMap';
-import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { MapPin, TrendingUp, Award } from 'lucide-react';
-import type { Database } from '@/integrations/supabase/types';
-import { loadGlobalRegionalScores } from '@/services/regional/globalRegionalScoreService';
+import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/common/useAuth";
+import { AppLayout } from "@/components/AppLayout";
+import { LeafletMap } from "@/components/LeafletMap";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { MapPin, TrendingUp, Award } from "lucide-react";
+import type { Database } from "@/integrations/supabase/types";
+import { loadGlobalRegionalScores } from "@/services/regional/globalRegionalScoreService";
 
-type Direction = Database['public']['Tables']['directions']['Row'];
-type Rapport = Database['public']['Tables']['rapports']['Row'];
+type Direction = Database["public"]["Tables"]["directions"]["Row"];
+type Rapport = Database["public"]["Tables"]["rapports"]["Row"];
 
 interface DirectionData {
   direction: Direction;
@@ -28,38 +28,35 @@ const RegionMapPage = () => {
   const [year, setYear] = useState<number>(new Date().getFullYear());
   const lang = i18n.language;
 
-  const getName = (dir: Direction) => (lang === 'ar' ? dir.nom_ar : dir.nom_fr);
+  const getName = (dir: Direction) => (lang === "ar" ? dir.nom_ar : dir.nom_fr);
 
   useEffect(() => {
     setLoading(true);
-  
-    const rapQuery = supabase.from('rapports').select('*').eq('annee', year);
-  
+
+    const rapQuery = supabase.from("rapports").select("*").eq("annee", year);
+
     Promise.all([
-      supabase.from('directions').select('*'),
+      supabase.from("directions").select("*"),
       rapQuery,
       loadGlobalRegionalScores(year),
     ]).then(([dirs, raps, scores]) => {
-  
       const rapMap = new Map<string, Rapport>(
-        (raps.data ?? []).map((r) => [r.direction_id ?? '', r]),
+        (raps.data ?? []).map((r) => [r.direction_id ?? "", r]),
       );
-  
-      const scoreMap = new Map(
-        scores.map((scoreRow) => [scoreRow.directionId, scoreRow]),
-      );
-  
+
+      const scoreMap = new Map(scores.map((scoreRow) => [scoreRow.directionId, scoreRow]));
+
       const result: DirectionData[] = (dirs.data ?? []).map((dir) => {
         const rapport = rapMap.get(dir.id) ?? null;
         const scoreData = scoreMap.get(dir.id);
-  
+
         return {
           direction: dir,
           rapport,
           score: scoreData?.score ?? 0,
         };
       });
-  
+
       setItems(result);
       setLoading(false);
     });
@@ -85,11 +82,11 @@ const RegionMapPage = () => {
   /* Adapter pour LeafletMap */
   const directionsForMap = items.map((i) => i.direction);
   const submissionsForMap = rankedItems
-  .filter((i) => i.rapport)
-  .map((i) => ({
-    ...(i.rapport as Rapport),
-    global_score: i.score,
-  }));
+    .filter((i) => i.rapport)
+    .map((i) => ({
+      ...(i.rapport as Rapport),
+      global_score: i.score,
+    }));
 
   const totalsMap = new Map<string, number>(items.map((i) => [i.direction.id, i.score]));
 
@@ -101,10 +98,10 @@ const RegionMapPage = () => {
           <div className="relative z-10">
             <p className="text-xs font-semibold uppercase tracking-wider opacity-80 flex items-center gap-2">
               <MapPin className="h-3.5 w-3.5" />
-              {t('map.eyebrow')}
+              {t("map.eyebrow")}
             </p>
-            <h1 className="text-2xl sm:text-3xl font-extrabold mt-2">{t('map.title')}</h1>
-            <p className="text-sm sm:text-base opacity-90 mt-1 max-w-2xl">{t('map.subtitle')}</p>
+            <h1 className="text-2xl sm:text-3xl font-extrabold mt-2">{t("map.title")}</h1>
+            <p className="text-sm sm:text-base opacity-90 mt-1 max-w-2xl">{t("map.subtitle")}</p>
           </div>
           <div className="absolute -top-12 -end-12 w-48 h-48 rounded-full bg-secondary/30 blur-3xl" />
           <div className="absolute -bottom-8 -start-8 w-40 h-40 rounded-full bg-primary-glow/40 blur-2xl" />
@@ -115,35 +112,35 @@ const RegionMapPage = () => {
           <Card className="p-4 sm:p-5 border-border/60">
             <div
               className="h-10 w-10 rounded-xl flex items-center justify-center mb-3"
-              style={{ background: 'hsl(var(--kpi-1-soft))', color: 'hsl(var(--kpi-1))' }}
+              style={{ background: "hsl(var(--kpi-1-soft))", color: "hsl(var(--kpi-1))" }}
             >
               <MapPin className="h-5 w-5" />
             </div>
             <div className="text-2xl font-extrabold tracking-tight">13</div>
-            <div className="text-xs text-muted-foreground mt-1">{t('map.prefectures')}</div>
+            <div className="text-xs text-muted-foreground mt-1">{t("map.prefectures")}</div>
           </Card>
           <Card className="p-4 sm:p-5 border-border/60">
             <div
               className="h-10 w-10 rounded-xl flex items-center justify-center mb-3"
-              style={{ background: 'hsl(var(--kpi-2-soft))', color: 'hsl(var(--kpi-2))' }}
+              style={{ background: "hsl(var(--kpi-2-soft))", color: "hsl(var(--kpi-2))" }}
             >
               <TrendingUp className="h-5 w-5" />
             </div>
             <div className="text-2xl font-extrabold tracking-tight tabular-nums">{avgScore}%</div>
-            <div className="text-xs text-muted-foreground mt-1">{t('map.avgScore')}</div>
+            <div className="text-xs text-muted-foreground mt-1">{t("map.avgScore")}</div>
           </Card>
           <Card className="p-4 sm:p-5 border-border/60 col-span-2 sm:col-span-1">
             <div
               className="h-10 w-10 rounded-xl flex items-center justify-center mb-3"
-              style={{ background: 'hsl(var(--kpi-3-soft))', color: 'hsl(var(--kpi-3))' }}
+              style={{ background: "hsl(var(--kpi-3-soft))", color: "hsl(var(--kpi-3))" }}
             >
               <Award className="h-5 w-5" />
             </div>
             <div className="text-base font-extrabold tracking-tight truncate">
-              {top ? getName(top.direction) : '—'}
+              {top ? getName(top.direction) : "—"}
             </div>
             <div className="text-xs text-muted-foreground mt-1">
-              {t('map.topPerformer')} {top ? `· ${formatScore(top.score)}%` : ''}
+              {t("map.topPerformer")} {top ? `· ${formatScore(top.score)}%` : ""}
             </div>
           </Card>
         </div>
@@ -152,8 +149,8 @@ const RegionMapPage = () => {
         <Card className="overflow-hidden">
           <div className="p-5 sm:p-6 border-b border-border flex items-center justify-between gap-4 flex-wrap">
             <div>
-              <h2 className="font-bold text-foreground">{t('map.choropleth')}</h2>
-              <p className="text-xs text-muted-foreground mt-1">{t('map.choroplethHint')}</p>
+              <h2 className="font-bold text-foreground">{t("map.choropleth")}</h2>
+              <p className="text-xs text-muted-foreground mt-1">{t("map.choroplethHint")}</p>
             </div>
             <div className="flex items-center gap-2">
               <input
@@ -163,10 +160,10 @@ const RegionMapPage = () => {
                 min={2020}
                 max={2099}
                 className="h-9 w-24 rounded-md border border-input bg-background px-3 text-sm"
-                aria-label={t('common.year')}
+                aria-label={t("common.year")}
               />
               <Badge variant="outline" className="text-xs flex-shrink-0">
-                {t('common.year')} {year}
+                {t("common.year")} {year}
               </Badge>
             </div>
           </div>
@@ -179,8 +176,6 @@ const RegionMapPage = () => {
             />
           </div>
         </Card>
-
-        
       </div>
     </AppLayout>
   );

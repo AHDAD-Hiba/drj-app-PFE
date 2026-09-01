@@ -1,5 +1,5 @@
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 export interface Programme {
   id: string;
@@ -8,12 +8,17 @@ export interface Programme {
 }
 
 export function useProgrammesCamping() {
-  const { data: items = [], isLoading, error, refetch } = useQuery({
-    queryKey: ['ref_programmes_camping'],
+  const {
+    data: items = [],
+    isLoading,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: ["ref_programmes_camping"],
     queryFn: async () => {
       const { data, error: err } = await supabase
-        .from('programmes_camping')
-        .select('id, nom, nom_ar');
+        .from("programmes_camping")
+        .select("id, nom, nom_ar");
 
       if (err) throw err;
       return (data as Programme[]) || [];

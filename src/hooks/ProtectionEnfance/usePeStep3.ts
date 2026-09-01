@@ -1,11 +1,11 @@
-import { useEntityEntries, BaseEntry } from '../common/useEntityEntries';
+import { useEntityEntries, BaseEntry } from "../common/useEntityEntries";
 
 // ============================================================================
 // 1. PARTENARIATS (pe_partenariats)
 // ============================================================================
 export interface PePartenariatEntry extends BaseEntry {
   etablissement_id: string | null;
-  type_partenariat: 'insertion_pro' | 'protection_enfance';
+  type_partenariat: "insertion_pro" | "protection_enfance";
   nombre_conventions: number;
   sujet: string;
   partenaires: string;
@@ -18,13 +18,13 @@ const buildPartenariatPayload = (entry: PePartenariatEntry, rId: string) => ({
   ...(entry.id ? { id: entry.id } : {}),
   rapport_id: rId,
   etablissement_id: entry.etablissement_id || null,
-  type_partenariat: entry.type_partenariat || 'insertion_pro',
+  type_partenariat: entry.type_partenariat || "insertion_pro",
   nombre_conventions: Number(entry.nombre_conventions) || 1,
-  sujet: entry.sujet?.trim() || '',
-  partenaires: entry.partenaires?.trim() || '',
+  sujet: entry.sujet?.trim() || "",
+  partenaires: entry.partenaires?.trim() || "",
   nombre_projets_executes: Number(entry.nombre_projets_executes) || 0,
-  activites_realisees: entry.activites_realisees?.trim() || '',
-  observations: entry.observations?.trim() || '',
+  activites_realisees: entry.activites_realisees?.trim() || "",
+  observations: entry.observations?.trim() || "",
 });
 
 const mapPartenariatRow = (row: any, local_id: string): PePartenariatEntry => ({
@@ -33,17 +33,17 @@ const mapPartenariatRow = (row: any, local_id: string): PePartenariatEntry => ({
   etablissement_id: row.etablissement_id || null,
   type_partenariat: row.type_partenariat,
   nombre_conventions: Number(row.nombre_conventions) || 1,
-  sujet: row.sujet || '',
-  partenaires: row.partenaires || '',
+  sujet: row.sujet || "",
+  partenaires: row.partenaires || "",
   nombre_projets_executes: Number(row.nombre_projets_executes) || 0,
-  activites_realisees: row.activites_realisees || '',
-  observations: row.observations || '',
+  activites_realisees: row.activites_realisees || "",
+  observations: row.observations || "",
 });
 
 export function usePePartenariats(rapportId: string | null, options?: { enabled?: boolean }) {
   return useEntityEntries<PePartenariatEntry>({
     rapportId,
-    tableName: 'pe_partenariats',
+    tableName: "pe_partenariats",
     buildPayload: buildPartenariatPayload,
     mapRowToEntry: mapPartenariatRow,
     // 🛡️ Garde-fou : Ne tente la sauvegarde BDD que si le sujet ou les partenaires sont renseignés
@@ -57,7 +57,7 @@ export function usePePartenariats(rapportId: string | null, options?: { enabled?
 // ============================================================================
 export interface PeFormationEntry extends BaseEntry {
   etablissement_id: string | null;
-  cible: 'cadres_centres' | 'delegues_ls' | 'admin_pedago_reinsertion';
+  cible: "cadres_centres" | "delegues_ls" | "admin_pedago_reinsertion";
   theme_formation: string;
   nombre_sessions: number;
   nombre_beneficiaires: number;
@@ -69,10 +69,10 @@ const buildFormationPayload = (entry: PeFormationEntry, rId: string) => ({
   rapport_id: rId,
   etablissement_id: entry.etablissement_id || null,
   cible: entry.cible,
-  theme_formation: entry.theme_formation?.trim() || '',
+  theme_formation: entry.theme_formation?.trim() || "",
   nombre_sessions: Number(entry.nombre_sessions) || 1,
   nombre_beneficiaires: Number(entry.nombre_beneficiaires) || 0,
-  partenaires: entry.partenaires?.trim() || '',
+  partenaires: entry.partenaires?.trim() || "",
 });
 
 const mapFormationRow = (row: any, local_id: string): PeFormationEntry => ({
@@ -80,21 +80,22 @@ const mapFormationRow = (row: any, local_id: string): PeFormationEntry => ({
   id: row.id,
   etablissement_id: row.etablissement_id || null,
   cible: row.cible,
-  theme_formation: row.theme_formation || '',
+  theme_formation: row.theme_formation || "",
   nombre_sessions: Number(row.nombre_sessions) || 1,
   nombre_beneficiaires: Number(row.nombre_beneficiaires) || 0,
-  partenaires: row.partenaires || '',
+  partenaires: row.partenaires || "",
 });
 
 export function usePeFormations(rapportId: string | null, options?: { enabled?: boolean }) {
   return useEntityEntries<PeFormationEntry>({
     rapportId,
-    tableName: 'pe_formation_personnel',
+    tableName: "pe_formation_personnel",
     buildPayload: buildFormationPayload,
     mapRowToEntry: mapFormationRow,
     enabled: options?.enabled ?? true,
     // 🛡️ Garde-fou : Nécessite un thème de formation renseigné ou un nombre de bénéficiaires
-    validateBeforeSave: (entry) => Boolean(entry.theme_formation?.trim() || entry.nombre_beneficiaires > 0),
+    validateBeforeSave: (entry) =>
+      Boolean(entry.theme_formation?.trim() || entry.nombre_beneficiaires > 0),
   });
 }
 
@@ -114,22 +115,22 @@ const buildAmenagementPayload = (entry: PeAmenagementEntry, rId: string) => ({
   etablissement_id: entry.etablissement_id,
   a_ete_rehabilite: Boolean(entry.a_ete_rehabilite),
   a_ete_equipe: Boolean(entry.a_ete_equipe),
-  observations: entry.observations?.trim() || '',
+  observations: entry.observations?.trim() || "",
 });
 
 const mapAmenagementRow = (row: any, local_id: string): PeAmenagementEntry => ({
   local_id,
   id: row.id,
-  etablissement_id: row.etablissement_id || '',
+  etablissement_id: row.etablissement_id || "",
   a_ete_rehabilite: Boolean(row.a_ete_rehabilite),
   a_ete_equipe: Boolean(row.a_ete_equipe),
-  observations: row.observations || '',
+  observations: row.observations || "",
 });
 
 export function usePeAmenagements(rapportId: string | null, options?: { enabled?: boolean }) {
   return useEntityEntries<PeAmenagementEntry>({
     rapportId,
-    tableName: 'pe_amenagement_equipement',
+    tableName: "pe_amenagement_equipement",
     buildPayload: buildAmenagementPayload,
     mapRowToEntry: mapAmenagementRow,
     enabled: options?.enabled ?? true,
@@ -155,34 +156,35 @@ const buildVisitePayload = (entry: PeVisiteEntry, rId: string) => ({
   ...(entry.id ? { id: entry.id } : {}),
   rapport_id: rId,
   etablissement_id: entry.etablissement_id,
-  entite_visiteuse: entry.entite_visiteuse?.trim() || '',
+  entite_visiteuse: entry.entite_visiteuse?.trim() || "",
   date_visite: entry.date_visite || null,
-  type_visite: entry.type_visite?.trim() || '',
-  objectifs: entry.objectifs?.trim() || '',
+  type_visite: entry.type_visite?.trim() || "",
+  objectifs: entry.objectifs?.trim() || "",
   nombre_visiteurs: Number(entry.nombre_visiteurs) || 1,
-  observations: entry.observations?.trim() || '',
+  observations: entry.observations?.trim() || "",
 });
 
 const mapVisiteRow = (row: any, local_id: string): PeVisiteEntry => ({
   local_id,
   id: row.id,
-  etablissement_id: row.etablissement_id || '',
-  entite_visiteuse: row.entite_visiteuse || '',
-  date_visite: row.date_visite ? row.date_visite.split('T')[0] : '',
-  type_visite: row.type_visite || '',
-  objectifs: row.objectifs || '',
+  etablissement_id: row.etablissement_id || "",
+  entite_visiteuse: row.entite_visiteuse || "",
+  date_visite: row.date_visite ? row.date_visite.split("T")[0] : "",
+  type_visite: row.type_visite || "",
+  objectifs: row.objectifs || "",
   nombre_visiteurs: Number(row.nombre_visiteurs) || 1,
-  observations: row.observations || '',
+  observations: row.observations || "",
 });
 
 export function usePeVisites(rapportId: string | null, options?: { enabled?: boolean }) {
   return useEntityEntries<PeVisiteEntry>({
     rapportId,
-    tableName: 'pe_visites_officielles',
+    tableName: "pe_visites_officielles",
     buildPayload: buildVisitePayload,
     mapRowToEntry: mapVisiteRow,
     enabled: options?.enabled ?? true,
     // 🛡️ Garde-fou : S'assure que l'entité visiteuse est renseignée avant de pousser vers Supabase
-    validateBeforeSave: (entry) => Boolean(entry.etablissement_id && entry.entite_visiteuse?.trim()),
+    validateBeforeSave: (entry) =>
+      Boolean(entry.etablissement_id && entry.entite_visiteuse?.trim()),
   });
 }

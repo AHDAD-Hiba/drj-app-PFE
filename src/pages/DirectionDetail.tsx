@@ -57,19 +57,23 @@ const DirectionDetail = () => {
   const [direction, setDirection] = useState<Direction | null>(null);
   const [directionLoading, setDirectionLoading] = useState(true);
 
-  const { dashboardData, isInitialLoading: dashboardLoading, activeDomainLabel, contentDomain } = usePrefDomainDashboardData(
-    id,
-    selectedYear,
-    selectedDomain,
-    { lang },
-  );
+  const {
+    dashboardData,
+    isInitialLoading: dashboardLoading,
+    activeDomainLabel,
+    contentDomain,
+  } = usePrefDomainDashboardData(id, selectedYear, selectedDomain, { lang });
 
   useEffect(() => {
     if (!id) return;
 
     (async () => {
       setDirectionLoading(true);
-      const { data: dir } = await supabase.from("directions").select("*").eq("id", id).maybeSingle();
+      const { data: dir } = await supabase
+        .from("directions")
+        .select("*")
+        .eq("id", id)
+        .maybeSingle();
       setDirection(dir);
       setDirectionLoading(false);
     })();
@@ -92,7 +96,10 @@ const DirectionDetail = () => {
     return (
       <AppLayout>
         <div className="p-12 text-center animate-pulse text-muted-foreground">
-          {t("RegDomainDashboard.loadingPrefecture", "Chargement de l'analyse détaillée de la préfecture...")}
+          {t(
+            "RegDomainDashboard.loadingPrefecture",
+            "Chargement de l'analyse détaillée de la préfecture...",
+          )}
         </div>
       </AppLayout>
     );
@@ -103,11 +110,21 @@ const DirectionDetail = () => {
       <AppLayout>
         <Card className="p-8 text-center border-border/60">
           <XCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
-          <h2 className="text-lg font-bold text-foreground">{t("common.accessDenied", "Accès refusé")}</h2>
+          <h2 className="text-lg font-bold text-foreground">
+            {t("common.accessDenied", "Accès refusé")}
+          </h2>
           <p className="text-sm text-muted-foreground mt-2">
-            {t("directionDetails.prefectoralOnlyOwn", "Vous ne pouvez consulter que votre propre direction.")}
+            {t(
+              "directionDetails.prefectoralOnlyOwn",
+              "Vous ne pouvez consulter que votre propre direction.",
+            )}
           </p>
-          <Button variant="outline" size="sm" onClick={() => navigate("/directions")} className="mt-4 gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate("/directions")}
+            className="mt-4 gap-2"
+          >
             <ArrowLeft className="h-4 w-4 rtl:rotate-180" />
             {t("detail.back")}
           </Button>
@@ -123,8 +140,15 @@ const DirectionDetail = () => {
           <div className="mx-auto h-14 w-14 rounded-2xl bg-muted/50 flex items-center justify-center mb-4">
             <Building2 className="h-7 w-7 text-muted-foreground" />
           </div>
-          <h2 className="text-lg font-bold text-foreground">{t("directionDetails.notFound", "Direction introuvable")}</h2>
-          <Button variant="outline" size="sm" onClick={() => navigate("/directions")} className="mt-4 gap-2">
+          <h2 className="text-lg font-bold text-foreground">
+            {t("directionDetails.notFound", "Direction introuvable")}
+          </h2>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate("/directions")}
+            className="mt-4 gap-2"
+          >
             <ArrowLeft className="h-4 w-4 rtl:rotate-180" />
             {t("detail.back")}
           </Button>
@@ -139,11 +163,16 @@ const DirectionDetail = () => {
         <Card className="overflow-hidden rounded-xl border-border/60 shadow-none">
           <div className="p-5 sm:p-6 border-b border-border bg-gradient-to-br from-primary/5 via-card to-card">
             <nav className="flex items-center gap-1.5 text-xs text-muted-foreground mb-3">
-              <button onClick={() => navigate("/directions")} className="hover:text-primary transition-smooth font-medium">
+              <button
+                onClick={() => navigate("/directions")}
+                className="hover:text-primary transition-smooth font-medium"
+              >
                 {t("nav.directions")}
               </button>
               <ChevronRight className="h-3.5 w-3.5" />
-              <span className="text-foreground font-semibold">{lang === "ar" ? direction.nom_ar : direction.nom_fr}</span>
+              <span className="text-foreground font-semibold">
+                {lang === "ar" ? direction.nom_ar : direction.nom_fr}
+              </span>
             </nav>
 
             <div className="flex flex-wrap items-start justify-between gap-4">
@@ -172,10 +201,15 @@ const DirectionDetail = () => {
                     className={`text-[10px] shadow-none ${STATUS_STYLE[metriquesGlobales.statut] || STATUS_STYLE["NON_COMMENCE"]}`}
                   >
                     <CheckCircle2 className="h-3 w-3 me-1" />
-                    {metriquesGlobales.statut ? t(`status.${metriquesGlobales.statut}`) : t("directionDetails.notStarted")}
+                    {metriquesGlobales.statut
+                      ? t(`status.${metriquesGlobales.statut}`)
+                      : t("directionDetails.notStarted")}
                   </Badge>
 
-                  <Badge variant="outline" className="text-[10px] bg-primary/10 text-primary border-primary/20 shadow-none">
+                  <Badge
+                    variant="outline"
+                    className="text-[10px] bg-primary/10 text-primary border-primary/20 shadow-none"
+                  >
                     <Activity className="h-3 w-3 me-1" />
                     {t("directionDetails.progression")} {metriquesGlobales.progression}%
                   </Badge>
@@ -184,7 +218,9 @@ const DirectionDetail = () => {
                     <Badge variant="outline" className="text-[10px] border-border/60 shadow-none">
                       <CalendarDays className="h-3 w-3 me-1" />
                       {t("directionDetails.lastUpdate")}{" "}
-                      {new Date(metriquesGlobales.lastUpdate).toLocaleDateString(lang === "ar" ? "ar-MA" : "fr-FR")}
+                      {new Date(metriquesGlobales.lastUpdate).toLocaleDateString(
+                        lang === "ar" ? "ar-MA" : "fr-FR",
+                      )}
                     </Badge>
                   )}
                 </div>

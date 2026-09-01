@@ -32,7 +32,9 @@ vi.mock("@/services/regional/regionalDashboardServices", () => ({
 }));
 
 const jeunessePayload = { kpis: { total_beneficiaires: 1 } } as unknown as RegionalDashboardPayload;
-const infrastructurePayload = { kpis: { credits_ouverts: 1 } } as unknown as RegionalDashboardPayload;
+const infrastructurePayload = {
+  kpis: { credits_ouverts: 1 },
+} as unknown as RegionalDashboardPayload;
 
 beforeEach(() => {
   jeunesseRequest = createDeferred();
@@ -42,7 +44,8 @@ beforeEach(() => {
 describe("useRegionalDomainDashboardData", () => {
   it("keeps previous data during refresh and ignores an obsolete response", async () => {
     const { result, rerender } = renderHook(
-      ({ domain }: { domain: "JEUNESSE" | "INFRA" }) => useRegionalDomainDashboardData(domain, 2040, "fr"),
+      ({ domain }: { domain: "JEUNESSE" | "INFRA" }) =>
+        useRegionalDomainDashboardData(domain, 2040, "fr"),
       { initialProps: { domain: "JEUNESSE" as const } },
     );
 

@@ -1,9 +1,21 @@
 import type { RegionalDashboardService } from "./types";
-import { loadJeunesseRegionalDashboard, type JeunesseRegionalDashboardData } from "./jeunesseRegionalService";
-import { loadInfrastructureRegionalDashboard, type InfrastructureRegionalDashboardData } from "./infrastructureRegionalService";
-import { loadFemmeRegionalDashboard, type FemmeRegionalDashboardData } from "./femmeRegionalService";
+import {
+  loadJeunesseRegionalDashboard,
+  type JeunesseRegionalDashboardData,
+} from "./jeunesseRegionalService";
+import {
+  loadInfrastructureRegionalDashboard,
+  type InfrastructureRegionalDashboardData,
+} from "./infrastructureRegionalService";
+import {
+  loadFemmeRegionalDashboard,
+  type FemmeRegionalDashboardData,
+} from "./femmeRegionalService";
 import { loadPeRegionalDashboard, type PeRegionalDashboardData } from "./peRegionalService";
-import { loadCrechesRegionalDashboard, type CrechesRegionalDashboardData } from "./crechesRegionalService";
+import {
+  loadCrechesRegionalDashboard,
+  type CrechesRegionalDashboardData,
+} from "./crechesRegionalService";
 
 export const REGIONAL_DOMAIN_CODES = ["JEUNESSE", "INFRA", "FEMME", "PE", "CRECHES"] as const;
 export type RegionalDomainCode = (typeof REGIONAL_DOMAIN_CODES)[number];
@@ -58,21 +70,36 @@ export function getRegionalMetricLabels(
   switch (domainCode) {
     case "INFRA":
       return {
-        metricPrimaryLabel: t("regDomainDashboard.infra.metrics.budgetExecutionRate", "Taux d'exécution budgétaire"),
-        metricSecondaryLabel: t("regDomainDashboard.infra.metrics.projectsCount", "Nombre de projets"),
+        metricPrimaryLabel: t(
+          "regDomainDashboard.infra.metrics.budgetExecutionRate",
+          "Taux d'exécution budgétaire",
+        ),
+        metricSecondaryLabel: t(
+          "regDomainDashboard.infra.metrics.projectsCount",
+          "Nombre de projets",
+        ),
         isPrimaryPercent: true,
         hasRealRanking: true,
       };
     case "FEMME":
       return {
-        metricPrimaryLabel: t("regDomainDashboard.femme.kpis.inscriptionsFormation", "Inscriptions en formation"),
-        metricSecondaryLabel: t("regDomainDashboard.femme.metrics.beneficiairesAccompagnes", "Bénéficiaires accompagnés"),
+        metricPrimaryLabel: t(
+          "regDomainDashboard.femme.kpis.inscriptionsFormation",
+          "Inscriptions en formation",
+        ),
+        metricSecondaryLabel: t(
+          "regDomainDashboard.femme.metrics.beneficiairesAccompagnes",
+          "Bénéficiaires accompagnés",
+        ),
         isPrimaryPercent: false,
         hasRealRanking: true,
       };
     case "PE":
       return {
-        metricPrimaryLabel: t("regDomainDashboard.pe.kpis.beneficiairesPriseEnCharge", "Bénéficiaires en prise en charge"),
+        metricPrimaryLabel: t(
+          "regDomainDashboard.pe.kpis.beneficiairesPriseEnCharge",
+          "Bénéficiaires en prise en charge",
+        ),
         metricSecondaryLabel: t(
           "regDomainDashboard.pe.kpis.integrationsLiberteSurveillee",
           "Intégrations en liberté surveillée",
@@ -82,8 +109,14 @@ export function getRegionalMetricLabels(
       };
     case "CRECHES":
       return {
-        metricPrimaryLabel: t("regDomainDashboard.creches.kpis.enfantsPrisEnCharge", "Enfants pris en charge"),
-        metricSecondaryLabel: t("regDomainDashboard.creches.kpis.demandesLicencesTraitees", "Demandes de licences traitées"),
+        metricPrimaryLabel: t(
+          "regDomainDashboard.creches.kpis.enfantsPrisEnCharge",
+          "Enfants pris en charge",
+        ),
+        metricSecondaryLabel: t(
+          "regDomainDashboard.creches.kpis.demandesLicencesTraitees",
+          "Demandes de licences traitées",
+        ),
         isPrimaryPercent: false,
         hasRealRanking: true,
       };
@@ -91,7 +124,10 @@ export function getRegionalMetricLabels(
     default:
       return {
         metricPrimaryLabel: t("RegDomainDashboard.section5.columns.metricPrimary", "Activités"),
-        metricSecondaryLabel: t("RegDomainDashboard.section5.columns.metricSecondary", "Bénéficiaires"),
+        metricSecondaryLabel: t(
+          "RegDomainDashboard.section5.columns.metricSecondary",
+          "Bénéficiaires",
+        ),
         isPrimaryPercent: false,
         hasRealRanking: true,
       };

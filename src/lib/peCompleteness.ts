@@ -1,8 +1,4 @@
-import {
-  computeCompleteness,
-  countCompleted,
-  hasText,
-} from '@/lib/formSchema';
+import { computeCompleteness, countCompleted, hasText } from "@/lib/formSchema";
 
 export interface PeCompletenessData {
   demoCentres: any[];
@@ -22,21 +18,33 @@ export interface PeCompletenessData {
 }
 
 // Helper local pour accepter le "0" comme valeur valide
-const hasValue = (val: any): boolean => 
-  val !== undefined && val !== null && val !== '';
+const hasValue = (val: any): boolean => val !== undefined && val !== null && val !== "";
 
 export function computePeCompleteness(data: PeCompletenessData): number {
-  const { 
-    demoCentres = [], demoLS = [], education = [], ateliers = [], formationBen = [],
-    activites = [], conseil = [], dons = [], incidents = [],
-    partenariats = [], formationPerso = [], amenagement = [], visites = [],
-    rapportsJudic = []
+  const {
+    demoCentres = [],
+    demoLS = [],
+    education = [],
+    ateliers = [],
+    formationBen = [],
+    activites = [],
+    conseil = [],
+    dons = [],
+    incidents = [],
+    partenariats = [],
+    formationPerso = [],
+    amenagement = [],
+    visites = [],
+    rapportsJudic = [],
   } = data;
 
   const stepCompletions = [
     // --- ÉTAPE 1: Scolarisation & Formation (المراكز) ---
     countCompleted([
-      demoCentres.length > 0 || education.length > 0 || ateliers.length > 0 || formationBen.length > 0, // Au moins une donnée
+      demoCentres.length > 0 ||
+        education.length > 0 ||
+        ateliers.length > 0 ||
+        formationBen.length > 0, // Au moins une donnée
       demoCentres.some((d) => hasValue(d.garcons)),
       demoCentres.some((d) => hasValue(d.filles)),
       education.some((e) => hasValue(e.beneficiaires_formel)),
@@ -63,7 +71,10 @@ export function computePeCompleteness(data: PeCompletenessData): number {
 
     // --- ÉTAPE 3: Gestion & Encadrement RH ---
     countCompleted([
-      partenariats.length > 0 || formationPerso.length > 0 || amenagement.length > 0 || visites.length > 0,
+      partenariats.length > 0 ||
+        formationPerso.length > 0 ||
+        amenagement.length > 0 ||
+        visites.length > 0,
       partenariats.some((p) => hasText(p.type_partenariat)),
       partenariats.some((p) => hasText(p.sujet)),
       partenariats.some((p) => hasText(p.partenaires)),

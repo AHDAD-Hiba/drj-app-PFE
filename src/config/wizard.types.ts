@@ -1,4 +1,4 @@
-import { ComponentType } from 'react';
+import { ComponentType } from "react";
 
 // 1. Le contrat pour les props de tes composants d'étapes (Step1, Step2, etc.)
 // C'est exactement ce que ton Saisie.tsx actuel passera aux enfants.
@@ -23,5 +23,9 @@ export interface DomainConfig {
   name: string; // ex: 'jeunesse' ou 'femme'
   steps: DomainStep[]; // La liste des étapes de ce domaine
   // La fonction pour calculer la complétude spécifique à ce domaine
-  useCompleteness: (rapportId: string | null, refreshTrigger?: number, currentStep?: number) => number; 
+  useCompleteness: (
+    rapportId: string | null,
+    refreshTrigger?: number,
+    currentStep?: number,
+  ) => number;
 }

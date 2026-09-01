@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { useCallback, useEffect, useRef, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 export interface FormationEntry {
   local_id: string;
@@ -27,7 +27,8 @@ export function useFormationEntries(rapportId: string | null, options?: { enable
   // Mise à jour synchrone de itemsRef
   const updateItems = useCallback((newItemsOrUpdater: React.SetStateAction<FormationEntry[]>) => {
     setItems((prev) => {
-      const next = typeof newItemsOrUpdater === 'function' ? newItemsOrUpdater(prev) : newItemsOrUpdater;
+      const next =
+        typeof newItemsOrUpdater === "function" ? newItemsOrUpdater(prev) : newItemsOrUpdater;
       itemsRef.current = next;
       return next;
     });
@@ -46,19 +47,19 @@ export function useFormationEntries(rapportId: string | null, options?: { enable
 
     try {
       const { data, error } = await supabase
-        .from('formations')
-        .select('*, statistiques_formation(*)')
-        .eq('rapport_id', rapportId);
+        .from("formations")
+        .select("*, statistiques_formation(*)")
+        .eq("rapport_id", rapportId);
 
       if (error) {
-        console.error('[useFormationEntries] reload error:', error);
+        console.error("[useFormationEntries] reload error:", error);
         return [];
       }
 
       const localIdById = new Map(
         itemsRef.current
           .filter((item): item is FormationEntry & { id: string } => Boolean(item.id))
-          .map((item) => [item.id as string, item.local_id] as const)
+          .map((item) => [item.id as string, item.local_id] as const),
       );
 
       const normalized: FormationEntry[] = ((data as any[]) || []).map((f) => {
@@ -68,7 +69,7 @@ export function useFormationEntries(rapportId: string | null, options?: { enable
         return {
           local_id: localIdById.get(f.id) ?? crypto.randomUUID(),
           id: f.id,
-          centre: f.centre ?? '',
+          centre: f.centre ?? "",
           numero_session: f.numero_session ?? 1,
           beneficiaries_girls: stats?.nombre_beneficiaires_femmes ?? 0,
           beneficiaries_boys: stats?.nombre_beneficiaires_hommes ?? 0,
@@ -79,7 +80,9 @@ export function useFormationEntries(rapportId: string | null, options?: { enable
       });
 
       updateItems((prev) => {
-        const normalizedByLocalId = new Map(normalized.map((item) => [item.local_id, item] as const));
+        const normalizedByLocalId = new Map(
+          normalized.map((item) => [item.local_id, item] as const),
+        );
         const merged = normalized.map((serverItem) => {
           const currentItem = prev.find((item) => item.local_id === serverItem.local_id);
           const hasPendingLocalChange =
@@ -89,12 +92,14 @@ export function useFormationEntries(rapportId: string | null, options?: { enable
 
           return currentItem && hasPendingLocalChange ? currentItem : serverItem;
         });
-        const unsavedLocalItems = prev.filter((item) => !item.id && !normalizedByLocalId.has(item.local_id));
+        const unsavedLocalItems = prev.filter(
+          (item) => !item.id && !normalizedByLocalId.has(item.local_id),
+        );
         return [...merged, ...unsavedLocalItems];
       });
       return normalized;
     } catch (err) {
-      console.error('[useFormationEntries] unexpected reload error:', err);
+      console.error("[useFormationEntries] unexpected reload error:", err);
       return [];
     } finally {
       setLoading(false);
@@ -103,20 +108,20 @@ export function useFormationEntries(rapportId: string | null, options?: { enable
 
   useEffect(() => {
     let cancelled = false;
-    
+
     // Si désactivé, vider les items et retourner
     if (!enabled) {
       updateItems([]);
       setLoading(false);
       return;
     }
-    
+
     if (!rapportId) {
       updateItems([]);
       setLoading(false);
       return;
     }
- 
+
     setLoading(true);
     (async () => {
       try {
@@ -125,9 +130,11 @@ export function useFormationEntries(rapportId: string | null, options?: { enable
         if (!cancelled) setLoading(false);
       }
     })();
- 
-    return () => { cancelled = true; };
-  }, [rapportId, reload, updateItems, enabled]); 
+
+    return () => {
+      cancelled = true;
+    };
+  }, [rapportId, reload, updateItems, enabled]);
   const saveEntry = useCallback(
     async (local_id: string): Promise<boolean> => {
       if (savingEntriesRef.current.has(local_id)) {
@@ -144,7 +151,7 @@ export function useFormationEntries(rapportId: string | null, options?: { enable
       }
 
       const updatedEntry = existing;
-      const centreClean = updatedEntry.centre?.trim() ?? '';
+      const centreClean = updatedEntry.centre?.trim() ?? "";
 
       // 🛡️ N'envoie pas à Supabase si le nom du centre est vide
       if (!centreClean) {
@@ -165,14 +172,14 @@ export function useFormationEntries(rapportId: string | null, options?: { enable
 
         // 1. Upsert formation
         const { data: frmData, error: frmError } = await supabase
-          .from('formations')
+          .from("formations")
           .upsert(
             payload,
             updatedEntry.id
-              ? { onConflict: 'id' }
-              : { onConflict: 'rapport_id,centre,numero_session' }
+              ? { onConflict: "id" }
+              : { onConflict: "rapport_id,centre,numero_session" },
           )
-          .select('id')
+          .select("id")
           .single();
 
         if (frmError) throw frmError;
@@ -191,12 +198,12 @@ export function useFormationEntries(rapportId: string | null, options?: { enable
         }
 
         const { data: statsData, error: statsError } = await supabase
-          .from('statistiques_formation')
+          .from("statistiques_formation")
           .upsert(
             statsPayload,
-            updatedEntry.statistiques_id ? { onConflict: 'id' } : { onConflict: 'formation_id' }
+            updatedEntry.statistiques_id ? { onConflict: "id" } : { onConflict: "formation_id" },
           )
-          .select('id')
+          .select("id")
           .single();
 
         if (statsError) throw statsError;
@@ -205,13 +212,13 @@ export function useFormationEntries(rapportId: string | null, options?: { enable
           prev.map((item) =>
             item.local_id === local_id
               ? { ...item, id: frmData.id, statistiques_id: statsData.id }
-              : item
-          )
+              : item,
+          ),
         );
 
         return true;
       } catch (error) {
-        console.error('[useFormationEntries] save error:', error);
+        console.error("[useFormationEntries] save error:", error);
         return false;
       } finally {
         savingEntriesRef.current.delete(local_id);
@@ -223,7 +230,7 @@ export function useFormationEntries(rapportId: string | null, options?: { enable
         }
       }
     },
-    [rapportId, updateItems]
+    [rapportId, updateItems],
   );
 
   // ====================
@@ -236,13 +243,13 @@ export function useFormationEntries(rapportId: string | null, options?: { enable
       updateItems((prev) => [...prev, optimisticItem]);
       return true;
     },
-    [updateItems]
+    [updateItems],
   );
 
   const update = useCallback(
     async (local_id: string, patch: Partial<FormationEntry>): Promise<boolean> => {
       updateItems((prev) =>
-        prev.map((item) => (item.local_id === local_id ? { ...item, ...patch } : item))
+        prev.map((item) => (item.local_id === local_id ? { ...item, ...patch } : item)),
       );
 
       if (saveTimersRef.current[local_id]) {
@@ -256,7 +263,7 @@ export function useFormationEntries(rapportId: string | null, options?: { enable
 
       return true;
     },
-    [updateItems, saveEntry]
+    [updateItems, saveEntry],
   );
 
   const remove = useCallback(
@@ -270,21 +277,21 @@ export function useFormationEntries(rapportId: string | null, options?: { enable
         try {
           if (existing.statistiques_id) {
             await supabase
-              .from('statistiques_formation')
+              .from("statistiques_formation")
               .delete()
-              .eq('id', existing.statistiques_id);
+              .eq("id", existing.statistiques_id);
           }
           if (existing.id) {
-            await supabase.from('formations').delete().eq('id', existing.id);
+            await supabase.from("formations").delete().eq("id", existing.id);
           }
         } catch (error) {
-          console.error('[useFormationEntries] remove error:', error);
+          console.error("[useFormationEntries] remove error:", error);
           return false;
         }
       }
       return true;
     },
-    [rapportId, updateItems]
+    [rapportId, updateItems],
   );
 
   return { items, loading, reload, add, update, remove };

@@ -1,11 +1,11 @@
-import { useEntityEntries, BaseEntry } from '../common/useEntityEntries';
+import { useEntityEntries, BaseEntry } from "../common/useEntityEntries";
 
 // ============================================================================
 // 1. STATISTIQUES DÉMOGRAPHIQUES (pe_statistiques_demographiques)
 // ============================================================================
 export interface PeDemographieEntry extends BaseEntry {
   etablissement_id: string | null; // null بالنسبة للإحصائيات الإجمالية للمديرية
-  type_prise_charge: 'centre_sauvegarde' | 'liberte_surveillee';
+  type_prise_charge: "centre_sauvegarde" | "liberte_surveillee";
   garcons: number;
   filles: number;
   migrants_non_accompagnes: number;
@@ -17,7 +17,7 @@ const buildDemographiePayload = (entry: PeDemographieEntry, rId: string) => ({
   ...(entry.id ? { id: entry.id } : {}),
   rapport_id: rId,
   etablissement_id: entry.etablissement_id || null,
-  type_prise_charge: entry.type_prise_charge || 'centre_sauvegarde',
+  type_prise_charge: entry.type_prise_charge || "centre_sauvegarde",
   garcons: Number(entry.garcons) || 0,
   filles: Number(entry.filles) || 0,
   migrants_non_accompagnes: Number(entry.migrants_non_accompagnes) || 0,
@@ -40,7 +40,7 @@ const mapDemographieRow = (row: any, local_id: string): PeDemographieEntry => ({
 export function usePeDemographie(rapportId: string | null, options?: { enabled?: boolean }) {
   return useEntityEntries<PeDemographieEntry>({
     rapportId,
-    tableName: 'pe_statistiques_demographiques',
+    tableName: "pe_statistiques_demographiques",
     buildPayload: buildDemographiePayload,
     mapRowToEntry: mapDemographieRow,
     enabled: options?.enabled ?? true,
@@ -78,7 +78,7 @@ const mapEducationRow = (row: any, local_id: string): PeEducationEntry => ({
 export function usePeEducation(rapportId: string | null, options?: { enabled?: boolean }) {
   return useEntityEntries<PeEducationEntry>({
     rapportId,
-    tableName: 'pe_education',
+    tableName: "pe_education",
     buildPayload: buildEducationPayload,
     mapRowToEntry: mapEducationRow,
     enabled: options?.enabled ?? true,
@@ -98,7 +98,7 @@ const buildAtelierPayload = (entry: PeAtelierEntry, rId: string) => ({
   ...(entry.id ? { id: entry.id } : {}),
   rapport_id: rId,
   etablissement_id: entry.etablissement_id,
-  nom_atelier: entry.nom_atelier || '',
+  nom_atelier: entry.nom_atelier || "",
   nombre: Number(entry.nombre) || 0,
 });
 
@@ -106,14 +106,14 @@ const mapAtelierRow = (row: any, local_id: string): PeAtelierEntry => ({
   local_id,
   id: row.id,
   etablissement_id: row.etablissement_id,
-  nom_atelier: row.nom_atelier || '',
+  nom_atelier: row.nom_atelier || "",
   nombre: Number(row.nombre) || 0,
 });
 
 export function usePeAteliers(rapportId: string | null, options?: { enabled?: boolean }) {
   return useEntityEntries<PeAtelierEntry>({
     rapportId,
-    tableName: 'pe_ateliers_crees',
+    tableName: "pe_ateliers_crees",
     buildPayload: buildAtelierPayload,
     mapRowToEntry: mapAtelierRow,
     enabled: options?.enabled ?? true,
@@ -151,7 +151,7 @@ const mapFormationRow = (row: any, local_id: string): PeFormationEntry => ({
 export function usePeFormation(rapportId: string | null, options?: { enabled?: boolean }) {
   return useEntityEntries<PeFormationEntry>({
     rapportId,
-    tableName: 'pe_formation_beneficiaires',
+    tableName: "pe_formation_beneficiaires",
     buildPayload: buildFormationPayload,
     mapRowToEntry: mapFormationRow,
     enabled: options?.enabled ?? true,

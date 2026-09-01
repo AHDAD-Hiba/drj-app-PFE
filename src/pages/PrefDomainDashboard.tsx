@@ -2,10 +2,19 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { AppLayout } from "@/components/AppLayout";
 import { PrefDomainDashboardContent } from "@/components/dashboard/PrefDomainDashboardContent";
-import { PrefDomainDashboardSection1, PrefDomainDashboardSection1Alerts } from "@/components/dashboard/PrefDomainDashboardSection1";
+import {
+  PrefDomainDashboardSection1,
+  PrefDomainDashboardSection1Alerts,
+} from "@/components/dashboard/PrefDomainDashboardSection1";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Calendar, Layers, CheckCircle2, Clock, AlertCircle } from "lucide-react";
 import { useAuth } from "@/hooks/common/useAuth";
 import { type Domain } from "@/lib/domainData";
@@ -44,7 +53,10 @@ const PrefDomainDashboard = () => {
   const rawStatus = WORKFLOW_STATUS[statusKey] || WORKFLOW_STATUS.NON_COMMENCE;
   const statusMeta = {
     ...rawStatus,
-    label: t(`prefDomainDashboard.status.${(statusKey || "NON_COMMENCE").toLowerCase()}`, rawStatus.label),
+    label: t(
+      `prefDomainDashboard.status.${(statusKey || "NON_COMMENCE").toLowerCase()}`,
+      rawStatus.label,
+    ),
   };
   const progressPct = dashboardData?.status.progressPct || 0;
 

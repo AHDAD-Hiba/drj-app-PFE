@@ -1,12 +1,12 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { useCallback, useEffect, useRef, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 export type BaseEntry = {
   local_id: string;
   id?: string;
 };
 
-export type DeleteMode = 'hard' | 'soft';
+export type DeleteMode = "hard" | "soft";
 
 export interface UseEntityEntriesOptions<TEntry extends BaseEntry> {
   rapportId: string | null;
@@ -24,7 +24,7 @@ export interface UseEntityEntriesOptions<TEntry extends BaseEntry> {
 export function useEntityEntries<TEntry extends BaseEntry>({
   rapportId,
   tableName,
-  deleteMode = 'hard',
+  deleteMode = "hard",
   enabled = true,
   buildPayload,
   buildConflictTarget,
@@ -43,25 +43,30 @@ export function useEntityEntries<TEntry extends BaseEntry>({
   // 🛠️ Marge de sécurité : Helper pour synchroniser items et itemsRef en même temps
   const updateItems = useCallback((newItemsOrUpdater: React.SetStateAction<TEntry[]>) => {
     setItems((prev) => {
-      const next = typeof newItemsOrUpdater === 'function' ? newItemsOrUpdater(prev) : newItemsOrUpdater;
+      const next =
+        typeof newItemsOrUpdater === "function" ? newItemsOrUpdater(prev) : newItemsOrUpdater;
       itemsRef.current = next;
       return next;
     });
   }, []);
 
-  useEffect(() => () => {
-    mountedRef.current = false;
-    Object.values(saveTimersRef.current).forEach(clearTimeout);
-    saveTimersRef.current = {};
-  }, []);
+  useEffect(
+    () => () => {
+      mountedRef.current = false;
+      Object.values(saveTimersRef.current).forEach(clearTimeout);
+      saveTimersRef.current = {};
+    },
+    [],
+  );
 
-  const updateLocal = useCallback((local_id: string, patch: Partial<TEntry>) => {
-    updateItems(prev =>
-      prev.map(item =>
-        item.local_id === local_id ? { ...item, ...patch } : item
-      )
-    );
-  }, [updateItems]);
+  const updateLocal = useCallback(
+    (local_id: string, patch: Partial<TEntry>) => {
+      updateItems((prev) =>
+        prev.map((item) => (item.local_id === local_id ? { ...item, ...patch } : item)),
+      );
+    },
+    [updateItems],
+  );
 
   const saveTimersRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
   const savingEntriesRef = useRef<Set<string>>(new Set());
@@ -78,11 +83,11 @@ export function useEntityEntries<TEntry extends BaseEntry>({
     setLoading(true);
 
     try {
-      const query = supabase.from(tableName as any).select('*');
-      
+      const query = supabase.from(tableName as any).select("*");
+
       const { data, error } = await query
-        .eq('rapport_id', rapportId)
-        .order('created_at', { ascending: true });
+        .eq("rapport_id", rapportId)
+        .order("created_at", { ascending: true });
 
       if (error) {
         console.error(`[useEntityEntries] reload error for ${tableName}:`, error);
@@ -174,136 +179,152 @@ export function useEntityEntries<TEntry extends BaseEntry>({
     };
   }, [rapportId, reload, updateItems, enabled]);
 
-  const saveEntry = useCallback(async (local_id: string): Promise<boolean> => {
-    if (savingEntriesRef.current.has(local_id) || !mountedRef.current) {
-      if (mountedRef.current) {
-        pendingSaveRef.current.add(local_id);
-      }
-      return true;
-    }
-
-    savingEntriesRef.current.add(local_id);
-
-    try {
-      const existing = itemsRef.current.find(item => item.local_id === local_id);
-      if (!existing || !rapportId) {
+  const saveEntry = useCallback(
+    async (local_id: string): Promise<boolean> => {
+      if (savingEntriesRef.current.has(local_id) || !mountedRef.current) {
+        if (mountedRef.current) {
+          pendingSaveRef.current.add(local_id);
+        }
         return true;
       }
 
-      // 🛡️ Garde-fou de validation locale optionnelle avant appel Supabase
-      if (validateBeforeSave && !validateBeforeSave(existing)) {
-        return true;
-      }
+      savingEntriesRef.current.add(local_id);
 
-      const payload = buildPayload(existing, rapportId);
+      try {
+        const existing = itemsRef.current.find((item) => item.local_id === local_id);
+        if (!existing || !rapportId) {
+          return true;
+        }
 
-      const query = supabase.from(tableName as any);
-      const { data, error } = await query
-        .upsert(payload as any, {
-          onConflict: buildConflictTarget?.(existing) ?? 'id',
-        })
-        .select('id')
-        .single();
+        // 🛡️ Garde-fou de validation locale optionnelle avant appel Supabase
+        if (validateBeforeSave && !validateBeforeSave(existing)) {
+          return true;
+        }
 
-      if (error) throw error;
+        const payload = buildPayload(existing, rapportId);
 
-      if (!mountedRef.current) {
-        return true;
-      }
-
-      const savedId = (data as any)?.id;
-
-      if (savedId && local_id) {
-        serverIdToLocalIdRef.current[savedId] = local_id;
-      }
-
-      const nextEntry: TEntry = {
-        ...(itemsRef.current.find(item => item.local_id === local_id) ?? existing),
-        ...(onSaveSuccess ? onSaveSuccess(existing, data) : { id: savedId }),
-      } as TEntry;
-
-      updateItems(prev =>
-        prev.map(item =>
-          item.local_id === local_id ? nextEntry : item
-        )
-      );
-
-      return true;
-    } catch (err) {
-      console.error(`[useEntityEntries] save failed for ${tableName}:`, err);
-      return false;
-    } finally {
-      savingEntriesRef.current.delete(local_id);
-
-      if (pendingSaveRef.current.has(local_id) && mountedRef.current) {
-        pendingSaveRef.current.delete(local_id);
-        setTimeout(() => {
-          void saveEntry(local_id);
-        }, 50);
-      }
-    }
-  }, [rapportId, tableName, buildPayload, buildConflictTarget, onSaveSuccess, validateBeforeSave, updateItems]);
-
-  const add = useCallback(async (entry: TEntry): Promise<boolean> => {
-    const local_id = entry.local_id || crypto.randomUUID();
-    const optimisticEntry = { ...entry, local_id };
-    updateItems(prev => [...prev, optimisticEntry]);
-    return true;
-  }, [updateItems]);
-
-  const saveNow = useCallback(async (local_id: string): Promise<boolean> => {
-    if (saveTimersRef.current[local_id]) {
-      clearTimeout(saveTimersRef.current[local_id]);
-      delete saveTimersRef.current[local_id];
-    }
-
-    return saveEntry(local_id);
-  }, [saveEntry]);
-
-  const update = useCallback(async (
-    local_id: string,
-    patch: Partial<TEntry>,
-  ): Promise<boolean> => {
-    updateLocal(local_id, patch);
-
-    if (saveTimersRef.current[local_id]) {
-      clearTimeout(saveTimersRef.current[local_id]);
-    }
-
-    saveTimersRef.current[local_id] = setTimeout(() => {
-      delete saveTimersRef.current[local_id];
-      void saveEntry(local_id);
-    }, 1200);
-
-    return true;
-  }, [updateLocal, saveEntry]);
-
-  const remove = useCallback(async (local_id: string): Promise<boolean> => {
-    const existing = itemsRef.current.find(item => item.local_id === local_id);
-    if (!existing) return false;
-
-    const previousItems = itemsRef.current;
-    updateItems(prev => prev.filter(item => item.local_id !== local_id));
-
-    if (!existing.id) {
-      return true;
-    }
-
-    try {
-      if (deleteMode === 'soft' && softDelete) {
-        await softDelete(existing.id);
-      } else {
         const query = supabase.from(tableName as any);
-        await query.delete().eq('id', existing.id);
+        const { data, error } = await query
+          .upsert(payload as any, {
+            onConflict: buildConflictTarget?.(existing) ?? "id",
+          })
+          .select("id")
+          .single();
+
+        if (error) throw error;
+
+        if (!mountedRef.current) {
+          return true;
+        }
+
+        const savedId = (data as any)?.id;
+
+        if (savedId && local_id) {
+          serverIdToLocalIdRef.current[savedId] = local_id;
+        }
+
+        const nextEntry: TEntry = {
+          ...(itemsRef.current.find((item) => item.local_id === local_id) ?? existing),
+          ...(onSaveSuccess ? onSaveSuccess(existing, data) : { id: savedId }),
+        } as TEntry;
+
+        updateItems((prev) => prev.map((item) => (item.local_id === local_id ? nextEntry : item)));
+
+        return true;
+      } catch (err) {
+        console.error(`[useEntityEntries] save failed for ${tableName}:`, err);
+        return false;
+      } finally {
+        savingEntriesRef.current.delete(local_id);
+
+        if (pendingSaveRef.current.has(local_id) && mountedRef.current) {
+          pendingSaveRef.current.delete(local_id);
+          setTimeout(() => {
+            void saveEntry(local_id);
+          }, 50);
+        }
+      }
+    },
+    [
+      rapportId,
+      tableName,
+      buildPayload,
+      buildConflictTarget,
+      onSaveSuccess,
+      validateBeforeSave,
+      updateItems,
+    ],
+  );
+
+  const add = useCallback(
+    async (entry: TEntry): Promise<boolean> => {
+      const local_id = entry.local_id || crypto.randomUUID();
+      const optimisticEntry = { ...entry, local_id };
+      updateItems((prev) => [...prev, optimisticEntry]);
+      return true;
+    },
+    [updateItems],
+  );
+
+  const saveNow = useCallback(
+    async (local_id: string): Promise<boolean> => {
+      if (saveTimersRef.current[local_id]) {
+        clearTimeout(saveTimersRef.current[local_id]);
+        delete saveTimersRef.current[local_id];
       }
 
+      return saveEntry(local_id);
+    },
+    [saveEntry],
+  );
+
+  const update = useCallback(
+    async (local_id: string, patch: Partial<TEntry>): Promise<boolean> => {
+      updateLocal(local_id, patch);
+
+      if (saveTimersRef.current[local_id]) {
+        clearTimeout(saveTimersRef.current[local_id]);
+      }
+
+      saveTimersRef.current[local_id] = setTimeout(() => {
+        delete saveTimersRef.current[local_id];
+        void saveEntry(local_id);
+      }, 1200);
+
       return true;
-    } catch (err) {
-      console.error(`[useEntityEntries] remove failed for ${tableName}:`, err);
-      updateItems(previousItems);
-      return false;
-    }
-  }, [deleteMode, softDelete, tableName, updateItems]);
+    },
+    [updateLocal, saveEntry],
+  );
+
+  const remove = useCallback(
+    async (local_id: string): Promise<boolean> => {
+      const existing = itemsRef.current.find((item) => item.local_id === local_id);
+      if (!existing) return false;
+
+      const previousItems = itemsRef.current;
+      updateItems((prev) => prev.filter((item) => item.local_id !== local_id));
+
+      if (!existing.id) {
+        return true;
+      }
+
+      try {
+        if (deleteMode === "soft" && softDelete) {
+          await softDelete(existing.id);
+        } else {
+          const query = supabase.from(tableName as any);
+          await query.delete().eq("id", existing.id);
+        }
+
+        return true;
+      } catch (err) {
+        console.error(`[useEntityEntries] remove failed for ${tableName}:`, err);
+        updateItems(previousItems);
+        return false;
+      }
+    },
+    [deleteMode, softDelete, tableName, updateItems],
+  );
 
   return {
     items,

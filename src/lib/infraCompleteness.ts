@@ -1,8 +1,4 @@
-import {
-  computeCompleteness,
-  countCompleted,
-  hasText,
-} from '@/lib/formSchema';
+import { computeCompleteness, countCompleted, hasText } from "@/lib/formSchema";
 
 export interface InfraCompletenessData {
   depenses: any[];
@@ -13,20 +9,12 @@ export interface InfraCompletenessData {
 }
 
 // Helpers locaux
-const hasValue = (val: any): boolean => 
-  val !== undefined && val !== null && val !== '';
+const hasValue = (val: any): boolean => val !== undefined && val !== null && val !== "";
 
-const hasArray = (val: any): boolean => 
-  Array.isArray(val) && val.length > 0;
+const hasArray = (val: any): boolean => Array.isArray(val) && val.length > 0;
 
 export function computeInfraCompleteness(data: InfraCompletenessData): number {
-  const { 
-    depenses = [], 
-    eauElec = [], 
-    partenariats = [], 
-    btp = [], 
-    souffrance = [] 
-  } = data;
+  const { depenses = [], eauElec = [], partenariats = [], btp = [], souffrance = [] } = data;
 
   const stepCompletions = [
     // --- ÉTAPE 1 : Dépenses de Fonctionnement et Investissement ---

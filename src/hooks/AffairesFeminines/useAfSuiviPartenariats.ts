@@ -1,4 +1,4 @@
-import { useEntityEntries, BaseEntry } from '../common/useEntityEntries';
+import { useEntityEntries, BaseEntry } from "../common/useEntityEntries";
 
 export interface AfSuiviPartenariatEntry extends BaseEntry {
   partenaires: string;
@@ -21,17 +21,17 @@ const buildPayload = (entry: AfSuiviPartenariatEntry, rId: string) => ({
 const mapRowToEntry = (row: any, local_id: string): AfSuiviPartenariatEntry => ({
   local_id,
   id: row.id,
-  partenaires: row.partenaires ?? '',
-  sujet_partenariat: row.sujet_partenariat ?? '',
-  evaluation: row.evaluation ?? '',
-  obstacles: row.obstacles ?? '',
-  solutions_proposees: row.solutions_proposees ?? '',
+  partenaires: row.partenaires ?? "",
+  sujet_partenariat: row.sujet_partenariat ?? "",
+  evaluation: row.evaluation ?? "",
+  obstacles: row.obstacles ?? "",
+  solutions_proposees: row.solutions_proposees ?? "",
 });
 
 export function useAfSuiviPartenariats(rapportId: string | null, options?: { enabled?: boolean }) {
   return useEntityEntries<AfSuiviPartenariatEntry>({
     rapportId,
-    tableName: 'af_suivi_partenariats',
+    tableName: "af_suivi_partenariats",
     buildPayload,
     mapRowToEntry,
     enabled: options?.enabled ?? true,

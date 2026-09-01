@@ -1,5 +1,5 @@
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 export interface CategorieAssociation {
   id: string;
@@ -8,12 +8,17 @@ export interface CategorieAssociation {
 }
 
 export function useCategoriesAssociations() {
-  const { data: items = [], isLoading, error, refetch } = useQuery({
-    queryKey: ['ref_categories_associations'],
+  const {
+    data: items = [],
+    isLoading,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: ["ref_categories_associations"],
     queryFn: async () => {
       const { data, error: err } = await supabase
-        .from('categories_associations')
-        .select('id, nom, nom_ar');
+        .from("categories_associations")
+        .select("id, nom, nom_ar");
 
       if (err) throw err;
       return (data as CategorieAssociation[]) || [];

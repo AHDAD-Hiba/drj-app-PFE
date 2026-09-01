@@ -1,5 +1,5 @@
-{   
-"form": {
+{
+  "form": {
     "eyebrow": "Campagne {{year}}",
     "title": "Saisie",
     "completeness": "Complétude",
@@ -37,9 +37,9 @@
       "confirm": "Soumettre définitivement"
     },
     "submit": {
-    "successTitle": "Domaine terminé",
-    "successBody": "Le domaine a été marqué comme terminé avec succès.",
-    "errorTitle": "Échec de la finalisation"
+      "successTitle": "Domaine terminé",
+      "successBody": "Le domaine a été marqué comme terminé avec succès.",
+      "errorTitle": "Échec de la finalisation"
     },
     "forbidden": {
       "title": "Accès réservé",
@@ -51,26 +51,26 @@
       "tooLarge": "Valeur trop élevée"
     }
   },
-    "PreFormSelection": {
-      "quarters": {
+  "PreFormSelection": {
+    "quarters": {
       "t1": "T1",
       "t2": "T2",
       "t3": "T3",
       "t4": "T4"
     }
   },
-    "directionsTab": {
-      "title": "Directions",
-      "searchPlaceholder": "Rechercher une direction...",
-      "countSuffix": "Directions - Année",
-      "scoreGlobal": "SCORE GLOBAL",
-      "trimestre": "TRIMESTRE",
-      "statuses": {
-        "non_commence": "Non commencé",
-        "en_cours": "En cours",
-        "termine": "Terminé"
-      }
-    },
+  "directionsTab": {
+    "title": "Directions",
+    "searchPlaceholder": "Rechercher une direction...",
+    "countSuffix": "Directions - Année",
+    "scoreGlobal": "SCORE GLOBAL",
+    "trimestre": "TRIMESTRE",
+    "statuses": {
+      "non_commence": "Non commencé",
+      "en_cours": "En cours",
+      "termine": "Terminé"
+    }
+  },
   "map": {
     "eyebrow": "Carte régionale",
     "title": "Région Casablanca-Settat",
@@ -174,12 +174,12 @@
       "lastUpdate": "Dernière mise à jour",
       "progress": "Progression"
     },
-      "status": {
+    "status": {
       "en_cours": "En cours",
       "termine": "Terminé",
       "non_commence": "Non commencé"
     },
-      "kpis": {
+    "kpis": {
       "title": "Top KPIs principaux",
       "activities": "Total des Activités",
       "beneficiaries": "Total Bénéficiaires",
@@ -188,7 +188,7 @@
       "partnerships": "Total Partenariats",
       "establishments": "Établissements Actifs"
     },
-      "charts": {
+    "charts": {
       "axeTitle": "Répartition des bénéficiaires par axe",
       "volumeTitle": "Volume Global par Programme",
       "volumeSubtitle": "Nombre absolu de bénéficiaires impactés",
@@ -204,19 +204,19 @@
       "evolutionCardTitle": "Trajectoire des performances par programme",
       "evolutionCardSubtitle": "Évolution du nombre de bénéficiaires (T1 à T4) pour les axes éligibles"
     },
-      "programs": {
+    "programs": {
       "camping": "Camping",
       "formation": "Formation",
       "festivals": "Festivals",
       "insertion": "Insertion"
     },
-      "quarters": {
+    "quarters": {
       "t1": "T1",
       "t2": "T2",
       "t3": "T3",
       "t4": "T4"
     },
-      "benchmark": {
+    "benchmark": {
       "title": "Benchmark régional",
       "columns": {
         "indicator": "Indicateur",
@@ -280,7 +280,7 @@
         "cultActivities": "Activités Culturelles",
         "capacityBuilding": "Renforcement des capacités"
       },
-       "camping": {
+      "camping": {
         "title": "Programme National de Camping & Formations",
         "participants": "Bénéficiaires & Participants",
         "totalBeneficiaries": "Total Bénéficiaires",
@@ -303,7 +303,7 @@
         "assocSortants": "Associations Sortantes",
         "benSortants": "Bénéficiaires Sortants"
       },
-       "conventions": {
+      "conventions": {
         "title": "Conventions et Partenariats",
         "summary": "Bilan des Conventions",
         "totalConventions": "Total Conventions",
@@ -317,7 +317,7 @@
           "Secteur public": "Secteur public"
         }
       },
-        "insertion": {
+      "insertion": {
         "title": "Intégration Socio-Économique",
         "summary": "Bilan des Activités",
         "activitiesDone": "Activités Réalisées",
@@ -333,7 +333,7 @@
         "urban": "Urbain",
         "rural": "Rural"
       },
-       "festivals": {
+      "festivals": {
         "title": "Festivals de Jeunesse",
         "summary": "Événements & Éliminatoires",
         "organized": "Festivals Organisés",
@@ -348,7 +348,7 @@
         "urban": "Urbain",
         "rural": "Rural"
       },
-        "etablissements": {
+      "etablissements": {
         "title": "Établissements & Infrastructures",
         "parcStatus": "Statut du Parc Actuel",
         "total": "Total",
@@ -368,54 +368,367 @@
       }
     },
     "infrastructure": {
-      "categories": { "fonctionnement": "Fonctionnement", "investissement": "Investissement", "construction": "Construction", "amenagement": "Aménagement", "etudes": "Études", "travaux": "Travaux", "livraison": "Livraison", "acheve": "Achevé" },
-      "phases": { "etudes": "Études", "attente_foncier": "En attente du foncier", "travaux": "Travaux", "attente_livraison": "En attente de livraison", "acheve": "Achevé", "non_defini": "Non défini" },
+      "categories": {
+        "fonctionnement": "Fonctionnement",
+        "investissement": "Investissement",
+        "construction": "Construction",
+        "amenagement": "Aménagement",
+        "etudes": "Études",
+        "travaux": "Travaux",
+        "livraison": "Livraison",
+        "acheve": "Achevé"
+      },
+      "phases": {
+        "etudes": "Études",
+        "attente_foncier": "En attente du foncier",
+        "travaux": "Travaux",
+        "attente_livraison": "En attente de livraison",
+        "acheve": "Achevé",
+        "non_defini": "Non défini"
+      },
       "causes": { "non_precise": "Cause non précisée" },
-      "kpis": { "executionRate": "Taux d'exécution budgétaire", "engagementRate": "Taux d'engagement budgétaire", "projetsBtp": "Nombre projets BTP", "projetsPartenariat": "Nombre projets Partenariat", "projetsEnSouffrance": "Nombre projets en souffrance", "arrieres": "Arriérés" },
-      "section3": { "title": "Vue d'ensemble Budget & Projets", "budgetTitle": "Budget Fonctionnement vs Investissement", "budgetSubtitle": "Payé vs Reste à payer (DH)", "paid": "Payé", "remaining": "Reste à payer", "projectStateTitle": "État des projets", "projectStateSubtitle": "Études, Travaux, Livraison, Achevé", "projectNatureTitle": "Nature des projets", "projectNatureSubtitle": "Construction vs Aménagement" },
-      "section4": { "title": "Évolution trimestrielle", "budgetTitle": "Évolution budgétaire", "budgetSubtitle": "Crédits ouverts vs payés (DH)", "ouverts": "Ouverts", "payes": "Payés", "arrearsTitle": "Évolution des arriérés", "arrearsSubtitle": "Eau vs Électricité (DH)", "water": "Eau", "electricity": "Électricité", "projectsTitle": "Évolution du nombre de projets", "projectsSubtitle": "BTP vs Partenariat", "btp": "BTP", "partenariat": "Partenariat" },
-      "section6": { "depenses": { "title": "Dépenses", "ouverts": "Ouverts", "engages": "Engagés", "payes": "Payés" }, "eauElectricite": { "title": "Eau & Électricité", "consumption": "Consommation", "water": "Eau", "electricity": "Électricité", "arrears": "Arriérés", "totalArrears": "Total Arriérés" }, "partenariat": { "title": "Partenariat", "summary": "Bilan", "total": "Total Projets", "avgProgress": "Avancement moyen", "byPhase": "Répartition par phase", "noData": "Aucune donnée disponible" }, "btp": { "title": "BTP", "breakdown": "Répartition", "cost": "Coût", "financials": "Suivi financier", "paidAmount": "Montant payé", "paymentRate": "Taux de paiement", "progress": "Avancement" }, "enSouffrance": { "title": "Projets en souffrance", "total": "Total", "noData": "Aucune donnée disponible" } }
+      "kpis": {
+        "executionRate": "Taux d'exécution budgétaire",
+        "engagementRate": "Taux d'engagement budgétaire",
+        "projetsBtp": "Nombre projets BTP",
+        "projetsPartenariat": "Nombre projets Partenariat",
+        "projetsEnSouffrance": "Nombre projets en souffrance",
+        "arrieres": "Arriérés"
+      },
+      "section3": {
+        "title": "Vue d'ensemble Budget & Projets",
+        "budgetTitle": "Budget Fonctionnement vs Investissement",
+        "budgetSubtitle": "Payé vs Reste à payer (DH)",
+        "paid": "Payé",
+        "remaining": "Reste à payer",
+        "projectStateTitle": "État des projets",
+        "projectStateSubtitle": "Études, Travaux, Livraison, Achevé",
+        "projectNatureTitle": "Nature des projets",
+        "projectNatureSubtitle": "Construction vs Aménagement"
+      },
+      "section4": {
+        "title": "Évolution trimestrielle",
+        "budgetTitle": "Évolution budgétaire",
+        "budgetSubtitle": "Crédits ouverts vs payés (DH)",
+        "ouverts": "Ouverts",
+        "payes": "Payés",
+        "arrearsTitle": "Évolution des arriérés",
+        "arrearsSubtitle": "Eau vs Électricité (DH)",
+        "water": "Eau",
+        "electricity": "Électricité",
+        "projectsTitle": "Évolution du nombre de projets",
+        "projectsSubtitle": "BTP vs Partenariat",
+        "btp": "BTP",
+        "partenariat": "Partenariat"
+      },
+      "section6": {
+        "depenses": {
+          "title": "Dépenses",
+          "ouverts": "Ouverts",
+          "engages": "Engagés",
+          "payes": "Payés"
+        },
+        "eauElectricite": {
+          "title": "Eau & Électricité",
+          "consumption": "Consommation",
+          "water": "Eau",
+          "electricity": "Électricité",
+          "arrears": "Arriérés",
+          "totalArrears": "Total Arriérés"
+        },
+        "partenariat": {
+          "title": "Partenariat",
+          "summary": "Bilan",
+          "total": "Total Projets",
+          "avgProgress": "Avancement moyen",
+          "byPhase": "Répartition par phase",
+          "noData": "Aucune donnée disponible"
+        },
+        "btp": {
+          "title": "BTP",
+          "breakdown": "Répartition",
+          "cost": "Coût",
+          "financials": "Suivi financier",
+          "paidAmount": "Montant payé",
+          "paymentRate": "Taux de paiement",
+          "progress": "Avancement"
+        },
+        "enSouffrance": {
+          "title": "Projets en souffrance",
+          "total": "Total",
+          "noData": "Aucune donnée disponible"
+        }
+      }
     },
     "affairesFeminines": {
-      "urbain": "Urbain", "rural": "Rural", "laureates": "Lauréates", "integrees": "Intégrées", "beneficiairesAgr": "Bénéficiaires AGR", "seances": "Séances", "seancesCentresEcoute": "Séances Centres d'Écoute", "partenariatsSuivis": "Partenariats suivis",
-      "section3": { "title": "Formation & Territorial", "formationSecteurTitle": "Formation professionnelle par secteur", "formationSecteurSubtitle": "Inscriptions OFPPT par secteur de formation", "inscriptions": "Inscriptions", "urbainRuralTitle": "Répartition des bénéficiaires Urbain / Rural", "urbainRuralSubtitle": "Bénéficiaires des activités de sensibilisation", "total": "Total", "urbainRuralPct": "part" },
-      "section4": { "title": "Évolution trimestrielle", "integrationTitle": "Évolution de l'intégration", "integrationSubtitle": "Lauréates et intégrées par trimestre", "activiteSocialeTitle": "Évolution de l'activité sociale", "activiteSocialeSubtitle": "Bénéficiaires AGR, séances d'écoute et partenariats", "leftAxis": "Bénéficiaires / Séances" },
-      "kpis": { "totalInscriptionsFormation": "Inscriptions en formation", "tauxIntegrationLaureates": "Taux d'intégration des lauréates", "totalBeneficiairesSensibilisationPortesOuvertes": "Bénéficiaires sensibilisation + portes ouvertes", "totalBeneficiairesAgr": "Bénéficiaires AGR", "totalPartenariatsSuivis": "Partenariats suivis", "totalSeancesCentresEcoute": "Séances d'écoute" },
-      "section6": { "formation": { "title": "Formation", "clubs": "Clubs", "ofppt": "OFPPT", "parFiliere": "Par filière", "parSecteur": "Par secteur", "parNiveau": "Niveau OFPPT" }, "insertionAgr": { "title": "Insertion et AGR", "taux": "Taux intégration", "benefAgr": "Bénéficiaires AGR", "partenaires": "Partenaires" }, "sensibilisation": { "title": "Sensibilisation", "activites": "Activités", "portesOuvertesBenef": "Bénéf. Portes Ouvertes", "portesOuvertes": "Portes ouvertes", "totalBenef": "Total bénéficiaires" }, "ecoute": { "title": "Écoute", "cas": "Cas traités", "parType": "Type de soutien" }, "rh": { "title": "Ressources humaines", "disponibles": "Disponibles", "besoins": "Besoins" }, "reseau": { "title": "Réseau & Partenariats", "partenariatsSuivis": "Partenariats suivis", "sujets": "Sujets de partenariats", "mouvements": "Mouvements du réseau", "types": { "nouvel": "Nouvel", "creation_en_cours": "Création en cours", "fermeture_temporaire": "Fermeture temporaire", "reouverture": "Réouverture" } } },
-      "secteurs": {"Cuisine": "Cuisine"}
-    },
-    "protectionEnfance": {
-      "garcons": "Garçons", "filles": "Filles", "categories": { "education": "Éducation", "formation": "Formation" }, "cibles": {},
-      "kpis": { "priseEnCharge": "Bénéficiaires en prise en charge", "tauxPreparationIntegration": "Taux de préparation à l'intégration", "educationFormation": "Bénéficiaires Éducation & Formation", "integrationsLiberteSurveillee": "Intégrations en Liberté Surveillée", "incidentsSignales": "Incidents exceptionnels", "migrantsNonAccompagnes": "Mineurs migrants non accompagnés" },
-      "section3": { "title": "Formation & Incidents", "priseEnChargeTitle": "Prise en charge", "priseEnChargeSubtitle": "Répartition des bénéficiaires", "incidentsTitle": "Incidents par type", "incidentsSubtitle": "Nombre de cas signalés" },
-      "priseEnChargeTypes": {
-      "centre_sauvegarde": "Centre de sauvegarde",
-      "liberte_surveillee": "Liberté surveillée"
-    },
-    "activitesTitles": {
-    "title": "Bénéficiaires par domaine d'activité",
-    "subtitle": "Volume de bénéficiaires, par domaine d'activité"
-  },
-      "section4": { "title": "Évolution trimestrielle", "genreTitle": "Évolution des bénéficiaires", "genreSubtitle": "Garçons vs filles (T1 à T4)", "garcons": "Garçons", "filles": "Filles", "incidentsTitle": "Évolution des incidents signalés", "incidentsSubtitle": "Nombre total de cas signalés (T1 à T4)", "incidents": "Incidents" },
-      "section6": { "priseEnCharge": { "title": "Prise en charge", "total": "Total", "migrants": "Migrants", "changementMesure": "Changements de mesure" }, "educationFormation": { "title": "Éducation & Formation", "education": "Éducation", "educationFormal": "Formel", "educationNonFormal": "Non formel", "educationSoutien": "Soutien", "formation": "Formation", "intra": "Intra-muros", "extra": "Extra-muros", "initiation": "Initiation" }, "totalEducation": "Total éducation", "totalFormation": "Total formation", "ateliersActivites": { "title": "Ateliers & Activités", "ateliers": "Ateliers créés", "parDomaine": "Bénéficiaires par domaine d'activité" }, "liberteSurveillee": { "title": "Liberté surveillée", "scolaire": "Scolaire", "formationPro": "Formation pro", "stage": "Stage", "associations": "Associations", "total": "Total intégrations" }, "conseilEnfant": { "title": "Conseil de l'enfant", "sessions": "Sessions organisées" }, "partenariats": { "title": "Partenariats", "conventions": "Conventions", "projets": "Projets exécutés", "partenaires": "Partenaires", "sujets": "Sujets" }, "formationPersonnel": { "title": "Formation du personnel", "sessions": "Sessions", "beneficiaires": "Bénéficiaires", "parCible": "Par cible" }, "visitesDons": { "title": "Visites & Dons", "visites": "Visites officielles", "noVisites": "Aucune visite signalée", "totalVisiteurs": "Total visiteurs", "dons": "Dons", "noDons": "Aucun don signalé", "totalDons": "Total dons" }, "amenagementEquipement": { "title": "Aménagement & Équipement", "total": "Total", "equipes": "Équipés", "rehabilites": "Réhabilités" }, "incidentsRapports": { "title": "Incidents & Rapports", "parType": "Par type", "rapportsJudiciaires": "Rapports judiciaires", "totalIncidents": "Total incidents" } }
-    },
-    "enfanceCreches": {
-      "kpis": { "enfantsPrisesEnCharge": "Enfants pris en charge", "demandesLicencesTraitees": "Demandes de licences traitées", "delaiMoyenTraitement": "Délai moyen de traitement (jours)", "cadresAssermentes": "Cadres assermentés", "crechesLabelliseesQualite": "Crèches labellisées qualité (obtenues)", "fermeturesCreches": "Fermetures de crèches signalées" },
-      "section3": { "title": "Demandes, statuts & enfants", "demandesTypeTitle": "Demandes de licences par type", "demandesTypeSubtitle": "Volume par type de demande", "demandesStatutTitle": "Demandes de licences par statut", "demandesStatutSubtitle": "Répartition par statut", "enfantsZoneTitle": "Enfants pris en charge : Garçons/Filles × Urbain/Rural", "enfantsZoneSubtitle": "Répartition par zone géographique" },
-      "section4": { "title": "Évolution trimestrielle", "enfantsTitle": "Évolution des enfants pris en charge", "enfantsSubtitle": "Garçons vs filles par trimestre", "garcons": "Garçons", "filles": "Filles", "mouvementsTitle": "Évolution des mouvements", "mouvementsSubtitle": "Fermetures vs réouvertures par trimestre", "fermetures": "Fermetures", "reouvertures": "Réouvertures" },
-      "section6": { "licencesDemandes": { "title": "Licences & Demandes", "demandesTraitees": "Demandes traitées", "delaiMoyen": "Délai moyen (jours)", "parType": "Par type", "parStatut": "Par statut" }, "enfants": { "title": "Enfants pris en charge", "total": "Total", "urbain": "Urbain", "rural": "Rural", "activites": "Activités" }, "infrastructureQualite": { "title": "Infrastructure & Qualité", "crechesCreees": "Créées", "crechesEquipees": "Équipées", "crechesQualifiees": "Qualifiées", "labelsObtenus": "Labels obtenus", "controles": "Contrôles" }, "mouvements": { "title": "Mouvements & Fermetures", "fermetures": "Fermetures", "reouvertures": "Réouvertures", "details": "Détails" }, "cadresFormations": { "title": "Cadres & Formations", "totalCadres": "Cadres assermentés", "formations": "Formations", "statuts": "Statuts" }, "partenariatsEtudes": { "title": "Partenariats & Études", "conventions": "Conventions", "analyses": "Analyses", "sondages": "Sondages" } }
-    }
-  },
-    "RegDomainDashboard": {
-      "title": "Tableau de bord régional DRJ",
-      "tracking": "Suivi du remplissage",
-      "submittedCount": "{{n}} / {{total}} directions ont terminé",
-      "status": {
-        "termine": "Terminé",
-        "en_cours": "En cours",
-        "non_commence": "Non commencé"
+      "urbain": "Urbain",
+      "rural": "Rural",
+      "laureates": "Lauréates",
+      "integrees": "Intégrées",
+      "beneficiairesAgr": "Bénéficiaires AGR",
+      "seances": "Séances",
+      "seancesCentresEcoute": "Séances Centres d'Écoute",
+      "partenariatsSuivis": "Partenariats suivis",
+      "section3": {
+        "title": "Formation & Territorial",
+        "formationSecteurTitle": "Formation professionnelle par secteur",
+        "formationSecteurSubtitle": "Inscriptions OFPPT par secteur de formation",
+        "inscriptions": "Inscriptions",
+        "urbainRuralTitle": "Répartition des bénéficiaires Urbain / Rural",
+        "urbainRuralSubtitle": "Bénéficiaires des activités de sensibilisation",
+        "total": "Total",
+        "urbainRuralPct": "part"
+      },
+      "section4": {
+        "title": "Évolution trimestrielle",
+        "integrationTitle": "Évolution de l'intégration",
+        "integrationSubtitle": "Lauréates et intégrées par trimestre",
+        "activiteSocialeTitle": "Évolution de l'activité sociale",
+        "activiteSocialeSubtitle": "Bénéficiaires AGR, séances d'écoute et partenariats",
+        "leftAxis": "Bénéficiaires / Séances"
       },
       "kpis": {
+        "totalInscriptionsFormation": "Inscriptions en formation",
+        "tauxIntegrationLaureates": "Taux d'intégration des lauréates",
+        "totalBeneficiairesSensibilisationPortesOuvertes": "Bénéficiaires sensibilisation + portes ouvertes",
+        "totalBeneficiairesAgr": "Bénéficiaires AGR",
+        "totalPartenariatsSuivis": "Partenariats suivis",
+        "totalSeancesCentresEcoute": "Séances d'écoute"
+      },
+      "section6": {
+        "formation": {
+          "title": "Formation",
+          "clubs": "Clubs",
+          "ofppt": "OFPPT",
+          "parFiliere": "Par filière",
+          "parSecteur": "Par secteur",
+          "parNiveau": "Niveau OFPPT"
+        },
+        "insertionAgr": {
+          "title": "Insertion et AGR",
+          "taux": "Taux intégration",
+          "benefAgr": "Bénéficiaires AGR",
+          "partenaires": "Partenaires"
+        },
+        "sensibilisation": {
+          "title": "Sensibilisation",
+          "activites": "Activités",
+          "portesOuvertesBenef": "Bénéf. Portes Ouvertes",
+          "portesOuvertes": "Portes ouvertes",
+          "totalBenef": "Total bénéficiaires"
+        },
+        "ecoute": { "title": "Écoute", "cas": "Cas traités", "parType": "Type de soutien" },
+        "rh": {
+          "title": "Ressources humaines",
+          "disponibles": "Disponibles",
+          "besoins": "Besoins"
+        },
+        "reseau": {
+          "title": "Réseau & Partenariats",
+          "partenariatsSuivis": "Partenariats suivis",
+          "sujets": "Sujets de partenariats",
+          "mouvements": "Mouvements du réseau",
+          "types": {
+            "nouvel": "Nouvel",
+            "creation_en_cours": "Création en cours",
+            "fermeture_temporaire": "Fermeture temporaire",
+            "reouverture": "Réouverture"
+          }
+        }
+      },
+      "secteurs": { "Cuisine": "Cuisine" }
+    },
+    "protectionEnfance": {
+      "garcons": "Garçons",
+      "filles": "Filles",
+      "categories": { "education": "Éducation", "formation": "Formation" },
+      "cibles": {},
+      "kpis": {
+        "priseEnCharge": "Bénéficiaires en prise en charge",
+        "tauxPreparationIntegration": "Taux de préparation à l'intégration",
+        "educationFormation": "Bénéficiaires Éducation & Formation",
+        "integrationsLiberteSurveillee": "Intégrations en Liberté Surveillée",
+        "incidentsSignales": "Incidents exceptionnels",
+        "migrantsNonAccompagnes": "Mineurs migrants non accompagnés"
+      },
+      "section3": {
+        "title": "Formation & Incidents",
+        "priseEnChargeTitle": "Prise en charge",
+        "priseEnChargeSubtitle": "Répartition des bénéficiaires",
+        "incidentsTitle": "Incidents par type",
+        "incidentsSubtitle": "Nombre de cas signalés"
+      },
+      "priseEnChargeTypes": {
+        "centre_sauvegarde": "Centre de sauvegarde",
+        "liberte_surveillee": "Liberté surveillée"
+      },
+      "activitesTitles": {
+        "title": "Bénéficiaires par domaine d'activité",
+        "subtitle": "Volume de bénéficiaires, par domaine d'activité"
+      },
+      "section4": {
+        "title": "Évolution trimestrielle",
+        "genreTitle": "Évolution des bénéficiaires",
+        "genreSubtitle": "Garçons vs filles (T1 à T4)",
+        "garcons": "Garçons",
+        "filles": "Filles",
+        "incidentsTitle": "Évolution des incidents signalés",
+        "incidentsSubtitle": "Nombre total de cas signalés (T1 à T4)",
+        "incidents": "Incidents"
+      },
+      "section6": {
+        "priseEnCharge": {
+          "title": "Prise en charge",
+          "total": "Total",
+          "migrants": "Migrants",
+          "changementMesure": "Changements de mesure"
+        },
+        "educationFormation": {
+          "title": "Éducation & Formation",
+          "education": "Éducation",
+          "educationFormal": "Formel",
+          "educationNonFormal": "Non formel",
+          "educationSoutien": "Soutien",
+          "formation": "Formation",
+          "intra": "Intra-muros",
+          "extra": "Extra-muros",
+          "initiation": "Initiation"
+        },
+        "totalEducation": "Total éducation",
+        "totalFormation": "Total formation",
+        "ateliersActivites": {
+          "title": "Ateliers & Activités",
+          "ateliers": "Ateliers créés",
+          "parDomaine": "Bénéficiaires par domaine d'activité"
+        },
+        "liberteSurveillee": {
+          "title": "Liberté surveillée",
+          "scolaire": "Scolaire",
+          "formationPro": "Formation pro",
+          "stage": "Stage",
+          "associations": "Associations",
+          "total": "Total intégrations"
+        },
+        "conseilEnfant": { "title": "Conseil de l'enfant", "sessions": "Sessions organisées" },
+        "partenariats": {
+          "title": "Partenariats",
+          "conventions": "Conventions",
+          "projets": "Projets exécutés",
+          "partenaires": "Partenaires",
+          "sujets": "Sujets"
+        },
+        "formationPersonnel": {
+          "title": "Formation du personnel",
+          "sessions": "Sessions",
+          "beneficiaires": "Bénéficiaires",
+          "parCible": "Par cible"
+        },
+        "visitesDons": {
+          "title": "Visites & Dons",
+          "visites": "Visites officielles",
+          "noVisites": "Aucune visite signalée",
+          "totalVisiteurs": "Total visiteurs",
+          "dons": "Dons",
+          "noDons": "Aucun don signalé",
+          "totalDons": "Total dons"
+        },
+        "amenagementEquipement": {
+          "title": "Aménagement & Équipement",
+          "total": "Total",
+          "equipes": "Équipés",
+          "rehabilites": "Réhabilités"
+        },
+        "incidentsRapports": {
+          "title": "Incidents & Rapports",
+          "parType": "Par type",
+          "rapportsJudiciaires": "Rapports judiciaires",
+          "totalIncidents": "Total incidents"
+        }
+      }
+    },
+    "enfanceCreches": {
+      "kpis": {
+        "enfantsPrisesEnCharge": "Enfants pris en charge",
+        "demandesLicencesTraitees": "Demandes de licences traitées",
+        "delaiMoyenTraitement": "Délai moyen de traitement (jours)",
+        "cadresAssermentes": "Cadres assermentés",
+        "crechesLabelliseesQualite": "Crèches labellisées qualité (obtenues)",
+        "fermeturesCreches": "Fermetures de crèches signalées"
+      },
+      "section3": {
+        "title": "Demandes, statuts & enfants",
+        "demandesTypeTitle": "Demandes de licences par type",
+        "demandesTypeSubtitle": "Volume par type de demande",
+        "demandesStatutTitle": "Demandes de licences par statut",
+        "demandesStatutSubtitle": "Répartition par statut",
+        "enfantsZoneTitle": "Enfants pris en charge : Garçons/Filles × Urbain/Rural",
+        "enfantsZoneSubtitle": "Répartition par zone géographique"
+      },
+      "section4": {
+        "title": "Évolution trimestrielle",
+        "enfantsTitle": "Évolution des enfants pris en charge",
+        "enfantsSubtitle": "Garçons vs filles par trimestre",
+        "garcons": "Garçons",
+        "filles": "Filles",
+        "mouvementsTitle": "Évolution des mouvements",
+        "mouvementsSubtitle": "Fermetures vs réouvertures par trimestre",
+        "fermetures": "Fermetures",
+        "reouvertures": "Réouvertures"
+      },
+      "section6": {
+        "licencesDemandes": {
+          "title": "Licences & Demandes",
+          "demandesTraitees": "Demandes traitées",
+          "delaiMoyen": "Délai moyen (jours)",
+          "parType": "Par type",
+          "parStatut": "Par statut"
+        },
+        "enfants": {
+          "title": "Enfants pris en charge",
+          "total": "Total",
+          "urbain": "Urbain",
+          "rural": "Rural",
+          "activites": "Activités"
+        },
+        "infrastructureQualite": {
+          "title": "Infrastructure & Qualité",
+          "crechesCreees": "Créées",
+          "crechesEquipees": "Équipées",
+          "crechesQualifiees": "Qualifiées",
+          "labelsObtenus": "Labels obtenus",
+          "controles": "Contrôles"
+        },
+        "mouvements": {
+          "title": "Mouvements & Fermetures",
+          "fermetures": "Fermetures",
+          "reouvertures": "Réouvertures",
+          "details": "Détails"
+        },
+        "cadresFormations": {
+          "title": "Cadres & Formations",
+          "totalCadres": "Cadres assermentés",
+          "formations": "Formations",
+          "statuts": "Statuts"
+        },
+        "partenariatsEtudes": {
+          "title": "Partenariats & Études",
+          "conventions": "Conventions",
+          "analyses": "Analyses",
+          "sondages": "Sondages"
+        }
+      }
+    }
+  },
+  "RegDomainDashboard": {
+    "title": "Tableau de bord régional DRJ",
+    "tracking": "Suivi du remplissage",
+    "submittedCount": "{{n}} / {{total}} directions ont terminé",
+    "status": {
+      "termine": "Terminé",
+      "en_cours": "En cours",
+      "non_commence": "Non commencé"
+    },
+    "kpis": {
       "title": "Indicateurs de Pilotage Stratégique",
       "totalBeneficiaires": "Total Bénéficiaires",
       "totalActivities": "Total activités",
@@ -487,48 +800,11 @@
     },
     "loadingPrefecture": "Chargement de l'analyse détaillée de la préfecture...",
     "buttons": {
-    "excel": "Données Excel",
-    "pdf": "Rapport PDF"
-  }
-    },
-   
+      "excel": "Données Excel",
+      "pdf": "Rapport PDF"
+    }
+  },
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    
   "app": {
     "name": "DRJ Casablanca-Settat",
     "fullName": "Direction Régionale de la Jeunesse",
@@ -588,7 +864,7 @@
     "viewDetail": "Voir la fiche",
     "noData": "Aucune donnée"
   },
-  
+
   "detail": {
     "back": "Retour",
     "globalScore": "Score global",

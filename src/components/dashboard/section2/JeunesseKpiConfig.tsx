@@ -20,10 +20,7 @@ export interface JeunesseKpis {
  * Reconstruit exactement l'ordre, les icônes, les couleurs, les labels
  * et le format existants — aucune régression visuelle.
  */
-export const buildJeunesseKpiItems = (
-  kpis: JeunesseKpis,
-  t: TFunction,
-): KpiItem[] => [
+export const buildJeunesseKpiItems = (kpis: JeunesseKpis, t: TFunction): KpiItem[] => [
   // 1. Total des Activités
   {
     id: "totalActivities",

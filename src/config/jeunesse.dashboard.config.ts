@@ -63,31 +63,105 @@ export const jeunesseDashboardConfig: DashboardConfig = {
   repartitionCharts: [
     {
       type: "volume",
-      title: { translationKey: "prefDomainDashboard.charts.volumeTitle", fallback: "Volume Global par Programme" },
-      subtitle: { translationKey: "prefDomainDashboard.charts.volumeSubtitle", fallback: "Nombre absolu de bénéficiaires impactés" },
+      title: {
+        translationKey: "prefDomainDashboard.charts.volumeTitle",
+        fallback: "Volume Global par Programme",
+      },
+      subtitle: {
+        translationKey: "prefDomainDashboard.charts.volumeSubtitle",
+        fallback: "Nombre absolu de bénéficiaires impactés",
+      },
     },
     {
       type: "mixity",
-      title: { translationKey: "prefDomainDashboard.charts.mixityTitle", fallback: "Mixité H / F par Programme (%)" },
-      subtitle: { translationKey: "prefDomainDashboard.charts.mixitySubtitle", fallback: "Taux de féminisation comparatif" },
+      title: {
+        translationKey: "prefDomainDashboard.charts.mixityTitle",
+        fallback: "Mixité H / F par Programme (%)",
+      },
+      subtitle: {
+        translationKey: "prefDomainDashboard.charts.mixitySubtitle",
+        fallback: "Taux de féminisation comparatif",
+      },
     },
     {
       type: "coverage",
-      title: { translationKey: "prefDomainDashboard.charts.coverageTitle", fallback: "Couverture Territorial (Urbain / Rural)" },
-      subtitle: { translationKey: "prefDomainDashboard.charts.coverageSubtitle", fallback: "Analyse incluant les données estimées" },
+      title: {
+        translationKey: "prefDomainDashboard.charts.coverageTitle",
+        fallback: "Couverture Territorial (Urbain / Rural)",
+      },
+      subtitle: {
+        translationKey: "prefDomainDashboard.charts.coverageSubtitle",
+        fallback: "Analyse incluant les données estimées",
+      },
     },
   ],
   evolutionChart: {
-    title: { translationKey: "prefDomainDashboard.charts.evolutionCardTitle", fallback: "Trajectoire des performances par programme" },
-    subtitle: { translationKey: "prefDomainDashboard.charts.evolutionCardSubtitle", fallback: "Évolution du nombre de bénéficiaires (T1 à T4) pour les axes éligibles" },
+    title: {
+      translationKey: "prefDomainDashboard.charts.evolutionCardTitle",
+      fallback: "Trajectoire des performances par programme",
+    },
+    subtitle: {
+      translationKey: "prefDomainDashboard.charts.evolutionCardSubtitle",
+      fallback: "Évolution du nombre de bénéficiaires (T1 à T4) pour les axes éligibles",
+    },
   },
-  benchmark: { translationKey: "prefDomainDashboard.benchmark.title", fallback: "Benchmark régional" },
+  benchmark: {
+    translationKey: "prefDomainDashboard.benchmark.title",
+    fallback: "Benchmark régional",
+  },
   sections: [
-    { id: "workflow", title: { translationKey: "prefDomainDashboard.workflow.title", fallback: "Suivi du rapport" }, className: "space-y-3", headingClassName: "text-base sm:text-lg font-bold text-foreground", headingWrapperClassName: "flex items-baseline justify-between" },
-    { id: "kpis", title: { translationKey: "prefDomainDashboard.keyIndicators", fallback: "Top KPIs principaux" }, className: "", headingClassName: "" },
-    { id: "repartition", title: { translationKey: "prefDomainDashboard.charts.axeTitle", fallback: "Répartition des bénéficiaires par axe" }, className: "space-y-4", headingClassName: "text-lg font-bold text-foreground" },
-    { id: "evolution", title: { translationKey: "prefDomainDashboard.charts.evolutionTitle", fallback: "Évolution trimestrielle des bénéficiaires" }, className: "space-y-4", headingClassName: "text-lg font-bold text-foreground", headingWrapperClassName: "flex items-center justify-between" },
-    { id: "benchmark", title: { translationKey: "prefDomainDashboard.benchmark.title", fallback: "Benchmark régional" }, className: "space-y-3", headingClassName: "text-base sm:text-lg font-bold text-foreground" },
-    { id: "details", title: { translationKey: "prefDomainDashboard.details.title", fallback: "Lecture détaillée du rapport" }, className: "space-y-2", headingClassName: "text-base sm:text-lg font-bold text-foreground" },
+    {
+      id: "workflow",
+      title: { translationKey: "prefDomainDashboard.workflow.title", fallback: "Suivi du rapport" },
+      className: "space-y-3",
+      headingClassName: "text-base sm:text-lg font-bold text-foreground",
+      headingWrapperClassName: "flex items-baseline justify-between",
+    },
+    {
+      id: "kpis",
+      title: {
+        translationKey: "prefDomainDashboard.keyIndicators",
+        fallback: "Top KPIs principaux",
+      },
+      className: "",
+      headingClassName: "",
+    },
+    {
+      id: "repartition",
+      title: {
+        translationKey: "prefDomainDashboard.charts.axeTitle",
+        fallback: "Répartition des bénéficiaires par axe",
+      },
+      className: "space-y-4",
+      headingClassName: "text-lg font-bold text-foreground",
+    },
+    {
+      id: "evolution",
+      title: {
+        translationKey: "prefDomainDashboard.charts.evolutionTitle",
+        fallback: "Évolution trimestrielle des bénéficiaires",
+      },
+      className: "space-y-4",
+      headingClassName: "text-lg font-bold text-foreground",
+      headingWrapperClassName: "flex items-center justify-between",
+    },
+    {
+      id: "benchmark",
+      title: {
+        translationKey: "prefDomainDashboard.benchmark.title",
+        fallback: "Benchmark régional",
+      },
+      className: "space-y-3",
+      headingClassName: "text-base sm:text-lg font-bold text-foreground",
+    },
+    {
+      id: "details",
+      title: {
+        translationKey: "prefDomainDashboard.details.title",
+        fallback: "Lecture détaillée du rapport",
+      },
+      className: "space-y-2",
+      headingClassName: "text-base sm:text-lg font-bold text-foreground",
+    },
   ],
 };

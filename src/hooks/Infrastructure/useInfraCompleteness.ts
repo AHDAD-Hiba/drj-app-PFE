@@ -1,11 +1,11 @@
-import { useState, useEffect, useMemo } from 'react';
-import { computeInfraCompleteness } from '@/lib/infraCompleteness';
+import { useState, useEffect, useMemo } from "react";
+import { computeInfraCompleteness } from "@/lib/infraCompleteness";
 
-import { useInfraDepenses } from './useInfraDepenses';
-import { useInfraEauElectricite } from './useInfraEauElectricite';
-import { useInfraPartenariats } from './useInfraPartenariats';
-import { useInfraBtp } from './useInfraBtp';
-import { useInfraProjetsSouffrance } from './useInfraProjetsSouffrance';
+import { useInfraDepenses } from "./useInfraDepenses";
+import { useInfraEauElectricite } from "./useInfraEauElectricite";
+import { useInfraPartenariats } from "./useInfraPartenariats";
+import { useInfraBtp } from "./useInfraBtp";
+import { useInfraProjetsSouffrance } from "./useInfraProjetsSouffrance";
 
 export function useInfraCompleteness(rapportId: string | null, refreshTrigger?: number) {
   // STEP 1 (IMMÉDIAT)
@@ -20,7 +20,7 @@ export function useInfraCompleteness(rapportId: string | null, refreshTrigger?: 
 
   const eauElec = useInfraEauElectricite(rapportId, { enabled: loadStep2 });
 
-    // STEP 3 (APRÈS 800ms)
+  // STEP 3 (APRÈS 800ms)
   const [loadStep3, setLoadStep3] = useState(false);
   useEffect(() => {
     const timer = setTimeout(() => setLoadStep3(true), 800);
@@ -46,7 +46,7 @@ export function useInfraCompleteness(rapportId: string | null, refreshTrigger?: 
   }, []);
   const souffrance = useInfraProjetsSouffrance(rapportId, { enabled: loadStep5 });
 
-// ✅ TOUJOURS recharger TOUT quand refreshTrigger change
+  // ✅ TOUJOURS recharger TOUT quand refreshTrigger change
   useEffect(() => {
     if (refreshTrigger && refreshTrigger > 0) {
       depenses.reload();

@@ -1,38 +1,41 @@
-import { memo } from 'react';
-import { useTranslation } from 'react-i18next';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { SafeInput } from '@/components/form/SafeInput';
-import { Label } from '@/components/ui/label';
+import { memo } from "react";
+import { useTranslation } from "react-i18next";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { SafeInput } from "@/components/form/SafeInput";
+import { Label } from "@/components/ui/label";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from '@/components/ui/select';
-import { Plus, Trash2, Landmark, AlertTriangle } from 'lucide-react';
-import { NumericField } from '@/components/form/NumericField';
-import { useTypesPartenaires } from '@/hooks/Jeunesse/useTypesPartenaires';
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Plus, Trash2, Landmark, AlertTriangle } from "lucide-react";
+import { NumericField } from "@/components/form/NumericField";
+import { useTypesPartenaires } from "@/hooks/Jeunesse/useTypesPartenaires";
 
-import { StepComponentProps } from '@/config/wizard.types';
-import { useInsertionEntries, type InsertionEntry as SocioEcoEntry } from '@/hooks/Jeunesse/useInsertionEntries';
+import { StepComponentProps } from "@/config/wizard.types";
+import {
+  useInsertionEntries,
+  type InsertionEntry as SocioEcoEntry,
+} from "@/hooks/Jeunesse/useInsertionEntries";
 
 const createEmptySocioEco = (): SocioEcoEntry => ({
   local_id: crypto.randomUUID(),
-  sujet: '',
+  sujet: "",
   duree_valeur: 0,
-  unite_duree: '',
-  type_partenaire_id: '',
+  unite_duree: "",
+  type_partenaire_id: "",
   femmes: 0,
   hommes: 0,
   rural: 0,
   urbain: 0,
 });
 
-export const Step7SocioEco = memo(({
-  rapportId,
-  disabled,
-  onActivity,
-}: StepComponentProps) => {
+export const Step7SocioEco = memo(({ rapportId, disabled, onActivity }: StepComponentProps) => {
   const { i18n } = useTranslation();
-  const isAr = i18n.language === 'ar';
+  const isAr = i18n.language === "ar";
 
   const insertionEntries = useInsertionEntries(rapportId);
   const socioeco = insertionEntries.items;
@@ -54,7 +57,7 @@ export const Step7SocioEco = memo(({
 
   const partnerTypes = useTypesPartenaires();
   const autreId = partnerTypes.items.find(
-    (x) => x.nom?.toLowerCase() === 'autre' || x.nom_ar === 'أخرى'
+    (x) => x.nom?.toLowerCase() === "autre" || x.nom_ar === "أخرى",
   )?.id;
 
   return (
@@ -64,10 +67,10 @@ export const Step7SocioEco = memo(({
           <div>
             <h2 className="text-lg font-bold flex items-center gap-2">
               <Landmark className="h-5 w-5 text-primary" />
-              {isAr ? 'الإدماج السوسيو-اقتصادي' : 'Intégration socio-économique'}
+              {isAr ? "الإدماج السوسيو-اقتصادي" : "Intégration socio-économique"}
             </h2>
             <p className="text-sm text-muted-foreground">
-              {isAr ? 'أضف كل نشاط على حدة' : 'Ajoutez chaque activité individuellement'}
+              {isAr ? "أضف كل نشاط على حدة" : "Ajoutez chaque activité individuellement"}
             </p>
           </div>
           <Button
@@ -78,13 +81,13 @@ export const Step7SocioEco = memo(({
             className="gap-1.5"
           >
             <Plus className="h-4 w-4" />
-            {isAr ? 'إضافة' : 'Ajouter'}
+            {isAr ? "إضافة" : "Ajouter"}
           </Button>
         </div>
 
         {socioeco.length === 0 ? (
           <div className="text-center py-4 text-xs text-muted-foreground border-2 border-dashed border-border rounded-lg">
-            {isAr ? 'لا توجد أنشطة' : 'Aucune activité enregistrée'}
+            {isAr ? "لا توجد أنشطة" : "Aucune activité enregistrée"}
           </div>
         ) : (
           <div className="space-y-3 pt-2">
@@ -114,14 +117,16 @@ export const Step7SocioEco = memo(({
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div className="space-y-1.5">
-                      <Label className="text-xs">{isAr ? 'موضوع النشاط' : "Sujet de l'activité"}</Label>
+                      <Label className="text-xs">
+                        {isAr ? "موضوع النشاط" : "Sujet de l'activité"}
+                      </Label>
                       <SafeInput
                         value={item.sujet}
                         maxLength={200}
                         placeholder={
                           isAr
-                            ? 'مثال: (تكوين، لقاء تحسيسي، ورشات علمية..)'
-                            : 'Ex: (formation, rencontre de sensibilisation, ateliers scientifiques...)'
+                            ? "مثال: (تكوين، لقاء تحسيسي، ورشات علمية..)"
+                            : "Ex: (formation, rencontre de sensibilisation, ateliers scientifiques...)"
                         }
                         className="h-9"
                         disabled={disabled}
@@ -134,7 +139,7 @@ export const Step7SocioEco = memo(({
                     <div className="space-y-1.5">
                       <div className="grid grid-cols-2 gap-2">
                         <NumericField
-                          label={isAr ? 'المدة' : 'Durée'}
+                          label={isAr ? "المدة" : "Durée"}
                           value={item.duree_valeur ?? 0}
                           onChange={(value) =>
                             handleUpdateSocio(item.local_id, {
@@ -145,29 +150,31 @@ export const Step7SocioEco = memo(({
                         />
 
                         <div className="space-y-1.5">
-                          <Label className="text-xs">{isAr ? 'الوحدة' : 'Unité'}</Label>
+                          <Label className="text-xs">{isAr ? "الوحدة" : "Unité"}</Label>
 
                           <Select
-                            value={item.unite_duree || 'none'}
+                            value={item.unite_duree || "none"}
                             onValueChange={(value) =>
                               handleUpdateSocio(item.local_id, {
-                                unite_duree: (value === 'none' ? '' : value) as SocioEcoEntry['unite_duree'],
+                                unite_duree: (value === "none"
+                                  ? ""
+                                  : value) as SocioEcoEntry["unite_duree"],
                               })
                             }
                             disabled={disabled}
                           >
                             <SelectTrigger className="h-9">
-                              <SelectValue placeholder={isAr ? 'اختر' : 'Choisir'} />
+                              <SelectValue placeholder={isAr ? "اختر" : "Choisir"} />
                             </SelectTrigger>
 
                             <SelectContent>
                               <SelectItem value="none">
-                                {isAr ? 'اختر الوحدة' : 'Choisir unité'}
+                                {isAr ? "اختر الوحدة" : "Choisir unité"}
                               </SelectItem>
-                              <SelectItem value="heure">{isAr ? 'ساعة' : 'Heure'}</SelectItem>
-                              <SelectItem value="jour">{isAr ? 'يوم' : 'Jour'}</SelectItem>
-                              <SelectItem value="semaine">{isAr ? 'أسبوع' : 'Semaine'}</SelectItem>
-                              <SelectItem value="mois">{isAr ? 'شهر' : 'Mois'}</SelectItem>
+                              <SelectItem value="heure">{isAr ? "ساعة" : "Heure"}</SelectItem>
+                              <SelectItem value="jour">{isAr ? "يوم" : "Jour"}</SelectItem>
+                              <SelectItem value="semaine">{isAr ? "أسبوع" : "Semaine"}</SelectItem>
+                              <SelectItem value="mois">{isAr ? "شهر" : "Mois"}</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
@@ -176,23 +183,23 @@ export const Step7SocioEco = memo(({
                   </div>
 
                   <div className="space-y-1.5">
-                    <Label className="text-xs">{isAr ? 'نوع الشريك' : 'Type de partenaire'}</Label>
+                    <Label className="text-xs">{isAr ? "نوع الشريك" : "Type de partenaire"}</Label>
                     <Select
-                      value={item.type_partenaire_id || 'none'}
+                      value={item.type_partenaire_id || "none"}
                       onValueChange={(value) =>
                         handleUpdateSocio(item.local_id, {
-                          type_partenaire_id: value === 'none' ? '' : value,
-                          autre_partenaire: value === autreId ? item.autre_partenaire : '',
+                          type_partenaire_id: value === "none" ? "" : value,
+                          autre_partenaire: value === autreId ? item.autre_partenaire : "",
                         })
                       }
                       disabled={disabled}
                     >
                       <SelectTrigger className="h-9">
-                        <SelectValue placeholder={isAr ? 'اختر' : 'Choisir'} />
+                        <SelectValue placeholder={isAr ? "اختر" : "Choisir"} />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="none">
-                          {isAr ? 'اختر نوع الشريك' : 'Choisir un partenaire'}
+                          {isAr ? "اختر نوع الشريك" : "Choisir un partenaire"}
                         </SelectItem>
                         {(partnerTypes.items ?? []).map((type) => (
                           <SelectItem key={type.id} value={type.id}>
@@ -205,10 +212,10 @@ export const Step7SocioEco = memo(({
                     {item.type_partenaire_id === autreId && (
                       <div className="mt-3 space-y-1.5">
                         <Label className="text-xs">
-                          {isAr ? 'تحديد الشريك' : 'Préciser le partenaire'}
+                          {isAr ? "تحديد الشريك" : "Préciser le partenaire"}
                         </Label>
                         <SafeInput
-                          value={item.autre_partenaire ?? ''}
+                          value={item.autre_partenaire ?? ""}
                           disabled={disabled}
                           onValueChange={(val) =>
                             handleUpdateSocio(item.local_id, {
@@ -222,29 +229,29 @@ export const Step7SocioEco = memo(({
 
                   <section className="space-y-2">
                     <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                      {isAr ? 'المشاركون' : 'Participants'}
+                      {isAr ? "المشاركون" : "Participants"}
                     </h4>
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                       <NumericField
-                        label={isAr ? 'عدد النساء' : 'Femmes'}
+                        label={isAr ? "عدد النساء" : "Femmes"}
                         value={item.femmes ?? 0}
                         onChange={(value) => handleUpdateSocio(item.local_id, { femmes: value })}
                         disabled={disabled}
                       />
                       <NumericField
-                        label={isAr ? 'عدد الرجال' : 'Hommes'}
+                        label={isAr ? "عدد الرجال" : "Hommes"}
                         value={item.hommes ?? 0}
                         onChange={(value) => handleUpdateSocio(item.local_id, { hommes: value })}
                         disabled={disabled}
                       />
                       <NumericField
-                        label={isAr ? 'عدد (قروي)' : 'Nbr Rural'}
+                        label={isAr ? "عدد (قروي)" : "Nbr Rural"}
                         value={item.rural ?? 0}
                         onChange={(value) => handleUpdateSocio(item.local_id, { rural: value })}
                         disabled={disabled}
                       />
                       <NumericField
-                        label={isAr ? 'عدد (حضري)' : 'Nbr Urbain'}
+                        label={isAr ? "عدد (حضري)" : "Nbr Urbain"}
                         value={item.urbain ?? 0}
                         onChange={(value) => handleUpdateSocio(item.local_id, { urbain: value })}
                         disabled={disabled}
@@ -257,8 +264,8 @@ export const Step7SocioEco = memo(({
                       <AlertTriangle className="h-4 w-4" />
                       <span>
                         {isAr
-                          ? 'تنبيه: يجب أن يكون مجموع (حضري + قروي) مساوياً للمجموع العام (نساء + رجال).'
-                          : 'Attention : Le total (Urbain + Rural) doit être égal au total général (Femmes + Hommes).'}
+                          ? "تنبيه: يجب أن يكون مجموع (حضري + قروي) مساوياً للمجموع العام (نساء + رجال)."
+                          : "Attention : Le total (Urbain + Rural) doit être égal au total général (Femmes + Hommes)."}
                       </span>
                     </div>
                   )}
@@ -272,4 +279,4 @@ export const Step7SocioEco = memo(({
   );
 });
 
-Step7SocioEco.displayName = 'Step7SocioEco';
+Step7SocioEco.displayName = "Step7SocioEco";

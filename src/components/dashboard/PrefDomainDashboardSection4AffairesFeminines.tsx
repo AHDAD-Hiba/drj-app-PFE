@@ -107,11 +107,12 @@ export const PrefDomainDashboardSection4AffairesFeminines = ({
                 <XAxis {...xAxisProps} />
                 <YAxis {...yAxisProps} allowDecimals={false} />
                 <Tooltip
-                  contentStyle={{ borderRadius: "8px", border: "1px solid hsl(var(--border))", fontSize: "12px" }}
-                  formatter={(value: number, name) => [
-                    fmtNum(value, lang),
-                    name as string,
-                  ]}
+                  contentStyle={{
+                    borderRadius: "8px",
+                    border: "1px solid hsl(var(--border))",
+                    fontSize: "12px",
+                  }}
+                  formatter={(value: number, name) => [fmtNum(value, lang), name as string]}
                 />
                 <Legend wrapperStyle={{ fontSize: "11px", paddingTop: "10px" }} iconType="circle" />
                 <Area
@@ -157,7 +158,10 @@ export const PrefDomainDashboardSection4AffairesFeminines = ({
           </div>
           <div className="h-[260px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={activiteSociale} margin={{ top: 10, right: 15, left: 10, bottom: 20 }}>
+              <LineChart
+                data={activiteSociale}
+                margin={{ top: 10, right: 15, left: 10, bottom: 20 }}
+              >
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
                 <XAxis {...xAxisProps} />
                 {/* Axe gauche : Bénéficiaires AGR + Séances centres d'écoute */}
@@ -167,10 +171,17 @@ export const PrefDomainDashboardSection4AffairesFeminines = ({
                   axisLine={{ stroke: "hsl(var(--muted-foreground))" }}
                   tickLine={{ stroke: "hsl(var(--muted-foreground))" }}
                   width={55}
-                  tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))", dx: lang === "ar" ? -18 : 0 }}
+                  tick={{
+                    fontSize: 11,
+                    fill: "hsl(var(--muted-foreground))",
+                    dx: lang === "ar" ? -18 : 0,
+                  }}
                   allowDecimals={false}
                   label={{
-                    value: t("prefDomainDashboard.affairesFeminines.section4.leftAxis", "Bénéficiaires / Séances"),
+                    value: t(
+                      "prefDomainDashboard.affairesFeminines.section4.leftAxis",
+                      "Bénéficiaires / Séances",
+                    ),
                     angle: -90,
                     position: "insideLeft",
                     fontSize: 10,
@@ -188,19 +199,41 @@ export const PrefDomainDashboardSection4AffairesFeminines = ({
                   allowDecimals={false}
                 />
                 <Tooltip
-                  contentStyle={{ borderRadius: "8px", border: "1px solid hsl(var(--border))", fontSize: "12px" }}
+                  contentStyle={{
+                    borderRadius: "8px",
+                    border: "1px solid hsl(var(--border))",
+                    fontSize: "12px",
+                  }}
                   formatter={(value: number | string, name: number | string) => {
                     const n = Number(value) || 0;
                     const label = name as string;
                     // On précise l'unité/nature de chaque série pour éviter toute
                     // confusion entre des valeurs de natures différentes.
-                    if (label === t("prefDomainDashboard.affairesFeminines.beneficiairesAgr", "Bénéficiaires AGR")) {
+                    if (
+                      label ===
+                      t(
+                        "prefDomainDashboard.affairesFeminines.beneficiairesAgr",
+                        "Bénéficiaires AGR",
+                      )
+                    ) {
                       return [`${fmtNum(n, lang)} bénéficiaires`, label];
                     }
-                    if (label === t("prefDomainDashboard.affairesFeminines.seancesCentresEcoute", "Séances Centres d'Écoute")) {
+                    if (
+                      label ===
+                      t(
+                        "prefDomainDashboard.affairesFeminines.seancesCentresEcoute",
+                        "Séances Centres d'Écoute",
+                      )
+                    ) {
                       return [`${fmtNum(n, lang)} séances`, label];
                     }
-                    if (label === t("prefDomainDashboard.affairesFeminines.partenariatsSuivis", "Partenariats suivis")) {
+                    if (
+                      label ===
+                      t(
+                        "prefDomainDashboard.affairesFeminines.partenariatsSuivis",
+                        "Partenariats suivis",
+                      )
+                    ) {
                       return [`${n} partenariats`, label];
                     }
                     return [fmtNum(n, lang), label];
@@ -212,7 +245,10 @@ export const PrefDomainDashboardSection4AffairesFeminines = ({
                   yAxisId="left"
                   type="linear"
                   dataKey="beneficiairesAgr"
-                  name={t("prefDomainDashboard.affairesFeminines.beneficiairesAgr", "Bénéficiaires AGR")}
+                  name={t(
+                    "prefDomainDashboard.affairesFeminines.beneficiairesAgr",
+                    "Bénéficiaires AGR",
+                  )}
                   stroke="#3b82f6"
                   strokeWidth={2}
                   dot={false}
@@ -222,7 +258,10 @@ export const PrefDomainDashboardSection4AffairesFeminines = ({
                   yAxisId="left"
                   type="linear"
                   dataKey="seancesCentresEcoute"
-                  name={t("prefDomainDashboard.affairesFeminines.seancesCentresEcoute", "Séances Centres d'Écoute")}
+                  name={t(
+                    "prefDomainDashboard.affairesFeminines.seancesCentresEcoute",
+                    "Séances Centres d'Écoute",
+                  )}
                   stroke="#10b981"
                   strokeWidth={2}
                   dot={false}
@@ -233,7 +272,10 @@ export const PrefDomainDashboardSection4AffairesFeminines = ({
                   yAxisId="right"
                   type="linear"
                   dataKey="partenariatsSuivis"
-                  name={t("prefDomainDashboard.affairesFeminines.partenariatsSuivis", "Partenariats suivis")}
+                  name={t(
+                    "prefDomainDashboard.affairesFeminines.partenariatsSuivis",
+                    "Partenariats suivis",
+                  )}
                   stroke="#f59e0b"
                   strokeWidth={2}
                   dot={false}

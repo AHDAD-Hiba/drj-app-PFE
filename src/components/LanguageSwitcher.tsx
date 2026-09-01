@@ -1,13 +1,13 @@
-import { useTranslation } from 'react-i18next';
-import { Languages } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { useTranslation } from "react-i18next";
+import { Languages } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
-export const LanguageSwitcher = ({ variant = 'default' }: { variant?: 'default' | 'minimal' }) => {
+export const LanguageSwitcher = ({ variant = "default" }: { variant?: "default" | "minimal" }) => {
   const { i18n } = useTranslation();
-  const toggle = () => i18n.changeLanguage(i18n.language === 'fr' ? 'ar' : 'fr');
-  const next = i18n.language === 'fr' ? 'العربية' : 'Français';
+  const toggle = () => i18n.changeLanguage(i18n.language === "fr" ? "ar" : "fr");
+  const next = i18n.language === "fr" ? "العربية" : "Français";
 
-  if (variant === 'minimal') {
+  if (variant === "minimal") {
     return (
       <button
         onClick={toggle}

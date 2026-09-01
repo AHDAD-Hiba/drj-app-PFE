@@ -1,4 +1,4 @@
-import { useOnlineStatus } from '@/hooks/common/useOnlineStatus';
+import { useOnlineStatus } from "@/hooks/common/useOnlineStatus";
 
 export const OfflineBanner = () => {
   const isOnline = useOnlineStatus();
@@ -13,7 +13,8 @@ export const OfflineBanner = () => {
         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
         <span className="relative inline-flex rounded-full h-3 w-3 bg-white"></span>
       </span>
-      Connexion Internet perdue. Ne quittez pas cette page, vos données sont en attente de synchronisation.
+      Connexion Internet perdue. Ne quittez pas cette page, vos données sont en attente de
+      synchronisation.
     </div>
   );
 };

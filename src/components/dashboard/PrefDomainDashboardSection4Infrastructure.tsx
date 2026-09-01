@@ -77,7 +77,10 @@ export const PrefDomainDashboardSection4Infrastructure = ({
               {t("prefDomainDashboard.infrastructure.section4.budgetTitle", "Évolution budgétaire")}
             </h3>
             <p className="text-xs text-muted-foreground mt-0.5">
-              {t("prefDomainDashboard.infrastructure.section4.budgetSubtitle", "Crédits ouverts vs payés (DH)")}
+              {t(
+                "prefDomainDashboard.infrastructure.section4.budgetSubtitle",
+                "Crédits ouverts vs payés (DH)",
+              )}
             </p>
           </div>
           <div className="h-[260px] w-full">
@@ -97,7 +100,11 @@ export const PrefDomainDashboardSection4Infrastructure = ({
                 <XAxis {...xAxisProps} />
                 <YAxis {...yAxisProps} />
                 <Tooltip
-                  contentStyle={{ borderRadius: "8px", border: "1px solid hsl(var(--border))", fontSize: "12px" }}
+                  contentStyle={{
+                    borderRadius: "8px",
+                    border: "1px solid hsl(var(--border))",
+                    fontSize: "12px",
+                  }}
                 />
                 <Legend wrapperStyle={{ fontSize: "11px", paddingTop: "10px" }} iconType="circle" />
                 <Area
@@ -129,10 +136,16 @@ export const PrefDomainDashboardSection4Infrastructure = ({
         <Card className="p-5">
           <div className="mb-4">
             <h3 className="text-sm font-bold text-foreground">
-              {t("prefDomainDashboard.infrastructure.section4.arrearsTitle", "Évolution des arriérés")}
+              {t(
+                "prefDomainDashboard.infrastructure.section4.arrearsTitle",
+                "Évolution des arriérés",
+              )}
             </h3>
             <p className="text-xs text-muted-foreground mt-0.5">
-              {t("prefDomainDashboard.infrastructure.section4.arrearsSubtitle", "Eau vs Électricité (DH)")}
+              {t(
+                "prefDomainDashboard.infrastructure.section4.arrearsSubtitle",
+                "Eau vs Électricité (DH)",
+              )}
             </p>
           </div>
           <div className="h-[260px] w-full">
@@ -148,7 +161,11 @@ export const PrefDomainDashboardSection4Infrastructure = ({
                 <XAxis {...xAxisProps} />
                 <YAxis {...yAxisProps} />
                 <Tooltip
-                  contentStyle={{ borderRadius: "8px", border: "1px solid hsl(var(--border))", fontSize: "12px" }}
+                  contentStyle={{
+                    borderRadius: "8px",
+                    border: "1px solid hsl(var(--border))",
+                    fontSize: "12px",
+                  }}
                 />
                 <Legend wrapperStyle={{ fontSize: "11px", paddingTop: "10px" }} iconType="circle" />
                 <Area
@@ -179,10 +196,16 @@ export const PrefDomainDashboardSection4Infrastructure = ({
         <Card className="p-5">
           <div className="mb-4">
             <h3 className="text-sm font-bold text-foreground">
-              {t("prefDomainDashboard.infrastructure.section4.projectsTitle", "Évolution du nombre de projets")}
+              {t(
+                "prefDomainDashboard.infrastructure.section4.projectsTitle",
+                "Évolution du nombre de projets",
+              )}
             </h3>
             <p className="text-xs text-muted-foreground mt-0.5">
-              {t("prefDomainDashboard.infrastructure.section4.projectsSubtitle", "BTP vs Partenariat")}
+              {t(
+                "prefDomainDashboard.infrastructure.section4.projectsSubtitle",
+                "BTP vs Partenariat",
+              )}
             </p>
           </div>
           <div className="h-[260px] w-full">
@@ -198,7 +221,11 @@ export const PrefDomainDashboardSection4Infrastructure = ({
                 <XAxis {...xAxisProps} />
                 <YAxis {...yAxisProps} allowDecimals={false} />
                 <Tooltip
-                  contentStyle={{ borderRadius: "8px", border: "1px solid hsl(var(--border))", fontSize: "12px" }}
+                  contentStyle={{
+                    borderRadius: "8px",
+                    border: "1px solid hsl(var(--border))",
+                    fontSize: "12px",
+                  }}
                 />
                 <Legend wrapperStyle={{ fontSize: "11px", paddingTop: "10px" }} iconType="circle" />
                 <Area

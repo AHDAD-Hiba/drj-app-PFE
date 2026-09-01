@@ -34,13 +34,14 @@ export const PrefDomainDashboardSection1Alerts = ({
             </h3>
 
             <p className="mt-2 text-sm">
-              {t("prefDomainDashboard.section1Alerts.correctionBody", "L'équipe régionale demande des modifications.")}
+              {t(
+                "prefDomainDashboard.section1Alerts.correctionBody",
+                "L'équipe régionale demande des modifications.",
+              )}
             </p>
 
             {correctionComment && (
-              <div className="mt-3 rounded border bg-white p-3">
-                {correctionComment}
-              </div>
+              <div className="mt-3 rounded border bg-white p-3">{correctionComment}</div>
             )}
           </CardContent>
         </Card>
@@ -50,11 +51,15 @@ export const PrefDomainDashboardSection1Alerts = ({
         <Card className="mb-5 border-green-500 bg-green-50">
           <CardContent className="p-4">
             <h3 className="font-bold text-green-700 flex items-center gap-2">
-              <CheckCircle2 className="h-5 w-5" /> {t("prefDomainDashboard.section1Alerts.validatedTitle", "Rapport validé")}
+              <CheckCircle2 className="h-5 w-5" />{" "}
+              {t("prefDomainDashboard.section1Alerts.validatedTitle", "Rapport validé")}
             </h3>
 
             <p className="mt-2 text-sm">
-              {t("prefDomainDashboard.section1Alerts.validatedBody", "Votre rapport a été validé par l'équipe régionale.")}
+              {t(
+                "prefDomainDashboard.section1Alerts.validatedBody",
+                "Votre rapport a été validé par l'équipe régionale.",
+              )}
             </p>
           </CardContent>
         </Card>
@@ -98,9 +103,10 @@ export const PrefDomainDashboardSection1 = ({
       </div>
       <Card className="p-5 sm:p-6">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 md:gap-6 items-center">
-
           {/* Statut */}
-          <div className={`rounded-xl p-4 ${statusMeta.badge} bg-opacity-30 ring-1 ring-current/20`}>
+          <div
+            className={`rounded-xl p-4 ${statusMeta.badge} bg-opacity-30 ring-1 ring-current/20`}
+          >
             <div className="flex items-center gap-2">
               <StatusIcon className="h-4 w-4" />
               <span className="text-[11px] font-semibold uppercase tracking-wider">
@@ -126,9 +132,7 @@ export const PrefDomainDashboardSection1 = ({
             <div className="text-lg font-bold text-foreground mt-1 flex items-center gap-1.5">
               <CalendarDays className="h-4 w-4 text-muted-foreground" />
               {lastUpdated
-                ? new Date(lastUpdated).toLocaleDateString(
-                    lang === 'ar' ? 'ar-MA' : 'fr-FR'
-                  )
+                ? new Date(lastUpdated).toLocaleDateString(lang === "ar" ? "ar-MA" : "fr-FR")
                 : "-"}
             </div>
           </div>
@@ -139,9 +143,7 @@ export const PrefDomainDashboardSection1 = ({
               <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                 {t("prefDomainDashboard.workflow.progress", "Progression")}
               </span>
-              <span className="text-sm font-bold tabular-nums text-foreground">
-                {progressPct}%
-              </span>
+              <span className="text-sm font-bold tabular-nums text-foreground">{progressPct}%</span>
             </div>
             <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
               <div
@@ -150,7 +152,6 @@ export const PrefDomainDashboardSection1 = ({
               />
             </div>
           </div>
-
         </div>
       </Card>
     </section>

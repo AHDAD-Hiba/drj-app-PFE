@@ -1,4 +1,4 @@
-import { useEntityEntries, BaseEntry } from '../common/useEntityEntries';
+import { useEntityEntries, BaseEntry } from "../common/useEntityEntries";
 
 export interface InfraBtpEntry extends BaseEntry {
   type_projet: string;
@@ -18,27 +18,27 @@ const buildPayload = (entry: InfraBtpEntry, rId: string) => ({
   cout_projet: Number(entry.cout_projet) || 0,
   montant_paye: Number(entry.montant_paye) || 0,
   taux_avancement_travaux: Number(entry.taux_avancement_travaux) || 0,
-  observations: entry.observations || '',
+  observations: entry.observations || "",
 });
 
 const mapRowToEntry = (row: any, local_id: string): InfraBtpEntry => ({
   local_id,
   id: row.id,
-  type_projet: row.type_projet ?? 'construction',
+  type_projet: row.type_projet ?? "construction",
   // On laisse vide pour forcer l'affichage du placeholder lors d'un ajout,
   // ou laisser le composant React le déduire au chargement :
-  type_filtre: '', 
-  etablissement_id: row.etablissement_id ?? '',
+  type_filtre: "",
+  etablissement_id: row.etablissement_id ?? "",
   cout_projet: Number(row.cout_projet) || 0,
   montant_paye: Number(row.montant_paye) || 0,
   taux_avancement_travaux: Number(row.taux_avancement_travaux) || 0,
-  observations: row.observations ?? '',
+  observations: row.observations ?? "",
 });
 
 export function useInfraBtp(rapportId: string | null, options?: { enabled?: boolean }) {
   return useEntityEntries<InfraBtpEntry>({
     rapportId,
-    tableName: 'infra_projets_btp', // 👈 Modifie ici si ta table a un autre nom
+    tableName: "infra_projets_btp", // 👈 Modifie ici si ta table a un autre nom
     buildPayload,
     mapRowToEntry,
     enabled: options?.enabled ?? true,

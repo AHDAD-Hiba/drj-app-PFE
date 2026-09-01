@@ -36,8 +36,14 @@ type AfCentresEcouteRow = Database["public"]["Tables"]["af_centres_ecoute"]["Row
 type AfSuiviPartenariatsRow = Database["public"]["Tables"]["af_suivi_partenariats"]["Row"];
 type AfSecteursRow = Database["public"]["Tables"]["af_secteurs"]["Row"];
 type AfFilieresRow = Database["public"]["Tables"]["af_filieres"]["Row"];
-type RapportRow = Pick<Database["public"]["Tables"]["rapports"]["Row"], "id" | "direction_id" | "statut_rapport" | "trimestre">;
-type DirectionRow = Pick<Database["public"]["Tables"]["directions"]["Row"], "id" | "nom_fr" | "nom_ar">;
+type RapportRow = Pick<
+  Database["public"]["Tables"]["rapports"]["Row"],
+  "id" | "direction_id" | "statut_rapport" | "trimestre"
+>;
+type DirectionRow = Pick<
+  Database["public"]["Tables"]["directions"]["Row"],
+  "id" | "nom_fr" | "nom_ar"
+>;
 
 // --- Types exposés (consommés par AffairesFemininesRegionalSections.tsx) ---
 
@@ -160,7 +166,7 @@ interface FemmeDirectionData {
 
 // --- Helpers d'agrégation (privés, mêmes formules que le service préfectoral) ---
 
-const sumBy = <T,>(rows: T[], selector: (row: T) => number | null | undefined): number =>
+const sumBy = <T>(rows: T[], selector: (row: T) => number | null | undefined): number =>
   rows.reduce((acc, row) => acc + (selector(row) || 0), 0);
 
 const ratioPct = (numerator: number, denominator: number): number =>
@@ -179,23 +185,43 @@ const toRegionalStatus = (statut: RapportRow["statut_rapport"]): RegionalStatus 
  * d'infrastructureRegionalService.ts.
  */
 const directionStatus = (rapports: RapportRow[]): RegionalStatus => {
-  if (rapports.length === 0 || rapports.every((rapport) => rapport.statut_rapport === "NON_COMMENCE")) {
+  if (
+    rapports.length === 0 ||
+    rapports.every((rapport) => rapport.statut_rapport === "NON_COMMENCE")
+  ) {
     return "NON_COMMENCE";
   }
   return rapports.every((rapport) => rapport.statut_rapport === "VALIDE") ? "TERMINE" : "EN_COURS";
 };
 
-const secteurLabel = (secteur: AfSecteursRow | undefined, fallback: string, lang: string = "fr"): string =>
-  secteur ? (lang === "ar" ? secteur.nom_ar || secteur.nom_fr : secteur.nom_fr || secteur.nom_ar) || fallback : fallback;
+const secteurLabel = (
+  secteur: AfSecteursRow | undefined,
+  fallback: string,
+  lang: string = "fr",
+): string =>
+  secteur
+    ? (lang === "ar" ? secteur.nom_ar || secteur.nom_fr : secteur.nom_fr || secteur.nom_ar) ||
+      fallback
+    : fallback;
 
-const filiereLabel = (filiere: AfFilieresRow | undefined, fallback: string, lang: string = "fr"): string =>
-  filiere ? (lang === "ar" ? filiere.nom_ar || filiere.nom_fr : filiere.nom_fr || filiere.nom_ar) || fallback : fallback;
+const filiereLabel = (
+  filiere: AfFilieresRow | undefined,
+  fallback: string,
+  lang: string = "fr",
+): string =>
+  filiere
+    ? (lang === "ar" ? filiere.nom_ar || filiere.nom_fr : filiere.nom_fr || filiere.nom_ar) ||
+      fallback
+    : fallback;
 
 // --- Requêtes Supabase (privées) ---
 
 const loadAllRows = async <T>(table: string, rapportIds: string[]): Promise<T[]> => {
   if (rapportIds.length === 0) return [];
-  const { data, error } = await supabase.from(table as any).select("*").in("rapport_id", rapportIds);
+  const { data, error } = await supabase
+    .from(table as any)
+    .select("*")
+    .in("rapport_id", rapportIds);
   if (error) {
     // Pattern d'erreur identique à Infrastructure : on ne masque pas
     // l'erreur, mais on ne casse pas le dashboard régional pour autant —
@@ -273,8 +299,9 @@ const calculateFemmeScore = (
 ) => {
   if (!isActive) return 0;
 
-  const scores = (Object.keys(FEMME_SCORE_WEIGHTS) as Array<keyof FemmeScoreKpis>).map((kpi) =>
-    relativeKpiScore(directionKpis[kpi], regionalKpis[kpi]) * (FEMME_SCORE_WEIGHTS[kpi] / 100),
+  const scores = (Object.keys(FEMME_SCORE_WEIGHTS) as Array<keyof FemmeScoreKpis>).map(
+    (kpi) =>
+      relativeKpiScore(directionKpis[kpi], regionalKpis[kpi]) * (FEMME_SCORE_WEIGHTS[kpi] / 100),
   );
 
   return clampScore(scores.reduce((total, score) => total + score, 0));
@@ -293,7 +320,8 @@ const kpisForRows = (
   suiviPartenariats: AfSuiviPartenariatsRow[],
 ) => {
   const totalInscriptions =
-    sumBy(inscriptionsClubs, (r) => r.inscrites_annee_2) + sumBy(inscriptionsOfppt, (r) => r.inscrites_annee_2);
+    sumBy(inscriptionsClubs, (r) => r.inscrites_annee_2) +
+    sumBy(inscriptionsOfppt, (r) => r.inscrites_annee_2);
   const totalLaureates = sumBy(integrationLaureates, (r) => r.nombre_laureates);
   const totalIntegrees = sumBy(integrationLaureates, (r) => r.nombre_integrees);
   const totalBeneficiairesSensibilisationPortesOuvertes =
@@ -345,8 +373,22 @@ const buildSection3 = (
   const total = urbain + rural;
 
   const urbainRural: FemmeUrbainRuralDatum[] = [
-    { name: "Urbain", urbain, rural: 0, total, urbainPct: total > 0 ? (urbain / total) * 100 : 0, ruralPct: 0 },
-    { name: "Rural", urbain: 0, rural, total, urbainPct: 0, ruralPct: total > 0 ? (rural / total) * 100 : 0 },
+    {
+      name: "Urbain",
+      urbain,
+      rural: 0,
+      total,
+      urbainPct: total > 0 ? (urbain / total) * 100 : 0,
+      ruralPct: 0,
+    },
+    {
+      name: "Rural",
+      urbain: 0,
+      rural,
+      total,
+      urbainPct: 0,
+      ruralPct: total > 0 ? (rural / total) * 100 : 0,
+    },
   ];
 
   return { formationParSecteur, urbainRural };
@@ -368,8 +410,10 @@ const buildEvolution = (
   trimestreByRapport: Map<string, string | null>,
   trimestresAvecRapport: Set<string>,
 ) => {
-  const rowsForTrimestre = <T extends { rapport_id: string | null }>(rows: T[], trimestre: string) =>
-    rows.filter((row) => row.rapport_id && trimestreByRapport.get(row.rapport_id) === trimestre);
+  const rowsForTrimestre = <T extends { rapport_id: string | null }>(
+    rows: T[],
+    trimestre: string,
+  ) => rows.filter((row) => row.rapport_id && trimestreByRapport.get(row.rapport_id) === trimestre);
 
   const integration: FemmeEvolutionIntegrationDatum[] = TRIMESTRES.map((trimestre) => {
     if (!trimestresAvecRapport.has(trimestre)) {
@@ -385,7 +429,12 @@ const buildEvolution = (
 
   const activiteSociale: FemmeEvolutionActiviteSocialeDatum[] = TRIMESTRES.map((trimestre) => {
     if (!trimestresAvecRapport.has(trimestre)) {
-      return { trimestre, beneficiairesAgr: null, seancesCentresEcoute: null, partenariatsSuivis: null };
+      return {
+        trimestre,
+        beneficiairesAgr: null,
+        seancesCentresEcoute: null,
+        partenariatsSuivis: null,
+      };
     }
     const agrRows = rowsForTrimestre(activitesGeneratricesRevenus, trimestre);
     const ecouteRows = rowsForTrimestre(centresEcoute, trimestre);
@@ -425,25 +474,40 @@ const buildDetailed = (
   const inscriptionsByFiliere = new Map<string, number>();
   [...inscriptionsClubs, ...inscriptionsOfppt].forEach((r) => {
     if (!r.filiere_id) return;
-    inscriptionsByFiliere.set(r.filiere_id, (inscriptionsByFiliere.get(r.filiere_id) || 0) + (r.inscrites_annee_2 || 0));
+    inscriptionsByFiliere.set(
+      r.filiere_id,
+      (inscriptionsByFiliere.get(r.filiere_id) || 0) + (r.inscrites_annee_2 || 0),
+    );
   });
   const parFiliere = Array.from(inscriptionsByFiliere.entries())
-    .map(([filiereId, inscriptions]) => ({ filiere: filiereLabel(filiereById.get(filiereId), filiereId, lang), inscriptions }))
+    .map(([filiereId, inscriptions]) => ({
+      filiere: filiereLabel(filiereById.get(filiereId), filiereId, lang),
+      inscriptions,
+    }))
     .sort((a, b) => b.inscriptions - a.inscriptions);
 
   const inscriptionsBySecteur = new Map<string, number>();
   inscriptionsOfppt.forEach((r) => {
     if (!r.secteur_id) return;
-    inscriptionsBySecteur.set(r.secteur_id, (inscriptionsBySecteur.get(r.secteur_id) || 0) + (r.inscrites_annee_2 || 0));
+    inscriptionsBySecteur.set(
+      r.secteur_id,
+      (inscriptionsBySecteur.get(r.secteur_id) || 0) + (r.inscrites_annee_2 || 0),
+    );
   });
   const parSecteur = Array.from(inscriptionsBySecteur.entries())
-    .map(([secteurId, inscriptions]) => ({ secteur: secteurLabel(secteurById.get(secteurId), secteurId, lang), inscriptions }))
+    .map(([secteurId, inscriptions]) => ({
+      secteur: secteurLabel(secteurById.get(secteurId), secteurId, lang),
+      inscriptions,
+    }))
     .sort((a, b) => b.inscriptions - a.inscriptions);
 
   const inscriptionsByNiveau = new Map<string, number>();
   inscriptionsOfppt.forEach((r) => {
     if (!r.niveau_formation) return;
-    inscriptionsByNiveau.set(r.niveau_formation, (inscriptionsByNiveau.get(r.niveau_formation) || 0) + (r.inscrites_annee_2 || 0));
+    inscriptionsByNiveau.set(
+      r.niveau_formation,
+      (inscriptionsByNiveau.get(r.niveau_formation) || 0) + (r.inscrites_annee_2 || 0),
+    );
   });
   const parNiveau = Array.from(inscriptionsByNiveau.entries())
     .map(([niveau, inscriptions]) => ({ niveau, inscriptions }))
@@ -452,12 +516,19 @@ const buildDetailed = (
   const totalLaureates = sumBy(integrationLaureates, (r) => r.nombre_laureates);
   const totalIntegrees = sumBy(integrationLaureates, (r) => r.nombre_integrees);
   const partenairesAgr = Array.from(
-    new Set(activitesGeneratricesRevenus.map((r) => r.partenaires).filter((p): p is string => !!p && p.trim().length > 0)),
+    new Set(
+      activitesGeneratricesRevenus
+        .map((r) => r.partenaires)
+        .filter((p): p is string => !!p && p.trim().length > 0),
+    ),
   );
 
   const totalUrbain = sumBy(activitesSensibilisation, (r) => r.benef_urbain);
   const totalRural = sumBy(activitesSensibilisation, (r) => r.benef_rural);
-  const totalBenefActivites = sumBy(activitesSensibilisation, (r) => (r.benef_urbain || 0) + (r.benef_rural || 0));
+  const totalBenefActivites = sumBy(
+    activitesSensibilisation,
+    (r) => (r.benef_urbain || 0) + (r.benef_rural || 0),
+  );
 
   const ecouteByType = new Map<string, number>();
   centresEcoute.forEach((r) => {
@@ -482,7 +553,11 @@ const buildDetailed = (
     mouvementsByType.set(type, (mouvementsByType.get(type) || 0) + 1);
   });
   const sujetsPartenariats = Array.from(
-    new Set(suiviPartenariats.map((r) => r.sujet_partenariat).filter((s): s is string => !!s && s.trim().length > 0)),
+    new Set(
+      suiviPartenariats
+        .map((r) => r.sujet_partenariat)
+        .filter((s): s is string => !!s && s.trim().length > 0),
+    ),
   );
 
   return {
@@ -514,11 +589,23 @@ const buildDetailed = (
       parTypeSoutien: Array.from(ecouteByType.entries()).map(([type, count]) => ({ type, count })),
     },
     ressourcesHumainesCadres: {
-      ressourcesDisponibles: sumBy(ressourcesHumaines.filter((r) => r.type_rh === "disponible"), (r) => r.nombre),
-      ressourcesBesoin: sumBy(ressourcesHumaines.filter((r) => r.type_rh === "besoin"), (r) => r.nombre),
-      parProfil: Array.from(rhProfileCounts.entries()).map(([profil, nombre]) => ({ profil, nombre })),
+      ressourcesDisponibles: sumBy(
+        ressourcesHumaines.filter((r) => r.type_rh === "disponible"),
+        (r) => r.nombre,
+      ),
+      ressourcesBesoin: sumBy(
+        ressourcesHumaines.filter((r) => r.type_rh === "besoin"),
+        (r) => r.nombre,
+      ),
+      parProfil: Array.from(rhProfileCounts.entries()).map(([profil, nombre]) => ({
+        profil,
+        nombre,
+      })),
       cadresFormes: sumBy(formationCadres, (r) => r.nombre_cadres),
-      parDomaineFormation: Array.from(cadresByDomaine.entries()).map(([domaine, cadres]) => ({ domaine, cadres })),
+      parDomaineFormation: Array.from(cadresByDomaine.entries()).map(([domaine, cadres]) => ({
+        domaine,
+        cadres,
+      })),
     },
     reseauPartenariats: {
       mouvements: Array.from(mouvementsByType.entries()).map(([type, count]) => ({ type, count })),
@@ -533,10 +620,16 @@ const buildDetailed = (
  * partir du chemin réel af_* -> rapports -> directions.
  * Le score par direction est calculé avec FEMME_SCORE_WEIGHTS (voir comparison.score).
  */
-export async function loadFemmeRegionalDashboard(year: number, lang: string = "fr"): Promise<FemmeRegionalDashboardData> {
+export async function loadFemmeRegionalDashboard(
+  year: number,
+  lang: string = "fr",
+): Promise<FemmeRegionalDashboardData> {
   const [directionsResult, rapportsResult, secteursResult, filieresResult] = await Promise.all([
     supabase.from("directions").select("id, nom_fr, nom_ar"),
-    supabase.from("rapports").select("id, direction_id, statut_rapport, trimestre").eq("annee", year),
+    supabase
+      .from("rapports")
+      .select("id, direction_id, statut_rapport, trimestre")
+      .eq("annee", year),
     supabase.from("af_secteurs").select("*"),
     supabase.from("af_filieres").select("*"),
   ]);
@@ -582,9 +675,15 @@ export async function loadFemmeRegionalDashboard(year: number, lang: string = "f
     rapportsByDirection.set(rapport.direction_id, directionRapports);
   });
   const rapportIdsByDirection = new Map(
-    Array.from(rapportsByDirection, ([directionId, directionRapports]) => [directionId, new Set(directionRapports.map((r) => r.id))]),
+    Array.from(rapportsByDirection, ([directionId, directionRapports]) => [
+      directionId,
+      new Set(directionRapports.map((r) => r.id)),
+    ]),
   );
-  const rowsForDirection = <T extends { rapport_id: string | null }>(rows: T[], directionId: string): T[] => {
+  const rowsForDirection = <T extends { rapport_id: string | null }>(
+    rows: T[],
+    directionId: string,
+  ): T[] => {
     const ids = rapportIdsByDirection.get(directionId);
     return ids ? rows.filter((row) => row.rapport_id && ids.has(row.rapport_id)) : [];
   };
@@ -605,7 +704,9 @@ export async function loadFemmeRegionalDashboard(year: number, lang: string = "f
   const section3 = buildSection3(inscriptionsOfppt, secteurs, activitesSensibilisation, lang);
 
   // --- Section 4 (2 évolutions trimestrielles) ---
-  const trimestreByRapport = new Map<string, string | null>(rapports.map((r) => [r.id, r.trimestre]));
+  const trimestreByRapport = new Map<string, string | null>(
+    rapports.map((r) => [r.id, r.trimestre]),
+  );
   const trimestresAvecRapport = new Set(
     rapports.map((r) => r.trimestre).filter((t): t is NonNullable<typeof t> => Boolean(t)),
   );
@@ -669,24 +770,60 @@ export async function loadFemmeRegionalDashboard(year: number, lang: string = "f
   directionsData.forEach((direction, index) => {
     if (direction.score <= 0 || direction.statut === "NON_COMMENCE") return;
     rankableIndex += 1;
-    direction.rang_regional = index > 0 && direction.score === directionsData[index - 1].score
-      ? directionsData[index - 1].rang_regional
-      : rankableIndex;
+    direction.rang_regional =
+      index > 0 && direction.score === directionsData[index - 1].score
+        ? directionsData[index - 1].rang_regional
+        : rankableIndex;
   });
 
-  const completedDirections = directionsData.filter((direction) => direction.statut === "TERMINE").length;
-  const inProgressDirections = directionsData.filter((direction) => direction.statut === "EN_COURS").length;
+  const completedDirections = directionsData.filter(
+    (direction) => direction.statut === "TERMINE",
+  ).length;
+  const inProgressDirections = directionsData.filter(
+    (direction) => direction.statut === "EN_COURS",
+  ).length;
   return {
-    status: { hasData: rapportIds.length > 0, submittedReports: rapports.length, completedDirections, inProgressDirections, notStartedDirections: directionsData.length - completedDirections - inProgressDirections },
+    status: {
+      hasData: rapportIds.length > 0,
+      submittedReports: rapports.length,
+      completedDirections,
+      inProgressDirections,
+      notStartedDirections: directionsData.length - completedDirections - inProgressDirections,
+    },
     kpis,
     section3,
     evolution,
     detailed,
     comparison: {
-      directions: directionsData.map((direction) => ({ id: direction.id, name: direction.nom_fr || `Direction ${direction.id}`, status: direction.statut, primary: direction.metric_primary, secondary: direction.metric_secondary, rank: direction.rang_regional < 99 ? direction.rang_regional : null, score: direction.score })),
-      primary: { key: "inscriptions_formation", label: "Inscriptions en formation", regionalAverage: directionsData.length ? kpis.totalInscriptionsFormation / directionsData.length : null },
-      secondary: { key: "beneficiaires_accompagnes", label: "Bénéficiaires accompagnés", regionalAverage: directionsData.length ? directionsData.reduce((total, direction) => total + direction.metric_secondary, 0) / directionsData.length : null },
-      score: { label: "Score Affaires Féminines", methodology: "Pondération existante : inscriptions formation 25 %, taux d'intégration 20 %, sensibilisation/portes ouvertes 15 %, AGR 15 %, partenariats 12,5 %, séances d'écoute 12,5 %. Score relatif à la région, borné 0–100." },
+      directions: directionsData.map((direction) => ({
+        id: direction.id,
+        name: direction.nom_fr || `Direction ${direction.id}`,
+        status: direction.statut,
+        primary: direction.metric_primary,
+        secondary: direction.metric_secondary,
+        rank: direction.rang_regional < 99 ? direction.rang_regional : null,
+        score: direction.score,
+      })),
+      primary: {
+        key: "inscriptions_formation",
+        label: "Inscriptions en formation",
+        regionalAverage: directionsData.length
+          ? kpis.totalInscriptionsFormation / directionsData.length
+          : null,
+      },
+      secondary: {
+        key: "beneficiaires_accompagnes",
+        label: "Bénéficiaires accompagnés",
+        regionalAverage: directionsData.length
+          ? directionsData.reduce((total, direction) => total + direction.metric_secondary, 0) /
+            directionsData.length
+          : null,
+      },
+      score: {
+        label: "Score Affaires Féminines",
+        methodology:
+          "Pondération existante : inscriptions formation 25 %, taux d'intégration 20 %, sensibilisation/portes ouvertes 15 %, AGR 15 %, partenariats 12,5 %, séances d'écoute 12,5 %. Score relatif à la région, borné 0–100.",
+      },
     },
   };
 }

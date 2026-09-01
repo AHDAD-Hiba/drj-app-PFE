@@ -1,8 +1,8 @@
-import { useTranslation } from 'react-i18next';
-import { Card } from '@/components/ui/card';
-import { NumericField } from '@/components/form/NumericField';
-import { useCategoriesAssociations } from '@/hooks/Jeunesse/useCategoriesAssociations';
-import type { AssociationValue } from '@/hooks/Jeunesse/useAssociationValues';
+import { useTranslation } from "react-i18next";
+import { Card } from "@/components/ui/card";
+import { NumericField } from "@/components/form/NumericField";
+import { useCategoriesAssociations } from "@/hooks/Jeunesse/useCategoriesAssociations";
+import type { AssociationValue } from "@/hooks/Jeunesse/useAssociationValues";
 
 interface AssociationsSectionProps {
   items: AssociationValue[];
@@ -16,22 +16,18 @@ export const AssociationsSection = ({
   disabled,
 }: AssociationsSectionProps) => {
   const { i18n } = useTranslation();
-  const isAr = i18n.language === 'ar';
+  const isAr = i18n.language === "ar";
   const { items: categories } = useCategoriesAssociations();
 
-  const itemsMap = new Map(
-    items.map((item) => [item.categorie_association_id, item])
-  );
+  const itemsMap = new Map(items.map((item) => [item.categorie_association_id, item]));
 
   return (
     <Card className="p-5 sm:p-6 space-y-4 bg-background">
       <div>
-        <h3 className="text-base font-semibold">
-          {isAr ? 'الجمعيات' : 'Associations'}
-        </h3>
+        <h3 className="text-base font-semibold">{isAr ? "الجمعيات" : "Associations"}</h3>
         <p className="text-xs text-muted-foreground">
           {isAr
-            ? 'أدخل عدد الجمعيات حسب نوعها'
+            ? "أدخل عدد الجمعيات حسب نوعها"
             : "Saisissez le nombre d'associations par catégorie"}
         </p>
       </div>

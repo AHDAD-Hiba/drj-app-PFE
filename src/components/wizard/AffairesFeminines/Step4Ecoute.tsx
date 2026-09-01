@@ -1,48 +1,53 @@
-import { memo, useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { SafeInput } from '@/components/form/SafeInput';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Trash2, HeartHandshake } from 'lucide-react';
-import { NumericField } from '@/components/form/NumericField';
-import { StepComponentProps } from '@/config/wizard.types';
-import { supabase } from '@/integrations/supabase/client';
-
+import { memo, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { SafeInput } from "@/components/form/SafeInput";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Plus, Trash2, HeartHandshake } from "lucide-react";
+import { NumericField } from "@/components/form/NumericField";
+import { StepComponentProps } from "@/config/wizard.types";
+import { supabase } from "@/integrations/supabase/client";
 
 // Import de nos hooks
-import { useAfCentresEcoute } from '@/hooks/AffairesFeminines/useAfCentresEcoute';
-import { useAfEtablissements } from '@/hooks/common/useAfEtablissements';
-import { useAuth } from '@/hooks/common/useAuth';
-import { useRapportDirection } from '@/hooks/common/useRapport';
+import { useAfCentresEcoute } from "@/hooks/AffairesFeminines/useAfCentresEcoute";
+import { useAfEtablissements } from "@/hooks/common/useAfEtablissements";
+import { useAuth } from "@/hooks/common/useAuth";
+import { useRapportDirection } from "@/hooks/common/useRapport";
 
 export const Step4Ecoute = memo(({ rapportId, disabled, onActivity }: StepComponentProps) => {
   const { i18n } = useTranslation();
-  const isAr = i18n.language === 'ar';
+  const isAr = i18n.language === "ar";
   const { utilisateur } = useAuth();
   const directionId = utilisateur?.direction_id;
 
   // HOOKS DE PERSISTANCE (AUTO-SAVE)
   const seances = useAfCentresEcoute(rapportId);
 
-  const { data: rapport} = useRapportDirection(rapportId);
+  const { data: rapport } = useRapportDirection(rapportId);
 
   const effectiveDirectionId = rapport?.direction_id || directionId;
 
   const { items: tousLesEtablissements } = useAfEtablissements(effectiveDirectionId);
   const etablissementsFiltres = tousLesEtablissements.filter(
-    e => e.type_etablissement === 'club_feminin' || e.type_etablissement === 'ofppt'
+    (e) => e.type_etablissement === "club_feminin" || e.type_etablissement === "ofppt",
   );
 
   const handleAddSeance = async () => {
     if (onActivity) await onActivity();
-    await seances.add({ 
-      local_id: crypto.randomUUID(), 
-      etablissement_id: '', 
-      nombre_cas: 0, 
-      nombre_seances: 0, 
-      type_soutien: '' 
+    await seances.add({
+      local_id: crypto.randomUUID(),
+      etablissement_id: "",
+      nombre_cas: 0,
+      nombre_seances: 0,
+      type_soutien: "",
     });
   };
 
@@ -55,31 +60,49 @@ export const Step4Ecoute = memo(({ rapportId, disabled, onActivity }: StepCompon
               <HeartHandshake className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <h2 className="text-lg font-bold">{isAr ? 'مراكز الاستماع' : 'Centres d\'Écoute'}</h2>
-              <p className="text-sm text-muted-foreground">{isAr ? 'أضف البيانات مجمعة حسب نوع الدعم لكل مؤسسة' : 'Ajoutez les données regroupées par type de soutien'}</p>
+              <h2 className="text-lg font-bold">{isAr ? "مراكز الاستماع" : "Centres d'Écoute"}</h2>
+              <p className="text-sm text-muted-foreground">
+                {isAr
+                  ? "أضف البيانات مجمعة حسب نوع الدعم لكل مؤسسة"
+                  : "Ajoutez les données regroupées par type de soutien"}
+              </p>
             </div>
           </div>
-          <Button type="button" size="sm" onClick={handleAddSeance} disabled={disabled} className="gap-1.5 shadow-sm">
+          <Button
+            type="button"
+            size="sm"
+            onClick={handleAddSeance}
+            disabled={disabled}
+            className="gap-1.5 shadow-sm"
+          >
             <Plus className="h-4 w-4" />
-            {isAr ? 'إضافة نوع دعم' : 'Ajouter un type de soutien'}
+            {isAr ? "إضافة نوع دعم" : "Ajouter un type de soutien"}
           </Button>
         </div>
 
         {seances.items.length === 0 ? (
           <div className="text-center py-8 text-sm text-muted-foreground border-2 border-dashed border-border rounded-xl bg-muted/30">
-            {isAr ? 'لا توجد بيانات مسجلة' : 'Aucune donnée enregistrée pour les centres d\'écoute.'}
+            {isAr ? "لا توجد بيانات مسجلة" : "Aucune donnée enregistrée pour les centres d'écoute."}
           </div>
         ) : (
           <div className="space-y-4 pt-2">
             {seances.items.map((item, idx) => (
-              <div key={item.local_id} className="border border-border rounded-xl p-4 bg-muted/10 space-y-4 transition-colors hover:border-primary/30">
-                
+              <div
+                key={item.local_id}
+                className="border border-border rounded-xl p-4 bg-muted/10 space-y-4 transition-colors hover:border-primary/30"
+              >
                 {/* En-tête épuré */}
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-xs font-semibold text-muted-foreground">#{idx + 1}</span>
                   <Button
-                    type="button" size="icon" variant="ghost"
-                    onClick={() => { seances.remove(item.local_id); if(onActivity) void onActivity(); }} disabled={disabled}
+                    type="button"
+                    size="icon"
+                    variant="ghost"
+                    onClick={() => {
+                      seances.remove(item.local_id);
+                      if (onActivity) void onActivity();
+                    }}
+                    disabled={disabled}
                     className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
                   >
                     <Trash2 className="h-4 w-4" />
@@ -88,50 +111,79 @@ export const Step4Ecoute = memo(({ rapportId, disabled, onActivity }: StepCompon
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pt-1">
                   <div className="space-y-1.5 sm:col-span-2 lg:col-span-3">
-                    <Label className="text-xs font-semibold">{isAr ? 'مقر نقطة الاستماع (المؤسسة)' : 'Établissement (Point d\'écoute)'}</Label>
-                    <Select disabled={disabled} value={item.etablissement_id} onValueChange={(v) => { seances.update(item.local_id, { etablissement_id: v }); if(onActivity) void onActivity(); }}>
+                    <Label className="text-xs font-semibold">
+                      {isAr ? "مقر نقطة الاستماع (المؤسسة)" : "Établissement (Point d'écoute)"}
+                    </Label>
+                    <Select
+                      disabled={disabled}
+                      value={item.etablissement_id}
+                      onValueChange={(v) => {
+                        seances.update(item.local_id, { etablissement_id: v });
+                        if (onActivity) void onActivity();
+                      }}
+                    >
                       <SelectTrigger className="h-10">
-                         <SelectValue placeholder={isAr ? 'اختر المؤسسة' : 'Sélectionner l\'établissement'} />
+                        <SelectValue
+                          placeholder={isAr ? "اختر المؤسسة" : "Sélectionner l'établissement"}
+                        />
                       </SelectTrigger>
                       <SelectContent>
-                        {etablissementsFiltres.map(etab => (
-                          <SelectItem key={etab.id} value={etab.id}>{etab.nom}</SelectItem>
+                        {etablissementsFiltres.map((etab) => (
+                          <SelectItem key={etab.id} value={etab.id}>
+                            {etab.nom}
+                          </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </div>
 
                   <div className="space-y-1.5 lg:col-span-1">
-                    <Label className="text-xs font-semibold">{isAr ? 'نوع الدعم أو الإجراءات المتخذة' : 'Type de soutien / Mesures'}</Label>
-                    <SafeInput 
-                      placeholder={isAr ? 'مثال: توجيه، دعم نفسي، إنصات...' : 'Ex: Orientation, écoute, soutien psy...'} 
-                      value={item.type_soutien} 
+                    <Label className="text-xs font-semibold">
+                      {isAr ? "نوع الدعم أو الإجراءات المتخذة" : "Type de soutien / Mesures"}
+                    </Label>
+                    <SafeInput
+                      placeholder={
+                        isAr
+                          ? "مثال: توجيه، دعم نفسي، إنصات..."
+                          : "Ex: Orientation, écoute, soutien psy..."
+                      }
+                      value={item.type_soutien}
                       onValueChange={(val) => {
                         seances.update(item.local_id, { type_soutien: val });
-                        if(onActivity) void onActivity();
-                      }} 
-                      disabled={disabled} 
-                      className="h-10" 
+                        if (onActivity) void onActivity();
+                      }}
+                      disabled={disabled}
+                      className="h-10"
                     />
                   </div>
 
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-semibold">{isAr ? 'عدد الحالات المرصودة' : 'Nombre de cas (Bénéficiaires)'}</Label>
-                    <NumericField 
-                      label="" 
-                      value={item.nombre_cas || 0} 
-                      onChange={(v) => { seances.update(item.local_id, { nombre_cas: v }); if(onActivity) void onActivity(); }} 
-                      disabled={disabled} 
+                    <Label className="text-xs font-semibold">
+                      {isAr ? "عدد الحالات المرصودة" : "Nombre de cas (Bénéficiaires)"}
+                    </Label>
+                    <NumericField
+                      label=""
+                      value={item.nombre_cas || 0}
+                      onChange={(v) => {
+                        seances.update(item.local_id, { nombre_cas: v });
+                        if (onActivity) void onActivity();
+                      }}
+                      disabled={disabled}
                     />
                   </div>
 
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-semibold">{isAr ? 'مجموع الجلسات المنعقدة' : 'Total des séances'}</Label>
-                    <NumericField 
-                      label="" 
-                      value={item.nombre_seances} 
-                      onChange={(v) => { seances.update(item.local_id, { nombre_seances: v }); if(onActivity) void onActivity(); }} 
-                      disabled={disabled} 
+                    <Label className="text-xs font-semibold">
+                      {isAr ? "مجموع الجلسات المنعقدة" : "Total des séances"}
+                    </Label>
+                    <NumericField
+                      label=""
+                      value={item.nombre_seances}
+                      onChange={(v) => {
+                        seances.update(item.local_id, { nombre_seances: v });
+                        if (onActivity) void onActivity();
+                      }}
+                      disabled={disabled}
                     />
                   </div>
                 </div>
@@ -144,4 +196,4 @@ export const Step4Ecoute = memo(({ rapportId, disabled, onActivity }: StepCompon
   );
 });
 
-Step4Ecoute.displayName = 'Step4Ecoute';
+Step4Ecoute.displayName = "Step4Ecoute";

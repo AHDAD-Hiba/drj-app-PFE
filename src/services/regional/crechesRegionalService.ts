@@ -41,8 +41,14 @@ type CrLabelQualiteRow = Database["public"]["Tables"]["cr_label_qualite"]["Row"]
 type CrMouvementsFermeturesRow = Database["public"]["Tables"]["cr_mouvements_fermetures"]["Row"];
 type CrDemandesLicencesRow = Database["public"]["Tables"]["cr_demandes_licences"]["Row"];
 type RefCrStatutsDemandeRow = Database["public"]["Tables"]["ref_cr_statuts_demande"]["Row"];
-type RapportRow = Pick<Database["public"]["Tables"]["rapports"]["Row"], "id" | "direction_id" | "statut_rapport" | "trimestre">;
-type DirectionRow = Pick<Database["public"]["Tables"]["directions"]["Row"], "id" | "nom_fr" | "nom_ar">;
+type RapportRow = Pick<
+  Database["public"]["Tables"]["rapports"]["Row"],
+  "id" | "direction_id" | "statut_rapport" | "trimestre"
+>;
+type DirectionRow = Pick<
+  Database["public"]["Tables"]["directions"]["Row"],
+  "id" | "nom_fr" | "nom_ar"
+>;
 
 // --- Types exposés (consommés par EnfanceCrechesRegionalSections.tsx) ---
 
@@ -147,19 +153,37 @@ const calculateCrechesScore = (
   if (!isActive) return 0;
 
   const score =
-    positiveKpiScore(directionKpis.enfantsPrisesEnCharge, regionalKpis.enfantsPrisesEnCharge) * (CRECHES_SCORE_WEIGHTS.enfantsPrisesEnCharge / 100) +
-    positiveKpiScore(directionKpis.demandesLicencesTraitees, regionalKpis.demandesLicencesTraitees) * (CRECHES_SCORE_WEIGHTS.demandesLicencesTraitees / 100) +
-    negativeKpiScore(directionKpis.delaiMoyenTraitementJours, regionalKpis.delaiMoyenTraitementJours) * (CRECHES_SCORE_WEIGHTS.delaiMoyenTraitementJours / 100) +
-    positiveKpiScore(directionKpis.cadresAssermentes, regionalKpis.cadresAssermentes) * (CRECHES_SCORE_WEIGHTS.cadresAssermentes / 100) +
-    positiveKpiScore(directionKpis.crechesLabelliseesQualite, regionalKpis.crechesLabelliseesQualite) * (CRECHES_SCORE_WEIGHTS.crechesLabelliseesQualite / 100) +
-    negativeKpiScore(directionKpis.fermeturesCrechesSignalees, regionalKpis.fermeturesCrechesSignalees) * (CRECHES_SCORE_WEIGHTS.fermeturesCrechesSignalees / 100);
+    positiveKpiScore(directionKpis.enfantsPrisesEnCharge, regionalKpis.enfantsPrisesEnCharge) *
+      (CRECHES_SCORE_WEIGHTS.enfantsPrisesEnCharge / 100) +
+    positiveKpiScore(
+      directionKpis.demandesLicencesTraitees,
+      regionalKpis.demandesLicencesTraitees,
+    ) *
+      (CRECHES_SCORE_WEIGHTS.demandesLicencesTraitees / 100) +
+    negativeKpiScore(
+      directionKpis.delaiMoyenTraitementJours,
+      regionalKpis.delaiMoyenTraitementJours,
+    ) *
+      (CRECHES_SCORE_WEIGHTS.delaiMoyenTraitementJours / 100) +
+    positiveKpiScore(directionKpis.cadresAssermentes, regionalKpis.cadresAssermentes) *
+      (CRECHES_SCORE_WEIGHTS.cadresAssermentes / 100) +
+    positiveKpiScore(
+      directionKpis.crechesLabelliseesQualite,
+      regionalKpis.crechesLabelliseesQualite,
+    ) *
+      (CRECHES_SCORE_WEIGHTS.crechesLabelliseesQualite / 100) +
+    negativeKpiScore(
+      directionKpis.fermeturesCrechesSignalees,
+      regionalKpis.fermeturesCrechesSignalees,
+    ) *
+      (CRECHES_SCORE_WEIGHTS.fermeturesCrechesSignalees / 100);
 
   return clampScore(score);
 };
 
 // --- Helpers d'agrégation (privés, mêmes formules que le service préfectoral) ---
 
-const sumBy = <T,>(rows: T[], selector: (row: T) => number | null | undefined): number =>
+const sumBy = <T>(rows: T[], selector: (row: T) => number | null | undefined): number =>
   rows.reduce((acc, row) => acc + (selector(row) || 0), 0);
 
 const average = (values: number[]): number =>
@@ -175,7 +199,10 @@ const toRegionalStatus = (statut: RapportRow["statut_rapport"]): RegionalStatus 
 
 /** Statut par direction — pattern directionStatus repris à l'identique de peRegionalService.ts. */
 const directionStatus = (rapports: RapportRow[]): RegionalStatus => {
-  if (rapports.length === 0 || rapports.every((rapport) => rapport.statut_rapport === "NON_COMMENCE")) {
+  if (
+    rapports.length === 0 ||
+    rapports.every((rapport) => rapport.statut_rapport === "NON_COMMENCE")
+  ) {
     return "NON_COMMENCE";
   }
   return rapports.every((rapport) => rapport.statut_rapport === "VALIDE") ? "TERMINE" : "EN_COURS";
@@ -207,7 +234,10 @@ const kpisForRows = (
 
 const loadAllRows = async <T>(table: string, rapportIds: string[]): Promise<T[]> => {
   if (rapportIds.length === 0) return [];
-  const { data, error } = await supabase.from(table as any).select("*").in("rapport_id", rapportIds);
+  const { data, error } = await supabase
+    .from(table as any)
+    .select("*")
+    .in("rapport_id", rapportIds);
   if (error) {
     // Pattern d'erreur identique à PE/Femme/Infrastructure : on ne masque pas
     // l'erreur, mais on ne casse pas le dashboard régional pour autant — la
@@ -231,7 +261,9 @@ const buildKpis = (
   demandesLicencesTraitees: sumBy(traitementLicences, (row) => row.nombre_demandes_traitees),
   // ⚠️ Moyenne simple des lignes renseignées, toutes directions confondues — voir en-tête du fichier
   delaiMoyenTraitementJours: average(
-    traitementLicences.map((row) => row.delai_moyen_traitement_jours).filter((v): v is number => v !== null && v !== undefined),
+    traitementLicences
+      .map((row) => row.delai_moyen_traitement_jours)
+      .filter((v): v is number => v !== null && v !== undefined),
   ),
   cadresAssermentes: sumBy(cadresAssermentes, (row) => row.nombre_cadres),
   crechesLabelliseesQualite: labelQualite.filter((row) => row.statut_label === "obtenue").length,
@@ -286,8 +318,10 @@ const buildEvolution = (
   trimestreByRapport: Map<string, string | null>,
   trimestresAvecRapport: Set<string>,
 ) => {
-  const rowsForTrimestre = <T extends { rapport_id: string | null }>(rows: T[], trimestre: string) =>
-    rows.filter((row) => row.rapport_id && trimestreByRapport.get(row.rapport_id) === trimestre);
+  const rowsForTrimestre = <T extends { rapport_id: string | null }>(
+    rows: T[],
+    trimestre: string,
+  ) => rows.filter((row) => row.rapport_id && trimestreByRapport.get(row.rapport_id) === trimestre);
 
   const enfants: CrechesEvolutionEnfantsDatum[] = TRIMESTRES.map((trimestre) => {
     if (!trimestresAvecRapport.has(trimestre)) {
@@ -327,10 +361,16 @@ const buildEvolution = (
  * réel cr_* -> rapports -> directions.
  * Pas de `detailed` régional. Score : CRECHES_SCORE_WEIGHTS (voir comparison.score).
  */
-export async function loadCrechesRegionalDashboard(year: number, lang = "fr"): Promise<CrechesRegionalDashboardData> {
+export async function loadCrechesRegionalDashboard(
+  year: number,
+  lang = "fr",
+): Promise<CrechesRegionalDashboardData> {
   const [directionsResult, rapportsResult, statutsDemandeResult] = await Promise.all([
     supabase.from("directions").select("id, nom_fr, nom_ar"),
-    supabase.from("rapports").select("id, direction_id, statut_rapport, trimestre").eq("annee", year),
+    supabase
+      .from("rapports")
+      .select("id, direction_id, statut_rapport, trimestre")
+      .eq("annee", year),
     supabase.from("ref_cr_statuts_demande").select("*"),
   ]);
 
@@ -339,7 +379,14 @@ export async function loadCrechesRegionalDashboard(year: number, lang = "fr"): P
   const statutsDemande = (statutsDemandeResult.data ?? []) as RefCrStatutsDemandeRow[];
   const rapportIds = rapports.map((rapport) => rapport.id);
 
-  const [stats, traitementLicences, cadresAssermentes, labelQualite, mouvementsFermetures, demandesLicences] = await Promise.all([
+  const [
+    stats,
+    traitementLicences,
+    cadresAssermentes,
+    labelQualite,
+    mouvementsFermetures,
+    demandesLicences,
+  ] = await Promise.all([
     loadAllRows<CrStatistiquesEnfantsRow>("cr_statistiques_enfants", rapportIds),
     loadAllRows<CrTraitementLicencesRow>("cr_traitement_licences", rapportIds),
     loadAllRows<CrCadresAssermentesRow>("cr_cadres_assermentes", rapportIds),
@@ -357,27 +404,52 @@ export async function loadCrechesRegionalDashboard(year: number, lang = "fr"): P
     rapportsByDirection.set(rapport.direction_id, directionRapports);
   });
   const rapportIdsByDirection = new Map(
-    Array.from(rapportsByDirection, ([directionId, directionRapports]) => [directionId, new Set(directionRapports.map((r) => r.id))]),
+    Array.from(rapportsByDirection, ([directionId, directionRapports]) => [
+      directionId,
+      new Set(directionRapports.map((r) => r.id)),
+    ]),
   );
-  const rowsForDirection = <T extends { rapport_id: string | null }>(rows: T[], directionId: string): T[] => {
+  const rowsForDirection = <T extends { rapport_id: string | null }>(
+    rows: T[],
+    directionId: string,
+  ): T[] => {
     const ids = rapportIdsByDirection.get(directionId);
     return ids ? rows.filter((row) => row.rapport_id && ids.has(row.rapport_id)) : [];
   };
 
   // --- KPI régionaux (6 KPI) ---
-  const kpis = buildKpis(stats, traitementLicences, cadresAssermentes, labelQualite, mouvementsFermetures);
+  const kpis = buildKpis(
+    stats,
+    traitementLicences,
+    cadresAssermentes,
+    labelQualite,
+    mouvementsFermetures,
+  );
 
   // --- Section 3 (2 visualisations) ---
   const section3 = buildSection3(demandesLicences, statutsDemande, lang);
 
   // --- Section 4 (2 évolutions trimestrielles) ---
-  const trimestreByRapport = new Map<string, string | null>(rapports.map((r) => [r.id, r.trimestre]));
+  const trimestreByRapport = new Map<string, string | null>(
+    rapports.map((r) => [r.id, r.trimestre]),
+  );
   const trimestresAvecRapport = new Set(
     rapports.map((r) => r.trimestre).filter((t): t is NonNullable<typeof t> => Boolean(t)),
   );
-  const evolution = buildEvolution(stats, mouvementsFermetures, trimestreByRapport, trimestresAvecRapport);
+  const evolution = buildEvolution(
+    stats,
+    mouvementsFermetures,
+    trimestreByRapport,
+    trimestresAvecRapport,
+  );
 
-  const regionalKpis = kpisForRows(stats, traitementLicences, cadresAssermentes, labelQualite, mouvementsFermetures);
+  const regionalKpis = kpisForRows(
+    stats,
+    traitementLicences,
+    cadresAssermentes,
+    labelQualite,
+    mouvementsFermetures,
+  );
 
   // --- Performance par direction : KPI, score et classement régional ---
   const directionsData: CrechesDirectionData[] = directions.map((direction) => {
@@ -397,7 +469,11 @@ export async function loadCrechesRegionalDashboard(year: number, lang = "fr"): P
       nom_fr: direction.nom_fr,
       nom: direction.nom_fr,
       statut: status,
-      score: calculateCrechesScore(directionKpis, regionalKpis, isActive && status !== "NON_COMMENCE"),
+      score: calculateCrechesScore(
+        directionKpis,
+        regionalKpis,
+        isActive && status !== "NON_COMMENCE",
+      ),
       rang_regional: 99,
       metric_primary: directionKpis.enfantsPrisesEnCharge,
       metric_secondary: directionKpis.demandesLicencesTraitees,
@@ -409,23 +485,58 @@ export async function loadCrechesRegionalDashboard(year: number, lang = "fr"): P
   directionsData.forEach((direction, index) => {
     if (direction.score <= 0 || direction.statut === "NON_COMMENCE") return;
     rankableIndex += 1;
-    direction.rang_regional = index > 0 && direction.score === directionsData[index - 1].score
-      ? directionsData[index - 1].rang_regional
-      : rankableIndex;
+    direction.rang_regional =
+      index > 0 && direction.score === directionsData[index - 1].score
+        ? directionsData[index - 1].rang_regional
+        : rankableIndex;
   });
 
-  const completedDirections = directionsData.filter((direction) => direction.statut === "TERMINE").length;
-  const inProgressDirections = directionsData.filter((direction) => direction.statut === "EN_COURS").length;
+  const completedDirections = directionsData.filter(
+    (direction) => direction.statut === "TERMINE",
+  ).length;
+  const inProgressDirections = directionsData.filter(
+    (direction) => direction.statut === "EN_COURS",
+  ).length;
   return {
-    status: { hasData: rapportIds.length > 0, submittedReports: rapports.length, completedDirections, inProgressDirections, notStartedDirections: directionsData.length - completedDirections - inProgressDirections },
+    status: {
+      hasData: rapportIds.length > 0,
+      submittedReports: rapports.length,
+      completedDirections,
+      inProgressDirections,
+      notStartedDirections: directionsData.length - completedDirections - inProgressDirections,
+    },
     kpis,
     section3,
     evolution,
     comparison: {
-      directions: directionsData.map((direction) => ({ id: direction.id, name: direction.nom_fr || `Direction ${direction.id}`, status: direction.statut, primary: direction.metric_primary, secondary: direction.metric_secondary, rank: direction.rang_regional < 99 ? direction.rang_regional : null, score: direction.score })),
-      primary: { key: "enfants_pris_en_charge", label: "Enfants pris en charge", regionalAverage: directionsData.length ? kpis.enfantsPrisesEnCharge / directionsData.length : null },
-      secondary: { key: "demandes_licences_traitees", label: "Demandes de licences traitées", regionalAverage: directionsData.length ? kpis.demandesLicencesTraitees / directionsData.length : null },
-      score: { label: "Score Crèches", methodology: "Pondération existante : enfants pris en charge 25 %, licences traitées 20 %, délai moyen 15 %, cadres 15 %, labels 12,5 %, fermetures 12,5 % (délai et fermetures inversés). Score relatif à la région, borné 0–100." },
+      directions: directionsData.map((direction) => ({
+        id: direction.id,
+        name: direction.nom_fr || `Direction ${direction.id}`,
+        status: direction.statut,
+        primary: direction.metric_primary,
+        secondary: direction.metric_secondary,
+        rank: direction.rang_regional < 99 ? direction.rang_regional : null,
+        score: direction.score,
+      })),
+      primary: {
+        key: "enfants_pris_en_charge",
+        label: "Enfants pris en charge",
+        regionalAverage: directionsData.length
+          ? kpis.enfantsPrisesEnCharge / directionsData.length
+          : null,
+      },
+      secondary: {
+        key: "demandes_licences_traitees",
+        label: "Demandes de licences traitées",
+        regionalAverage: directionsData.length
+          ? kpis.demandesLicencesTraitees / directionsData.length
+          : null,
+      },
+      score: {
+        label: "Score Crèches",
+        methodology:
+          "Pondération existante : enfants pris en charge 25 %, licences traitées 20 %, délai moyen 15 %, cadres 15 %, labels 12,5 %, fermetures 12,5 % (délai et fermetures inversés). Score relatif à la région, borné 0–100.",
+      },
     },
   };
 }

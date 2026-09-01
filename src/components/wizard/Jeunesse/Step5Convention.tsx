@@ -1,26 +1,26 @@
-import { memo } from 'react';
-import { useTranslation } from 'react-i18next';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
+import { memo } from "react";
+import { useTranslation } from "react-i18next";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from '@/components/ui/select';
-import { Plus, Trash2, Handshake } from 'lucide-react';
-import { NumericField } from '@/components/form/NumericField';
-import { SafeInput } from '@/components/form/SafeInput';
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Plus, Trash2, Handshake } from "lucide-react";
+import { NumericField } from "@/components/form/NumericField";
+import { SafeInput } from "@/components/form/SafeInput";
 
-import { StepComponentProps } from '@/config/wizard.types';
-import { usePartenariatEntries, PartenariatEntry } from '@/hooks/Jeunesse/usePartenariatEntries';
-import { useTypesPartenaires } from '@/hooks/Jeunesse/useTypesPartenaires';
+import { StepComponentProps } from "@/config/wizard.types";
+import { usePartenariatEntries, PartenariatEntry } from "@/hooks/Jeunesse/usePartenariatEntries";
+import { useTypesPartenaires } from "@/hooks/Jeunesse/useTypesPartenaires";
 
-export const Step5Convention = memo(({
-  rapportId,
-  disabled,
-  onActivity,
-}: StepComponentProps) => {
+export const Step5Convention = memo(({ rapportId, disabled, onActivity }: StepComponentProps) => {
   const { i18n } = useTranslation();
-  const isAr = i18n.language === 'ar';
+  const isAr = i18n.language === "ar";
 
   const partenaires = usePartenariatEntries(rapportId);
   const typesPartenaires = useTypesPartenaires();
@@ -32,7 +32,7 @@ export const Step5Convention = memo(({
     if (onActivity) await onActivity();
     void partenaires.add({
       local_id: crypto.randomUUID(),
-      type_partenaire_id: '',
+      type_partenaire_id: "",
       nombre_conventions: 0,
     });
   };
@@ -47,9 +47,7 @@ export const Step5Convention = memo(({
     if (onActivity) await onActivity();
   };
 
-  const autreType = partnerTypes.find(
-    p => p.nom?.toLowerCase() === 'autre'
-  );
+  const autreType = partnerTypes.find((p) => p.nom?.toLowerCase() === "autre");
   const autreId = autreType?.id;
 
   return (
@@ -59,21 +57,29 @@ export const Step5Convention = memo(({
           <div>
             <h2 className="text-lg font-bold flex items-center gap-2">
               <Handshake className="h-5 w-5 text-primary" />
-              {isAr ? 'الاتفاقيات والشراكات' : 'Conventions et partenariats'}
+              {isAr ? "الاتفاقيات والشراكات" : "Conventions et partenariats"}
             </h2>
             <p className="text-sm text-muted-foreground">
-              {isAr ? 'أضف كل اتفاقية حسب نوع الشريك' : 'Ajoutez chaque convention par type de partenaire'}
+              {isAr
+                ? "أضف كل اتفاقية حسب نوع الشريك"
+                : "Ajoutez chaque convention par type de partenaire"}
             </p>
           </div>
-          <Button type="button" size="sm" onClick={handleAdd} disabled={disabled} className="gap-1.5">
+          <Button
+            type="button"
+            size="sm"
+            onClick={handleAdd}
+            disabled={disabled}
+            className="gap-1.5"
+          >
             <Plus className="h-4 w-4" />
-            {isAr ? 'إضافة' : 'Ajouter'}
+            {isAr ? "إضافة" : "Ajouter"}
           </Button>
         </div>
 
         {items.length === 0 ? (
           <div className="text-center py-4 text-xs text-muted-foreground border-2 border-dashed border-border rounded-lg">
-            {isAr ? 'لا توجد اتفاقيات' : 'Aucune convention enregistrée'}
+            {isAr ? "لا توجد اتفاقيات" : "Aucune convention enregistrée"}
           </div>
         ) : (
           <div className="space-y-3 pt-2">
@@ -83,9 +89,7 @@ export const Step5Convention = memo(({
                 className="border border-border rounded-lg p-4 bg-muted/20 space-y-3"
               >
                 <div className="flex items-center justify-between gap-2">
-                  <span className="text-xs font-semibold text-muted-foreground">
-                    #{idx + 1}
-                  </span>
+                  <span className="text-xs font-semibold text-muted-foreground">#{idx + 1}</span>
 
                   <Button
                     type="button"
@@ -101,23 +105,25 @@ export const Step5Convention = memo(({
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-start">
                   <div className="space-y-1.5">
-                    <Label className="text-xs">{isAr ? 'نوع الشريك' : 'Type de partenaire'}</Label>
+                    <Label className="text-xs">{isAr ? "نوع الشريك" : "Type de partenaire"}</Label>
                     <Select
-                      value={item.type_partenaire_id || 'none'}
+                      value={item.type_partenaire_id || "none"}
                       onValueChange={(value) =>
                         handleUpdate(item.local_id, {
-                          type_partenaire_id: value === 'none' ? '' : value,
-                          autre_partenaire: value === autreId ? item.autre_partenaire : '',
+                          type_partenaire_id: value === "none" ? "" : value,
+                          autre_partenaire: value === autreId ? item.autre_partenaire : "",
                         })
                       }
                       disabled={disabled}
                     >
                       <SelectTrigger className="h-9">
-                        <SelectValue placeholder={isAr ? 'اختر' : 'Choisir'} />
+                        <SelectValue placeholder={isAr ? "اختر" : "Choisir"} />
                       </SelectTrigger>
                       <SelectContent>
                         {partnerTypes.length === 0 ? (
-                          <SelectItem value="none">{isAr ? 'جارٍ التحميل...' : 'Chargement...'}</SelectItem>
+                          <SelectItem value="none">
+                            {isAr ? "جارٍ التحميل..." : "Chargement..."}
+                          </SelectItem>
                         ) : null}
                         {partnerTypes.map((partnerType) => (
                           <SelectItem key={partnerType.id} value={partnerType.id}>
@@ -131,10 +137,10 @@ export const Step5Convention = memo(({
                   {item.type_partenaire_id === autreId && (
                     <div className="space-y-1.5 sm:col-span-2">
                       <Label className="text-xs">
-                        {isAr ? 'تحديد الشريك' : 'Préciser le partenaire'}
+                        {isAr ? "تحديد الشريك" : "Préciser le partenaire"}
                       </Label>
                       <SafeInput
-                        value={item.autre_partenaire ?? ''}
+                        value={item.autre_partenaire ?? ""}
                         disabled={disabled}
                         onValueChange={(val) =>
                           handleUpdate(item.local_id, {
@@ -146,11 +152,17 @@ export const Step5Convention = memo(({
                   )}
 
                   <div className="space-y-1.5">
-                    <Label className="text-xs">{isAr ? 'عدد الاتفاقيات' : 'Nombre de conventions'}</Label>
+                    <Label className="text-xs">
+                      {isAr ? "عدد الاتفاقيات" : "Nombre de conventions"}
+                    </Label>
                     <NumericField
                       label=""
-                      value={typeof item.nombre_conventions === 'number' ? item.nombre_conventions : 0}
-                      onChange={(value) => handleUpdate(item.local_id, { nombre_conventions: value })}
+                      value={
+                        typeof item.nombre_conventions === "number" ? item.nombre_conventions : 0
+                      }
+                      onChange={(value) =>
+                        handleUpdate(item.local_id, { nombre_conventions: value })
+                      }
                       disabled={disabled}
                     />
                   </div>
@@ -164,4 +176,4 @@ export const Step5Convention = memo(({
   );
 });
 
-Step5Convention.displayName = 'Step5Convention';
+Step5Convention.displayName = "Step5Convention";

@@ -1,4 +1,4 @@
-import { useEntityEntries, BaseEntry } from '../common/useEntityEntries';
+import { useEntityEntries, BaseEntry } from "../common/useEntityEntries";
 
 // ============================================================================
 // 1. STATISTIQUES DES INFRASTRUCTURES (cr_stats_infrastructures)
@@ -16,7 +16,7 @@ const buildStatsPayload = (entry: CrStatsInfraEntry, rId: string) => ({
   nombre_creches_creees: Number(entry.nombre_creches_creees) || 0,
   nombre_creches_qualifiees: Number(entry.nombre_creches_qualifiees) || 0,
   nombre_creches_equipees: Number(entry.nombre_creches_equipees) || 0,
-  observations: entry.observations?.trim() || '',
+  observations: entry.observations?.trim() || "",
 });
 
 const mapStatsRow = (row: any, local_id: string): CrStatsInfraEntry => ({
@@ -25,13 +25,16 @@ const mapStatsRow = (row: any, local_id: string): CrStatsInfraEntry => ({
   nombre_creches_creees: Number(row.nombre_creches_creees) || 0,
   nombre_creches_qualifiees: Number(row.nombre_creches_qualifiees) || 0,
   nombre_creches_equipees: Number(row.nombre_creches_equipees) || 0,
-  observations: row.observations || '',
+  observations: row.observations || "",
 });
 
-export function useCrStatsInfrastructures(rapportId: string | null, options?: { enabled?: boolean }) {
+export function useCrStatsInfrastructures(
+  rapportId: string | null,
+  options?: { enabled?: boolean },
+) {
   return useEntityEntries<CrStatsInfraEntry>({
     rapportId,
-    tableName: 'cr_stats_infrastructures',
+    tableName: "cr_stats_infrastructures",
     buildPayload: buildStatsPayload,
     mapRowToEntry: mapStatsRow,
     enabled: options?.enabled ?? true,
@@ -51,25 +54,28 @@ export interface CrMouvementFermetureEntry extends BaseEntry {
 const buildMouvementPayload = (entry: CrMouvementFermetureEntry, rId: string) => ({
   ...(entry.id ? { id: entry.id } : {}),
   rapport_id: rId,
-  type_mouvement: entry.type_mouvement || 'fermeture',
+  type_mouvement: entry.type_mouvement || "fermeture",
   nombre_creches: Number(entry.nombre_creches) || 1,
-  raisons: entry.raisons?.trim() || '',
-  observations: entry.observations?.trim() || '',
+  raisons: entry.raisons?.trim() || "",
+  observations: entry.observations?.trim() || "",
 });
 
 const mapMouvementRow = (row: any, local_id: string): CrMouvementFermetureEntry => ({
   local_id,
   id: row.id,
-  type_mouvement: row.type_mouvement || 'fermeture',
+  type_mouvement: row.type_mouvement || "fermeture",
   nombre_creches: Number(row.nombre_creches) || 1,
-  raisons: row.raisons || '',
-  observations: row.observations || '',
+  raisons: row.raisons || "",
+  observations: row.observations || "",
 });
 
-export function useCrMouvementsFermetures(rapportId: string | null, options?: { enabled?: boolean }) {
+export function useCrMouvementsFermetures(
+  rapportId: string | null,
+  options?: { enabled?: boolean },
+) {
   return useEntityEntries<CrMouvementFermetureEntry>({
     rapportId,
-    tableName: 'cr_mouvements_fermetures',
+    tableName: "cr_mouvements_fermetures",
     buildPayload: buildMouvementPayload,
     mapRowToEntry: mapMouvementRow,
     enabled: options?.enabled ?? true,
@@ -92,30 +98,30 @@ export interface CrPartenariatEntry extends BaseEntry {
 const buildPartenariatPayload = (entry: CrPartenariatEntry, rId: string) => ({
   ...(entry.id ? { id: entry.id } : {}),
   rapport_id: rId,
-  partenaire: entry.partenaire?.trim() || '',
+  partenaire: entry.partenaire?.trim() || "",
   nombre_conventions: Number(entry.nombre_conventions) || 1,
   objectif: entry.objectif?.trim() || null,
   evaluation_engagement:
-    entry.evaluation_engagement && entry.evaluation_engagement.trim() !== ''
+    entry.evaluation_engagement && entry.evaluation_engagement.trim() !== ""
       ? entry.evaluation_engagement
       : null,
-  observations: entry.observations?.trim() || '',
+  observations: entry.observations?.trim() || "",
 });
 
 const mapPartenariatRow = (row: any, local_id: string): CrPartenariatEntry => ({
   local_id,
   id: row.id,
-  partenaire: row.partenaire || '',
+  partenaire: row.partenaire || "",
   nombre_conventions: Number(row.nombre_conventions) || 1,
-  objectif: row.objectif || '',
-  evaluation_engagement: row.evaluation_engagement || '',
-  observations: row.observations || '',
+  objectif: row.objectif || "",
+  evaluation_engagement: row.evaluation_engagement || "",
+  observations: row.observations || "",
 });
 
 export function useCrPartenariats(rapportId: string | null, options?: { enabled?: boolean }) {
   return useEntityEntries<CrPartenariatEntry>({
     rapportId,
-    tableName: 'cr_partenariats_conventions',
+    tableName: "cr_partenariats_conventions",
     buildPayload: buildPartenariatPayload,
     mapRowToEntry: mapPartenariatRow,
     enabled: options?.enabled ?? true,
@@ -137,23 +143,23 @@ const buildControlePayload = (entry: CrControleCrecheEntry, rId: string) => ({
   ...(entry.id ? { id: entry.id } : {}),
   rapport_id: rId,
   creche_privee_id:
-    entry.creche_privee_id && entry.creche_privee_id.trim() !== '' ? entry.creche_privee_id : null,
+    entry.creche_privee_id && entry.creche_privee_id.trim() !== "" ? entry.creche_privee_id : null,
   resultats_controle: entry.resultats_controle?.trim() || null,
-  observations: entry.observations?.trim() || '',
+  observations: entry.observations?.trim() || "",
 });
 
 const mapControleRow = (row: any, local_id: string): CrControleCrecheEntry => ({
   local_id,
   id: row.id,
-  creche_privee_id: row.creche_privee_id || '',
-  resultats_controle: row.resultats_controle || '',
-  observations: row.observations || '',
+  creche_privee_id: row.creche_privee_id || "",
+  resultats_controle: row.resultats_controle || "",
+  observations: row.observations || "",
 });
 
 export function useCrControleCreches(rapportId: string | null, options?: { enabled?: boolean }) {
   return useEntityEntries<CrControleCrecheEntry>({
     rapportId,
-    tableName: 'cr_controle_creches',
+    tableName: "cr_controle_creches",
     buildPayload: buildControlePayload,
     mapRowToEntry: mapControleRow,
     enabled: options?.enabled ?? true,
@@ -175,25 +181,25 @@ const buildCadrePayload = (entry: CrCadresAssermentesEntry, rId: string) => ({
   ...(entry.id ? { id: entry.id } : {}),
   rapport_id: rId,
   statut_cadre_id:
-    entry.statut_cadre_id && entry.statut_cadre_id.trim() !== '' ? entry.statut_cadre_id : null,
+    entry.statut_cadre_id && entry.statut_cadre_id.trim() !== "" ? entry.statut_cadre_id : null,
   statut_cadre_autre: entry.statut_cadre_autre?.trim() || null,
   nombre_cadres: Number(entry.nombre_cadres) || 0,
-  observations: entry.observations?.trim() || '',
+  observations: entry.observations?.trim() || "",
 });
 
 const mapCadreRow = (row: any, local_id: string): CrCadresAssermentesEntry => ({
   local_id,
   id: row.id,
-  statut_cadre_id: row.statut_cadre_id || '',
-  statut_cadre_autre: row.statut_cadre_autre || '',
+  statut_cadre_id: row.statut_cadre_id || "",
+  statut_cadre_autre: row.statut_cadre_autre || "",
   nombre_cadres: Number(row.nombre_cadres) || 0,
-  observations: row.observations || '',
+  observations: row.observations || "",
 });
 
 export function useCrCadresAssermentes(rapportId: string | null, options?: { enabled?: boolean }) {
   return useEntityEntries<CrCadresAssermentesEntry>({
     rapportId,
-    tableName: 'cr_cadres_assermentes',
+    tableName: "cr_cadres_assermentes",
     buildPayload: buildCadrePayload,
     mapRowToEntry: mapCadreRow,
     enabled: options?.enabled ?? true,
@@ -217,30 +223,28 @@ const buildLabelPayload = (entry: CrLabelQualiteEntry, rId: string) => ({
   ...(entry.id ? { id: entry.id } : {}),
   rapport_id: rId,
   etablissement_id:
-    entry.etablissement_id && entry.etablissement_id.trim() !== '' ? entry.etablissement_id : null,
+    entry.etablissement_id && entry.etablissement_id.trim() !== "" ? entry.etablissement_id : null,
   creche_privee_id:
-    entry.creche_privee_id && entry.creche_privee_id.trim() !== '' ? entry.creche_privee_id : null,
-  statut_label: entry.statut_label || 'proposee',
+    entry.creche_privee_id && entry.creche_privee_id.trim() !== "" ? entry.creche_privee_id : null,
+  statut_label: entry.statut_label || "proposee",
   motif_refus: entry.motif_refus?.trim() || null,
-  observations: entry.observations?.trim() || '',
+  observations: entry.observations?.trim() || "",
 });
 
 const mapLabelRow = (row: any, local_id: string): CrLabelQualiteEntry => ({
   local_id,
   id: row.id,
-  etablissement_id: row.etablissement_id || '',
-  creche_privee_id: row.creche_privee_id || '',
-  statut_label: row.statut_label || 'proposee',
-  motif_refus: row.motif_refus || '',
-  observations: row.observations || '',
+  etablissement_id: row.etablissement_id || "",
+  creche_privee_id: row.creche_privee_id || "",
+  statut_label: row.statut_label || "proposee",
+  motif_refus: row.motif_refus || "",
+  observations: row.observations || "",
 });
-
-
 
 export function useCrLabelQualite(rapportId: string | null, options?: { enabled?: boolean }) {
   return useEntityEntries<CrLabelQualiteEntry>({
     rapportId,
-    tableName: 'cr_label_qualite',
+    tableName: "cr_label_qualite",
     buildPayload: buildLabelPayload,
     mapRowToEntry: mapLabelRow,
     enabled: options?.enabled ?? true,
