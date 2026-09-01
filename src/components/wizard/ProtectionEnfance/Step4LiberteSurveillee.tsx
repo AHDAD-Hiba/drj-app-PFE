@@ -1,16 +1,18 @@
-import { memo } from "react";
-import { useTranslation } from "react-i18next";
+import { NumericField } from "@/components/form/NumericField";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Scale, Users, FileText, BookOpen } from "lucide-react";
 import { StepComponentProps } from "@/config/wizard.types";
-import { NumericField } from "@/components/form/NumericField";
+import { BookOpen, FileText, Scale, Users } from "lucide-react";
+import { memo } from "react";
+import { useTranslation } from "react-i18next";
+
 
 // ⚠️ Assure-toi que les imports pointent vers le bon fichier contenant les Hooks ci-dessus
 import {
-  usePeStatistiquesLS,
-  usePeRapportsJudiciaires,
+  PeRapportJudiciaireEntry,
   PeStatsLSEntry,
+  usePeRapportsJudiciaires,
+  usePeStatistiquesLS
 } from "@/hooks/ProtectionEnfance/usePeStep4";
 
 export const Step4LiberteSurveillee = memo(
@@ -49,15 +51,22 @@ export const Step4LiberteSurveillee = memo(
       if (onActivity) onActivity();
     };
 
+
     const handleRapportChange = (value: number) => {
+      const numValue = Number(value) || 0;
+
       if (rapportJudiciaire) {
-        updateRapport(rapportJudiciaire.local_id, { nombre_rapports: value });
+        updateRapport(rapportJudiciaire.local_id, { nombre_rapports: numValue });
       } else {
+        const newLocalId = crypto.randomUUID();
         addRapport({
-          local_id: crypto.randomUUID(),
-          nombre_rapports: value,
-        } as any);
+          local_id: newLocalId,
+          nombre_rapports: numValue,
+        } as PeRapportJudiciaireEntry);
+        
+        updateRapport(newLocalId, { nombre_rapports: numValue });
       }
+
       if (onActivity) onActivity();
     };
 

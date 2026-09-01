@@ -1,29 +1,29 @@
-import { useState, useCallback, useRef, useMemo, useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
-import { useTranslation } from "react-i18next";
-import { useAuth } from "@/hooks/common/useAuth";
 import { AppLayout } from "@/components/AppLayout";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { useToast } from "@/hooks/common/use-toast";
+import { useAuth } from "@/hooks/common/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import {
+  AlertTriangle,
+  CheckCircle2,
   ChevronLeft,
   ChevronRight,
+  Loader2,
+  Pencil,
   Save,
   Send,
   ShieldAlert,
-  Loader2,
-  CheckCircle2,
-  Pencil,
-  AlertTriangle,
 } from "lucide-react";
-import { useToast } from "@/hooks/common/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { useSearchParams } from "react-router-dom";
 
-import { useDomainSubmission } from "@/hooks/common/useDomainSubmission";
 import { SaveIndicator } from "@/components/form/SaveIndicator";
 import { Stepper } from "@/components/form/Stepper";
+import { useDomainSubmission } from "@/hooks/common/useDomainSubmission";
 
 import {
   Dialog,
@@ -36,8 +36,8 @@ import { Textarea } from "@/components/ui/textarea";
 
 import { PreFormSelection, type ReportSelection } from "@/components/wizard/PreFormSelection";
 import { DEFAULT_YEAR } from "@/components/YearSwitcher";
-import type { DomainConfig } from "@/config/wizard.types";
 import { getDomainConfig } from "@/config/domainRegistry";
+import type { DomainConfig } from "@/config/wizard.types";
 import { useDomaines } from "@/hooks/common/useDomaines";
 
 type StatutRapport = "NON_COMMENCE" | "EN_COURS" | "SOUMIS" | "RETOUR_CORRECTION" | "VALIDE";
@@ -130,7 +130,6 @@ const ActiveWizard = ({
       } catch (err) {
         console.error(err);
       }
-      //setRefreshTrigger(prev => prev + 1);
     }, 1500);
   }, []);
 

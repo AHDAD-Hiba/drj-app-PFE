@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 export function useInfraPartenariats(rapportId: string | null, options?: { enabled?: boolean }) {
   const [conventions, setConventions] = useState<any[]>([]);
@@ -10,16 +10,11 @@ export function useInfraPartenariats(rapportId: string | null, options?: { enabl
   const isInitialLoad = useRef(true);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // 1. CHARGEMENT : Groupement par "sujet_convention"
+  // 1. CHARGEMENT : Regroupement des projets par "sujet_convention"
   const fetchItems = useCallback(async () => {
-    if (!enabled) {
+    if (!enabled || !rapportId) {
       setConventions([]);
       setLoading(false);
-      return;
-    }
-
-    if (!rapportId) {
-      setConventions([]);
       return;
     }
 
@@ -63,7 +58,7 @@ export function useInfraPartenariats(rapportId: string | null, options?: { enabl
 
       setConventions(grouped);
     } catch (err) {
-      console.error("Erreur fetch partenariats:", err);
+      console.error("Erreur de récupération des partenariats :", err);
     } finally {
       setLoading(false);
       setTimeout(() => {
@@ -76,17 +71,17 @@ export function useInfraPartenariats(rapportId: string | null, options?: { enabl
     void fetchItems();
   }, [fetchItems, enabled]);
 
-  // 2. SAUVEGARDE SÉCURISÉE SANS PERTE DE DONNÉES
+  // 2. SAUVEGARDE SÉCURISÉE : Séparation claire entre insertion et mise à jour
   const saveItems = useCallback(
     async (dataToSave: any[]) => {
       if (!rapportId) return;
 
       try {
-        const flatData: any[] = [];
+        const toInsert: any[] = [];
+        const toUpdate: any[] = [];
         const currentDbIds: string[] = [];
 
         dataToSave.forEach((conv) => {
-          // 🎯 Ne pas bloquer la sauvegarde si le sujet est temporairement vide
           const sujetConv = conv.sujet_convention?.trim() || "Sans titre";
 
           (conv.projets || []).forEach((proj: any) => {
@@ -106,16 +101,18 @@ export function useInfraPartenariats(rapportId: string | null, options?: { enabl
               observations: proj.observations?.trim() || "",
             };
 
+            // Séparation : mise à jour pour les projets existants, insertion pour les nouveaux
             if (proj.db_id) {
               row.id = proj.db_id;
               currentDbIds.push(proj.db_id);
+              toUpdate.push(row);
+            } else {
+              toInsert.push({ ...row, _temp_local_id: proj.local_id });
             }
-
-            flatData.push(row);
           });
         });
 
-        // 🎯 1. Supprimer uniquement les projets qui ont été retirés de l'UI (qui avaient un ID mais ne sont plus dans flatData)
+        // Étape A : Supprimer les projets retirés de l'interface
         const { data: existingInDb } = await supabase
           .from("infra_projets_partenariat")
           .select("id")
@@ -131,22 +128,33 @@ export function useInfraPartenariats(rapportId: string | null, options?: { enabl
           }
         }
 
-        // 🎯 2. Utiliser UPSERT pour enregistrer/mettre à jour les projets sans tout supprimer
-        if (flatData.length > 0) {
-          const { data: savedData, error } = await supabase
+        // Étape B : Mettre à jour les projets existants (possédant déjà un ID)
+        if (toUpdate.length > 0) {
+          const { error: updateError } = await supabase
             .from("infra_projets_partenariat")
-            .upsert(flatData, { onConflict: "id" })
+            .upsert(toUpdate, { onConflict: "id" });
+
+          if (updateError) throw updateError;
+        }
+
+        // Étape C : Insérer les nouveaux projets sans fournir d'ID (génération automatique par PostgreSQL)
+        if (toInsert.length > 0) {
+          const payloadInsert = toInsert.map(({ _temp_local_id, ...rest }) => rest);
+          const { data: insertedData, error: insertError } = await supabase
+            .from("infra_projets_partenariat")
+            .insert(payloadInsert)
             .select("id, sujet_convention, sujet_projet");
 
-          if (error) throw error;
+          if (insertError) throw insertError;
 
-          // 🎯 3. Mettre à jour les `db_id` localement pour les nouveaux projets créés
-          if (savedData && savedData.length > 0) {
+          // Étape D : Réassigner les identifiants générés à l'état local
+          if (insertedData && insertedData.length > 0) {
             setConventions((prev) =>
               prev.map((c) => ({
                 ...c,
                 projets: c.projets.map((p) => {
-                  const matched = savedData.find(
+                  if (p.db_id) return p;
+                  const matched = insertedData.find(
                     (s) =>
                       s.sujet_convention === c.sujet_convention &&
                       s.sujet_projet === p.sujet_projet,
@@ -158,13 +166,13 @@ export function useInfraPartenariats(rapportId: string | null, options?: { enabl
           }
         }
       } catch (err) {
-        console.error("Erreur save partenariats:", err);
+        console.error("Erreur lors de l'enregistrement des partenariats :", err);
       }
     },
     [rapportId],
   );
 
-  // 3. AUTO-SAVE DEBOUNCE (1.5s)
+  // 3. AUTO-SAVE AVEC DÉBOUNCE (1.5s)
   useEffect(() => {
     if (isInitialLoad.current) return;
 

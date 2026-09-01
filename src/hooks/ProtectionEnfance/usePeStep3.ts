@@ -1,4 +1,4 @@
-import { useEntityEntries, BaseEntry } from "../common/useEntityEntries";
+import { BaseEntry, useEntityEntries } from "../common/useEntityEntries";
 
 // ============================================================================
 // 1. PARTENARIATS (pe_partenariats)
@@ -185,6 +185,7 @@ export function usePeVisites(rapportId: string | null, options?: { enabled?: boo
     enabled: options?.enabled ?? true,
     // 🛡️ Garde-fou : S'assure que l'entité visiteuse est renseignée avant de pousser vers Supabase
     validateBeforeSave: (entry) =>
-      Boolean(entry.etablissement_id && entry.entite_visiteuse?.trim()),
+      Boolean(entry.etablissement_id && entry.entite_visiteuse?.trim() && entry.date_visite?.trim().length > 0),
+
   });
 }

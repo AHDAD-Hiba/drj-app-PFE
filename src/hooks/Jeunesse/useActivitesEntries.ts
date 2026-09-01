@@ -1,4 +1,4 @@
-import { useEntityEntries, BaseEntry } from "@/hooks/common/useEntityEntries";
+import { BaseEntry, useEntityEntries } from "@/hooks/common/useEntityEntries";
 
 export interface ActiviteEntry extends BaseEntry {
   type_activite: "permanente" | "rayonnante";
@@ -14,7 +14,7 @@ export interface ActiviteEntry extends BaseEntry {
 const buildPayload = (entry: ActiviteEntry, rId: string) => ({
   ...(entry.id ? { id: entry.id } : {}),
   rapport_id: rId,
-  type_activite: entry.type_activite,
+  type_activite: entry.type_activite?.trim() ? entry.type_activite : null,
   nombre_associations: Number(entry.nombre_associations) || 0,
   nombre_clubs: Number(entry.nombre_clubs) || 0,
   nombre_conventions: Number(entry.nombre_conventions) || 0,

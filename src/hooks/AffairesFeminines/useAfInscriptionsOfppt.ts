@@ -1,4 +1,4 @@
-import { useEntityEntries, BaseEntry } from "../common/useEntityEntries";
+import { BaseEntry, useEntityEntries } from "../common/useEntityEntries";
 
 export interface AfInscriptionOfpptEntry extends BaseEntry {
   etablissement_id: string;
@@ -13,10 +13,10 @@ export interface AfInscriptionOfpptEntry extends BaseEntry {
 const buildPayload = (entry: AfInscriptionOfpptEntry, rId: string) => ({
   ...(entry.id ? { id: entry.id } : {}),
   rapport_id: rId,
-  etablissement_id: entry.etablissement_id ?? null,
-  secteur_id: entry.secteur_id ?? null,
-  filiere_id: entry.filiere_id ?? null,
-  niveau_formation: entry.niveau_formation ?? null,
+  etablissement_id: entry.etablissement_id?.trim() ? entry.etablissement_id : null,
+  secteur_id: entry.secteur_id?.trim() ? entry.secteur_id : null,
+  filiere_id: entry.filiere_id?.trim() ? entry.filiere_id : null,
+  niveau_formation: entry.niveau_formation?.trim() ? entry.niveau_formation : null,
   inscrites_annee_1: entry.inscrites_annee_1 || 0,
   inscrites_annee_2: entry.inscrites_annee_2 || 0,
 });
@@ -39,5 +39,7 @@ export function useAfInscriptionsOfppt(rapportId: string | null, options?: { ena
     buildPayload, // On passe juste la référence
     mapRowToEntry, // On passe juste la référence
     enabled: options?.enabled ?? true,
+    validateBeforeSave: (entry) =>
+      Boolean(entry.etablissement_id?.trim() || entry.secteur_id?.trim() || entry.filiere_id?.trim()),
   });
 }

@@ -1,4 +1,4 @@
-import { useEntityEntries, BaseEntry } from "../common/useEntityEntries";
+import { BaseEntry, useEntityEntries } from "../common/useEntityEntries";
 
 // ============================================================================
 // 1. STATISTIQUES & INTEGRATION (pe_statistiques_demographiques)

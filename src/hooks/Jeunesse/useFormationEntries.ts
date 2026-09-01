@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 export interface FormationEntry {
   local_id: string;
@@ -153,7 +153,7 @@ export function useFormationEntries(rapportId: string | null, options?: { enable
       const updatedEntry = existing;
       const centreClean = updatedEntry.centre?.trim() ?? "";
 
-      // 🛡️ N'envoie pas à Supabase si le nom du centre est vide
+      // N'envoie pas à Supabase si le nom du centre est vide
       if (!centreClean) {
         savingEntriesRef.current.delete(local_id);
         return true;
@@ -163,9 +163,10 @@ export function useFormationEntries(rapportId: string | null, options?: { enable
         const payload: any = {
           rapport_id: rapportId,
           centre: centreClean,
-          numero_session: updatedEntry.numero_session || 1,
+          numero_session: Number(updatedEntry.numero_session) || 1,
         };
 
+        // Si l'entrée a un ID, on l'ajoute au payload pour l'upsert
         if (updatedEntry.id) {
           payload.id = updatedEntry.id;
         }
@@ -173,20 +174,18 @@ export function useFormationEntries(rapportId: string | null, options?: { enable
         // 1. Upsert formation
         const { data: frmData, error: frmError } = await supabase
           .from("formations")
-          .upsert(
-            payload,
-            updatedEntry.id
-              ? { onConflict: "id" }
-              : { onConflict: "rapport_id,centre,numero_session" },
-          )
+          .upsert(payload, {
+            onConflict: "rapport_id,centre,numero_session",
+          })
           .select("id")
           .single();
 
         if (frmError) throw frmError;
+        const formationId = frmData.id;
 
-        // 2. Upsert statistiques associées
+        // 2. Upsert statistiques_formation
         const statsPayload: any = {
-          formation_id: frmData.id,
+          formation_id: formationId,
           nombre_beneficiaires_femmes: Number(updatedEntry.beneficiaries_girls) || 0,
           nombre_beneficiaires_hommes: Number(updatedEntry.beneficiaries_boys) || 0,
           nombre_formateurs_femmes: Number(updatedEntry.trainers_girls) || 0,
@@ -199,19 +198,19 @@ export function useFormationEntries(rapportId: string | null, options?: { enable
 
         const { data: statsData, error: statsError } = await supabase
           .from("statistiques_formation")
-          .upsert(
-            statsPayload,
-            updatedEntry.statistiques_id ? { onConflict: "id" } : { onConflict: "formation_id" },
-          )
+          .upsert(statsPayload, {
+            onConflict: "formation_id",
+          })
           .select("id")
           .single();
 
         if (statsError) throw statsError;
 
+        // 3. Update State
         updateItems((prev) =>
           prev.map((item) =>
             item.local_id === local_id
-              ? { ...item, id: frmData.id, statistiques_id: statsData.id }
+              ? { ...item, id: formationId, statistiques_id: statsData.id }
               : item,
           ),
         );

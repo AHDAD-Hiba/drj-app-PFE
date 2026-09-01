@@ -1,10 +1,8 @@
-import { memo, useState, useMemo, useEffect } from "react";
-import { useTranslation } from "react-i18next";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import { SafeInput } from "@/components/form/SafeInput";
 import { SafeTextarea } from "@/components/form/SafeTextarea";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -12,15 +10,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Trash2, Building2, Search } from "lucide-react";
 import { StepComponentProps } from "@/config/wizard.types";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/client"; // Nécessaire pour l'insertion directe dans la table 'etablissements'
+import { Building2, Plus, Search, Trash2 } from "lucide-react";
+import { memo, useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 
-import { useAfEtablissements } from "@/hooks/common/useAfEtablissements";
 import {
-  useAfMiseAJourReseau,
   AfMouvementEntry,
+  useAfMiseAJourReseau,
 } from "@/hooks/AffairesFeminines/useAfMiseAJourReseau";
+import { useAfEtablissements } from "@/hooks/common/useAfEtablissements";
 import { useAuth } from "@/hooks/common/useAuth";
 import { useRapportDirection } from "@/hooks/common/useRapport";
 
@@ -31,25 +31,32 @@ export const Step6Infra = memo(({ rapportId, disabled, onActivity }: StepCompone
   const directionId = utilisateur?.direction_id;
 
   const { data: rapport } = useRapportDirection(rapportId);
-
   const effectiveDirectionId = rapport?.direction_id || directionId;
 
   const { items: tousLesEtablissements, loading: loadingEtabs } =
     useAfEtablissements(effectiveDirectionId);
   const reseau = useAfMiseAJourReseau(rapportId);
 
-  const [localMouvements, setLocalMouvements] = useState<AfMouvementEntry[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
 
-  // LOGIQUE DE FUSION DYNAMIQUE
+  // 🕒 1. SOLUTION PROPRE : Timer pour attendre la fin de la saisie avant de créer l'établissement
+  const debounceTimerRef = useRef<Record<string, NodeJS.Timeout>>({});
+
   useEffect(() => {
-    if (loadingEtabs || reseau.loading) return;
+    // Nettoyage des timers lors du démontage du composant
+    return () => {
+      Object.values(debounceTimerRef.current).forEach(clearTimeout);
+    };
+  }, []);
 
+  const combinedItems = useMemo(() => {
     const etabsDeBase = tousLesEtablissements.filter(
       (e) => e.type_etablissement === "club_feminin" || e.type_etablissement === "ofppt",
     );
 
     const nouveauxDansCeRapport = reseau.items.filter(
       (m) =>
+        m.is_new_entry ||
         m.type_mise_a_jour === "nouvel" ||
         m.type_mise_a_jour === "creation_en_cours" ||
         !m.etablissement_id,
@@ -70,6 +77,8 @@ export const Step6Infra = memo(({ rapportId, disabled, onActivity }: StepCompone
           is_new_entry: false,
         };
       }
+      
+      // Entrée par défaut pour les établissements existants
       return {
         local_id: etab.id,
         is_new_entry: false,
@@ -95,17 +104,20 @@ export const Step6Infra = memo(({ rapportId, disabled, onActivity }: StepCompone
       };
     });
 
-    setLocalMouvements([...nouveauxList, ...baseList]);
-  }, [tousLesEtablissements, reseau.items, loadingEtabs, reseau.loading]);
+    return [...nouveauxList, ...baseList];
+  }, [tousLesEtablissements, reseau.items]);
 
-  const [searchTerm, setSearchTerm] = useState("");
   const filteredItems = useMemo(() => {
-    return localMouvements.filter(
-      (item) =>
-        item.is_new_entry ||
-        item.nom_etablissement?.toLowerCase().includes(searchTerm.toLowerCase()),
+    const term = searchTerm.trim().toLowerCase();
+    
+    // Si la recherche est vide, on affiche tout
+    if (!term) return combinedItems;
+
+    // Recherche par nom de l'établissement
+    return combinedItems.filter((item) =>
+      (item.nom_etablissement || "").toLowerCase().includes(term)
     );
-  }, [localMouvements, searchTerm]);
+  }, [combinedItems, searchTerm]);
 
   // ACTIONS ET SYNCHRONISATION
   const handleAddMouvement = async () => {
@@ -123,47 +135,96 @@ export const Step6Infra = memo(({ rapportId, disabled, onActivity }: StepCompone
       observations: "",
     };
 
-    setLocalMouvements((prev) => [newEntry, ...prev]);
+    // Il suffit de l'ajouter au Hook, le useMemo s'occupe du reste instantanément
+    await reseau.add(newEntry);
     if (onActivity) void onActivity();
   };
 
   const handleUpdateMouvement = async (local_id: string, patch: Partial<AfMouvementEntry>) => {
-    setLocalMouvements((prev) =>
-      prev.map((m) => (m.local_id === local_id ? { ...m, ...patch } : m)),
+    const existingInReseau = reseau.items.find(
+      (m) => m.local_id === local_id || m.etablissement_id === local_id
     );
-
-    const currentItem = localMouvements.find((m) => m.local_id === local_id);
-    if (!currentItem) return;
 
     const isNowSansChangement = patch.type_mise_a_jour === "sans_changement";
-    const wasAlreadyInDB = reseau.items.some(
-      (m) =>
-        m.local_id === local_id ||
-        (m.etablissement_id && m.etablissement_id === currentItem.etablissement_id),
-    );
 
-    if (isNowSansChangement && wasAlreadyInDB) {
-      const dbItem = reseau.items.find(
-        (m) => m.local_id === local_id || m.etablissement_id === currentItem.etablissement_id,
-      );
-      if (dbItem) await reseau.remove(dbItem.local_id);
-    } else if (!isNowSansChangement) {
-      if (!currentItem.id && !wasAlreadyInDB) {
-        await reseau.add({ ...currentItem, ...patch });
+    if (existingInReseau) {
+      if (isNowSansChangement) {
+        await reseau.remove(existingInReseau.local_id);
       } else {
-        const idToUpdate = currentItem.id
-          ? currentItem.local_id
-          : reseau.items.find((m) => m.etablissement_id === currentItem.etablissement_id)
-              ?.local_id || local_id;
-        await reseau.update(idToUpdate, patch);
+        // 1. Mise à jour des données dans le Hook (pour une réactivité immédiate de l'UI)
+        await reseau.update(existingInReseau.local_id, patch);
+
+        // 2. Enregistrement silencieux de l'établissement sans duplication de frappes (Debouncing)
+        const isNewOrUnlinked = existingInReseau.is_new_entry || !existingInReseau.etablissement_id;
+        const nameOrTypeChanged = patch.nom_etablissement !== undefined || patch.type_etablissement !== undefined;
+
+        if (isNewOrUnlinked && nameOrTypeChanged && effectiveDirectionId) {
+          const nomToSave = patch.nom_etablissement !== undefined ? patch.nom_etablissement : existingInReseau.nom_etablissement;
+          const typeToSave = patch.type_etablissement !== undefined ? patch.type_etablissement : existingInReseau.type_etablissement;
+
+          if (nomToSave && nomToSave.trim() !== "") {
+            // Annulation du timer précédent si l'utilisateur continue de taper
+            if (debounceTimerRef.current[local_id]) {
+              clearTimeout(debounceTimerRef.current[local_id]);
+            }
+
+            // Attendre 1.2 seconde (fin de frappe) avant d'envoyer la requête à Supabase
+            debounceTimerRef.current[local_id] = setTimeout(async () => {
+              try {
+                const { data, error } = await supabase
+                  .from("etablissements")
+                  .upsert({
+                    ...(existingInReseau.etablissement_id ? { id: existingInReseau.etablissement_id } : {}),
+                    nom: nomToSave.trim(),
+                    type_etablissement: (typeToSave || "club_feminin") as any,
+                    direction_id: effectiveDirectionId,
+                    est_actif: true,
+                  }, { onConflict: existingInReseau.etablissement_id ? "id" : "direction_id,nom" })
+                  .select("id")
+                  .single();
+
+                if (data?.id && data.id !== existingInReseau.etablissement_id) {
+                  // Lier le nouvel ID de l'établissement au mouvement dans le Hook
+                  await reseau.update(existingInReseau.local_id, { etablissement_id: data.id });
+                }
+              } catch (err) {
+                console.error("Erreur de synchronisation de l'établissement :", err);
+              }
+            }, 1200);
+          }
+        }
+      }
+    } else {
+      // C'est un établissement existant dont on modifie le statut pour la première fois
+      if (!isNowSansChangement) {
+        const etabDeBase = tousLesEtablissements.find((e) => e.id === local_id);
+        if (etabDeBase) {
+          await reseau.add({
+            local_id: crypto.randomUUID(),
+            etablissement_id: etabDeBase.id,
+            nom_etablissement: etabDeBase.nom,
+            type_etablissement: etabDeBase.type_etablissement,
+            type_mise_a_jour: patch.type_mise_a_jour || "fermeture_temporaire",
+            statut_juridique: "",
+            date_mouvement: "",
+            raisons: "",
+            suggestions: "",
+            observations: "",
+            is_new_entry: false,
+            ...patch,
+          });
+        }
       }
     }
     if (onActivity) void onActivity();
   };
 
   const handleRemoveMouvement = async (local_id: string) => {
-    setLocalMouvements((prev) => prev.filter((m) => m.local_id !== local_id));
-    await reseau.remove(local_id);
+    // Recherche de l'élément réel dans le Hook pour le supprimer
+    const existing = reseau.items.find(m => m.local_id === local_id || m.etablissement_id === local_id);
+    if (existing) {
+      await reseau.remove(existing.local_id);
+    }
     if (onActivity) void onActivity();
   };
 
@@ -260,14 +321,7 @@ export const Step6Infra = memo(({ rapportId, disabled, onActivity }: StepCompone
                         }
                         value={item.nom_etablissement}
                         onValueChange={(val) => {
-                          setLocalMouvements((prev) =>
-                            prev.map((m) =>
-                              m.local_id === item.local_id ? { ...m, nom_etablissement: val } : m,
-                            ),
-                          );
-                          if (val.trim() !== "") {
-                            handleUpdateMouvement(item.local_id, { nom_etablissement: val });
-                          }
+                          handleUpdateMouvement(item.local_id, { nom_etablissement: val });
                         }}
                         disabled={disabled}
                         className="h-10 bg-background"

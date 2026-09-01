@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState, useCallback } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/common/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -269,6 +269,6 @@ export const useDraftSubmission = ({
     submit,
     ensureEnCours,
     submissionId: rapportId,
-    completeness: 0,
+    completeness: Math.round(completeness),
   };
 };
