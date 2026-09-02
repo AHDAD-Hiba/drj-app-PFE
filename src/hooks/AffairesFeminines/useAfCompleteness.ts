@@ -1,25 +1,25 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
-import { supabase } from "@/integrations/supabase/client";
+// src/hooks/AffairesFeminines/useAfCompleteness.ts
 import { computeAfCompleteness } from "@/lib/afCompleteness";
+import { useEffect, useMemo, useState } from "react";
 
+import { useAfAgrs } from "./useAfAgrs";
+import { useAfCentresEcoute } from "./useAfCentresEcoute";
+import { useAfFormationCadres } from "./useAfFormationCadres";
 import { useAfInscriptionsClubs } from "./useAfInscriptionsClubs";
 import { useAfInscriptionsOfppt } from "./useAfInscriptionsOfppt";
 import { useAfIntegrationLaureates } from "./useAfIntegrationLaureates";
-import { useAfAgrs } from "./useAfAgrs";
-import { useAfSensibilisations } from "./useAfSensibilisations";
-import { useAfPortesOuvertes } from "./useAfPortesOuvertes";
-import { useAfCentresEcoute } from "./useAfCentresEcoute";
-import { useAfRessourcesHumaines } from "./useAfRessourcesHumaines";
-import { useAfFormationCadres } from "./useAfFormationCadres";
 import { useAfMiseAJourReseau } from "./useAfMiseAJourReseau";
+import { useAfPortesOuvertes } from "./useAfPortesOuvertes";
+import { useAfRessourcesHumaines } from "./useAfRessourcesHumaines";
+import { useAfSensibilisations } from "./useAfSensibilisations";
 import { useAfSuiviPartenariats } from "./useAfSuiviPartenariats";
 
-export function useAfCompleteness(rapportId: string | null, refreshTrigger?: number) {
-  // ✅ STEP 1 (IMMÉDIAT) - Inscriptions clubs et OFPPT
+export const useAfCompleteness = (rapportId: string | null, refreshTrigger?: number, step?: number, onActivityTrigger?: number) => {
+  // IMMÉDIAT
   const clubs = useAfInscriptionsClubs(rapportId);
   const ofppt = useAfInscriptionsOfppt(rapportId);
 
-  // ✅ STEP 2 (APRÈS 200ms) - Intégration et AGR
+  // Charger après 200ms (arrière-plan)
   const [loadStep2, setLoadStep2] = useState(false);
   useEffect(() => {
     const timer = setTimeout(() => setLoadStep2(true), 200);
@@ -29,7 +29,7 @@ export function useAfCompleteness(rapportId: string | null, refreshTrigger?: num
   const laureates = useAfIntegrationLaureates(rapportId, { enabled: loadStep2 });
   const agr = useAfAgrs(rapportId, { enabled: loadStep2 });
 
-  // ✅ STEP 3 (APRÈS 400ms) - Sensibilisation et Portes ouvertes
+  // Charger après 400ms
   const [loadStep3, setLoadStep3] = useState(false);
   useEffect(() => {
     const timer = setTimeout(() => setLoadStep3(true), 400);
@@ -39,7 +39,7 @@ export function useAfCompleteness(rapportId: string | null, refreshTrigger?: num
   const sensi = useAfSensibilisations(rapportId, { enabled: loadStep3 });
   const portes = useAfPortesOuvertes(rapportId, { enabled: loadStep3 });
 
-  // ✅ STEP 4 (APRÈS 600ms) - Centres d'écoute
+  // Charger après 600ms
   const [loadStep4, setLoadStep4] = useState(false);
   useEffect(() => {
     const timer = setTimeout(() => setLoadStep4(true), 600);
@@ -48,7 +48,7 @@ export function useAfCompleteness(rapportId: string | null, refreshTrigger?: num
 
   const ecoute = useAfCentresEcoute(rapportId, { enabled: loadStep4 });
 
-  // ✅ STEP 5 (APRÈS 800ms) - RH et Cadres
+  // Charger après 800ms
   const [loadStep5, setLoadStep5] = useState(false);
   useEffect(() => {
     const timer = setTimeout(() => setLoadStep5(true), 800);
@@ -58,7 +58,7 @@ export function useAfCompleteness(rapportId: string | null, refreshTrigger?: num
   const rh = useAfRessourcesHumaines(rapportId, { enabled: loadStep5 });
   const cadres = useAfFormationCadres(rapportId, { enabled: loadStep5 });
 
-  // ✅ STEP 6 (APRÈS 1000ms) - Mise à jour réseau
+  // Charger après 1000ms
   const [loadStep6, setLoadStep6] = useState(false);
   useEffect(() => {
     const timer = setTimeout(() => setLoadStep6(true), 1000);
@@ -67,7 +67,7 @@ export function useAfCompleteness(rapportId: string | null, refreshTrigger?: num
 
   const reseau = useAfMiseAJourReseau(rapportId, { enabled: loadStep6 });
 
-  // ✅ STEP 7 (APRÈS 1200ms) - Suivi partenariats
+  // Charger après 1200ms
   const [loadStep7, setLoadStep7] = useState(false);
   useEffect(() => {
     const timer = setTimeout(() => setLoadStep7(true), 1200);
@@ -76,28 +76,27 @@ export function useAfCompleteness(rapportId: string | null, refreshTrigger?: num
 
   const partenariats = useAfSuiviPartenariats(rapportId, { enabled: loadStep7 });
 
-  // ✅ TOUJOURS recharger TOUT quand refreshTrigger change
+  // TOUJOURS recharger TOUT quand refreshTrigger change
   useEffect(() => {
-    if (refreshTrigger && refreshTrigger > 0) {
-      clubs.reload();
-      ofppt.reload();
-      laureates.reload();
-      agr.reload();
-      sensi.reload();
-      portes.reload();
-      ecoute.reload();
-      rh.reload();
-      cadres.reload();
-      reseau.reload();
-      partenariats.reload();
+    if (onActivityTrigger && onActivityTrigger > 0) {
+      const timer = setTimeout(() => {
+        if (!rapportId) return;
+        clubs.reload();
+        ofppt.reload();
+        if (loadStep2) { laureates.reload(); agr.reload(); }
+        if (loadStep3) { sensi.reload(); portes.reload(); }
+        if (loadStep4) { ecoute.reload(); }
+        if (loadStep5) { rh.reload(); cadres.reload(); }
+        if (loadStep6) { reseau.reload(); }
+        if (loadStep7) { partenariats.reload(); }
+      }, 2500); 
+      return () => clearTimeout(timer);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [refreshTrigger]);
+  }, [onActivityTrigger, rapportId, loadStep2, loadStep3, loadStep4, loadStep5, loadStep6, loadStep7]);
 
-  // ✅ TOUJOURS CALCULER la complétude avec TOUTES les données
+  // TOUJOURS CALCULER la complétude avec TOUTES les données
   return useMemo(() => {
     if (!rapportId) return 0;
-
     return computeAfCompleteness({
       clubs: clubs.items,
       ofppt: ofppt.items,
@@ -114,6 +113,8 @@ export function useAfCompleteness(rapportId: string | null, refreshTrigger?: num
   }, [
     rapportId,
     refreshTrigger,
+    step,
+    onActivityTrigger,
     clubs.items,
     ofppt.items,
     laureates.items,
@@ -126,4 +127,4 @@ export function useAfCompleteness(rapportId: string | null, refreshTrigger?: num
     reseau.items,
     partenariats.items,
   ]);
-}
+};

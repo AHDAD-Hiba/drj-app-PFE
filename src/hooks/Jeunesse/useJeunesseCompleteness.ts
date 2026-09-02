@@ -13,7 +13,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { computeJeunesseCompleteness } from "@/lib/jeunesseCompleteness";
 
-export const useJeunesseCompleteness = (rapportId: string | null, refreshTrigger?: number, currentStep?: number) => {
+export const useJeunesseCompleteness = (rapportId: string | null, refreshTrigger?: number, step?: number, onActivityTrigger?: number) => {
   const { utilisateur: profile } = useAuth();
 
   // IMMÉDIAT - nécessaire pour Step 1
@@ -61,23 +61,20 @@ export const useJeunesseCompleteness = (rapportId: string | null, refreshTrigger
     return activites.items.find((item) => item.type_activite === "rayonnante");
   }, [activites.items]);
 
-  // ✅ TOUJOURS recharger TOUT quand refreshTrigger change
+  // TOUJOURS recharger TOUT quand refreshTrigger change
   useEffect(() => {
-    if (refreshTrigger && refreshTrigger > 0) {
-      activites.reload();
-      facilities.reload();
-      camps.reload();
-      mouvements.reload();
-      associationValues.reload();
-      formations.reload();
-      partenaires.reload();
-      festivals.reload();
-      socios.reload();
+    if (onActivityTrigger && onActivityTrigger > 0) {
+      const timer = setTimeout(() => {
+        if (!rapportId) return;
+        activites.reload();
+        if (loadStep3) { facilities.reload(); camps.reload(); mouvements.reload(); }
+        if (loadStep4) { associationValues.reload(); formations.reload(); }
+        if (loadStep5) { partenaires.reload(); festivals.reload(); socios.reload(); }
+      }, 2500); 
+      return () => clearTimeout(timer);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [refreshTrigger]);
-
-  // ✅ TOUJOURS CALCULER la complétude avec TOUTES les données
+  }, [onActivityTrigger, rapportId, loadStep3, loadStep4, loadStep5]);
+  // TOUJOURS CALCULER la complétude avec TOUTES les données
   return useMemo(() => {
     if (!rapportId) return 0;
     return computeJeunesseCompleteness({
@@ -94,7 +91,8 @@ export const useJeunesseCompleteness = (rapportId: string | null, refreshTrigger
   }, [
     rapportId,
     refreshTrigger,
-    currentStep,
+    step,
+    onActivityTrigger,
     permanenteData,
     rayonanteData,
     facilities.items,
@@ -104,6 +102,5 @@ export const useJeunesseCompleteness = (rapportId: string | null, refreshTrigger
     socios.items,
     associationValues.items,
     formations.items,
-    mouvements.items,
   ]);
 };

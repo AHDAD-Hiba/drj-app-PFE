@@ -27,5 +27,6 @@ export interface DomainConfig {
     rapportId: string | null,
     refreshTrigger?: number,
     currentStep?: number,
+    onActivityTrigger?: number
   ) => number;
 }

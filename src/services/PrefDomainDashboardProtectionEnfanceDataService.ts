@@ -1,6 +1,6 @@
+import type { PrefDomainBenchmarkRow } from "@/components/dashboard/PrefDomainBenchmarkTable";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
-import type { PrefDomainBenchmarkRow } from "@/components/dashboard/PrefDomainBenchmarkTable";
 import type { DashboardData } from "@/services/prefDomainDashboardTypes";
 import {
   averageDirectionalKpis,
@@ -391,12 +391,12 @@ const buildKpis = (
     ),
     // ⚠️ Source unique = pe_liberte_surveillee (PAS pe_statistiques_demographiques.ls_integres_*)
     totalIntegrationsLiberteSurveillee: sumBy(
-      liberteSurveillee,
-      (l) =>
-        (l.integres_scolaire || 0) +
-        (l.integres_formation_pro || 0) +
-        (l.integres_stage || 0) +
-        (l.integres_associations || 0),
+      stats,
+      (s) =>
+        (s.ls_integres_enseignement || 0) +
+        (s.ls_integres_formation_pro || 0) +
+        (s.ls_integres_apprentissage || 0) +
+        (s.ls_integres_activites_durables || 0),
     ),
     totalIncidentsSignales: sumBy(rapportsExceptionnels, (r) => r.nombre_cas),
     totalMigrantsNonAccompagnes: sumBy(stats, (s) => s.migrants_non_accompagnes),
@@ -700,15 +700,18 @@ const buildDetailed = (
     },
     ateliersActivites: { ateliers, activitesParDomaine },
     liberteSurveillee: {
-      scolaire: sumBy(liberteSurveillee, (l) => l.integres_scolaire),
-      formationPro: sumBy(liberteSurveillee, (l) => l.integres_formation_pro),
-      stage: sumBy(liberteSurveillee, (l) => l.integres_stage),
-      associations: sumBy(liberteSurveillee, (l) => l.integres_associations),
-      total:
-        sumBy(liberteSurveillee, (l) => l.integres_scolaire) +
-        sumBy(liberteSurveillee, (l) => l.integres_formation_pro) +
-        sumBy(liberteSurveillee, (l) => l.integres_stage) +
-        sumBy(liberteSurveillee, (l) => l.integres_associations),
+      scolaire: sumBy(stats, (s) => s.ls_integres_enseignement),
+      formationPro: sumBy(stats, (s) => s.ls_integres_formation_pro),
+      stage: sumBy(stats, (s) => s.ls_integres_apprentissage),
+      associations: sumBy(stats, (s) => s.ls_integres_activites_durables),
+      total: sumBy(
+        stats,
+        (s) =>
+          (s.ls_integres_enseignement || 0) +
+          (s.ls_integres_formation_pro || 0) +
+          (s.ls_integres_apprentissage || 0) +
+          (s.ls_integres_activites_durables || 0),
+      ),
     },
     conseilEnfant: { totalSessions: conseilEnfant.length },
     partenariats: {

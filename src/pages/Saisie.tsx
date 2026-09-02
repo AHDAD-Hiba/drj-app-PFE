@@ -85,7 +85,8 @@ const ActiveWizard = ({
   const [confirmCompleteOpen, setConfirmCompleteOpen] = useState(false);
 
   const [refreshTrigger, setRefreshTrigger] = useState(0);
-  const completeness = domainConfig.useCompleteness(currentId, refreshTrigger, step);
+  const [activityTrigger, setActivityTrigger] = useState(0);
+  const completeness = domainConfig.useCompleteness(currentId, refreshTrigger, step, activityTrigger);
 
   const domain = useDomainSubmission({
     rapportId: currentId,
@@ -122,6 +123,7 @@ const ActiveWizard = ({
   }, [domain.ensureEnCours]);
 
   const onActivityGlobal = useCallback(async () => {
+    setActivityTrigger(prev => prev + 1);
     if (ensureEnCoursTimerRef.current) clearTimeout(ensureEnCoursTimerRef.current);
 
     ensureEnCoursTimerRef.current = setTimeout(async () => {
@@ -137,6 +139,9 @@ const ActiveWizard = ({
   const handleSaveDraft = async (silent = false) => {
     try {
       const ok = await domain.saveNow();
+      if (ok) {
+        setRefreshTrigger(prev => prev + 1);
+      }
       if (!silent) {
         toast({
           title: ok ? t("form.save.draftSavedTitle") : t("form.save.draftErrorTitle"),

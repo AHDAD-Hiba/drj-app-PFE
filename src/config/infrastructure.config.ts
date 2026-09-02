@@ -12,9 +12,7 @@ import { Step5ProjetsEnSouffrance } from "@/components/wizard/Infrastructure/Ste
 export const infrastructureConfig: DomainConfig = {
   id: "bf2cc627-577f-4028-a904-04172676ecfa",
   name: "infra",
-  useCompleteness: (rapportId: string | null, refreshTrigger?: number) => {
-    return useInfraCompleteness(rapportId, refreshTrigger);
-  },
+  useCompleteness: useInfraCompleteness,
   steps: [
     {
       id: 1,

@@ -13,9 +13,7 @@ export const crechesConfig: DomainConfig = {
   // نفس الـ ID الذي استخدمناه في قاعدة البيانات
   id: "556a7353-770d-48a2-8adf-643004a46884",
   name: "creches",
-  useCompleteness: (rapportId: string | null, refreshTrigger?: number) => {
-    return useCrCompleteness(rapportId, refreshTrigger);
-  },
+  useCompleteness: useCrCompleteness,
   steps: [
     {
       id: 1,

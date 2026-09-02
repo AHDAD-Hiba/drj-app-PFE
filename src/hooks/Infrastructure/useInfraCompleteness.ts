@@ -1,44 +1,46 @@
-import { useState, useEffect, useMemo } from "react";
 import { computeInfraCompleteness } from "@/lib/infraCompleteness";
+import { useEffect, useMemo, useState } from "react";
 
+import { useInfraBtp } from "./useInfraBtp";
 import { useInfraDepenses } from "./useInfraDepenses";
 import { useInfraEauElectricite } from "./useInfraEauElectricite";
 import { useInfraPartenariats } from "./useInfraPartenariats";
-import { useInfraBtp } from "./useInfraBtp";
 import { useInfraProjetsSouffrance } from "./useInfraProjetsSouffrance";
 
-export function useInfraCompleteness(rapportId: string | null, refreshTrigger?: number) {
-  // STEP 1 (IMMÉDIAT)
+export function useInfraCompleteness(
+  rapportId: string | null,
+  refreshTrigger?: number,
+  step?: number,
+  onActivityTrigger?: number
+) {
+  // STEP 1
   const depenses = useInfraDepenses(rapportId);
 
-  // STEP 2 (APRÈS 400ms)
+  // STEP 2
   const [loadStep2, setLoadStep2] = useState(false);
   useEffect(() => {
     const timer = setTimeout(() => setLoadStep2(true), 400);
     return () => clearTimeout(timer);
   }, []);
-
   const eauElec = useInfraEauElectricite(rapportId, { enabled: loadStep2 });
 
-  // STEP 3 (APRÈS 800ms)
+  // STEP 3
   const [loadStep3, setLoadStep3] = useState(false);
   useEffect(() => {
     const timer = setTimeout(() => setLoadStep3(true), 800);
     return () => clearTimeout(timer);
   }, []);
-
   const partenariats = useInfraPartenariats(rapportId, { enabled: loadStep3 });
 
-  // STEP 4 (APRÈS 1200ms) - Analyses et sondages
+  // STEP 4
   const [loadStep4, setLoadStep4] = useState(false);
   useEffect(() => {
     const timer = setTimeout(() => setLoadStep4(true), 1200);
     return () => clearTimeout(timer);
   }, []);
-
   const btp = useInfraBtp(rapportId, { enabled: loadStep4 });
 
-  // STEP 5 (APRÈS 1600ms) - Projets en souffrance
+  // STEP 5
   const [loadStep5, setLoadStep5] = useState(false);
   useEffect(() => {
     const timer = setTimeout(() => setLoadStep5(true), 1600);
@@ -46,22 +48,41 @@ export function useInfraCompleteness(rapportId: string | null, refreshTrigger?: 
   }, []);
   const souffrance = useInfraProjetsSouffrance(rapportId, { enabled: loadStep5 });
 
-  // ✅ TOUJOURS recharger TOUT quand refreshTrigger change
+  // 🔄 1. REFRESH MANUEL (Immédiat)
   useEffect(() => {
     if (refreshTrigger && refreshTrigger > 0) {
+      if (!rapportId) return;
       depenses.reload();
-      eauElec.reload();
-      btp.reload();
-      souffrance.reload();
+      if (loadStep2) eauElec.reload();
+      if (loadStep4) btp.reload();
+      if (loadStep5) souffrance.reload();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refreshTrigger]);
 
-  // TOUJOURS CALCULER la complétude avec TOUTES les données
+  // ⌨️ 2. REFRESH AUTO (Dual Polling)
+  useEffect(() => {
+    if (onActivityTrigger && onActivityTrigger > 0) {
+      const reloadAll = () => {
+        if (!rapportId) return;
+        depenses.reload();
+        if (loadStep2) eauElec.reload();
+        if (loadStep4) btp.reload();
+        if (loadStep5) souffrance.reload();
+      };
+
+      const t1 = setTimeout(reloadAll, 2000);
+      const t2 = setTimeout(reloadAll, 4500);
+
+      return () => { clearTimeout(t1); clearTimeout(t2); };
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onActivityTrigger]);
+
+  // ✅ CALCUL COMPLÉTUDE
   return useMemo(() => {
     if (!rapportId) return 0;
 
-    // Transformer conventions en format attendu
     const partenariatsData = (partenariats.conventions || []).reduce((acc: any[], conv: any) => {
       return [...acc, ...(conv.projets || [])];
     }, []);
@@ -76,6 +97,8 @@ export function useInfraCompleteness(rapportId: string | null, refreshTrigger?: 
   }, [
     rapportId,
     refreshTrigger,
+    step,
+    onActivityTrigger,
     depenses.items,
     eauElec.items,
     partenariats.conventions,

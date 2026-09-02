@@ -12,9 +12,7 @@ import { Step4LiberteSurveillee } from "@/components/wizard/ProtectionEnfance/St
 export const protectionEnfanceConfig: DomainConfig = {
   id: "e521e2c2-eb21-41d2-a442-a6a87440ec1e",
   name: "PE",
-  useCompleteness: (rapportId: string | null, refreshTrigger?: number) => {
-    return usePeCompleteness(rapportId, refreshTrigger);
-  },
+  useCompleteness: usePeCompleteness,
   steps: [
     {
       id: 1,

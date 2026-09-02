@@ -1,30 +1,24 @@
-import { useState, useEffect, useMemo } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { computePeCompleteness } from "@/lib/peCompleteness";
+import { useEffect, useMemo, useState } from "react";
 
-import { usePeDemographie } from "./usePeStep1";
-import { usePeEducation } from "./usePeStep1";
-import { usePeAteliers } from "./usePeStep1";
-import { usePeFormation } from "./usePeStep1";
-import { usePeActivites } from "./usePeStep2";
-import { usePeConseilEnfant } from "./usePeStep2";
-import { usePeDons } from "./usePeStep2";
-import { usePeIncidents } from "./usePeStep2";
-import { usePePartenariats } from "./usePeStep3";
-import { usePeFormations } from "./usePeStep3";
-import { usePeAmenagements } from "./usePeStep3";
-import { usePeVisites } from "./usePeStep3";
-import { usePeStatistiquesLS } from "./usePeStep4";
-import { usePeRapportsJudiciaires } from "./usePeStep4";
+import { usePeAteliers, usePeDemographie, usePeEducation, usePeFormation } from "./usePeStep1";
+import { usePeActivites, usePeConseilEnfant, usePeDons, usePeIncidents } from "./usePeStep2";
+import { usePeAmenagements, usePeFormations, usePePartenariats, usePeVisites } from "./usePeStep3";
+import { usePeRapportsJudiciaires, usePeStatistiquesLS } from "./usePeStep4";
 
-export function usePeCompleteness(rapportId: string | null, refreshTrigger?: number) {
-  // STEP 1 (IMMÉDIAT)
+export function usePeCompleteness(
+  rapportId: string | null,
+  refreshTrigger?: number,
+  step?: number,
+  onActivityTrigger?: number
+) {
+  // STEP 1
   const demographie = usePeDemographie(rapportId);
   const education = usePeEducation(rapportId);
   const ateliers = usePeAteliers(rapportId);
   const formationBen = usePeFormation(rapportId);
 
-  // STEP 2 (APRÈS 400ms)
+  // STEP 2
   const [loadStep2, setLoadStep2] = useState(false);
   useEffect(() => {
     const timer = setTimeout(() => setLoadStep2(true), 400);
@@ -35,7 +29,7 @@ export function usePeCompleteness(rapportId: string | null, refreshTrigger?: num
   const dons = usePeDons(rapportId, { enabled: loadStep2 });
   const incidents = usePeIncidents(rapportId, { enabled: loadStep2 });
 
-  // STEP 3 (APRÈS 800ms)
+  // STEP 3
   const [loadStep3, setLoadStep3] = useState(false);
   useEffect(() => {
     const timer = setTimeout(() => setLoadStep3(true), 800);
@@ -46,7 +40,7 @@ export function usePeCompleteness(rapportId: string | null, refreshTrigger?: num
   const amenagement = usePeAmenagements(rapportId, { enabled: loadStep3 });
   const visites = usePeVisites(rapportId, { enabled: loadStep3 });
 
-  // STEP 4 (APRÈS 1200ms)
+  // STEP 4
   const [loadStep4, setLoadStep4] = useState(false);
   useEffect(() => {
     const timer = setTimeout(() => setLoadStep4(true), 1200);
@@ -55,31 +49,40 @@ export function usePeCompleteness(rapportId: string | null, refreshTrigger?: num
   const statsLS = usePeStatistiquesLS(rapportId, { enabled: loadStep4 });
   const rapportsJudic = usePeRapportsJudiciaires(rapportId, { enabled: loadStep4 });
 
-  // ✅ TOUJOURS recharger TOUT quand refreshTrigger change
+  // 🔄 1. REFRESH MANUEL (Immédiat)
   useEffect(() => {
     if (refreshTrigger && refreshTrigger > 0) {
-      demographie.reload();
-      education.reload();
-      ateliers.reload();
-      formationBen.reload();
-      activites.reload();
-      conseil.reload();
-      dons.reload();
-      incidents.reload();
-      partenariats.reload();
-      formationPerso.reload();
-      amenagement.reload();
-      visites.reload();
-      statsLS.reload();
-      rapportsJudic.reload();
+      if (!rapportId) return;
+      demographie.reload(); education.reload(); ateliers.reload(); formationBen.reload();
+      if (loadStep2) { activites.reload(); conseil.reload(); dons.reload(); incidents.reload(); }
+      if (loadStep3) { partenariats.reload(); formationPerso.reload(); amenagement.reload(); visites.reload(); }
+      if (loadStep4) { statsLS.reload(); rapportsJudic.reload(); }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refreshTrigger]);
 
-  // ✅ TOUJOURS CALCULER la complétude avec TOUTES les données
+  // ⌨️ 2. REFRESH AUTO (Dual Polling)
+  useEffect(() => {
+    if (onActivityTrigger && onActivityTrigger > 0) {
+      const reloadAll = () => {
+        if (!rapportId) return;
+        demographie.reload(); education.reload(); ateliers.reload(); formationBen.reload();
+        if (loadStep2) { activites.reload(); conseil.reload(); dons.reload(); incidents.reload(); }
+        if (loadStep3) { partenariats.reload(); formationPerso.reload(); amenagement.reload(); visites.reload(); }
+        if (loadStep4) { statsLS.reload(); rapportsJudic.reload(); }
+      };
+
+      const t1 = setTimeout(reloadAll, 2000);
+      const t2 = setTimeout(reloadAll, 4500);
+
+      return () => { clearTimeout(t1); clearTimeout(t2); };
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onActivityTrigger]);
+
+  // ✅ CALCUL COMPLÉTUDE
   return useMemo(() => {
     if (!rapportId) return 0;
-
     return computePeCompleteness({
       demoCentres: demographie.items,
       education: education.items,
@@ -99,6 +102,8 @@ export function usePeCompleteness(rapportId: string | null, refreshTrigger?: num
   }, [
     rapportId,
     refreshTrigger,
+    step,
+    onActivityTrigger,
     demographie.items,
     education.items,
     ateliers.items,
